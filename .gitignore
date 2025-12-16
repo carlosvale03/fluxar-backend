@@ -1,7 +1,14 @@
+# Ambientes
+.env
+.env.*
+!.env.example
+
+# Python / Django
 venv/
 __pycache__/
 *.pyc
-.env
 db.sqlite3
-.DS_Store
+
+# IDEs
 .vscode/
+.idea/
