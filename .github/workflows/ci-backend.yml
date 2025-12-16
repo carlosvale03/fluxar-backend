@@ -1,0 +1,40 @@
+name: CI Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'fluxar-backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'fluxar-backend/**'
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./fluxar-backend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Check for Syntax Errors
+      run: |
+        python -m compileall .
+
+    - name: Run Migrations Check
+      # Verifica se faltou gerar algum arquivo de migração
+      run: |
+        python manage.py makemigrations --check --dry-run
