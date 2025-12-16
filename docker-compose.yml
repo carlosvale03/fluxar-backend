@@ -4,6 +4,10 @@ services:
     volumes:
       - postgres_data_local:/var/lib/postgresql/data
     environment:
+      # Mapeando variáveis do Postgres para valores fixos ou lendo do shell
+      # Para facilitar, vamos manter o padrão de dev aqui, ou ler do .env se os nomes fossem POSTGRES_...
+      # Como definimos DB_USER no .env, o postgres imagem espera POSTGRES_USER.
+      # Vamos manter hardcoded AQUI no local (backend isolado) ou passar explicitamente.
       - POSTGRES_DB=fluxar_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -18,13 +22,9 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=db
-      - DB_NAME=fluxar_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - SECRET_KEY=django-insecure-dev-key-123
-      - DEBUG=1
+    # AQUI ESTÁ A MUDANÇA:
+    env_file:
+      - .env
     depends_on:
       - db
 
