@@ -1,5 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
+from .serializers_auth import CustomTokenObtainPairView
 from .views import (
     RegisterView,
     CustomLoginView,
@@ -29,4 +30,7 @@ urlpatterns = [
 
     # System
     path('health/', health_check, name='health_check'),
+    
+    # JWT (Standard + Custom Claims)
+    path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
 ]

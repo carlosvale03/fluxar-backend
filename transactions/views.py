@@ -7,17 +7,15 @@ from .serializers import (
     TransferSerializer, CreditCardExpenseSerializer
 )
 from .services import TransactionService
+from core.mixins import UserQuerySetMixin
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+    queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Apenas categorias do usuário (não listamos templates brutos)
-        # Buscar apenas raízes? Ou todas? Depende do frontend.
-        # Geralmente lista-se tudo ou apenas raízes com children nested.
-        # Vamos retornar TUDO e deixar o frontend montar a árvore ou filtrar pelo parent se quiser.
-        qs = Category.objects.filter(user=self.request.user, is_active=True)
+        qs = super().get_queryset()
         
         # Filtro opcional por tipo
         type_filter = self.request.query_params.get('type')
@@ -26,19 +24,20 @@ class CategoryViewSet(viewsets.ModelViewSet):
             
         return qs.order_by('name')
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    # get_queryset removido pois o Mixin resolve
 
-    def get_queryset(self):
-        return Tag.objects.filter(user=self.request.user)
-
-class TransactionViewSet(viewsets.ModelViewSet):
+class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Transaction.objects.filter(user=self.request.user)
+        queryset = super().get_queryset()
         # Filtros básicos (poderiam usar django-filter backend)
         account_id = self.request.query_params.get('account')
         card_id = self.request.query_params.get('credit_card')
