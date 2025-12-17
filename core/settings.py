@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'transactions',
     'budgets',
     'reports',
+    'data_exchange',
 ]
 
 MIDDLEWARE = [
