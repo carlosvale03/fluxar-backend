@@ -175,10 +175,8 @@ class CategoryService:
         """
         # Se usuário não tem profile/plano ainda, assume FREE
         plan_type = 'FREE'
-        if hasattr(user, 'profile') and user.profile.plan:
-             # Ajuste conforme modelagem do Profile (ainda não especificada completamente em BD-001, mas assumindo campo seguro)
-             # user.profile.plan pode ser um related object ou string
-             plan_type = str(user.profile.plan).upper() # Simplificação
+        if hasattr(user, 'plan'):
+             plan_type = str(user.plan).upper()
         
         limits = CategoryService.PLAN_LIMITS.get(plan_type, CategoryService.PLAN_LIMITS['FREE'])
 
