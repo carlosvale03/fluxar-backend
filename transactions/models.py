@@ -9,12 +9,16 @@ class Category(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories', null=True, blank=True)
     name = models.CharField(max_length=50)
     icon = models.CharField(max_length=50, blank=True, null=True, help_text="Identificador do ícone (ex: 'mdi-food')")
     color = models.CharField(max_length=7, blank=True, null=True)
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='EXPENSE')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='EXPENSE')
     
+    # Hierarquia e Templates
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories', help_text="Categoria pai (opcional, para subcategorias)")
+    is_template = models.BooleanField(default=False, help_text="Se True, serve apenas como molde para novos usuários")
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -26,6 +30,8 @@ class Category(models.Model):
         ]
 
     def __str__(self):
+        if self.parent:
+            return f"{self.parent.name} > {self.name}"
         return f"{self.name} ({self.get_type_display()})"
 
 

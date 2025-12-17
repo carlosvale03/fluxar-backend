@@ -13,7 +13,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Category.objects.filter(user=self.request.user, is_active=True)
+        # Apenas categorias do usuário (não listamos templates brutos)
+        # Buscar apenas raízes? Ou todas? Depende do frontend.
+        # Geralmente lista-se tudo ou apenas raízes com children nested.
+        # Vamos retornar TUDO e deixar o frontend montar a árvore ou filtrar pelo parent se quiser.
+        qs = Category.objects.filter(user=self.request.user, is_active=True)
+        
+        # Filtro opcional por tipo
+        type_filter = self.request.query_params.get('type')
+        if type_filter:
+            qs = qs.filter(type=type_filter)
+            
+        return qs.order_by('name')
 
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer

@@ -1,12 +1,31 @@
 from rest_framework import serializers
+from rest_framework import serializers
 from .models import Transaction, Category, Tag
 from accounts.models import Account, CreditCard
+from .services import TransactionService, CategoryService
 
 class CategorySerializer(serializers.ModelSerializer):
+    subcategories = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
-        fields = ['id', 'name', 'icon', 'color', 'type', 'is_active']
-        read_only_fields = ['id']
+        fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'subcategories', 'is_active']
+        read_only_fields = ['id', 'subcategories']
+
+    def get_subcategories(self, obj):
+        # Retorna subcategorias de 1º nível
+        subs = obj.subcategories.filter(is_active=True)
+        return CategorySerializer(subs, many=True).data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        parent = validated_data.get('parent')
+        
+        # Check Limits
+        CategoryService.check_limits(user, parent)
+        
+        validated_data['user'] = user
+        return super().create(validated_data)
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:

@@ -160,3 +160,68 @@ class TransactionService:
             }
         )
         return invoice
+
+class CategoryService:
+    # Definição simples de limites (em futuro mover para tabela de Planos)
+    PLAN_LIMITS = {
+        'FREE': {'max_roots': 20, 'max_subs_per_root': 5},
+        'PREMIUM': {'max_roots': 9999, 'max_subs_per_root': 9999}
+    }
+
+    @staticmethod
+    def check_limits(user, parent_category=None):
+        """
+        Verifica se o usuário pode criar nova categoria/subcategoria de acordo com o plano.
+        """
+        # Se usuário não tem profile/plano ainda, assume FREE
+        plan_type = 'FREE'
+        if hasattr(user, 'profile') and user.profile.plan:
+             # Ajuste conforme modelagem do Profile (ainda não especificada completamente em BD-001, mas assumindo campo seguro)
+             # user.profile.plan pode ser um related object ou string
+             plan_type = str(user.profile.plan).upper() # Simplificação
+        
+        limits = CategoryService.PLAN_LIMITS.get(plan_type, CategoryService.PLAN_LIMITS['FREE'])
+
+        if parent_category:
+            # Validando Subcategoria
+            count = Category.objects.filter(user=user, parent=parent_category, is_active=True).count()
+            if count >= limits['max_subs_per_root']:
+                raise ValidationError(f"Limite de subcategorias ({limits['max_subs_per_root']}) atingido para 'FREE'. Upgrade para Premium!")
+        else:
+            # Validando Categoria Raiz
+            count = Category.objects.filter(user=user, parent__isnull=True, is_active=True).count()
+            if count >= limits['max_roots']:
+                raise ValidationError(f"Limite de categorias principais ({limits['max_roots']}) atingido para 'FREE'.")
+
+    @staticmethod
+    def clone_templates_to_user(user):
+        """
+        Copia todas as categorias marcadas como (is_template=True, parent=None) para o novo usuário.
+        Também copia suas subcategorias recursivamente (suportando 1 nível).
+        """
+        templates = Category.objects.filter(is_template=True, parent__isnull=True)
+        
+        for template in templates:
+            # Copiar Raiz
+            new_cat = Category.objects.create(
+                user=user,
+                name=template.name,
+                type=template.type,
+                icon=template.icon,
+                color=template.color,
+                is_template=False, # Agora é instância real do user
+                parent=None
+            )
+            
+            # Copiar Subcategorias (Nível 1)
+            sub_templates = template.subcategories.all()
+            for sub in sub_templates:
+                Category.objects.create(
+                    user=user,
+                    name=sub.name,
+                    type=sub.type,
+                    icon=sub.icon,
+                    color=sub.color,
+                    is_template=False,
+                    parent=new_cat # Vincula à nova raiz do usuário
+                )
