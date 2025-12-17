@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'api',
     'accounts',
     'transactions',
+    'budgets',
 ]
 
 MIDDLEWARE = [
