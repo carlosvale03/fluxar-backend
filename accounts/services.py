@@ -11,9 +11,25 @@ class AccountService:
         Por enquanto considera apenas o saldo inicial.
         Futuramente irá somar receitas e subtrair despesas/transferências.
         """
-        # TODO: Integrar com módulo de transações (BD-003)
-        # balance = account.initial_balance + sum(receitas) - sum(despesas)
-        return account.initial_balance
+        from django.db.models import Sum
+        from transactions.models import Transaction
+
+        balance = account.initial_balance
+
+        # Receitas e Transferências Recebidas (Entradas)
+        incomes = Transaction.objects.filter(
+            account=account, 
+            type__in=['INCOME', 'TRANSFER_IN']
+        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+        # Despesas, Transferências Enviadas e Pagamento de Fatura (Saídas)
+        # Nota: CREDIT_CARD não sai da conta (sai do limite do cartão). Só INVOICE_PAYMENT sai da conta.
+        expenses = Transaction.objects.filter(
+            account=account,
+            type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT']
+        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+        return balance + incomes - expenses
 
 class CreditCardService:
     @staticmethod
