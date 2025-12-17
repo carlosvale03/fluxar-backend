@@ -19,7 +19,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
 AUTH_USER_MODEL = 'api.User'
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'corsheaders',
     # Nossos apps
     'api',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -89,7 +90,7 @@ else:
             'NAME': os.getenv('DB_NAME', 'fluxar_db'),
             'USER': os.getenv('DB_USER', 'postgres'),
             'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-            'HOST': os.getenv('DB_HOST', 'db'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
             'PORT': os.getenv('DB_PORT', '5432'),
         }
     }
