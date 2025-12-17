@@ -2,13 +2,17 @@ from rest_framework import viewsets, permissions
 from .models import Budget
 from .serializers import BudgetSerializer
 from transactions.models import Category
+from core.mixins import UserQuerySetMixin
 
-class BudgetViewSet(viewsets.ModelViewSet):
+class BudgetViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+    queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = Budget.objects.filter(user=self.request.user)
+        # Mixin já filtra por user. 
+        # Precisamos filtrar os parametros adicionais sobre o resultado do mixin.
+        qs = super().get_queryset()
         
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')

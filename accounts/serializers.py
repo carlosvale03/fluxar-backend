@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import Account, CreditCard, CreditCardInvoice
 from .services import AccountService, CreditCardService
+from core.services.plan_limits import PlanLimitsService
 
 class AccountSerializer(serializers.ModelSerializer):
     balance = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = Account
         fields = [
@@ -14,13 +15,20 @@ class AccountSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_manual', 'balance']
 
+    def validate(self, data):
+        # Validar limite APENAS na criação
+        if not self.instance:
+            user = self.context['request'].user
+            if not PlanLimitsService.can_add_account(user):
+                raise serializers.ValidationError("Limite de contas excedido para o seu plano.")
+        return data
+
     def get_balance(self, obj):
         return AccountService.get_balance(obj)
 
     def create(self, validated_data):
         user = self.context['request'].user
         validated_data['user'] = user
-        # Quando criamos manualmente pela API, is_manual deve ser True (já é default)
         return super().create(validated_data)
 
 
@@ -34,7 +42,7 @@ class CreditCardSerializer(serializers.ModelSerializer):
     available_limit = serializers.SerializerMethodField()
     current_invoice_total = serializers.SerializerMethodField()
     next_due_date = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = CreditCard
         fields = [
@@ -45,8 +53,19 @@ class CreditCardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'available_limit', 'current_invoice_total']
 
+    def validate(self, data):
+        if 'closing_day' in data:
+            self.validate_closing_day(data['closing_day'])
+        if 'due_day' in data:
+            self.validate_due_day(data['due_day'])
+            
+        if not self.instance:
+            user = self.context['request'].user
+            if not PlanLimitsService.can_add_card(user):
+                raise serializers.ValidationError("Limite de cartões excedido para o seu plano.")
+        return data
+
     def get_invoice_data(self, obj):
-        # Cache simples no objeto para não recalcular duas vezes se o serializer chamar ambos os campos
         if not hasattr(obj, '_invoice_data'):
             obj._invoice_data = CreditCardService.get_invoice_data(obj)
         return obj._invoice_data
