@@ -34,8 +34,51 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'plan', 'email_verified', 'created_at')
-        read_only_fields = ('id', 'email', 'plan', 'email_verified', 'created_at')
+        fields = (
+            'id', 'name', 'email', 'plan', 'email_verified', 
+            'cpf', 'phone_number', 'avatar_url', 'date_of_birth',
+            'currency', 'theme_preference', 'language', 'monthly_income',
+            'notification_settings', 'last_login', 'created_at'
+        )
+        read_only_fields = ('id', 'email', 'plan', 'email_verified', 'last_login', 'created_at')
+
+    def validate_cpf(self, value):
+        if not value: return value
+        # Validação simples de formato (melhorar com lib depois)
+        # Manter apenas números
+        clean_cpf = ''.join(filter(str.isdigit, value))
+        if len(clean_cpf) != 11:
+            raise serializers.ValidationError("CPF inválido. Deve conter 11 dígitos.")
+        # TODO: Implementar algoritmo real de dígito verificador
+        return value
+
+    def validate_phone_number(self, value):
+        if not value: return value
+        # Validação simples
+        if len(value) < 10:
+             raise serializers.ValidationError("Telefone inválido.")
+        return value
+
+    def to_representation(self, instance):
+        # Gera o JSON padrão
+        ret = super().to_representation(instance)
+        
+        # Extrai campos de preferência para um objeto aninhado
+        preferences = {
+            'currency': ret.pop('currency', 'BRL'),
+            'theme': ret.pop('theme_preference', 'system'),
+            'language': ret.pop('language', 'pt-BR'),
+            'notifications': ret.pop('notification_settings', {})
+        }
+        
+        ret['preferences'] = preferences
+        return ret
+    
+    def update(self, instance, validated_data):
+        # Suporte a update via JSON aninhado 'preferences' se vier do front (opcional, mas robusto)
+        # Por enquanto o serializer espera input 'flat' (ex: { "theme_preference": "dark" })
+        # O to_representation cuida da saída.
+        return super().update(instance, validated_data)
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
