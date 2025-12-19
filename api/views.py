@@ -157,6 +157,9 @@ class MeView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request):
+        return self.put(request)
+
 class ChangePasswordView(APIView):
     """
     Permite que usuário logado altere sua senha.

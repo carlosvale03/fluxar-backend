@@ -32,6 +32,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='COMMON')
     email_verified = models.BooleanField(default=False)
+    
+    # 1. Dados Pessoais
+    avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    
+    # 2. Preferências
+    currency = models.CharField(max_length=3, default='BRL')
+    theme_preference = models.CharField(max_length=10, default='system', choices=[('light', 'Light'), ('dark', 'Dark'), ('system', 'System')])
+    language = models.CharField(max_length=10, default='pt-BR')
+    
+    # 3. Perfil Financeiro
+    monthly_income = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    
+    # 4. Configurações (JSON)
+    notification_settings = models.JSONField(default=dict, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
