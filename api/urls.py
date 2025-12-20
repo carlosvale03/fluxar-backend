@@ -9,7 +9,8 @@ from .views import (
     VerifyEmailView,
     ForgotPasswordView,
     ResetPasswordView,
-    health_check
+    health_check,
+    UserAvatarView
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
 
     # Auth Protected Endpoints
     path('auth/me/', MeView.as_view(), name='auth_me'),
+    path('auth/me/avatar/', UserAvatarView.as_view(), name='auth_avatar'),
 
     # User Management
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST

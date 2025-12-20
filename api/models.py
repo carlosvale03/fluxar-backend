@@ -34,7 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verified = models.BooleanField(default=False)
     
     # 1. Dados Pessoais
-    avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
