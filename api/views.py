@@ -10,6 +10,7 @@ from datetime import timedelta
 from .serializers import (
     UserRegisterSerializer,
     UserProfileSerializer,
+    UserAvatarSerializer,
     CustomTokenObtainPairSerializer,
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
@@ -159,6 +160,25 @@ class MeView(APIView):
 
     def patch(self, request):
         return self.put(request)
+
+class UserAvatarView(APIView):
+    """
+    Endpoint para upload de avatar do usuário.
+    POST: Recebe arquivo multipart e salva no perfil.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+    
+    def post(self, request):
+        user = request.user
+        serializer = UserAvatarSerializer(user, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            # Retorna URL pública
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+            return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ChangePasswordView(APIView):
     """
