@@ -43,15 +43,32 @@ class CreditCardSerializer(serializers.ModelSerializer):
     current_invoice_total = serializers.SerializerMethodField()
     next_due_date = serializers.SerializerMethodField()
     
+    # Campos para vínculo com conta (FE-002)
+    account_id = serializers.PrimaryKeyRelatedField(
+        queryset=Account.objects.none(), # Placeholder, populado no __init__
+        source='account',
+        required=False,
+        allow_null=True
+    )
+    account = AccountSerializer(read_only=True)
+
     class Meta:
         model = CreditCard
         fields = [
             'id', 'name', 'limit', 'closing_day', 'due_day',
             'institution', 'color',
+            'account', 'account_id', # Novos campos
             'available_limit', 'current_invoice_total', 'next_due_date',
             'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'available_limit', 'current_invoice_total']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtra contas apenas do usuário logado
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+             self.fields['account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
 
     def validate(self, data):
         if 'closing_day' in data:
