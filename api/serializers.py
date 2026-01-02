@@ -35,8 +35,11 @@ class UserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar']
+        extra_kwargs = {'avatar': {'required': True}}
         
     def validate_avatar(self, value):
+        if not value:
+            raise serializers.ValidationError("Nenhum arquivo enviado.")
         # Limite de tamanho (ex: 5MB)
         limit_mb = 5
         if value.size > limit_mb * 1024 * 1024:
@@ -58,7 +61,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_avatar_url(self, obj):
         if obj.avatar:
-            return obj.avatar.url # Django Storage retorna URL absoluta ou relativa dependendo do config
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url 
         return None
 
     def validate_cpf(self, value):
