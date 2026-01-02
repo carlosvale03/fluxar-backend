@@ -43,6 +43,9 @@ class CreditCard(models.Model):
     closing_day = models.IntegerField(help_text="Dia de fechamento da fatura (1-31)")
     due_day = models.IntegerField(help_text="Dia de vencimento da fatura (1-31)")
     
+    # Vínculo com Conta de Pagamento (FE-002)
+    account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='credit_cards', help_text="Conta usada para pagar a fatura deste cartão")
+    
     # Identidade Visual
     institution = models.CharField(max_length=50, blank=True, null=True, help_text="Código ou nome da instituição para ícone")
     color = models.CharField(max_length=7, blank=True, null=True)
