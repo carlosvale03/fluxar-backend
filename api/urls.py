@@ -28,6 +28,7 @@ urlpatterns = [
 
     # User Management
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST
+    path('users/me/avatar/', UserAvatarView.as_view(), name='users_avatar'),
     path('users/me/password/', ChangePasswordView.as_view(), name='users_me_password'),
 
     # System

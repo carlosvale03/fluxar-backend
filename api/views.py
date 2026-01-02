@@ -147,12 +147,12 @@ class MeView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        serializer = UserProfileSerializer(request.user)
+        serializer = UserProfileSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request):
         user = request.user
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        serializer = UserProfileSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -170,13 +170,27 @@ class UserAvatarView(APIView):
     
     def post(self, request):
         user = request.user
-        serializer = UserAvatarSerializer(user, data=request.data)
+        
+        # Compatibilidade com frontend que envia key='file'
+        if 'file' in request.FILES and 'avatar' not in request.FILES:
+            # Cria um novo dict apenas com o arquivo mapeado, evitando copy() do QueryDict
+            # que pode falhar com deepcopy em arquivos abertos
+            data = {'avatar': request.FILES['file']}
+        else:
+            data = request.data
+            
+        serializer = UserAvatarSerializer(user, data=data)
         
         if serializer.is_valid():
             serializer.save()
-            # Retorna URL pública
-            avatar_url = request.build_absolute_uri(user.avatar.url)
-            return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
+            user.refresh_from_db() # Garante que temos o estado atualizado do banco/arquivo
+            
+            if user.avatar:
+                # Retorna URL pública
+                avatar_url = request.build_absolute_uri(user.avatar.url)
+                return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
+            else:
+                 return Response({"error": "Erro ao salvar arquivo."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

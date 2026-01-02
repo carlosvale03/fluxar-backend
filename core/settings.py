@@ -138,6 +138,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Compactação e cache para produção
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media Files (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Django Rest Framework
 REST_FRAMEWORK = {
