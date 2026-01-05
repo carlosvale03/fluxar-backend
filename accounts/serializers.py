@@ -37,6 +37,17 @@ class CreditCardInvoiceSerializer(serializers.ModelSerializer):
         model = CreditCardInvoice
         fields = ['id', 'month', 'year', 'status', 'total_amount', 'closing_date', 'due_date']
 
+class InvoicePaymentSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none(), required=True)
+    date = serializers.DateField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+             self.fields['account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
+
 
 class CreditCardSerializer(serializers.ModelSerializer):
     available_limit = serializers.SerializerMethodField()

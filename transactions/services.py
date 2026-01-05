@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 
 from .models import Transaction, TransferGroup, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
+from accounts.services import CreditCardService
 
 class TransactionService:
     @staticmethod
@@ -157,6 +158,94 @@ class TransactionService:
                 'closing_date': date(year, month, card.closing_day) if card.closing_day <= 28 else date(year, month, 28), # Simplificação
                 'due_date': date(year, month, card.due_day) if card.due_day <= 28 else date(year, month, 28)
                 # TODO: Melhorar calculo de datas fim de mês (29/30/31)
+            }
+        )
+    @staticmethod
+    def create_credit_card_expense(user, card, amount, date, description, category, tags=None, installments=1):
+        if installments < 1:
+            raise ValidationError("Número de parcelas deve ser pelo menos 1.")
+
+        transactions = []
+        installment_amount = amount / Decimal(installments)
+        installment_amount = round(installment_amount, 2)
+        diff = amount - (installment_amount * installments)
+        
+        parent_txn = None
+        
+        for i in range(installments):
+            # 1. Data de Compra Virtual da Parcela
+            # Simula que a compra foi feita i meses depois, para cair na fatura correta
+            purchase_date_virtual = date + relativedelta(months=i)
+            
+            # 2. Vencimento da Fatura (Competência)
+            due_date = CreditCardService.calculate_due_date(card, purchase_date_virtual)
+            
+            val = installment_amount
+            if i == 0:
+                val += diff
+            
+            # Buscar ou Criar Fatura
+            invoice = TransactionService._get_or_create_invoice(card, due_date.month, due_date.year)
+            
+            # Descrição
+            desc = description
+            if installments > 1:
+                desc = f"{description} ({i+1}/{installments})"
+            
+            t = Transaction.objects.create(
+                user=user,
+                type='CREDIT_CARD',
+                credit_card=card,
+                invoice=invoice,
+                amount=val,
+                date=due_date, # Data efetiva da despesa na fatura
+                description=desc,
+                category=category,
+                is_installment=(installments > 1),
+                installment_number=(i + 1) if installments > 1 else None,
+                installment_total=installments if installments > 1 else None,
+                parent_transaction=parent_txn
+            )
+            
+            if tags:
+                t.tags.set(tags)
+            
+            if i == 0 and installments > 1:
+                parent_txn = t
+                t.parent_transaction = None 
+                t.save()
+                
+            transactions.append(t)
+            
+        return transactions
+
+    @staticmethod
+    def _get_or_create_invoice(card, month, year):
+        # Calcula datas estimadas de fechamento e vencimento
+        
+        # Se o closing_day > due_day, o fechamento é no mês anterior.
+        closing_m = month
+        closing_y = year
+        if card.closing_day > card.due_day:
+           closing_date_obj = date(year, month, 1) - relativedelta(months=1)
+           closing_m = closing_date_obj.month
+           closing_y = closing_date_obj.year
+           
+        try:
+            c_date = date(closing_y, closing_m, card.closing_day)
+        except ValueError:
+            c_date = date(closing_y, closing_m, 28)
+            
+        try:
+            d_date = date(year, month, card.due_day)
+        except ValueError:
+            d_date = date(year, month, 28)
+
+        invoice, created = CreditCardInvoice.objects.get_or_create(
+            card=card, month=month, year=year,
+            defaults={
+                'closing_date': c_date,
+                'due_date': d_date
             }
         )
         return invoice
