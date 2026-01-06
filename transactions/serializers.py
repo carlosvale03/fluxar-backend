@@ -34,14 +34,15 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 class TransactionSerializer(serializers.ModelSerializer):
+    account_detail = serializers.SerializerMethodField()
     category_detail = CategorySerializer(source='category', read_only=True)
     tags_detail = TagSerializer(source='tags', many=True, read_only=True)
     
     class Meta:
         model = Transaction
         fields = [
-            'id', 'type', 'description', 'amount', 'date',
-            'account', 'credit_card', 'invoice', 
+            'id', 'type', 'status', 'description', 'amount', 'date',
+            'account', 'account_detail', 'credit_card', 'invoice', 
             'category', 'category_detail',
             'tags', 'tags_detail',
             'is_installment', 'installment_number', 'installment_total',
@@ -51,6 +52,11 @@ class TransactionSerializer(serializers.ModelSerializer):
             'id', 'invoice', 'is_installment', 'installment_number', 'installment_total',
             'created_at', 'updated_at'
         ]
+
+    def get_account_detail(self, obj):
+        if obj.account:
+            return {'id': obj.account.id, 'name': obj.account.name}
+        return None
 
     def create(self, validated_data):
         # Criação simples (Receita/Despesa padrão)
