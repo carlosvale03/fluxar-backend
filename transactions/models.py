@@ -50,12 +50,7 @@ class Tag(models.Model):
         return self.name
 
 
-class TransferGroup(models.Model):
-    """
-    Agrupa duas transações (saída e entrada) de uma transferência.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+
 
 
 class Transaction(models.Model):
@@ -93,7 +88,7 @@ class Transaction(models.Model):
     date = models.DateField() # Data de competência (para filtro)
     
     # Transferência
-    transfer_group = models.ForeignKey(TransferGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='transactions')
+    transfer_id = models.UUIDField(null=True, blank=True, db_index=True, help_text="ID agrupador de transferências (origem/destino)")
 
     # Parcelamento (Installments)
     is_installment = models.BooleanField(default=False)
