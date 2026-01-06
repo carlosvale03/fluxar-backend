@@ -1,10 +1,11 @@
+import uuid
 from decimal import Decimal
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.core.exceptions import ValidationError
 
-from .models import Transaction, TransferGroup, Category
+from .models import Transaction, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from accounts.services import CreditCardService
 
@@ -50,24 +51,25 @@ class TransactionService:
     def create_transfer(user, account_from, account_to, amount, date, description="Transferência"):
         """
         Cria transferencia entre contas (Atomic).
-        Gera 2 transações ligadas por um TransferGroup.
+        Gera 2 transações ligadas pelo mesmo transfer_id.
         """
-        group = TransferGroup.objects.create()
+        transfer_uid = uuid.uuid4()
         
         # Saída
         t_out = Transaction.objects.create(
             user=user, type='TRANSFER_OUT', account=account_from,
             amount=amount, date=date, description=f"TR - Para: {account_to.name}",
-            transfer_group=group
+            transfer_id=transfer_uid
         )
         
         # Entrada
         t_in = Transaction.objects.create(
             user=user, type='TRANSFER_IN', account=account_to,
             amount=amount, date=date, description=f"TR - De: {account_from.name}",
-            transfer_group=group
+            transfer_id=transfer_uid
         )
-        return group
+        # Retorna o ID de agrupamento
+        return transfer_uid
 
     @staticmethod
     def create_credit_card_expense(user, card, amount, date, description, category, tags=None, installments=1):
