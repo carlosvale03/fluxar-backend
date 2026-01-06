@@ -19,14 +19,16 @@ class AccountService:
         # Receitas e Transferências Recebidas (Entradas)
         incomes = Transaction.objects.filter(
             account=account, 
+            status='COMPLETED', # Apenas efetivadas
             type__in=['INCOME', 'TRANSFER_IN']
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
 
         # Despesas, Transferências Enviadas e Pagamento de Fatura (Saídas)
-        # Nota: CREDIT_CARD não sai da conta (sai do limite do cartão). Só INVOICE_PAYMENT sai da conta.
+        # Nota: CREDIT_CARD "PAGO" (COMPLETED) impacta o saldo da conta vinculada.
         expenses = Transaction.objects.filter(
             account=account,
-            type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT']
+            status='COMPLETED', # Apenas efetivadas
+            type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
 
         return balance + incomes - expenses
@@ -107,86 +109,128 @@ class CreditCardService:
     @staticmethod
     def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date):
         """
-        Processa o pagamento de uma fatura.
-        - Cria despesa na conta bancária.
-        - Atualiza status da fatura e das transações.
-        - Gera rotativo se pagamento parcial.
+        Processa pagamento de fatura atualizando as transações originais.
+        Refatoração:
+        - Não cria mais 'INVOICE_PAYMENT'.
+        - Despesas pagas viram saídas da `account` na data do pagamento.
+        - Despesas não pagas (parcial) são movidas para a próxima fatura (Rollover).
         """
         from transactions.services import TransactionService
-        from transactions.models import Transaction
-
-        # 1. Validar se a fatura tem valor a pagar
-        # Recalcular total amount pelas transactions para garantir?
-        # Por enquanto confiar no invoice.total_amount ou somar transactions 'OPEN'?
-        # Vamos somar transactions vinculadas.
-        pending_transactions = invoice.transactions.exclude(type='INVOICE_PAYMENT') 
-        # Cuidado: invoice.transactions related manager.
-        # As transações de despesa são CREDIT_CARD.
-        # INVOICE_PAYMENT não deve estar vinculado a invoice dessa forma (geralmente nao tem FK pra invoice, ou tem?)
-        # Transaction model tem `invoice = models.ForeignKey(...)`.
         
-        real_total = Decimal('0.00')
-        for t in pending_transactions:
-            real_total += t.amount # TODO: Filtrar apenas não estornadas/pagas?
+        # 1. Buscar transações pendentes desta fatura
+        # Apenas despesas de cartão, ignorando eventuais ajustes manuais por enquanto
+        pending_txs = invoice.transactions.filter(
+            type='CREDIT_CARD', 
+            status='PENDING'
+        ).order_by('date', 'amount')
+        
+        remaining_payment = amount
+        paid_transactions = []
+        
+        # Próxima fatura (para rollover)
+        next_month = invoice.month + 1
+        next_year = invoice.year
+        if next_month > 12:
+            next_month = 1
+            next_year += 1
             
-        if real_total <= 0:
-             # Se for 0, marca como paga direto
-             invoice.status = 'PAID'
-             invoice.save()
-             return
+        next_invoice = None # Lazy load
+        
+        # 2. Processar pagamentos
+        for tx in pending_txs:
+            if remaining_payment <= 0:
+                # Acabou o dinheiro do pagamento. O resto é rollover.
+                if not next_invoice:
+                    next_invoice = TransactionService._get_or_create_invoice(invoice.card, next_month, next_year)
+                
+                # Move para próxima fatura
+                tx.invoice = next_invoice
+                tx.save()
+                continue
+            
+            if tx.amount <= remaining_payment:
+                # Paga a transação inteira
+                tx.status = 'COMPLETED'
+                tx.account = account # Sai desta conta
+                tx.date = date # Data do pagamento efetivo
+                tx.save()
+                
+                remaining_payment -= tx.amount
+                
+            else:
+                # Paga PARTE da transação (Split)
+                pay_amount = remaining_payment
+                leftover_amount = tx.amount - pay_amount
+                
+                # 1. Atualizar a original (parte PAGA)
+                # Precisamos clonar dados antes de salvar
+                original_desc = tx.description
+                original_category = tx.category
+                original_tags = list(tx.tags.all())
+                
+                tx.amount = pay_amount
+                tx.status = 'COMPLETED'
+                tx.account = account
+                tx.date = date
+                tx.description = f"{original_desc} (Parcial)"
+                tx.save()
+                
+                # 2. Criar a parte RESTANTE (Rollover)
+                if not next_invoice:
+                    next_invoice = TransactionService._get_or_create_invoice(invoice.card, next_month, next_year)
+                    
+                from transactions.models import Transaction
+                # Criar nova transação para o resto
+                new_tx = Transaction.objects.create(
+                    user=user,
+                    type='CREDIT_CARD',
+                    status='PENDING',
+                    account=invoice.card.account, # Volker à conta do cartão (padrão)
+                    credit_card=invoice.card,
+                    invoice=next_invoice,
+                    amount=leftover_amount,
+                    date=tx.date, # Mantém data original de competência? Ou vira divida nova?
+                                  # Melhor manter original para saberem a origem.
+                    description=f"{original_desc} (Restante)",
+                    category=original_category,
+                    is_installment=tx.is_installment,
+                    installment_number=tx.installment_number,
+                    installment_total=tx.installment_total,
+                    parent_transaction=tx.parent_transaction
+                )
+                new_tx.tags.set(original_tags)
+                
+                remaining_payment = Decimal('0.00')
 
-        # 2. Criar saída da conta (Pagamento de Fatura)
-        # Usar TransactionService para criar a despesa na conta
-        # Tipo deve ser INVOICE_PAYMENT para não bagunçar relatórios de categorias
-        payment_txn = Transaction.objects.create(
-            user=user,
-            type='INVOICE_PAYMENT',
-            account=account,
-            amount=amount,
-            date=date,
-            description=f"Pagamento Fatura {invoice.card.name} ({invoice.month}/{invoice.year})",
-            category=None # Ou categoria específica "Pagamento de Fatura"?
+        # 3. Finalizar Fatura
+        # Como todas as txs foram tratadas (pagas ou movidas), a fatura deve ficar zerada de pendencias?
+        # Sim, mas o registro dela fica PAID.
+        # Importante: O signal que criamos (update_invoice_total) vai rodar a cada save acima!
+        # Isso vai atualizar o invoice.total_amount em tempo real.
+        # Ao final, o total_amount da invoice deve refletir O QUE FOI PAGO nela?
+        # Não, o total_amount reflete o que está vinculado a ela.
+        # Se movemos as não pagas para a próxima, o total_amount desta vai diminuir para apenas o valor pago.
+        # Correto. Contabilidade bate.
+        
+        invoice.status = 'PAID'
+        invoice.save()
+
+    @staticmethod
+    def unpay_invoice(user, invoice: CreditCardInvoice):
+        """
+        Reverte o pagamento de uma fatura.
+        - Transações COMPLETED voltam para PENDING.
+        - Invoice volta para OPEN.
+        """
+        # 1. Buscar transações pagas
+        paid_txs = invoice.transactions.filter(
+            type='CREDIT_CARD',
+            status='COMPLETED'
         )
         
-        # 3. Atualizar Fatura e Transações
-        # Cenário 1: Pagamento Total (ou maior)
-        if amount >= real_total:
-            invoice.status = 'PAID'
-            invoice.total_amount = real_total # Atualiza com o real
-            invoice.save()
-            
-            # Opcional: Marcar transações como pagas? 
-            # Como o modelo Transaction não tem status booleano 'paid', assumimos que se invoice está PAID, elas estão pagas.
-            
-        # Cenário 2: Pagamento Parcial (Rotativo)
-        else:
-            remaining = real_total - amount
-            
-            # Marca a fatura atual como FECHADA/PAGA pois foi "resolvida" com o pagamento parcial + rolagem
-            invoice.status = 'PAID' 
-            invoice.total_amount = real_total
-            invoice.save()
-            
-            # Criar Transação de Rotativo na PRÓXIMA fatura
-            # Data da nova despesa: Hoje ou vencimento da próxima?
-            # Vencimento da próxima.
-            
-            # Achar próxima fatura
-            next_month = invoice.month + 1
-            next_year = invoice.year
-            if next_month > 12:
-                next_month = 1
-                next_year += 1
-                
-            # Usar create_credit_card_expense para gerar o rotativo
-            TransactionService.create_credit_card_expense(
-                user=user,
-                card=invoice.card,
-                amount=remaining,
-                date=date, # Data hoje
-                description=f"Rotativo Fatura {invoice.month}/{invoice.year} (Restante)",
-                category=None, # Categoria "Juros/Rotativo"?
-                installments=1
-            )
-            
-            # TODO: Adicionar juros se necessário (User pediu "Restante + Juros" no prompt, mas não deu taxa. Faremos só o restante por enquanto).
+        # 2. Reverter Status
+        paid_txs.update(status='PENDING')
+        
+        # 3. Reabrir Fatura
+        invoice.status = 'OPEN'
+        invoice.save()

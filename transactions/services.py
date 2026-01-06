@@ -195,6 +195,8 @@ class TransactionService:
             t = Transaction.objects.create(
                 user=user,
                 type='CREDIT_CARD',
+                status='PENDING', # Refatoração: Status PENDING até pagar fatura
+                account=card.account, # Refatoração: Vincula à conta do cartão (Contábil)
                 credit_card=card,
                 invoice=invoice,
                 amount=val,

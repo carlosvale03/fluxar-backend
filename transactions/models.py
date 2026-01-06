@@ -80,8 +80,14 @@ class Transaction(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     
+    STATUS_CHOICES = [
+        ('PENDING', 'Pendente'),
+        ('COMPLETED', 'Concluída'),
+    ]
+
     # Dados da transação
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='COMPLETED')
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     date = models.DateField() # Data de competência (para filtro)
