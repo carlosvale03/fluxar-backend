@@ -46,6 +46,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         required=False, 
     )
     signed_amount = serializers.SerializerMethodField()
+    update_scope = serializers.ChoiceField(
+        choices=['SINGLE', 'ALL_FUTURE'], 
+        default='SINGLE', 
+        write_only=True
+    )
 
     class Meta:
         model = Transaction
@@ -55,7 +60,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'category', 'category_detail',
             'tags', 'tags_detail',
             'is_installment', 'installment_number', 'installment_total',
-            'transfer_id', 'related_transaction', 'target_account_id',
+            'transfer_id', 'related_transaction', 'target_account_id', 'update_scope',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -63,6 +68,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'transfer_id', 'related_transaction', 'signed_amount',
             'created_at', 'updated_at'
         ]
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,6 +121,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         target_account = validated_data.pop('target_account_id', None)
+        scope = validated_data.pop('update_scope', 'SINGLE')
         
         # 1. Update Partner Account if requested
         if target_account and instance.transfer_id:
@@ -126,7 +133,28 @@ class TransactionSerializer(serializers.ModelSerializer):
                 partner.account = target_account
                 partner.save() # Dispara signal, mas sync_transfer_update ignora account change.
         
-        # 2. Normal Update
+        # 2. Batch Installment Update (ALL_FUTURE)
+        if scope == 'ALL_FUTURE' and instance.is_installment:
+            from django.db.models import Q
+            root_id = instance.parent_transaction_id or instance.id
+            
+            # Busca parcelas futuras (excluindo a atual, que será atualizada pelo super().update)
+            futures = Transaction.objects.filter(
+                Q(id=root_id) | Q(parent_transaction_id=root_id)
+            ).filter(
+                installment_number__gt=instance.installment_number
+            )
+            
+            for txn in futures:
+                # Descrição NÃO propaga (para manter n/total)
+                if 'amount' in validated_data:
+                    txn.amount = validated_data['amount']
+                if 'category' in validated_data:
+                    txn.category = validated_data['category']
+                
+                txn.save()
+
+        # 3. Normal Update
         t = super().update(instance, validated_data)
         
         if tags is not None:
