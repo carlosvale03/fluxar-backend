@@ -35,6 +35,7 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None # Remove o limite de 10 itens por página
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -91,3 +92,47 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             TransactionSerializer(txs, many=True).data,
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=False, methods=['delete'], url_path='bulk-delete')
+    def bulk_delete(self, request):
+        """
+        Deleta todas as transações vinculadas a um grupo de recorrência ou transferência.
+        """
+        recurring_id = request.query_params.get('recurring_source')
+        transfer_id = request.query_params.get('transfer_id')
+        
+        if recurring_id:
+            deleted_count, _ = Transaction.objects.filter(
+                user=request.user, 
+                recurring_source_id=recurring_id
+            ).delete()
+            return Response({'status': f'{deleted_count} transações removidas.'})
+            
+        if transfer_id:
+            deleted_count, _ = Transaction.objects.filter(
+                user=request.user, 
+                transfer_id=transfer_id
+            ).delete()
+            return Response({'status': f'{deleted_count} transações removidas.'})
+            
+        return Response({'error': 'Informe recurring_source ou transfer_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['patch'], url_path='bulk-update')
+    def bulk_update(self, request):
+        """
+        Atualiza campos (description, amount, category) de um grupo.
+        """
+        recurring_id = request.data.get('recurring_source')
+        if not recurring_id:
+            return Response({'error': 'Informe recurring_source'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Filtra apenas transações futuras/pendentes do grupo se solicitado? 
+        # Por enquanto faz em todas do grupo.
+        update_data = {k: v for k, v in request.data.items() if k in ['description', 'amount', 'category']}
+        
+        updated_count = Transaction.objects.filter(
+            user=request.user,
+            recurring_source_id=recurring_id
+        ).update(**update_data)
+        
+        return Response({'status': f'{updated_count} transações atualizadas.'})
