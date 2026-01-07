@@ -97,7 +97,7 @@ class Transaction(models.Model):
     parent_transaction = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='installments', help_text="Transação pai que originou o parcelamento")
 
     # Recorrência (Link para template original, se houver)
-    # recurring_source = models.ForeignKey('RecurringTransaction', ...)
+    recurring_source = models.ForeignKey('RecurringTransaction', on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_transactions')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

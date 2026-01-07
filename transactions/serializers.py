@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from rest_framework import serializers
-from .models import Transaction, Category, Tag
+from django.db import transaction
+from dateutil.relativedelta import relativedelta
+from .models import Transaction, Category, Tag, RecurringTransaction
 from accounts.models import Account, CreditCard
 from .services import TransactionService, CategoryService
 
@@ -51,6 +52,13 @@ class TransactionSerializer(serializers.ModelSerializer):
         default='SINGLE', 
         write_only=True
     )
+    is_recurring = serializers.BooleanField(write_only=True, default=False)
+    frequency = serializers.ChoiceField(
+        choices=RecurringTransaction.FREQUENCY_CHOICES, 
+        required=False, 
+        write_only=True
+    )
+    recurring_source = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Transaction
@@ -61,11 +69,12 @@ class TransactionSerializer(serializers.ModelSerializer):
             'tags', 'tags_detail',
             'is_installment', 'installment_number', 'installment_total',
             'transfer_id', 'related_transaction', 'target_account_id', 'update_scope',
+            'is_recurring', 'frequency', 'recurring_source',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'invoice', 'is_installment', 'installment_number', 'installment_total',
-            'transfer_id', 'related_transaction', 'signed_amount',
+            'transfer_id', 'related_transaction', 'signed_amount', 'recurring_source',
             'created_at', 'updated_at'
         ]
 
@@ -75,6 +84,23 @@ class TransactionSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             self.fields['target_account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
+
+    def to_representation(self, instance):
+        """
+        Injeta is_recurring e frequency no output baseado no recurring_source.
+        """
+        representation = super().to_representation(instance)
+        
+        # Se tem recurring_source, é recorrente
+        has_recurrence = instance.recurring_source is not None
+        representation['is_recurring'] = has_recurrence
+        
+        if has_recurrence:
+            representation['frequency'] = instance.recurring_source.frequency
+        else:
+            representation['frequency'] = None
+            
+        return representation
 
     def get_signed_amount(self, obj):
         # Retorna negativo para saídas e positivo para entradas
@@ -102,21 +128,76 @@ class TransactionSerializer(serializers.ModelSerializer):
                  }
         return None
 
+    @transaction.atomic
     def create(self, validated_data):
-        # Criação simples (Receita/Despesa padrão)
-        # Para logicas complexas use as actions da ViewSet
         user = self.context['request'].user
-        validated_data['user'] = user
-        tags = validated_data.pop('tags', [])
-        # Remove campos puramente virtuais se sobrarem
-        validated_data.pop('target_account_id', None) # source='_target...' might fail if popped manually above?
-        # Actually without 'source', validated_data has 'target_account_id'. We pop it.
         
-        t = super().create(validated_data)
+        # Extrair dados de recorrência
+        is_recurring = validated_data.pop('is_recurring', False)
+        frequency = validated_data.pop('frequency', None)
+        
+        # Extrair tags
+        tags = validated_data.pop('tags', [])
+        
+        # Limpar campos virtuais
+        validated_data.pop('target_account_id', None)
+        validated_data.pop('update_scope', None)
+        
+        # 1. Criar a Transação base
+        validated_data['user'] = user
+        transaction = super().create(validated_data)
         
         if tags:
-            t.tags.set(tags)
-        return t
+            transaction.tags.set(tags)
+            
+        # 2. Lógica de Recorrência
+        if is_recurring and frequency:
+            recur = RecurringTransaction.objects.create(
+                user=user,
+                description=transaction.description,
+                amount=transaction.amount,
+                type=transaction.type,
+                account=transaction.account,
+                credit_card=transaction.credit_card,
+                category=transaction.category,
+                frequency=frequency,
+                start_date=transaction.date
+            )
+            
+            # Vincular a transação original ao template
+            transaction.recurring_source = recur
+            transaction.save(update_fields=['recurring_source'])
+
+            # 3. Gerar ocorrências futuras (LIMIT de 12 meses/ciclos no total)
+            current_date = transaction.date
+            
+            # Já criamos a primeira. Gerar mais 11 futuras.
+            for _ in range(11):
+                if frequency == 'DAILY': delta = relativedelta(days=1)
+                elif frequency == 'WEEKLY': delta = relativedelta(weeks=1)
+                elif frequency == 'MONTHLY': delta = relativedelta(months=1)
+                elif frequency == 'YEARLY': delta = relativedelta(years=1)
+                else: break
+                
+                current_date += delta
+                
+                # Criar transação futura
+                future_txn = Transaction.objects.create(
+                    user=user,
+                    description=transaction.description,
+                    amount=transaction.amount,
+                    type=transaction.type,
+                    account=transaction.account,
+                    credit_card=transaction.credit_card,
+                    category=transaction.category,
+                    date=current_date,
+                    status='PENDING' if transaction.type in ['EXPENSE', 'CREDIT_CARD'] else 'COMPLETED',
+                    recurring_source=recur
+                )
+                if tags:
+                    future_txn.tags.set(tags)
+            
+        return transaction
 
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
