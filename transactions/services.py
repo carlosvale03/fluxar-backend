@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
@@ -273,14 +273,18 @@ class CategoryService:
         
         limits = CategoryService.PLAN_LIMITS.get(plan_type, CategoryService.PLAN_LIMITS['FREE'])
 
+        print(f"DEBUG LIMITS: User={user.email}, Plan={plan_type}, Parent={parent_category}")
+
         if parent_category:
             # Validando Subcategoria
             count = Category.objects.filter(user=user, parent=parent_category, is_active=True).count()
+            print(f"DEBUG LIMITS: Sub Count={count}, Limit={limits['max_subs_per_root']}")
             if count >= limits['max_subs_per_root']:
                 raise ValidationError(f"Limite de subcategorias ({limits['max_subs_per_root']}) atingido para 'FREE'. Upgrade para Premium!")
         else:
             # Validando Categoria Raiz
             count = Category.objects.filter(user=user, parent__isnull=True, is_active=True).count()
+            print(f"DEBUG LIMITS: Root Count={count}, Limit={limits['max_roots']}")
             if count >= limits['max_roots']:
                 raise ValidationError(f"Limite de categorias principais ({limits['max_roots']}) atingido para 'FREE'.")
 
