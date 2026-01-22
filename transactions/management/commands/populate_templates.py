@@ -10,33 +10,32 @@ class Command(BaseCommand):
         # Limpar templates antigos para evitar duplicação em desenvolvimento
         Category.objects.filter(is_template=True).delete()
 
-        # Estrutura: TYPE -> [(Name, Icon, [Sub1, Sub2, ...])]
+        # Estrutura: TYPE -> [(Name, Icon, Color, [Sub1, Sub2, ...])]
         
         data_income = [
-            ("Salário", "mdi-cash", ["Adiantamento", "13º Salário", "Férias"]),
-            ("Investimentos", "mdi-chart-line", ["Dividendos", "Juros", "Venda de Ativos"]),
-            ("Presente", "mdi-gift", []),
-            ("Outros", "mdi-dots-horizontal", [])
+            ("Salário", "Briefcase", "#10b981", []), # Green-500
+            ("Pagamentos", "Banknote", "#3b82f6", []), # Blue-500
+            ("Outros", "Tag", "#9ca3af", []) # Gray-400
         ]
         
         data_expense = [
-            ("Moradia", "mdi-home", ["Aluguel", "Condomínio", "Energia", "Água", "Internet"]),
-            ("Alimentação", "mdi-food", ["Mercado", "Restaurante", "Delivery"]),
-            ("Transporte", "mdi-car", ["Combustível", "Uber/Táxi", "Manutenção", "IPVA"]),
-            ("Saúde", "mdi-hospital", ["Farmácia", "Consultas", "Plano de Saúde", "Dentes"]),
-            ("Lazer", "mdi-controller", ["Cinema", "Viagens", "Jogos"]),
-            ("Educação", "mdi-school", ["Faculdade", "Cursos", "Livros"]),
-            ("Compras", "mdi-cart", ["Roupas", "Eletrônicos", "Casa"])
+            ("Beleza", "Flower2", "#1e3a8a", []), # Azul Escuro
+            ("Casa", "Home", "#60a5fa", []), # Azul Claro
+            ("Comida", "Utensils", "#86efac", []), # Verde Claro
+            ("Doação", "Heart", "#9333ea", []), # Roxo
+            ("Lazer", "Smile", "#ef4444", []), # Vermelho
+            ("Outros", "Tag", "#d1d5db", []) # Cinza Claro (Gray-300)
         ]
 
         def create_tree(type_cat, items):
-            for name, icon, subs in items:
+            for name, icon, color, subs in items:
                 # Criar Raiz
                 root = Category.objects.create(
                     user=None, # System wide
                     name=name,
                     type=type_cat,
                     icon=icon,
+                    color=color,
                     is_template=True,
                     parent=None
                 )
@@ -47,7 +46,10 @@ class Command(BaseCommand):
                         name=sub_name,
                         type=type_cat, # Herda tipo
                         parent=root,
-                        is_template=True
+                        is_template=True,
+                         # Herda cor do pai ou define padrao? Frontend herda. 
+                         # Backend model permite null? Sim.
+                        color=color 
                     )
 
         create_tree('INCOME', data_income)

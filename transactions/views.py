@@ -13,9 +13,14 @@ class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None  # Remove paginação para retornar árvore completa
 
     def get_queryset(self):
         qs = super().get_queryset()
+        
+        # Na listagem, retorna apenas as RAÍZES (subcategorias vêm aninhadas pelo serializer)
+        if self.action == 'list':
+            qs = qs.filter(parent__isnull=True)
         
         # Filtro opcional por tipo
         type_filter = self.request.query_params.get('type')
@@ -24,12 +29,32 @@ class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             
         return qs.order_by('name')
 
+    def perform_destroy(self, instance):
+        """
+        Soft Delete: Apenas marca como inativa para manter histórico e liberar limite.
+        """
+        instance.is_active = False
+        instance.save()
+
+    def create(self, request, *args, **kwargs):
+        print(f"DEBUG CREATE CATEGORY PAYLOAD: {request.data}")
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"DEBUG CREATE CATEGORY ERROR: {e}")
+            if hasattr(e, 'detail'):
+                print(f"DEBUG ERROR DETAIL: {e.detail}")
+            raise e
+
 class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     # get_queryset removido pois o Mixin resolve
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()

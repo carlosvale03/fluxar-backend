@@ -29,18 +29,24 @@ class ReportService:
         from accounts.services import AccountService
         total_balance = sum(AccountService.get_balance(acc) for acc in accounts)
 
-        # 2. Fluxo do Mês Atual
-        transactions_month = Transaction.objects.filter(
-            user=user,
-            date__year=today.year,
-            date__month=today.month
+        # Fluxo do Mês Atual
+        # Usamos a mesma lógica de orçamentos para Consistência:
+        # Cartão -> Mês da Fatura | Resto -> Mês da Data
+        expense_q = (
+            Q(type='CREDIT_CARD', invoice__year=today.year, invoice__month=today.month) |
+            Q(type='EXPENSE', date__year=today.year, date__month=today.month)
         )
         
-        month_income = transactions_month.filter(type='INCOME').aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-        # Despesas incluem EXPENSE e CREDIT_CARD (compras)
-        # Transferências não alteram patrimônio liquido global (só entre contas), mas Dash exibe "Gastos"?
-        # Geralmente Dash mostra Receita vs Despesa.
-        month_expense = transactions_month.filter(type__in=['EXPENSE', 'CREDIT_CARD']).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        month_income = Transaction.objects.filter(
+            user=user,
+            type='INCOME',
+            date__year=today.year,
+            date__month=today.month
+        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+        month_expense = Transaction.objects.filter(
+            user=user
+        ).filter(expense_q).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
         
         net_result = month_income - month_expense
         
@@ -95,13 +101,15 @@ class ReportService:
         """
         Dados para gráficos: Barras (Por Dia/Semana) e Pizza (Categorias).
         """
-        # 1. Pizza de Categorias (Top 5 + Outros?)
+        # 1. Pizza de Categorias
+        expense_q = (
+            Q(type='CREDIT_CARD', invoice__year=year, invoice__month=month) |
+            Q(type='EXPENSE', date__year=year, date__month=month)
+        )
+        
         cat_expenses = Transaction.objects.filter(
-            user=user,
-            date__year=year,
-            date__month=month,
-            type__in=['EXPENSE', 'CREDIT_CARD']
-        ).values('category__name').annotate(total=Sum('amount')).order_by('-total')
+            user=user
+        ).filter(expense_q).values('category__name').annotate(total=Sum('amount')).order_by('-total')
         
         pie_data = {
             'labels': [],

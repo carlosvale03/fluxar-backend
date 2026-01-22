@@ -7,11 +7,12 @@ from .services import TransactionService, CategoryService
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
+    parent_name = serializers.ReadOnlyField(source='parent.name')
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'subcategories', 'is_active']
-        read_only_fields = ['id', 'subcategories']
+        fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active']
+        read_only_fields = ['id', 'subcategories', 'parent_name']
 
     def get_subcategories(self, obj):
         # Retorna subcategorias de 1º nível
