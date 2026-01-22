@@ -23,13 +23,20 @@ class BudgetService:
         # Pegar subcategorias (1 nivel)
         relevant_categories += list(budget.category.subcategories.values_list('id', flat=True))
 
+        from django.db.models import Q
+        
+        # Filtro dual:
+        # 1. Para CREDIT_CARD, usamos o mês/ano da FATURA vinculada
+        # 2. Para EXPENSE (Dinheiro/PIX), usamos o mês/ano da DATA da transação
+        filter_q = (
+            Q(type='CREDIT_CARD', invoice__year=budget.year, invoice__month=budget.month) |
+            Q(type='EXPENSE', date__year=budget.year, date__month=budget.month)
+        )
+
         queryset = Transaction.objects.filter(
             user=budget.user,
-            category__id__in=relevant_categories,
-            date__year=budget.year,
-            date__month=budget.month,
-            type__in=['EXPENSE', 'CREDIT_CARD'] # Ignora transferências e pagamentos de fatura
-        )
+            category__id__in=relevant_categories
+        ).filter(filter_q)
         
         total_spent = queryset.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
         
