@@ -99,6 +99,9 @@ class Transaction(models.Model):
     # Recorrência (Link para template original, se houver)
     recurring_source = models.ForeignKey('RecurringTransaction', on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_transactions')
 
+    # Data de pagamento (efetiva saída/entrada no caixa)
+    payment_date = models.DateField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

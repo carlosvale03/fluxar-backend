@@ -151,8 +151,8 @@ class CreditCardService:
             if tx.amount <= remaining_payment:
                 # Paga a transação inteira
                 tx.status = 'COMPLETED'
-                tx.account = account # Sai desta conta
-                tx.date = date # Data do pagamento efetivo
+                tx.account = account 
+                tx.payment_date = date # Data do pagamento efetivo (não altera data de competência)
                 tx.save()
                 
                 remaining_payment -= tx.amount
@@ -171,7 +171,7 @@ class CreditCardService:
                 tx.amount = pay_amount
                 tx.status = 'COMPLETED'
                 tx.account = account
-                tx.date = date
+                tx.payment_date = date # Data do pagamento
                 tx.description = f"{original_desc} (Parcial)"
                 tx.save()
                 
