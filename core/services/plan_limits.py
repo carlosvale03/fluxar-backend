@@ -4,7 +4,7 @@ from accounts.models import Account, CreditCard
 class PlanLimitsService:
     # MVP: Constantes Hardcoded. Futuro: Tabela de Planos no DB.
     LIMITS = {
-        'FREE': {
+        'COMMON': {
             'ACCOUNTS': 2,
             'CREDIT_CARDS': 1,
             'ADVANCED_CHARTS': False
@@ -23,9 +23,9 @@ class PlanLimitsService:
 
     @staticmethod
     def get_user_plan(user):
-        plan = 'FREE'
-        if hasattr(user, 'profile') and user.profile.plan:
-            plan = user.profile.plan
+        plan = 'COMMON'
+        if hasattr(user, 'plan') and user.plan:
+            plan = user.plan
         # Fallback para superuser -> Premium Plus
         if user.is_superuser:
             plan = 'PREMIUM_PLUS'
@@ -35,7 +35,7 @@ class PlanLimitsService:
     @classmethod
     def can_add_account(cls, user):
         plan = cls.get_user_plan(user)
-        limit = cls.LIMITS.get(plan, cls.LIMITS['FREE'])['ACCOUNTS']
+        limit = cls.LIMITS.get(plan, cls.LIMITS['COMMON'])['ACCOUNTS']
         current_count = Account.objects.filter(user=user, is_active=True).count()
         print(f"[DEBUG] Check Account Limit: Count={current_count} Limit={limit} Allowed={current_count < limit}")
         return current_count < limit
@@ -43,11 +43,11 @@ class PlanLimitsService:
     @classmethod
     def can_add_card(cls, user):
         plan = cls.get_user_plan(user)
-        limit = cls.LIMITS.get(plan, cls.LIMITS['FREE'])['CREDIT_CARDS']
+        limit = cls.LIMITS.get(plan, cls.LIMITS['COMMON'])['CREDIT_CARDS']
         current_count = CreditCard.objects.filter(user=user, is_active=True).count()
         return current_count < limit
 
     @classmethod
     def allow_advanced_charts(cls, user):
         plan = cls.get_user_plan(user)
-        return cls.LIMITS.get(plan, cls.LIMITS['FREE'])['ADVANCED_CHARTS']
+        return cls.LIMITS.get(plan, cls.LIMITS['COMMON'])['ADVANCED_CHARTS']
