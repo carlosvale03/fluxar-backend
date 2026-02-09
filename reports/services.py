@@ -1028,3 +1028,60 @@ class ReportService:
             comparison_list.append(val)
 
         return comparison_list
+    @staticmethod
+    def get_user_financial_stats(user):
+        """
+        Retorna métricas financeiras detalhadas para um usuário específico (Admin focus).
+        Calcula saldo total, médias diárias de valor e contagem de transações.
+        """
+        today = date.today()
+        # Período de análise: últimos 30 dias para as médias
+        start_date = today - timedelta(days=30)
+        
+        # 1. Total Balance (Status atual de todas as contas)
+        from accounts.models import Account
+        from accounts.services import AccountService
+        accounts = Account.objects.filter(user=user)
+        total_balance = sum(AccountService.get_balance(acc) for acc in accounts)
+
+        # 2. Daily Averages (Baseado nos últimos 30 dias)
+        # Receitas
+        income_txs = Transaction.objects.filter(
+            user=user, 
+            type='INCOME', 
+            date__gte=start_date, 
+            date__lte=today
+        )
+        total_income_val = income_txs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        income_count = income_txs.count()
+        
+        # Despesas (Inclui Credit Card)
+        expense_txs = Transaction.objects.filter(
+            user=user, 
+            type__in=['EXPENSE', 'CREDIT_CARD'], 
+            date__gte=start_date, 
+            date__lte=today
+        )
+        total_expense_val = expense_txs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+        expense_count = expense_txs.count()
+        
+        # Divisor (dias que tiveram transações ou 30?)
+        # O usuário pediu "média baseada na contagem individual".
+        # Vamos usar 30 dias como base de tempo para médias diárias.
+        avg_income_value = total_income_val / Decimal('30')
+        avg_expense_value = total_expense_val / Decimal('30')
+        income_count_per_day = income_count / 30.0
+        expense_count_per_day = expense_count / 30.0
+
+        # Last transaction
+        last_tx = Transaction.objects.filter(user=user).order_by('-date').first()
+        last_transaction_date = last_tx.date.strftime('%Y-%m-%d') if last_tx else None
+
+        return {
+            "total_balance": float(total_balance),
+            "avg_income_value": float(avg_income_value),
+            "avg_expense_value": float(avg_expense_value),
+            "income_count_per_day": float(income_count_per_day),
+            "expense_count_per_day": float(expense_count_per_day),
+            "last_transaction_date": last_transaction_date
+        }

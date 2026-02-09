@@ -10,6 +10,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Adicionar claims customizadas
         token['email'] = user.email
         token['plan'] = PlanLimitsService.get_user_plan(user)
+        token['role'] = getattr(user, 'role', 'USER')
         
         # Futuramente: Nome, Avatar, etc.
         token['name'] = getattr(user, 'name', '')

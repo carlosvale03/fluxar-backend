@@ -16,6 +16,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'ADMIN')
         extra_fields.setdefault('plan', 'PREMIUM_PLUS') # Admin tem tudo
         extra_fields.setdefault('email_verified', True)
         return self.create_user(email, password, **extra_fields)
@@ -27,10 +28,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('PREMIUM_PLUS', 'Premium Plus'),
     ]
 
+    ROLE_CHOICES = [
+        ('USER', 'Usuário'),
+        ('ADMIN', 'Administrador'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='COMMON')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER')
     email_verified = models.BooleanField(default=False)
     
     # 1. Dados Pessoais
