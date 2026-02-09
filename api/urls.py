@@ -10,7 +10,11 @@ from .views import (
     ForgotPasswordView,
     ResetPasswordView,
     health_check,
-    UserAvatarView
+    UserAvatarView,
+    AdminUserListView,
+    AdminUserDetailView,
+    AdminStatsView,
+    AdminUserFinancialStatsView
 )
 
 urlpatterns = [
@@ -34,6 +38,12 @@ urlpatterns = [
     # System
     path('health/', health_check, name='health_check'),
     
+    # Admin Backoffice
+    path('admin/users/', AdminUserListView.as_view(), name='admin_users_list'),
+    path('admin/users/<uuid:pk>/', AdminUserDetailView.as_view(), name='admin_users_detail'),
+    path('admin/users/<uuid:pk>/financial-stats/', AdminUserFinancialStatsView.as_view(), name='admin_user_financial_stats'),
+    path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+
     # JWT (Standard + Custom Claims)
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
 ]

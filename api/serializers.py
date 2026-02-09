@@ -52,12 +52,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'name', 'email', 'plan', 'email_verified', 
+            'id', 'name', 'email', 'plan', 'role', 'email_verified', 
             'cpf', 'phone_number', 'avatar_url', 'date_of_birth',
             'currency', 'theme_preference', 'language', 'monthly_income',
-            'notification_settings', 'last_login', 'created_at'
+            'notification_settings', 'is_active', 'last_login', 'created_at'
         )
-        read_only_fields = ('id', 'email', 'plan', 'email_verified', 'last_login', 'created_at')
+        read_only_fields = ('id', 'email', 'plan', 'role', 'email_verified', 'is_active', 'last_login', 'created_at')
 
     def get_avatar_url(self, obj):
         if obj.avatar:
@@ -105,6 +105,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # O to_representation cuida da saída.
         return super().update(instance, validated_data)
 
+class AdminUserSerializer(UserProfileSerializer):
+    """
+    Serializer para uso exclusivo do admin. 
+    Permite alterar planos e roles que são read_only para o usuário comum.
+    """
+    class Meta(UserProfileSerializer.Meta):
+        read_only_fields = ('id', 'email', 'last_login', 'created_at')
+
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
@@ -121,6 +129,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['name'] = user.name
         token['email'] = user.email
         token['plan'] = user.plan
+        token['role'] = user.role
 
         return token
 

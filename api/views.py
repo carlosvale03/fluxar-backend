@@ -1,4 +1,4 @@
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -14,7 +14,8 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
-    ResetPasswordSerializer
+    ResetPasswordSerializer,
+    AdminUserSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken
 from .utils.email_service import send_verification_email, send_password_reset_email
@@ -216,6 +217,195 @@ class ChangePasswordView(APIView):
             return Response({"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# --- Admin Views ---
+
+class AdminUserListView(generics.ListAPIView):
+    """
+    Lista todos os usuários cadastrados na plataforma.
+    Acesso: Apenas administradores (is_staff=True ou role='ADMIN').
+    """
+    queryset = User.objects.all().order_by('-created_at')
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = AdminUserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'email']
+
+    def get_queryset(self):
+        queryset = User.objects.all().order_by('-created_at')
+        show_archived = self.request.query_params.get('show_archived') == 'true'
+        role = self.request.query_params.get('role')
+        plan = self.request.query_params.get('plan')
+        
+        if show_archived:
+            queryset = queryset.filter(is_active=False)
+        else:
+            queryset = queryset.filter(is_active=True)
+
+        if role:
+            queryset = queryset.filter(role=role)
+        if plan:
+            queryset = queryset.filter(plan=plan)
+            
+        return queryset
+
+    def delete(self, request, *args, **kwargs):
+        """Exclusão em massa"""
+        admin_password = request.data.get('admin_password')
+        user_ids = request.data.get('user_ids', [])
+
+        if not admin_password:
+            return Response({"detail": "Senha do administrador obrigatória."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not request.user.check_password(admin_password):
+            return Response({"detail": "Senha do administrador incorreta."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user_ids:
+            return Response({"detail": "Nenhum usuário selecionado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verificar se está tentando excluir o último admin ou a si mesmo
+        users_to_delete = User.objects.filter(id__in=user_ids)
+        
+        if any(u.id == request.user.id for u in users_to_delete):
+             return Response({"detail": "Você não pode excluir sua própria conta em uma ação em massa."}, status=status.HTTP_400_BAD_REQUEST)
+
+        admin_count = User.objects.filter(role='ADMIN').count()
+        admins_to_delete = users_to_delete.filter(role='ADMIN').count()
+        
+        if admin_count - admins_to_delete < 1:
+            return Response({"detail": "Ação bloqueada: O sistema deve ter pelo menos um administrador."}, status=status.HTTP_400_BAD_REQUEST)
+
+        users_to_delete.update(is_active=False)
+        return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
+
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Gerencia um usuário específico. Permite ao admin alterar planos, 
+    roles ou desativar contas manualmente.
+    Acesso: Apenas administradores.
+    """
+    queryset = User.objects.all()
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = AdminUserSerializer
+
+    def update(self, request, *args, **kwargs):
+        admin_password = request.data.get('admin_password')
+        if not admin_password:
+            return Response(
+                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not request.user.check_password(admin_password):
+            return Response(
+                {"detail": "Senha do administrador incorreta."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        admin_password = request.data.get('admin_password')
+        if not admin_password:
+            return Response(
+                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not request.user.check_password(admin_password):
+            return Response(
+                {"detail": "Senha do administrador incorreta."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        instance = self.get_object()
+        
+        # Evitar que o admin se arquive
+        if instance.id == request.user.id:
+            return Response(
+                {"detail": "Você não pode arquivar sua própria conta administrativa."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verificar se é o último admin ativo
+        if instance.role == 'ADMIN':
+            admin_count = User.objects.filter(role='ADMIN', is_active=True).count()
+            if admin_count <= 1:
+                return Response(
+                    {"detail": "Ação bloqueada: Este é o último administrador ativo do sistema."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        instance.is_active = False
+        instance.save()
+        return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        new_role = self.request.data.get('role')
+        
+        # Impedir que o admin tire o próprio admin
+        if instance.id == self.request.user.id and new_role and new_role != 'ADMIN':
+             raise permissions.exceptions.PermissionDenied("Você não pode remover seu próprio papel administrativo.")
+
+        # Impedir de demover o último admin
+        if instance.role == 'ADMIN' and new_role and new_role != 'ADMIN':
+            admin_count = User.objects.filter(role='ADMIN').count()
+            if admin_count <= 1:
+                raise permissions.exceptions.PermissionDenied("Ação bloqueada: Este é o último administrador do sistema.")
+
+        serializer.save()
+
+class AdminStatsView(APIView):
+    """
+    Endpoint para fornecer métricas globais da plataforma para o dashboard admin.
+    Acesso: Apenas administradores.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def get(self, request):
+        total_users = User.objects.count()
+        premium_users = User.objects.filter(plan__in=['PREMIUM', 'PREMIUM_PLUS']).count()
+        
+        # Faturamento estimado (simulado com base nos planos)
+        # TODO: Integrar com Stripe/Gateway real futuramente
+        estimated_revenue = (
+            User.objects.filter(plan='PREMIUM').count() * 19.90 +
+            User.objects.filter(plan='PREMIUM_PLUS').count() * 39.90
+        )
+
+        # Taxa de conversão
+        conversion_rate = (premium_users / total_users * 100) if total_users > 0 else 0
+
+        # Usuários recentes para o feed de atividade
+        recent_users_query = User.objects.all().order_by('-created_at')[:5]
+        recent_users = [{
+            "id": str(u.id),
+            "name": u.name,
+            "email": u.email,
+            "created_at": u.created_at
+        } for u in recent_users_query]
+
+        return Response({
+            "total_users": total_users,
+            "premium_users": premium_users,
+            "estimated_revenue": estimated_revenue,
+            "conversion_rate": round(conversion_rate, 2),
+            "recent_users": recent_users,
+            "status": "Operacional"
+        })
+
+class AdminUserFinancialStatsView(APIView):
+    """
+    Endpoint para fornecer métricas financeiras de um usuário específico.
+    Acesso: Apenas administradores.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def get(self, request, pk):
+        from reports.services import ReportService
+        user = get_object_or_404(User, pk=pk)
+        stats = ReportService.get_user_financial_stats(user)
+        return Response(stats)
 
 # --- System Views ---
 
