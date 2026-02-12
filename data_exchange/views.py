@@ -1,7 +1,9 @@
+import json
 from rest_framework import views, status, permissions, parsers
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from django.utils.dateparse import parse_datetime
 from accounts.models import Account
 from transactions.models import Transaction
 from .services import ImportService, ExportService
@@ -26,7 +28,15 @@ class ImportOFXView(views.APIView):
         
         result = ImportService.process_ofx(file_obj, account, request.user)
         
-        return Response(result, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
+        # Garante que as chaves batam com o frontend (total, imported, ignored, errors)
+        summary = {
+            'total': result.get('total', 0),
+            'imported': result.get('created', 0),
+            'ignored': result.get('ignored', 0),
+            'errors': len(result.get('errors', []))
+        }
+        
+        return Response(summary, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
 
 class ImportSpreadsheetView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -36,12 +46,20 @@ class ImportSpreadsheetView(views.APIView):
         file_obj = request.FILES.get('file')
         account_id = request.data.get('account_id')
         
-        mapping = {
-            'date_column': request.data.get('date_column', 'date'),
-            'description_column': request.data.get('description_column', 'description'),
-            'amount_column': request.data.get('amount_column', 'amount'),
-            'type_column': request.data.get('type_column'),
-        }
+        # O frontend envia mapping como string JSON
+        mapping_raw = request.data.get('mapping')
+        if mapping_raw:
+            try:
+                mapping = json.loads(mapping_raw)
+            except:
+                mapping = {}
+        else:
+            mapping = {
+                'date_column': request.data.get('date_column', 'date'),
+                'description_column': request.data.get('description_column', 'description'),
+                'amount_column': request.data.get('amount_column', 'amount'),
+                'type_column': request.data.get('type_column'),
+            }
         
         if not file_obj:
             return Response({'error': 'Arquivo não enviado.'}, status=400)
@@ -50,7 +68,14 @@ class ImportSpreadsheetView(views.APIView):
         
         result = ImportService.process_spreadsheet(file_obj, mapping, account, request.user)
         
-        return Response(result, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
+        summary = {
+            'total': result.get('total', 0),
+            'imported': result.get('created', 0),
+            'ignored': result.get('ignored', 0),
+            'errors': len(result.get('errors', []))
+        }
+        
+        return Response(summary, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
 
 class ExportTransactionsPDFView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
@@ -58,12 +83,32 @@ class ExportTransactionsPDFView(views.APIView):
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)
         
-        account_id = request.query_params.get('account')
-        month = request.query_params.get('month')
-        year = request.query_params.get('year')
+        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
+        tags_str = request.query_params.get('tagIds')
+
+        if account_id and account_id != 'ALL': 
+            qs = qs.filter(account_id=account_id)
         
-        if account_id: qs = qs.filter(account_id=account_id)
-        if month and year: qs = qs.filter(date__month=month, date__year=year)
+        if category_id and category_id != 'ALL':
+            qs = qs.filter(category_id=category_id)
+
+        if type_ and type_ != 'ALL':
+            qs = qs.filter(type=type_)
+
+        if start_date_str:
+            dt = parse_datetime(start_date_str)
+            if dt: qs = qs.filter(date__gte=dt.date())
+
+        if end_date_str:
+            dt = parse_datetime(end_date_str)
+            if dt: qs = qs.filter(date__lte=dt.date())
+
+        if tag_ids:
+            qs = qs.filter(tags__id__in=tag_ids).distinct()
+        elif tags_str:
+            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
+            if ids:
+                qs = qs.filter(tags__id__in=ids).distinct()
         
         qs = qs.order_by('date')
         
@@ -79,12 +124,32 @@ class ExportTransactionsXLSView(views.APIView):
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)
         
-        account_id = request.query_params.get('account')
-        month = request.query_params.get('month')
-        year = request.query_params.get('year')
+        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
+        tags_str = request.query_params.get('tagIds')
+
+        if account_id and account_id != 'ALL': 
+            qs = qs.filter(account_id=account_id)
         
-        if account_id: qs = qs.filter(account_id=account_id)
-        if month and year: qs = qs.filter(date__month=month, date__year=year)
+        if category_id and category_id != 'ALL':
+            qs = qs.filter(category_id=category_id)
+
+        if type_ and type_ != 'ALL':
+            qs = qs.filter(type=type_)
+
+        if start_date_str:
+            dt = parse_datetime(start_date_str)
+            if dt: qs = qs.filter(date__gte=dt.date())
+
+        if end_date_str:
+            dt = parse_datetime(end_date_str)
+            if dt: qs = qs.filter(date__lte=dt.date())
+
+        if tag_ids:
+            qs = qs.filter(tags__id__in=tag_ids).distinct()
+        elif tags_str:
+            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
+            if ids:
+                qs = qs.filter(tags__id__in=ids).distinct()
         
         qs = qs.order_by('date')
         

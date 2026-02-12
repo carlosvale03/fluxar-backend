@@ -14,18 +14,19 @@ class ImportService:
     def process_ofx(file, account, user):
         """
         Lê arquivo OFX e cria transações.
-        Retorna resumo: { 'total': N, 'created': N, 'errors': [] }
+        Retorna resumo: { 'total': N, 'created': N, 'ignored': N, 'errors': [] }
         """
         try:
             ofx = OfxParser.parse(file)
         except Exception as e:
-            return {'total': 0, 'created': 0, 'errors': [f"Erro ao ler OFX: {str(e)}"]}
+            return {'total': 0, 'created': 0, 'ignored': 0, 'errors': [f"Erro ao ler OFX: {str(e)}"]}
         
         created_count = 0
+        ignored_count = 0
         errors = []
         
         if not ofx.account:
-             return {'total': 0, 'created': 0, 'errors': ["Nenhuma conta encontrada no OFX"]}
+             return {'total': 0, 'created': 0, 'ignored': 0, 'errors': ["Nenhuma conta encontrada no OFX"]}
 
         transactions = ofx.account.statement.transactions
         total = len(transactions)
@@ -33,22 +34,37 @@ class ImportService:
         for tx in transactions:
             try:
                 amount = Decimal(str(tx.amount))
-                date = tx.date # datetime object
+                date_val = tx.date.date() # Date object
                 description = tx.memo or tx.payee or "Sem descrição"
                 
                 # Definir tipo baseado no sinal
                 if amount < 0:
                     type_ = 'EXPENSE'
-                    amount = abs(amount)
+                    abs_amount = abs(amount)
                 else:
                     type_ = 'INCOME'
+                    abs_amount = amount
+
+                # Duplicate Check
+                exists = Transaction.objects.filter(
+                    user=user,
+                    account=account,
+                    date=date_val,
+                    amount=abs_amount,
+                    description=description,
+                    type=type_
+                ).exists()
+
+                if exists:
+                    ignored_count += 1
+                    continue
                 
                 if type_ == 'INCOME':
                     TransactionService.create_income(
                         user=user,
                         account=account,
-                        amount=amount,
-                        date=date.date(),
+                        amount=abs_amount,
+                        date=date_val,
                         description=description,
                         category=None
                     )
@@ -56,8 +72,8 @@ class ImportService:
                     TransactionService.create_expense(
                         user=user,
                         account=account,
-                        amount=amount,
-                        date=date.date(),
+                        amount=abs_amount,
+                        date=date_val,
                         description=description,
                         category=None
                     )
@@ -69,6 +85,7 @@ class ImportService:
         return {
             'total': total,
             'created': created_count,
+            'ignored': ignored_count,
             'errors': errors
         }
 
@@ -83,9 +100,10 @@ class ImportService:
             else:
                 df = pd.read_excel(file)
         except Exception as e:
-            return {'total': 0, 'created': 0, 'errors': [f"Erro ao ler arquivo: {str(e)}"]}
+            return {'total': 0, 'created': 0, 'ignored': 0, 'errors': [f"Erro ao ler arquivo: {str(e)}"]}
             
         created_count = 0
+        ignored_count = 0
         errors = []
         total = len(df)
         
@@ -93,51 +111,167 @@ class ImportService:
         col_desc = mapping.get('description_column')
         col_amount = mapping.get('amount_column')
         col_type = mapping.get('type_column') 
+        col_status = mapping.get('status_column')
+        col_category = mapping.get('category_column')
+        col_subcategory = mapping.get('subcategory_column')
+        col_tags = mapping.get('tags_column')
+        col_account_name = mapping.get('account_column')
         
         if not all([col_date, col_desc, col_amount]):
-             return {'total': 0, 'created': 0, 'errors': ["Colunas obrigatórias não informadas"]}
+             return {'total': 0, 'created': 0, 'ignored': 0, 'errors': ["Colunas obrigatórias (Data, Descrição, Valor) não informadas"]}
+
+        from accounts.models import Account
+        from transactions.models import Category, Tag
 
         for index, row in df.iterrows():
             try:
+                # Basic row validation to skip empty/footer rows
+                if pd.isna(row[col_date]) or pd.isna(row[col_amount]) or str(row[col_date]).strip() == "":
+                    continue
+
                 raw_date = row[col_date]
-                description = str(row[col_desc])
+                description = str(row[col_desc]) if pd.notna(row[col_desc]) else ""
                 amount_val = row[col_amount]
                 
-                date = pd.to_datetime(raw_date).date()
-                amount = Decimal(str(amount_val))
-                type_ = 'EXPENSE' 
+                try:
+                    date_val = pd.to_datetime(raw_date, dayfirst=True).date()
+                except:
+                    # Skip rows where date is not a valid date (like "Total" line)
+                    continue
                 
+                # Handle +/- signs and clean value
+                amount_str = str(amount_val).replace('R$', '').replace(' ', '').replace(',', '.')
+                # Remove any other non-numeric chars except . and -
+                import re
+                amount_str = re.sub(r'[^-0-9.]', '', amount_str)
+                
+                if not amount_str or amount_str == '-':
+                    continue
+                    
+                amount_dec = Decimal(amount_str)
+                
+                # Determine type from amount sign if not provided
                 if col_type and pd.notna(row[col_type]):
                     type_str = str(row[col_type]).upper()
                     if type_str in ['INCOME', 'RECEITA', 'C', 'CREDITO']:
                         type_ = 'INCOME'
-                    elif type_str in ['EXPENSE', 'DESPESA', 'D', 'DEBITO']:
+                    else:
                         type_ = 'EXPENSE'
                 else:
-                    if amount < 0:
+                    if amount_dec < 0:
                         type_ = 'EXPENSE'
-                        amount = abs(amount)
                     else:
                         type_ = 'INCOME'
+                
+                amount_dec = abs(amount_dec)
 
+                # Optional: Account override
+                target_account = account
+                if col_account_name and pd.notna(row[col_account_name]):
+                    acc_name = str(row[col_account_name])
+                    acc_exists = Account.objects.filter(user=user, name__iexact=acc_name).first()
+                    if acc_exists:
+                        target_account = acc_exists
+
+                # Optional: Status
+                status_val = 'COMPLETED'
+                if col_status and pd.notna(row[col_status]):
+                    st_str = str(row[col_status]).upper()
+                    if st_str in ['PENDENTE', 'PENDING', 'A PAGAR', 'A RECEBER']:
+                        status_val = 'PENDING'
+
+                # Duplicate Check
+                exists = Transaction.objects.filter(
+                    user=user,
+                    account=target_account,
+                    date=date_val,
+                    amount=amount_dec,
+                    description=description,
+                    type=type_
+                ).exists()
+
+                if exists:
+                    ignored_count += 1
+                    continue
+
+                # Utility for normalization (accent and case insensitive)
+                import unicodedata
+                def normalize_str(s):
+                    if not s: return ""
+                    return "".join(
+                        c for c in unicodedata.normalize('NFKD', str(s))
+                        if not unicodedata.combining(c)
+                    ).lower().strip()
+
+                # Logic to find or create Category hierarchically
+                def find_or_create_cat(user, name, cat_type, parent=None):
+                    if not name: return None
+                    norm_name = normalize_str(name)
+                    # Check existing for user
+                    qs = Category.objects.filter(user=user, parent=parent, type=cat_type)
+                    for c in qs:
+                        if normalize_str(c.name) == norm_name:
+                            return c
+                    # Create if not found
+                    return Category.objects.create(user=user, name=name, type=cat_type, parent=parent)
+
+                # Optional: Category & Subcategory
+                target_category = None
+                if col_category and pd.notna(row[col_category]):
+                    cat_name = str(row[col_category]).strip()
+                    if cat_name:
+                        # Find/Create Parent Category
+                        main_cat = find_or_create_cat(user, cat_name, type_)
+                        target_category = main_cat
+                        
+                        # Find/Create Subcategory if provided
+                        if col_subcategory and pd.notna(row[col_subcategory]):
+                            sub_name = str(row[col_subcategory]).strip()
+                            if sub_name:
+                                target_category = find_or_create_cat(user, sub_name, type_, parent=main_cat)
+
+                # Create transaction
                 if type_ == 'INCOME':
-                    TransactionService.create_income(
+                    tx = TransactionService.create_income(
                         user=user,
-                        account=account,
-                        amount=amount,
-                        date=date,
+                        account=target_account,
+                        amount=amount_dec,
+                        date=date_val,
                         description=description,
-                        category=None
+                        category=target_category
                     )
                 else:
-                    TransactionService.create_expense(
+                    tx = TransactionService.create_expense(
                         user=user,
-                        account=account,
-                        amount=amount,
-                        date=date,
+                        account=target_account,
+                        amount=amount_dec,
+                        date=date_val,
                         description=description,
-                        category=None
+                        category=target_category
                     )
+                
+                # Additional updates (status, tags)
+                if status_val == 'PENDING':
+                    tx.status = 'PENDING'
+                    tx.save()
+                
+                if col_tags and pd.notna(row[col_tags]):
+                    tag_names = [t.strip() for t in str(row[col_tags]).split(',')]
+                    for tag_name in tag_names:
+                        if tag_name:
+                            norm_tag = normalize_str(tag_name)
+                            # Find existing tag for user
+                            existing_tag = None
+                            for t in Tag.objects.filter(user=user):
+                                if normalize_str(t.name) == norm_tag:
+                                    existing_tag = t
+                                    break
+                            
+                            if not existing_tag:
+                                existing_tag = Tag.objects.create(user=user, name=tag_name)
+                            
+                            tx.tags.add(existing_tag)
+
                 created_count += 1
 
             except Exception as e:
@@ -146,6 +280,7 @@ class ImportService:
         return {
             'total': total,
             'created': created_count,
+            'ignored': ignored_count,
             'errors': errors
         }
 
@@ -198,11 +333,11 @@ class ExportService:
             
             if tx.type == 'INCOME':
                 total_income += tx.amount
-            else:
+            elif tx.type in ['EXPENSE', 'CREDIT_CARD', 'INVOICE_PAYMENT']:
                 total_expense += tx.amount
                 
             p.drawString(x_coords[0], y, date)
-            p.drawString(x_coords[1], y, type_)
+            p.drawString(x_coords[1], y, type_[:18]) # Truncate to avoid overlap
             p.drawString(x_coords[2], y, account)
             p.drawString(x_coords[3], y, category[:20])
             p.drawString(x_coords[4], y, amount)
@@ -232,13 +367,27 @@ class ExportService:
         """
         data = []
         for tx in queryset:
+            # Format amount with +/- prefix
+            sign = "+" if tx.type == 'INCOME' else "-"
+            formatted_amount = f"{sign} {tx.amount:.2f}"
+            
+            # Categoria e Subcategoria
+            category_name = tx.category.name if tx.category else ''
+            subcategory_name = ''
+            if tx.category and tx.category.parent_id: # Check for parent category
+                subcategory_name = tx.category.name
+                category_name = tx.category.parent.name
+
             data.append({
-                'Data': tx.date,
+                'Data': tx.date.strftime('%d/%m/%Y'),
                 'Descrição': tx.description,
-                'Tipo': tx.get_type_display(),
-                'Conta': tx.account.name,
-                'Categoria': tx.category.name if tx.category else "-",
-                'Valor': tx.amount
+                'Valor': formatted_amount,
+                'Conta': tx.account.name if tx.account else '',
+                'Situação': 'Liquidado' if tx.status == 'COMPLETED' else 'Pendente',
+                'Categoria': category_name,
+                'Subcategoria': subcategory_name,
+                'Tags': ', '.join([t.name for t in tx.tags.all()]),
+                'Tipo': tx.get_type_display()
             })
             
         df = pd.DataFrame(data)
