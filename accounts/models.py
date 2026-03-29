@@ -8,6 +8,7 @@ class Account(models.Model):
         ('SAVINGS', 'Poupança'),
         ('WALLET', 'Carteira'),
         ('INVESTMENT', 'Investimento'),
+        ('PIGGY_BANK', 'Cofrinho'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'budgets',
     'reports',
     'data_exchange',
-    'goals',
+    'goals.apps.GoalsConfig',
 ]
 
 MIDDLEWARE = [
