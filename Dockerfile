@@ -26,6 +26,8 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Default command (can be overridden by docker-compose)
-# Using sh -c to allow multiple commands in string format if needed
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Dá permissão de execução para o script
+RUN chmod +x /app/entrypoint.sh
+
+# Define o script como o comando de inicialização
+CMD ["./entrypoint.sh"]
