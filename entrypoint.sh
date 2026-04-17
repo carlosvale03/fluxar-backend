@@ -6,6 +6,9 @@ set -e
 echo "📍 Rodando Migrations..."
 python manage.py migrate --noinput
 
+echo "📍 Criando Superusuário (se necessário)..."
+python create_admin.py
+
 echo "📍 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput
 
