@@ -140,7 +140,9 @@ class GoalService:
         No sistema de Ledger Estrito, confiamos no current_amount salvo na meta,
         que é atualizado permanentemente por cada aporte ou resgate (manual ou automático).
         """
-        current_amount = goal.current_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        # Garante que seja Decimal para evitar erro 'int object has no attribute quantize'
+        val = Decimal(str(goal.current_amount))
+        current_amount = val.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
         progress_pct = Decimal('0')
         if goal.target_amount > 0:

@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 from django.conf import settings
 from accounts.models import Account
 
@@ -9,7 +10,7 @@ class Goal(models.Model):
     current_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='goals')
     target_date = models.DateField(null=True, blank=True)
-    image = models.ImageField(upload_to='goals/', null=True, blank=True)
+    image = CloudinaryField('image', folder='goals', resource_type='image', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

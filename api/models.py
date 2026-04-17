@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -41,7 +42,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verified = models.BooleanField(default=False)
     
     # 1. Dados Pessoais
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar = CloudinaryField('image', folder='avatars', resource_type='image', blank=True, null=True)
     cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
