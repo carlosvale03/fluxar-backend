@@ -37,6 +37,17 @@ class GoalSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'current_amount', 'created_at', 'updated_at', 'deposits']
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Força o campo image a retornar a URL absoluta da CDN
+        if instance.image:
+            request = self.context.get('request')
+            if request:
+                ret['image'] = request.build_absolute_uri(instance.image.url)
+            else:
+                ret['image'] = instance.image.url
+        return ret
+
     def _get_prog(self, obj):
         if not hasattr(self, '_prog_cache'):
             self._prog_cache = {}
