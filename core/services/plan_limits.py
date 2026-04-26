@@ -5,13 +5,13 @@ class PlanLimitsService:
     # MVP: Constantes Hardcoded. Futuro: Tabela de Planos no DB.
     LIMITS = {
         'COMMON': {
-            'ACCOUNTS': 2,
-            'CREDIT_CARDS': 1,
-            'ADVANCED_CHARTS': False
+            'ACCOUNTS': 999,
+            'CREDIT_CARDS': 999,
+            'ADVANCED_CHARTS': True
         },
         'PREMIUM': {
-            'ACCOUNTS': 6,
-            'CREDIT_CARDS': 3,
+            'ACCOUNTS': 999,
+            'CREDIT_CARDS': 999,
             'ADVANCED_CHARTS': True
         },
         'PREMIUM_PLUS': {
