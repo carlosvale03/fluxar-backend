@@ -38,25 +38,29 @@ class CreditCardService:
     def get_invoice_data(card: CreditCard):
         """
         Retorna dados da fatura atual e limite disponível.
+        Refatoração (UX):
+        - Fatura Atual: A primeira fatura não paga (OPEN ou CLOSED) em ordem cronológica.
+        - Limite Utilizado: Soma de TODAS as transações 'CREDIT_CARD' pendentes do cartão.
         """
-        # 1. Identificar fatura aberta atual
-        # Simulação simples da fatura atual baseada na data de hoje
-        # TODO: Implementar lógica real de busca/criação de fatura
+        from django.db.models import Sum
+        from transactions.models import Transaction
+
+        # 1. Limite Utilizado (Total pendente no cartão)
+        total_pending = Transaction.objects.filter(
+            credit_card=card,
+            type='CREDIT_CARD',
+            status='PENDING'
+        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+        available_limit = card.limit - total_pending
+
+        # 2. Fatura Atual (Próxima fatura a ser paga)
+        # Busca a fatura mais antiga que não esteja PAGA
+        current_invoice = card.invoices.exclude(status='PAID').order_by('year', 'month').first()
         
         current_invoice_total = Decimal('0.00')
-        
-        # Tenta pegar a fatura aberta atual
-        today = timezone.localtime().date()
-        current_invoice = card.invoices.filter(
-            status='OPEN', 
-            month=today.month, 
-            year=today.year
-        ).first()
-
         if current_invoice:
             current_invoice_total = current_invoice.total_amount
-
-        available_limit = card.limit - current_invoice_total
 
         return {
             'current_invoice_total': current_invoice_total,
@@ -85,15 +89,30 @@ class CreditCardService:
         """
         Calcula a data de vencimento da fatura onde a compra cairá.
         Regra:
-        - Se purchase_date.day < closing_day: Fatura do mês corrente.
-        - Se purchase_date.day >= closing_day: Fatura do mês seguinte.
+        1. Determina o mês de FECHAMENTO:
+           - Se purchase_date.day < closing_day: Fecha no mês da compra.
+           - Caso contrário: Fecha no próximo mês.
+        2. Determina o mês de VENCIMENTO a partir do fechamento:
+           - Se due_day > closing_day: Vence no mesmo mês do fechamento.
+           - Se due_day <= closing_day: Vence no mês seguinte ao fechamento.
         """
+        # 1. Mês de Fechamento
         if purchase_date.day < card.closing_day:
-            due_month = purchase_date.month
-            due_year = purchase_date.year
+            closing_month = purchase_date.month
+            closing_year = purchase_date.year
         else:
-            due_month = purchase_date.month + 1
-            due_year = purchase_date.year
+            closing_month = purchase_date.month + 1
+            closing_year = purchase_date.year
+            if closing_month > 12:
+                closing_month = 1
+                closing_year += 1
+        
+        # 2. Mês de Vencimento
+        due_month = closing_month
+        due_year = closing_year
+        
+        if card.due_day <= card.closing_day:
+            due_month += 1
             if due_month > 12:
                 due_month = 1
                 due_year += 1

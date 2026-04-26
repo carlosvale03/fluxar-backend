@@ -2,6 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db.models import Sum
 from api.models import User
+from accounts.models import Account, CreditCard
 from .models import Transaction, Category
 
 DEFAULT_CATEGORIES = [
@@ -32,11 +33,12 @@ DEFAULT_CATEGORIES = [
 ]
 
 @receiver(post_save, sender=User)
-def create_default_categories(sender, instance, created, **kwargs):
+def initialize_user_data(sender, instance, created, **kwargs):
     """
-    Cria as categorias padrão sempre que um novo usuário é registrado.
+    Cria categorias e conta padrão sempre que um novo usuário é registrado.
     """
     if created:
+        # 1. Cria as categorias padrão
         for cat_data in DEFAULT_CATEGORIES:
             # Cria a categoria pai
             parent_category = Category.objects.create(
@@ -60,6 +62,16 @@ def create_default_categories(sender, instance, created, **kwargs):
                         parent=parent_category,
                         is_active=True
                     )
+        
+        # 2. Cria a conta padrão "Carteira"
+        Account.objects.create(
+            user=instance,
+            name="Carteira",
+            type="WALLET",
+            initial_balance=0,
+            color="#475569",
+            is_active=True
+        )
 
 @receiver(post_save, sender=Transaction)
 @receiver(post_delete, sender=Transaction)

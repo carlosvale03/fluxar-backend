@@ -426,14 +426,13 @@ class ReportService:
         }
 
     @staticmethod
-    def get_advanced_charts(user, period_days=90):
+    def get_advanced_charts(user, period_days=None):
         """
         Premium: Evolução Patrimonial, Inteligência de Investimentos, Heatmap e Monitoramento.
         """
         from django.db.models.functions import ExtractHour, ExtractWeekDay
         
-        end_date = date.today()
-        start_date = end_date - timedelta(days=period_days)
+        start_date, end_date = ReportService._get_date_range(period_days)
         
         # 1. Evolução Patrimonial (Net Worth)
         summary_res = ReportService.get_dashboard_summary(user)
@@ -895,7 +894,30 @@ class ReportService:
                 # Simplificação: pegar a categoria com maior volume que não seja fixa
                 sensitive_category = cat_variance.order_by('-avg').first()['category__name']
 
-        # 10. Gastos por Dia da Semana (Migrado para Premium)
+        # 10. Gastos por Dia da Semana (Migrado para Premium) - Agora como Média
+        # Buscamos a data da primeira transação de gasto para ajustar o período de média se necessário
+        first_txn_date = Transaction.objects.filter(
+            user=user, 
+            type__in=['EXPENSE', 'CREDIT_CARD']
+        ).exclude(
+            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
+        ).aggregate(models.Min('date'))['date__min']
+
+        # O período de cálculo da média começa no máximo entre a start_date e a primeira transação
+        calculation_start_date = start_date
+        if first_txn_date and first_txn_date > start_date:
+            calculation_start_date = first_txn_date
+
+        # Contamos quantas vezes cada dia da semana aparece no período efetivo de dados
+        weekday_counts = {i: 0 for i in range(1, 8)}
+        curr = calculation_start_date
+        while curr <= end_date:
+            # ExtractWeekDay: 1 (Sun) to 7 (Sat)
+            # curr.weekday(): 0 (Mon) to 6 (Sun)
+            django_wd = (curr.weekday() + 1) % 7 + 1
+            weekday_counts[django_wd] += 1
+            curr += timedelta(days=1)
+
         spend_by_weekday_qs = Transaction.objects.filter(
             user=user,
             date__gte=start_date,
@@ -911,7 +933,10 @@ class ReportService:
         spend_by_weekday = []
         data_by_weekday = {i: 0.0 for i in range(1, 8)}
         for item in spend_by_weekday_qs:
-            data_by_weekday[item['weekday']] = float(item['total'])
+            wd = item['weekday']
+            total = float(item['total'])
+            count = weekday_counts.get(wd, 1)
+            data_by_weekday[wd] = total / count if count > 0 else total
             
         for i in range(1, 8):
             spend_by_weekday.append({
@@ -944,7 +969,12 @@ class ReportService:
                 'available_for_month': float(available_for_month)
             },
             'risk_analysis': risk_analysis,
-            'spend_by_weekday': spend_by_weekday
+            'spend_by_weekday': spend_by_weekday,
+            'period': {
+                'start_date': calculation_start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d'),
+                'requested_start_date': start_date.strftime('%Y-%m-%d')
+            }
         }
 
     @staticmethod

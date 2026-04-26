@@ -35,6 +35,10 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        # Define como inativo até confirmar e-mail
+        user.is_active = False
+        user.save()
+        
         # Cria token de verificação e envia e-mail
         token = EmailVerificationToken.objects.create(
             user=user,
@@ -71,12 +75,21 @@ class VerifyEmailView(APIView):
         # Atualiza usuário e token
         user = token.user
         user.email_verified = True
+        user.is_active = True # Ativa a conta
         user.save()
 
         token.used = True
         token.save()
 
-        return Response({"message": "E-mail verificado com sucesso!"}, status=status.HTTP_200_OK)
+        # Gera tokens para login automático
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "message": "E-mail verificado com sucesso! Sua conta está ativa.",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh)
+        }, status=status.HTTP_200_OK)
 
 class ForgotPasswordView(APIView):
     """

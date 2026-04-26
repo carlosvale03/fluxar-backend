@@ -26,8 +26,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
-            password=validated_data['password'],
-            plan='COMMON' # Força plano comum no cadastro
+            password=validated_data['password']
         )
         return user
 
@@ -120,7 +119,28 @@ class ChangePasswordSerializer(serializers.Serializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Customiza o payload do JWT para incluir dados extras do usuário no token
+    e fornece mensagens de erro claras para contas inativas.
     """
+    def validate(self, attrs):
+        try:
+            # Tenta autenticar normalmente via SimpleJWT
+            data = super().validate(attrs)
+            return data
+        except Exception as e:
+            # Se a autenticação falhou, vamos investigar se o usuário existe mas está inativo
+            email = attrs.get("email") or attrs.get("username")
+            user = User.objects.filter(email=email).first()
+            
+            if user and not user.is_active:
+                raise serializers.ValidationError({
+                    "detail": "Sua conta ainda não foi ativada. Por favor, verifique seu e-mail para confirmar seu cadastro."
+                })
+            
+            # Se não for caso de conta inativa, relança o erro original (ou genérico)
+            raise serializers.ValidationError({
+                "detail": "E-mail ou senha incorretos. Verifique suas credenciais."
+            })
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
