@@ -49,8 +49,8 @@ class ReportViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='charts/advanced', permission_classes=[permissions.IsAuthenticated, IsPremium])
     def charts_advanced(self, request):
         # Premium Only
-        days = int(request.query_params.get('days', 90))
-        data = ReportService.get_advanced_charts(request.user, period_days=days)
+        period = request.query_params.get('period') or request.query_params.get('days')
+        data = ReportService.get_advanced_charts(request.user, period_days=period)
         return Response(data)
     @action(detail=False, methods=['get'], url_path='charts/monthly-comparison')
     def monthly_comparison(self, request):

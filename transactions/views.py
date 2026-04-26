@@ -69,11 +69,14 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         card_id = self.request.query_params.get('credit_card')
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
+        invoice_id = self.request.query_params.get('invoice')
         
         if account_id:
             queryset = queryset.filter(account_id=account_id)
         if card_id:
             queryset = queryset.filter(credit_card_id=card_id)
+        if invoice_id:
+            queryset = queryset.filter(invoice_id=invoice_id)
         if month and year:
             queryset = queryset.filter(date__month=month, date__year=year)
             

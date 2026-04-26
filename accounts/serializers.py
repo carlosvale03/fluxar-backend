@@ -38,6 +38,7 @@ class CreditCardInvoiceSerializer(serializers.ModelSerializer):
         fields = ['id', 'month', 'year', 'status', 'total_amount', 'closing_date', 'due_date']
 
 class InvoicePaymentSerializer(serializers.Serializer):
+
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none(), required=True)
     date = serializers.DateField(required=True)
