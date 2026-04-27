@@ -11,7 +11,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'password', 'password_confirm')
+        fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted')
+        extra_kwargs = {
+            'terms_accepted': {'required': True}
+        }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
@@ -23,10 +26,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm')
 
         # Cria o usuário usando o manager customizado (faz hash da senha)
+        from django.utils import timezone
+        
         user = User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
-            password=validated_data['password']
+            password=validated_data['password'],
+            terms_accepted=validated_data.get('terms_accepted', False),
+            terms_accepted_at=timezone.now() if validated_data.get('terms_accepted') else None
         )
         return user
 

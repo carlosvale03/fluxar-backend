@@ -17,6 +17,12 @@ class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     serializer_class = AccountSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(is_active=True)
+        return qs
+
     def perform_destroy(self, instance):
         # Soft delete
         instance.is_active = False

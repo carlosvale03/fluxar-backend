@@ -120,6 +120,15 @@ class ImportService:
         if not all([col_date, col_desc, col_amount]):
              return {'total': 0, 'created': 0, 'ignored': 0, 'errors': ["Colunas obrigatórias (Data, Descrição, Valor) não informadas"]}
 
+        # Validar se as colunas mapeadas existem no DataFrame
+        missing_cols = []
+        for col in [col_date, col_desc, col_amount, col_type, col_status, col_category, col_subcategory, col_tags, col_account_name]:
+            if col and col not in df.columns:
+                missing_cols.append(col)
+                
+        if missing_cols:
+             return {'total': 0, 'created': 0, 'ignored': 0, 'errors': [f"As seguintes colunas mapeadas não foram encontradas na planilha: {', '.join(missing_cols)}"]}
+
         from accounts.models import Account
         from transactions.models import Category, Tag
 
