@@ -64,6 +64,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # 5. Consentimento Legal
+    terms_accepted = models.BooleanField(default=False)
+    terms_accepted_at = models.DateTimeField(blank=True, null=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
