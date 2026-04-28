@@ -56,22 +56,31 @@ class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+from core.pagination import StandardResultsSetPagination
+
 class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = None # Remove o limite de 10 itens por página
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Filtros básicos (poderiam usar django-filter backend)
-        account_id = self.request.query_params.get('account')
+        
+        # Filtros de Query Params
+        account_id = self.request.query_params.get('accountId') or self.request.query_params.get('account')
         card_id = self.request.query_params.get('credit_card')
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
         invoice_id = self.request.query_params.get('invoice')
         
-        if account_id:
+        start_date = self.request.query_params.get('startDate')
+        end_date = self.request.query_params.get('endDate')
+        transaction_type = self.request.query_params.get('type')
+        category_id = self.request.query_params.get('categoryId') or self.request.query_params.get('category')
+        search = self.request.query_params.get('search')
+        
+        if account_id and account_id != 'ALL':
             queryset = queryset.filter(account_id=account_id)
         if card_id:
             queryset = queryset.filter(credit_card_id=card_id)
@@ -79,6 +88,25 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             queryset = queryset.filter(invoice_id=invoice_id)
         if month and year:
             queryset = queryset.filter(date__month=month, date__year=year)
+            
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+            
+        if transaction_type and transaction_type != 'ALL':
+            if transaction_type == 'EXPENSE':
+                queryset = queryset.filter(type__in=['EXPENSE', 'CREDIT_CARD', 'CREDIT_CARD_EXPENSE', 'INVOICE_PAYMENT'])
+            elif transaction_type == 'TRANSFER':
+                queryset = queryset.filter(type__in=['TRANSFER', 'TRANSFER_OUT', 'TRANSFER_IN'])
+            else:
+                queryset = queryset.filter(type=transaction_type)
+                
+        if category_id and category_id != 'ALL':
+            queryset = queryset.filter(category_id=category_id)
+            
+        if search:
+            queryset = queryset.filter(description__icontains=search)
             
         return queryset.order_by('-date', '-created_at')
 

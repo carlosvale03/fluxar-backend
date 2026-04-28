@@ -13,5 +13,5 @@ echo "📍 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput
 
 echo "🚀 Iniciando Gunicorn..."
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000
+exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --timeout 120
 

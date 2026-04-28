@@ -38,6 +38,29 @@ class ImportOFXView(views.APIView):
         
         return Response(summary, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
 
+class ImportSpreadsheetPreflightView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    def post(self, request):
+        file_obj = request.FILES.get('file')
+        import_type = request.data.get('import_type', 'INCOME_EXPENSE')
+        mapping_raw = request.data.get('mapping')
+        
+        try:
+            mapping = json.loads(mapping_raw) if mapping_raw else {}
+        except:
+            mapping = {}
+
+        if not file_obj:
+            return Response({'error': 'Arquivo não enviado.'}, status=400)
+        
+        try:
+            unique_accounts = ImportService.preflight_spreadsheet(file_obj, mapping, import_type)
+            return Response({'accounts': unique_accounts}, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
 class ImportSpreadsheetView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
@@ -45,37 +68,41 @@ class ImportSpreadsheetView(views.APIView):
     def post(self, request):
         file_obj = request.FILES.get('file')
         account_id = request.data.get('account_id')
+        import_type = request.data.get('import_type', 'INCOME_EXPENSE')
         
-        # O frontend envia mapping como string JSON
+        # O frontend envia mapping e account_mapping como string JSON
         mapping_raw = request.data.get('mapping')
-        if mapping_raw:
-            try:
-                mapping = json.loads(mapping_raw)
-            except:
-                mapping = {}
-        else:
-            mapping = {
-                'date_column': request.data.get('date_column', 'date'),
-                'description_column': request.data.get('description_column', 'description'),
-                'amount_column': request.data.get('amount_column', 'amount'),
-                'type_column': request.data.get('type_column'),
-            }
+        account_mapping_raw = request.data.get('account_mapping')
+        
+        try:
+            mapping = json.loads(mapping_raw) if mapping_raw else {}
+        except:
+            mapping = {}
+
+        try:
+            account_mapping = json.loads(account_mapping_raw) if account_mapping_raw else None
+        except:
+            account_mapping = None
         
         if not file_obj:
             return Response({'error': 'Arquivo não enviado.'}, status=400)
             
-        account = get_object_or_404(Account, id=account_id, user=request.user)
+        account = get_object_or_404(Account, id=account_id, user=request.user) if account_id else None
         
-        result = ImportService.process_spreadsheet(file_obj, mapping, account, request.user)
+        result = ImportService.process_spreadsheet(
+            file_obj, mapping, account, request.user, 
+            import_type=import_type, account_mapping=account_mapping
+        )
         
         summary = {
             'total': result.get('total', 0),
             'imported': result.get('created', 0),
             'ignored': result.get('ignored', 0),
-            'errors': len(result.get('errors', []))
+            'errors': len(result.get('errors', [])),
+            'errors_list': result.get('errors', [])
         }
         
-        return Response(summary, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
+        return Response(summary, status=status.HTTP_200_OK if result['created'] >= 0 else status.HTTP_400_BAD_REQUEST)
 
 class ExportTransactionsPDFView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
@@ -83,6 +110,12 @@ class ExportTransactionsPDFView(views.APIView):
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)
         
+        # Extração de parâmetros da query string
+        account_id = request.query_params.get('accountId')
+        category_id = request.query_params.get('categoryId')
+        type_ = request.query_params.get('type')
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
         tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
         tags_str = request.query_params.get('tagIds')
 
@@ -124,6 +157,12 @@ class ExportTransactionsXLSView(views.APIView):
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)
         
+        # Extração de parâmetros da query string
+        account_id = request.query_params.get('accountId')
+        category_id = request.query_params.get('categoryId')
+        type_ = request.query_params.get('type')
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
         tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
         tags_str = request.query_params.get('tagIds')
 

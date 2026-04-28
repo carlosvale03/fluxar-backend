@@ -4,8 +4,6 @@ from .services import AccountService, CreditCardService
 from core.services.plan_limits import PlanLimitsService
 
 class AccountSerializer(serializers.ModelSerializer):
-    balance = serializers.SerializerMethodField()
-    
     class Meta:
         model = Account
         fields = [
@@ -22,9 +20,6 @@ class AccountSerializer(serializers.ModelSerializer):
             if not PlanLimitsService.can_add_account(user):
                 raise serializers.ValidationError("Limite de contas excedido para o seu plano.")
         return data
-
-    def get_balance(self, obj):
-        return AccountService.get_balance(obj)
 
     def create(self, validated_data):
         user = self.context['request'].user
