@@ -1,6 +1,6 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
-from django.db.models import Sum
+from django.db.models import Sum, F
 from api.models import User
 from accounts.models import Account, CreditCard
 from .models import Transaction, Category
@@ -120,12 +120,80 @@ def sync_transfer_delete(sender, instance, **kwargs):
     Cascade delete para transações de transferência.
     """
     if instance.transfer_id:
-        # Deleta a parceira
-        # O exclude é importante para não tentar deletar a que acabou de disparar o signal (embora ja não exista)
-        # O queryset.delete() dispara signals, então haverá uma chamada recursiva para a parceira.
-        # A parceira deletada disparará o signal novamente, mas não encontrará 'instance' no banco, então o loop para.
         Transaction.objects.filter(
             transfer_id=instance.transfer_id
         ).exclude(
             id=instance.id
         ).delete()
+
+# --- BALANCE SYNC SIGNALS ---
+
+def get_transaction_impact(transaction):
+    """
+    Calcula o impacto financeiro de uma transação no saldo da conta.
+    Retorna o valor assinado (positivo para entradas, negativo para saídas).
+    Retorna 0 se a transação não for COMPLETED ou não tiver conta.
+    """
+    if not getattr(transaction, 'account_id', None) or transaction.status != 'COMPLETED':
+        return 0
+    
+    # Entradas
+    if transaction.type in ['INCOME', 'TRANSFER_IN']:
+        return transaction.amount
+    
+    # Saídas
+    if transaction.type in ['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']:
+        return -transaction.amount
+        
+    return 0
+
+@receiver(pre_save, sender=Transaction)
+def capture_old_transaction_state(sender, instance, **kwargs):
+    """
+    Captura o estado anterior da transação antes de salvar, para calcular o diff do saldo.
+    """
+    if instance.pk:
+        try:
+            old_instance = Transaction.objects.get(pk=instance.pk)
+            instance._old_impact = get_transaction_impact(old_instance)
+            instance._old_account_id = old_instance.account_id
+        except Transaction.DoesNotExist:
+            instance._old_impact = 0
+            instance._old_account_id = None
+    else:
+        instance._old_impact = 0
+        instance._old_account_id = None
+
+@receiver(post_save, sender=Transaction)
+def update_account_balance_on_save(sender, instance, created, **kwargs):
+    """
+    Atualiza o saldo da conta quando uma transação é criada ou editada.
+    """
+    new_impact = get_transaction_impact(instance)
+    old_impact = getattr(instance, '_old_impact', 0)
+    old_account_id = getattr(instance, '_old_account_id', None)
+    new_account_id = getattr(instance, 'account_id', None)
+
+    # 1. Se a conta mudou, remove o impacto da conta antiga e adiciona na nova
+    if old_account_id and old_account_id != new_account_id:
+        Account.objects.filter(id=old_account_id).update(balance=F('balance') - old_impact)
+        if new_account_id:
+            Account.objects.filter(id=new_account_id).update(balance=F('balance') + new_impact)
+    else:
+        # 2. Mesma conta (ou nova transação), aplica apenas a diferença
+        if new_account_id:
+            diff = new_impact - old_impact
+            if diff != 0:
+                Account.objects.filter(id=new_account_id).update(balance=F('balance') + diff)
+
+@receiver(post_delete, sender=Transaction)
+def update_account_balance_on_delete(sender, instance, **kwargs):
+    """
+    Atualiza o saldo da conta quando uma transação é excluída.
+    """
+    impact = get_transaction_impact(instance)
+    account_id = getattr(instance, 'account_id', None)
+    if impact != 0 and account_id:
+        # Usamos filter().update() em vez de instance.account para evitar 
+        # exceptions de DoesNotExist durante deleção em cascata
+        Account.objects.filter(id=account_id).update(balance=F('balance') - impact)
