@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from .models import Account, CreditCard, CreditCardInvoice
 
@@ -89,41 +90,29 @@ class CreditCardService:
         """
         Calcula a data de vencimento da fatura onde a compra cairá.
         Regra:
-        1. Determina o mês de FECHAMENTO:
-           - Se purchase_date.day < closing_day: Fecha no mês da compra.
-           - Caso contrário: Fecha no próximo mês.
-        2. Determina o mês de VENCIMENTO a partir do fechamento:
-           - Se due_day > closing_day: Vence no mesmo mês do fechamento.
-           - Se due_day <= closing_day: Vence no mês seguinte ao fechamento.
+        1. Se a compra foi feita no dia de fechamento ou depois, vai para a próxima fatura.
+        2. O vencimento é relativo ao mês de fechamento.
         """
-        # 1. Mês de Fechamento
-        if purchase_date.day < card.closing_day:
-            closing_month = purchase_date.month
-            closing_year = purchase_date.year
+        # 1. Determina o Ciclo (Mês de Referência do Fechamento)
+        if purchase_date.day >= card.closing_day:
+            # Comprou no "Melhor Dia" ou depois: vai para o fechamento do próximo mês
+            closing_month_date = purchase_date + relativedelta(months=1)
         else:
-            closing_month = purchase_date.month + 1
-            closing_year = purchase_date.year
-            if closing_month > 12:
-                closing_month = 1
-                closing_year += 1
+            # Comprou antes do fechamento: fecha neste mês
+            closing_month_date = purchase_date
+            
+        closing_month = closing_month_date.month
+        closing_year = closing_month_date.year
         
-        # 2. Mês de Vencimento
-        due_month = closing_month
-        due_year = closing_year
-        
+        # 2. Determina a data de vencimento
+        # Se o dia de vencimento <= dia de fechamento (ex: 4 <= 28), vence no mês seguinte ao fechamento.
+        # Se o dia de vencimento > dia de fechamento (ex: 15 > 5), vence no mesmo mês do fechamento.
         if card.due_day <= card.closing_day:
-            due_month += 1
-            if due_month > 12:
-                due_month = 1
-                due_year += 1
-        
-        # Define o dia com base no due_day do cartão
-        try:
-            return date(due_year, due_month, card.due_day)
-        except ValueError:
-            import calendar
-            last_day = calendar.monthrange(due_year, due_month)[1]
-            return date(due_year, due_month, last_day)
+            due_date = date(closing_year, closing_month, 1) + relativedelta(months=1, day=card.due_day)
+        else:
+            due_date = date(closing_year, closing_month, card.due_day)
+            
+        return due_date
 
     @staticmethod
     def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date):
