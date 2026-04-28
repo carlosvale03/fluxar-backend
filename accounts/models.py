@@ -16,6 +16,7 @@ class Account(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=20, choices=ACCOUNT_TYPE_CHOICES, default='CHECKING')
     initial_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0, help_text="Saldo atual calculado (inicial + receitas - despesas)")
     
     # Identidade Visual e Open Finance
     institution = models.CharField(max_length=50, blank=True, null=True, help_text="Código ou nome da instituição para ícone (ex: 'nubank', 'itaú')")

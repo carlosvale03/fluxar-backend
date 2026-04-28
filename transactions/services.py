@@ -138,31 +138,39 @@ class TransactionService:
 
     @staticmethod
     def _get_or_create_invoice(card, month, year):
-        # Calcula datas estimadas de fechamento e vencimento
+        # O 'month' e 'year' aqui referem-se à competência do VENCIMENTO da fatura.
         
-        # Se o closing_day > due_day, o fechamento é no mês anterior.
-        closing_m = month
-        closing_y = year
-        if card.closing_day > card.due_day:
-           closing_date_obj = date(year, month, 1) - relativedelta(months=1)
-           closing_m = closing_date_obj.month
-           closing_y = closing_date_obj.year
-           
-        try:
-            c_date = date(closing_y, closing_m, card.closing_day)
-        except ValueError:
-            c_date = date(closing_y, closing_m, 28)
-            
+        # Calcula a data de vencimento real
         try:
             d_date = date(year, month, card.due_day)
         except ValueError:
-            d_date = date(year, month, 28)
+            # Fallback para o último dia do mês se o dia não existir (ex: 31 de fevereiro)
+            import calendar
+            last_day = calendar.monthrange(year, month)[1]
+            d_date = date(year, month, last_day)
+
+        # O fechamento ocorre no mês anterior ao vencimento se due_day <= closing_day
+        if card.due_day <= card.closing_day:
+            closing_ref = d_date - relativedelta(months=1)
+        else:
+            closing_ref = d_date
+            
+        try:
+            c_date = date(closing_ref.year, closing_ref.month, card.closing_day)
+        except ValueError:
+            import calendar
+            last_day = calendar.monthrange(closing_ref.year, closing_ref.month)[1]
+            c_date = date(closing_ref.year, closing_ref.month, last_day)
+
+        # Log para depuração (pode ser removido após validação)
+        print(f"[INVOICE] Card: {card.name}, Target: {month}/{year} -> Closes: {c_date}, Due: {d_date}")
 
         invoice, created = CreditCardInvoice.objects.get_or_create(
             card=card, month=month, year=year,
             defaults={
                 'closing_date': c_date,
-                'due_date': d_date
+                'due_date': d_date,
+                'status': 'OPEN'
             }
         )
         return invoice

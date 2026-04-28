@@ -117,27 +117,36 @@ class ReportService:
         total_current_invoices = Decimal('0.00')
         card_details = []
 
+        from accounts.services import AccountService, CreditCardService
+
         for card in credit_cards:
             total_credit_limit += card.limit
             
-            # 1. Dados para o KPI (Respeitam o Período)
+            # 1. Dados para o KPI (Respeitam o Período selecionado no dashboard)
             invoice_period = card.invoices.filter(month=end_date.month, year=end_date.year).first()
             total_current_invoices += invoice_period.total_amount if invoice_period else Decimal('0.00')
 
             # 2. Dados para Gestão de Crédito (Sempre Real-time/Hoje)
-            invoice_now = card.invoices.filter(month=today.month, year=today.year).first()
+            # Encontramos a fatura onde um gasto feito HOJE seria alocado
+            due_date_now = CreditCardService.calculate_due_date(card, today)
+            invoice_now = card.invoices.filter(month=due_date_now.month, year=due_date_now.year).first()
             invoice_amount_now = invoice_now.total_amount if invoice_now else Decimal('0.00')
+
+            # O limite disponível real é o limite total menos a soma de todas as faturas NÃO pagas
+            total_unpaid = card.invoices.filter(status__in=['OPEN', 'CLOSED']).aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0.00')
+            available_limit = card.limit - total_unpaid
 
             card_details.append({
                 'id': str(card.id),
                 'name': card.name,
                 'limit': card.limit,
-                'current_invoice': invoice_amount_now, # Real-time
-                'available_limit': card.limit - invoice_amount_now, # Real-time
+                'current_invoice': invoice_amount_now, # Fatura "ativa" para gastos hoje
+                'available_limit': available_limit, # Real-time consolidado
                 'color': card.color or '#CBD5E1',
                 'institution': card.institution,
                 'due_day': card.due_day
             })
+
                 
         # 5. Métricas de Saúde Financeira (Agora sincronizadas com o range)
         health_metrics = ReportService.get_financial_health_metrics(
