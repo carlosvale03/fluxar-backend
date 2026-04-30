@@ -1124,3 +1124,173 @@ class ReportService:
             "expense_count_per_day": float(expense_count_per_day),
             "last_transaction_date": last_transaction_date
         }
+
+    @staticmethod
+    def get_tag_insights(user, tag_id, months=6):
+        """
+        Retorna Monitor de Foco e Gráfico de Histórico para uma tag específica.
+        """
+        tag = Tag.objects.filter(user=user, id=tag_id).first()
+        if not tag:
+            return None
+
+        today = date.today()
+        # Início do histórico baseado no parâmetro months
+        start_history = (today.replace(day=1) - timedelta(days=30 * (months - 1))).replace(day=1)
+        
+        # 1. Base de Transações da Tag
+        base_qs = Transaction.objects.filter(user=user, tags__id=tag_id).exclude(
+            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
+        ).distinct()
+
+        # 2. Monitor de Foco (Mês Atual)
+        current_month_q = (
+            Q(type='CREDIT_CARD', invoice__year=today.year, invoice__month=today.month) |
+            Q(type='EXPENSE', date__year=today.year, date__month=today.month) |
+            Q(type='INCOME', date__year=today.year, date__month=today.month)
+        )
+        
+        current_total = base_qs.filter(current_month_q).aggregate(
+            total=Sum(
+                Case(
+                    When(type='INCOME', then=-F('amount')),
+                    default=F('amount'),
+                    output_field=models.DecimalField()
+                )
+            )
+        )['total'] or Decimal('0.00')
+
+        # 3. Média Histórica (Baseada no período selecionado)
+        history_start_date = today - timedelta(days=30 * months)
+        history_qs = base_qs.filter(date__gt=history_start_date)
+        
+        total_historical = history_qs.aggregate(
+            total=Sum(
+                Case(
+                    When(type='INCOME', then=-F('amount')),
+                    default=F('amount'),
+                    output_field=models.DecimalField()
+                )
+            )
+        )['total'] or Decimal('0.00')
+        
+        months_count = history_qs.annotate(m=TruncMonth('date')).values('m').distinct().count()
+        average = total_historical / max(1, months_count)
+
+        status = 'success'
+        if average > 0:
+            if current_total > average * Decimal('1.2'): status = 'warning'
+            if current_total > average * Decimal('1.5'): status = 'error'
+        elif current_total > 0:
+            status = 'warning'
+
+        # 4. Gráfico de Histórico (Dinamizado por months)
+        history_chart = []
+        curr = start_history
+        while curr <= today:
+            # Ganhos e Gastos mensais para o LineChart
+            m_data = base_qs.filter(date__year=curr.year, date__month=curr.month).aggregate(
+                income=Sum(Case(When(type='INCOME', then=F('amount')), default=0, output_field=models.DecimalField())),
+                expense=Sum(Case(When(type__in=['EXPENSE', 'CREDIT_CARD'], then=F('amount')), default=0, output_field=models.DecimalField()))
+            )
+            
+            history_chart.append({
+                'month': curr.strftime('%b/%y'),
+                'income': float(m_data['income'] or 0),
+                'expense': float(m_data['expense'] or 0)
+            })
+            
+            # Próximo mês
+            if curr.month == 12:
+                curr = curr.replace(year=curr.year+1, month=1)
+            else:
+                curr = curr.replace(month=curr.month+1)
+
+        return {
+            'tag_name': tag.name,
+            'color': tag.color,
+            'focus_monitor': {
+                'current_month': float(current_total),
+                'average_month': float(average),
+                'status': status
+            },
+            'history_chart': history_chart
+        }
+
+    @staticmethod
+    def get_tag_distribution(user, month=None, year=None, period_days=None):
+        """
+        Distribuição de Gastos e Ganhos por Tags. Inclui 'Outros' para transações sem tags.
+        """
+        from transactions.models import Transaction
+        from django.db.models import Sum, Q
+        
+        start_date, end_date = ReportService._get_date_range(period_days, month, year)
+        
+        # Base querysets
+        base_transactions = Transaction.objects.filter(user=user, date__gte=start_date, date__lte=end_date)
+        
+        # 1. Gastos (Despesa + Cartão)
+        expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD']) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
+        expenses = base_transactions.filter(expense_q)
+        
+        # Sem tags
+        others_expenses = expenses.filter(tags__isnull=True).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Por Tag
+        tag_expenses = expenses.filter(tags__isnull=False).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
+        
+        expense_by_tag = []
+        for item in tag_expenses:
+            expense_by_tag.append({
+                'id': str(item['tags__id']),
+                'name': item['tags__name'],
+                'amount': float(item['total']),
+                'color': item['tags__color'] or '#CBD5E1'
+            })
+            
+        if others_expenses > 0:
+            expense_by_tag.append({
+                'id': 'others',
+                'name': 'Outros',
+                'amount': float(others_expenses),
+                'color': '#94a3b8'
+            })
+
+        # 2. Ganhos (Income)
+        income_q = Q(type='INCOME')
+        incomes = base_transactions.filter(income_q)
+        
+        # Sem tags
+        others_incomes = incomes.filter(tags__isnull=True).aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Por Tag
+        tag_incomes = incomes.filter(tags__isnull=False).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
+        
+        income_by_tag = []
+        for item in tag_incomes:
+            income_by_tag.append({
+                'id': str(item['tags__id']),
+                'name': item['tags__name'],
+                'amount': float(item['total']),
+                'color': item['tags__color'] or '#CBD5E1'
+            })
+            
+        if others_incomes > 0:
+            income_by_tag.append({
+                'id': 'others',
+                'name': 'Outros',
+                'amount': float(others_incomes),
+                'color': '#94a3b8'
+            })
+            
+        return {
+            'expense_by_tag': expense_by_tag,
+            'income_by_tag': income_by_tag,
+            'period': {
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d')
+            }
+        }
+
+
