@@ -47,7 +47,14 @@ class RegisterView(generics.CreateAPIView):
             user=user,
             expires_at=timezone.now() + timedelta(hours=24)
         )
-        send_verification_email(user, token)
+        
+        # Envio assíncrono para evitar timeout no Render
+        import threading
+        email_thread = threading.Thread(
+            target=send_verification_email,
+            args=(user, token)
+        )
+        email_thread.start()
 
 class CustomLoginView(TokenObtainPairView):
     """
@@ -121,7 +128,14 @@ class ForgotPasswordView(APIView):
                     user=user,
                     expires_at=timezone.now() + timedelta(hours=1)
                 )
-                send_password_reset_email(user, token)
+                
+                # Envio assíncrono para evitar timeout no Render
+                import threading
+                email_thread = threading.Thread(
+                    target=send_password_reset_email,
+                    args=(user, token)
+                )
+                email_thread.start()
             except User.DoesNotExist:
                 # Para não revelar emails cadastrados, fingimos sucesso
                 pass
