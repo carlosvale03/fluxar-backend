@@ -1,3 +1,4 @@
+import os
 from django.core.mail import send_mail
 from django.conf import settings
 import logging
@@ -8,8 +9,8 @@ def send_verification_email(user, token):
     """
     Envia email de verificação premium via Django SMTP (Gmail).
     """
-    # Em produção, usar o domínio real do frontend
-    frontend_url = "http://localhost:3000" 
+    # Usa variável de ambiente ou fallback para localhost
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     verification_url = f"{frontend_url}/auth/verify-email?token={token.token}"
     
     subject = "Ative sua conta no Fluxar"
@@ -65,7 +66,7 @@ def send_password_reset_email(user, token):
     """
     Envia email de redefinição de senha premium via Django SMTP (Gmail).
     """
-    frontend_url = "http://localhost:3000"
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     reset_url = f"{frontend_url}/auth/reset-password?token={token.token}"
     
     subject = "Redefinição de senha - Fluxar"
