@@ -15,9 +15,12 @@ from .serializers import (
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
-    AdminUserSerializer
+    AdminUserSerializer,
+    SystemLogSerializer,
+    AdminResetPasswordSerializer,
+    GlobalSettingSerializer
 )
-from .models import EmailVerificationToken, PasswordResetToken
+from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
 from .utils.email_service import send_verification_email, send_password_reset_email
 
 User = get_user_model()
@@ -80,6 +83,14 @@ class VerifyEmailView(APIView):
 
         token.used = True
         token.save()
+
+        # Registra a ação no log
+        SystemLog.objects.create(
+            user=user,
+            action="EMAIL_VERIFIED",
+            description=f"E-mail verificado com sucesso via token.",
+            admin_name="Sistema"
+        )
 
         # Gera tokens para login automático
         from rest_framework_simplejwt.tokens import RefreshToken
@@ -314,10 +325,35 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
                 {"detail": "Senha do administrador incorreta."}, 
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().update(request, *args, **kwargs)
+        
+        old_user = User.objects.get(pk=kwargs.get('pk'))
+        response = super().update(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            new_user = self.get_object()
+            changes = []
+            if old_user.plan != new_user.plan:
+                changes.append(f"Plano alterado de {old_user.plan} para {new_user.plan}")
+            if old_user.role != new_user.role:
+                changes.append(f"Cargo alterado de {old_user.role} para {new_user.role}")
+            if old_user.is_active != new_user.is_active:
+                status_str = "Ativado" if new_user.is_active else "Arquivado"
+                changes.append(f"Status alterado para {status_str}")
+            
+            if changes:
+                SystemLog.objects.create(
+                    user=new_user,
+                    action="UPDATE_PROFILE",
+                    description="; ".join(changes),
+                    admin_name=request.user.name
+                )
+        
+        return response
 
     def destroy(self, request, *args, **kwargs):
         admin_password = request.data.get('admin_password')
+        permanent = request.data.get('permanent') is True
+        
         if not admin_password:
             return Response(
                 {"detail": "A senha do administrador é obrigatória para esta ação."}, 
@@ -332,25 +368,49 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
             
         instance = self.get_object()
         
-        # Evitar que o admin se arquive
+        # Evitar que o admin se arquive/exclua
         if instance.id == request.user.id:
+            action = "excluir" if permanent else "arquivar"
             return Response(
-                {"detail": "Você não pode arquivar sua própria conta administrativa."}, 
+                {"detail": f"Você não pode {action} sua própria conta administrativa."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Verificar se é o último admin ativo
+        # Verificar se é o último admin (ativo ou total conforme a ação)
         if instance.role == 'ADMIN':
-            admin_count = User.objects.filter(role='ADMIN', is_active=True).count()
+            if permanent:
+                admin_count = User.objects.filter(role='ADMIN').count()
+            else:
+                admin_count = User.objects.filter(role='ADMIN', is_active=True).count()
+                
             if admin_count <= 1:
+                status_type = "cadastrado" if permanent else "ativo"
                 return Response(
-                    {"detail": "Ação bloqueada: Este é o último administrador ativo do sistema."}, 
+                    {"detail": f"Ação bloqueada: Este é o último administrador {status_type} do sistema."}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        instance.is_active = False
-        instance.save()
-        return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
+        if permanent:
+            user_email = instance.email
+            instance.delete()
+            # Log global or related? If deleted, user FK might fail if not null. 
+            # But SystemLog user is ForeignKey, so we can't link to deleted user.
+            # Maybe use a global log or just skip if hard delete. 
+            # For now, let's just log it before delete or use a string if possible.
+            # Actually, let's log as "USER_DELETED" with the email in description.
+            return Response({"detail": "Usuário excluído permanentemente com sucesso."}, status=status.HTTP_200_OK)
+        else:
+            instance.is_active = False
+            instance.save()
+            
+            SystemLog.objects.create(
+                user=instance,
+                action="ARCHIVE_ACCOUNT",
+                description=f"Conta arquivada pelo administrador {request.user.name}",
+                admin_name=request.user.name
+            )
+            
+            return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
         instance = self.get_object()
@@ -398,14 +458,76 @@ class AdminStatsView(APIView):
             "created_at": u.created_at
         } for u in recent_users_query]
 
+        # Verificação de saúde real
+        import time
+        from django.db import connection
+        
+        db_start = time.time()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            db_status = "Conectado"
+            db_latency = f"{int((time.time() - db_start) * 1000)}ms"
+        except Exception:
+            db_status = "Erro"
+            db_latency = "N/A"
+
         return Response({
             "total_users": total_users,
             "premium_users": premium_users,
             "estimated_revenue": estimated_revenue,
             "conversion_rate": round(conversion_rate, 2),
             "recent_users": recent_users,
-            "status": "Operacional"
+            "status": "Operacional",
+            "db_status": db_status,
+            "db_latency": db_latency,
+            "api_version": "1.2.5"
         })
+
+class AdminSystemSettingsView(APIView):
+    """
+    Gerencia configurações globais do sistema (ex: modo manutenção).
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def get(self, request):
+        settings = GlobalSetting.objects.all()
+        # Retorna como um dicionário para facilitar no front
+        data = {s.key: s.value for s in settings}
+        return Response(data)
+
+    def post(self, request):
+        # Suporta múltiplos formatos: { "key": "k", "value": "v" } ou { "maintenance_mode": true }
+        if 'key' in request.data:
+            key = request.data.get('key')
+            value = request.data.get('value')
+            settings_to_update = {key: value}
+        else:
+            settings_to_update = request.data
+
+        for key, value in settings_to_update.items():
+            str_value = str(value).lower() if isinstance(value, bool) else str(value)
+            setting, created = GlobalSetting.objects.update_or_create(
+                key=key,
+                defaults={'value': str_value}
+            )
+            
+            # Log da ação
+            SystemLog.objects.create(
+                action="UPDATE_SETTING",
+                description=f"Configuração '{key}' atualizada para '{value}'.",
+                admin_name=request.user.name
+            )
+            
+        return Response({"message": "Configurações atualizadas com sucesso."})
+
+class AdminGlobalLogsView(generics.ListAPIView):
+    """
+    Retorna todos os logs do sistema para auditoria global.
+    """
+    queryset = SystemLog.objects.all().order_by('-timestamp')
+    serializer_class = SystemLogSerializer
+    permission_classes = (permissions.IsAdminUser,)
 
 class AdminUserFinancialStatsView(APIView):
     """
@@ -419,6 +541,113 @@ class AdminUserFinancialStatsView(APIView):
         user = get_object_or_404(User, pk=pk)
         stats = ReportService.get_user_financial_stats(user)
         return Response(stats)
+
+class AdminUserLogsView(generics.ListAPIView):
+    """
+    Retorna os logs de atividade de um usuário específico.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = SystemLogSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        return SystemLog.objects.filter(user_id=user_id).order_by('-timestamp')
+
+class AdminResetPasswordView(APIView):
+    """
+    Permite que um administrador redefina a senha de um usuário.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        serializer = AdminResetPasswordSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            admin_password = serializer.validated_data['admin_password']
+            new_password = serializer.validated_data['new_password']
+            
+            if not request.user.check_password(admin_password):
+                return Response({"admin_password": ["Senha do administrador incorreta."]}, status=status.HTTP_403_FORBIDDEN)
+            
+            user.set_password(new_password)
+            user.save()
+            
+            SystemLog.objects.create(
+                user=user,
+                action="RESET_PASSWORD",
+                description=f"Senha redefinida pelo administrador {request.user.name}",
+                admin_name=request.user.name
+            )
+            
+            return Response({"message": "Senha do usuário redefinida com sucesso."}, status=status.HTTP_200_OK)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminClearUserDataView(APIView):
+    """
+    Limpa todos os dados financeiros e cadastros (contas, transações, etc.) de um usuário,
+    mantendo apenas o seu login, senha e assinatura.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        admin_password = request.data.get('admin_password')
+
+        if not admin_password or not request.user.check_password(admin_password):
+            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            # Apaga dados relacionados explicitamente
+            user.transactions.all().delete()
+            user.categories.all().delete()
+            user.recurring_transactions.all().delete()
+            user.tags.all().delete()
+            user.focused_monitors.all().delete()
+            user.goals.all().delete()
+            user.budgets.all().delete()
+            user.credit_cards.all().delete()
+            user.accounts.all().delete()
+
+            SystemLog.objects.create(
+                user=user,
+                action="CLEAR_DATA",
+                description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
+                admin_name=request.user.name
+            )
+
+            return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class AdminHardDeleteView(APIView):
+    """
+    Exclui um usuário e todos os seus dados permanentemente do banco de dados.
+    """
+    permission_classes = (permissions.IsAdminUser,)
+
+    def delete(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        admin_password = request.data.get('admin_password')
+
+        if not admin_password or not request.user.check_password(admin_password):
+            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+
+        user_name = user.name
+        # Delete user
+        user.delete()
+
+        # O user foi excluído, então não podemos referenciá-lo no SystemLog.
+        # Vamos usar um campo de texto para registrar o alvo, ou apenas não usar o ForeignKey 'user'
+        # ou, se quisermos registrar, precisamos garantir que o SystemLog permita user nulo
+        # Mas para o Hard Delete, o mais seguro é não tentar registrar com ForeignKey ou registrar em uma tabela geral.
+        # A atual SystemLog tem ForeignKey on_delete=CASCADE, então ao excluir o usuário, seus logs também são excluídos.
+        # Portanto, não precisamos (ou não podemos) salvar um log vinculado ao usuário excluído.
+
+        return Response({"message": f"Usuário {user_name} excluído permanentemente."}, status=status.HTTP_200_OK)
 
 # --- System Views ---
 

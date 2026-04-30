@@ -31,56 +31,61 @@ class ImportService:
         transactions = ofx.account.statement.transactions
         total = len(transactions)
 
-        for tx in transactions:
-            try:
-                amount = Decimal(str(tx.amount))
-                date_val = tx.date.date() # Date object
-                description = tx.memo or tx.payee or "Sem descrição"
-                
-                # Definir tipo baseado no sinal
-                if amount < 0:
-                    type_ = 'EXPENSE'
-                    abs_amount = abs(amount)
-                else:
-                    type_ = 'INCOME'
-                    abs_amount = amount
+        # Otimização: Carrega hashes de TODAS as transações existentes para verificação O(1) de duplicatas
+        from django.db import transaction
+        existing_txs = set()
+        
+        # Filtra pelo account para otimizar a query
+        account_id = account.id if account else None
+        for tx in Transaction.objects.filter(user=user, account_id=account_id).values('date', 'amount', 'description', 'type'):
+            amt = Decimal(str(tx['amount']))
+            existing_txs.add((tx['date'], amt, tx['description'], tx['type']))
 
-                # Duplicate Check
-                exists = Transaction.objects.filter(
-                    user=user,
-                    account=account,
-                    date=date_val,
-                    amount=abs_amount,
-                    description=description,
-                    type=type_
-                ).exists()
+        with transaction.atomic():
+            for tx in transactions:
+                try:
+                    amount = Decimal(str(tx.amount))
+                    date_val = tx.date.date() # Date object
+                    description = tx.memo or tx.payee or "Sem descrição"
+                    
+                    # Definir tipo baseado no sinal
+                    if amount < 0:
+                        type_ = 'EXPENSE'
+                        abs_amount = abs(amount)
+                    else:
+                        type_ = 'INCOME'
+                        abs_amount = amount
 
-                if exists:
-                    ignored_count += 1
-                    continue
-                
-                if type_ == 'INCOME':
-                    TransactionService.create_income(
-                        user=user,
-                        account=account,
-                        amount=abs_amount,
-                        date=date_val,
-                        description=description,
-                        category=None
-                    )
-                else:
-                    TransactionService.create_expense(
-                        user=user,
-                        account=account,
-                        amount=abs_amount,
-                        date=date_val,
-                        description=description,
-                        category=None
-                    )
-                created_count += 1
-                
-            except Exception as e:
-                errors.append(f"Erro na transação {description}: {str(e)}")
+                    # Duplicate Check O(1)
+                    tx_hash = (date_val, abs_amount, description, type_)
+                    if tx_hash in existing_txs:
+                        ignored_count += 1
+                        continue
+                    
+                    if type_ == 'INCOME':
+                        TransactionService.create_income(
+                            user=user,
+                            account=account,
+                            amount=abs_amount,
+                            date=date_val,
+                            description=description,
+                            category=None
+                        )
+                    else:
+                        TransactionService.create_expense(
+                            user=user,
+                            account=account,
+                            amount=abs_amount,
+                            date=date_val,
+                            description=description,
+                            category=None
+                        )
+                    
+                    existing_txs.add(tx_hash)
+                    created_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"Erro na transação {description}: {str(e)}")
         
         return {
             'total': total,
@@ -178,7 +183,11 @@ class ImportService:
                 cols_to_check.append(col_desc)
         
         # Opcionais
-        optional_fields = ['type_column', 'status_column', 'category_column', 'subcategory_column', 'tags_column', 'account_column']
+        if import_type == 'TRANSFER':
+            optional_fields = ['tags_column']
+        else:
+            optional_fields = ['type_column', 'status_column', 'category_column', 'subcategory_column', 'tags_column', 'account_column']
+            
         for field in optional_fields:
             col_name = mapping.get(field)
             if col_name:
@@ -195,6 +204,7 @@ class ImportService:
 
         from accounts.models import Account
         from transactions.models import Category, Tag
+        from django.db import transaction
         import unicodedata
         import re
 
@@ -225,6 +235,15 @@ class ImportService:
         all_tags = Tag.objects.filter(user=user)
         for t in all_tags:
             tag_cache[normalize_str(t.name)] = t
+            
+        # Otimização: Carrega hashes de TODAS as transações existentes para verificação O(1) de duplicatas
+        existing_normal_txs = set()
+        existing_transfer_txs = set()
+        for tx in Transaction.objects.filter(user=user).values('account_id', 'date', 'amount', 'description', 'type'):
+            amt = Decimal(str(tx['amount']))
+            existing_normal_txs.add((tx['account_id'], tx['date'], amt, tx['type'], tx['description']))
+            if tx['type'] == 'TRANSFER_OUT':
+                existing_transfer_txs.add((tx['account_id'], tx['date'], amt, 'TRANSFER_OUT'))
 
         def get_mapped_account(acc_name):
             if not acc_name: return account
@@ -233,7 +252,7 @@ class ImportService:
             if account_mapping:
                 # Tenta nome exato, nome com strip e nome normalizado
                 mapped_id = account_mapping.get(acc_name) or \
-                            account_mapping.get(acc_name.strip()) or \
+                            account_mapping.get(str(acc_name).strip()) or \
                             account_mapping.get(normalize_str(acc_name))
                 
                 if mapped_id:
@@ -281,126 +300,134 @@ class ImportService:
             tag_cache[norm_name] = tag
             return tag
 
-        for index, row in df.iterrows():
-            try:
-                if pd.isna(row[col_date]) or pd.isna(row[col_amount]) or str(row[col_date]).strip() == "":
-                    continue
+        records = df.to_dict('records')
 
-                raw_date = row[col_date]
-                description = "Transferência via Importação"
-                if col_desc and col_desc in df.columns and pd.notna(row[col_desc]):
-                    description = str(row[col_desc])
-                amount_val = row[col_amount]
-                
+        with transaction.atomic():
+            for index, row in enumerate(records):
                 try:
-                    date_val = pd.to_datetime(raw_date, dayfirst=True).date()
-                except:
-                    continue
-                
-                # Limpeza e conversão do valor
-                amount_str = str(amount_val).replace('R$', '').replace(' ', '').replace(',', '.')
-                amount_str = re.sub(r'[^-0-9.]', '', amount_str)
-                
-                if not amount_str or amount_str == '-':
-                    continue
-                    
-                amount_dec = abs(Decimal(amount_str))
-                
-                if import_type == 'TRANSFER':
-                    source_acc_name = str(row[col_source_acc]).strip()
-                    dest_acc_name = str(row[col_dest_acc]).strip()
-                    
-                    source_acc = get_mapped_account(source_acc_name)
-                    dest_acc = get_mapped_account(dest_acc_name)
-                    
-                    if not source_acc:
-                        errors.append(f"Linha {index}: Conta de origem '{source_acc_name}' não mapeada.")
-                        continue
-                    if not dest_acc:
-                        errors.append(f"Linha {index}: Conta de destino '{dest_acc_name}' não mapeada.")
-                        continue
-                    if source_acc == dest_acc:
-                        errors.append(f"Linha {index}: Conta de origem e destino são iguais ({source_acc_name}).")
+                    if pd.isna(row.get(col_date)) or pd.isna(row.get(col_amount)) or str(row.get(col_date)).strip() == "":
                         continue
 
-                    # Check Duplicata de Transferência
-                    # Como não temos um link direto fácil, checamos se existe uma saída com os mesmos dados
-                    exists = Transaction.objects.filter(
-                        user=user, account=source_acc, date=date_val, amount=amount_dec, type='TRANSFER_OUT'
-                    ).exists()
-                    # Nota: Uma validação mais rigorosa checaria se o 'transfer_id' dessa transação 
-                    # possui um par 'TRANSFER_IN' na conta de destino.
-
-                    if exists:
-                        ignored_count += 1
+                    raw_date = row.get(col_date)
+                    description = "Transferência via Importação"
+                    if col_desc and col_desc in row and pd.notna(row[col_desc]):
+                        description = str(row[col_desc])
+                    amount_val = row.get(col_amount)
+                    
+                    try:
+                        date_val = pd.to_datetime(raw_date, dayfirst=True).date()
+                    except:
                         continue
                     
-                    TransactionService.create_transfer(
-                        user=user, 
-                        account_from=source_acc, 
-                        account_to=dest_acc,
-                        amount=amount_dec, 
-                        date=date_val, 
-                        description=description
-                    )
-                else:
-                    # Lógica INCOME/EXPENSE original
-                    if col_type and pd.notna(row[col_type]):
-                        type_str = str(row[col_type]).upper()
-                        if type_str in ['INCOME', 'RECEITA', 'C', 'CREDITO']:
-                            type_ = 'INCOME'
+                    # Limpeza e conversão do valor
+                    amount_str = str(amount_val).replace('R$', '').replace(' ', '').replace(',', '.')
+                    amount_str = re.sub(r'[^-0-9.]', '', amount_str)
+                    
+                    if not amount_str or amount_str == '-':
+                        continue
+                        
+                    amount_dec = abs(Decimal(amount_str))
+                    
+                    if import_type == 'TRANSFER':
+                        source_acc_name = str(row.get(col_source_acc, '')).strip()
+                        dest_acc_name = str(row.get(col_dest_acc, '')).strip()
+                        
+                        source_acc = get_mapped_account(source_acc_name)
+                        dest_acc = get_mapped_account(dest_acc_name)
+                        
+                        if not source_acc:
+                            errors.append(f"Linha {index}: Conta de origem '{source_acc_name}' não mapeada.")
+                            continue
+                        if not dest_acc:
+                            errors.append(f"Linha {index}: Conta de destino '{dest_acc_name}' não mapeada.")
+                            continue
+                        if source_acc == dest_acc:
+                            errors.append(f"Linha {index}: Conta de origem e destino são iguais ({source_acc_name}).")
+                            continue
+
+                        # Check Duplicata de Transferência via Set em Memória
+                        transfer_hash = (source_acc.id, date_val, amount_dec, 'TRANSFER_OUT')
+                        if transfer_hash in existing_transfer_txs:
+                            ignored_count += 1
+                            continue
+                        
+                        TransactionService.create_transfer(
+                            user=user, 
+                            account_from=source_acc, 
+                            account_to=dest_acc,
+                            amount=amount_dec, 
+                            date=date_val, 
+                            description=description
+                        )
+                        # Adiciona ao Set em Memória para evitar duplicação na mesma importação
+                        existing_transfer_txs.add(transfer_hash)
+
+                    else:
+                        # Lógica INCOME/EXPENSE original
+                        if col_type and col_type in row and pd.notna(row[col_type]):
+                            type_str = str(row[col_type]).upper()
+                            if type_str in ['INCOME', 'RECEITA', 'C', 'CREDITO']:
+                                type_ = 'INCOME'
+                            else:
+                                type_ = 'EXPENSE'
                         else:
-                            type_ = 'EXPENSE'
-                    else:
-                        # Se não tem coluna de tipo, usa o sinal do valor
-                        type_ = 'EXPENSE' if Decimal(amount_str) < 0 else 'INCOME'
+                            # Se não tem coluna de tipo, usa o sinal do valor
+                            # Mas como amount_str foi limpado com replace e sub, o sinal pode ter se perdido
+                            # Vamos recalcular com base no str original antes do regex:
+                            orig_amount_str = str(amount_val).replace('R$', '').replace(' ', '').replace(',', '.')
+                            type_ = 'EXPENSE' if orig_amount_str.startswith('-') else 'INCOME'
 
-                    target_account = get_mapped_account(str(row[col_account_name]).strip() if col_account_name and pd.notna(row[col_account_name]) else None)
+                        raw_acc_name = str(row.get(col_account_name, '')).strip() if col_account_name else None
+                        target_account = get_mapped_account(raw_acc_name)
+                        if not target_account:
+                            # Se não achou conta mapeada e não tem conta padrão, falha essa linha ou usa fallback?
+                            # A função get_mapped_account retorna 'account' se não achar. Mas se 'account' for None, dará erro.
+                            pass
 
-                    exists = Transaction.objects.filter(
-                        user=user, account=target_account, date=date_val,
-                        amount=amount_dec, description=description, type=type_
-                    ).exists()
+                        # O(1) Memory Duplicate Check
+                        target_account_id = target_account.id if target_account else None
+                        normal_hash = (target_account_id, date_val, amount_dec, type_, description)
+                        if normal_hash in existing_normal_txs:
+                            ignored_count += 1
+                            continue
 
-                    if exists:
-                        ignored_count += 1
-                        continue
+                        # Categoria
+                        target_category = None
+                        if col_category and col_category in row and pd.notna(row[col_category]):
+                            cat_name = str(row[col_category]).strip()
+                            main_cat = get_or_create_cached_cat(cat_name, type_)
+                            target_category = main_cat
+                            if col_subcategory and col_subcategory in row and pd.notna(row[col_subcategory]):
+                                sub_name = str(row[col_subcategory]).strip()
+                                target_category = get_or_create_cached_cat(sub_name, type_, parent=main_cat)
 
-                    # Categoria
-                    target_category = None
-                    if col_category and pd.notna(row[col_category]):
-                        cat_name = str(row[col_category]).strip()
-                        main_cat = get_or_create_cached_cat(cat_name, type_)
-                        target_category = main_cat
-                        if col_subcategory and pd.notna(row[col_subcategory]):
-                            sub_name = str(row[col_subcategory]).strip()
-                            target_category = get_or_create_cached_cat(sub_name, type_, parent=main_cat)
+                        if type_ == 'INCOME':
+                            tx = TransactionService.create_income(
+                                user=user, account=target_account, amount=amount_dec,
+                                date=date_val, description=description, category=target_category
+                            )
+                        else:
+                            tx = TransactionService.create_expense(
+                                user=user, account=target_account, amount=amount_dec,
+                                date=date_val, description=description, category=target_category
+                            )
+                        
+                        if col_status and col_status in row and pd.notna(row[col_status]) and str(row[col_status]).upper() in ['PENDENTE', 'PENDING']:
+                            tx.status = 'PENDING'
+                            tx.save()
 
-                    if type_ == 'INCOME':
-                        tx = TransactionService.create_income(
-                            user=user, account=target_account, amount=amount_dec,
-                            date=date_val, description=description, category=target_category
-                        )
-                    else:
-                        tx = TransactionService.create_expense(
-                            user=user, account=target_account, amount=amount_dec,
-                            date=date_val, description=description, category=target_category
-                        )
-                    
-                    if col_status and pd.notna(row[col_status]) and str(row[col_status]).upper() in ['PENDENTE', 'PENDING']:
-                        tx.status = 'PENDING'
-                        tx.save()
+                        # Tags
+                        if col_tags and col_tags in row and pd.notna(row[col_tags]):
+                            for tag_name in str(row[col_tags]).split(','):
+                                tag_obj = get_or_create_cached_tag(tag_name.strip())
+                                if tag_obj: tx.tags.add(tag_obj)
+                        
+                        existing_normal_txs.add(normal_hash)
 
-                    # Tags
-                    if col_tags and pd.notna(row[col_tags]):
-                        for tag_name in str(row[col_tags]).split(','):
-                            tag_obj = get_or_create_cached_tag(tag_name.strip())
-                            if tag_obj: tx.tags.add(tag_obj)
+                    created_count += 1
 
-                created_count += 1
-
-            except Exception as e:
-                errors.append(f"Linha {index}: {str(e)}")
+                except Exception as e:
+                    errors.append(f"Linha {index}: {str(e)}")
 
         return {
             'total': total, 'created': created_count, 'ignored': ignored_count, 'errors': errors
