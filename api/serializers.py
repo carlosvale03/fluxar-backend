@@ -54,16 +54,17 @@ class UserAvatarSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
 
     class Meta:
         model = User
         fields = (
-            'id', 'name', 'email', 'plan', 'role', 'email_verified', 
+            'id', 'name', 'email', 'plan', 'role', 'emailVerified', 
             'cpf', 'phone_number', 'avatar_url', 'date_of_birth',
             'currency', 'theme_preference', 'language', 'monthly_income',
             'notification_settings', 'is_active', 'last_login', 'created_at'
         )
-        read_only_fields = ('id', 'email', 'plan', 'role', 'email_verified', 'is_active', 'last_login', 'created_at')
+        read_only_fields = ('id', 'email', 'plan', 'role', 'is_active', 'last_login', 'created_at')
 
     def get_avatar_url(self, obj):
         if obj.avatar:
@@ -172,3 +173,20 @@ class ResetPasswordSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError({"new_password": "As senhas não coincidem."})
         return attrs
+
+class SystemLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import SystemLog
+        model = SystemLog
+        fields = ('id', 'action', 'description', 'admin_name', 'timestamp')
+
+class GlobalSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import GlobalSetting
+        model = GlobalSetting
+        fields = ('key', 'value', 'description', 'updated_at')
+        read_only_fields = ('updated_at',)
+
+class AdminResetPasswordSerializer(serializers.Serializer):
+    admin_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])

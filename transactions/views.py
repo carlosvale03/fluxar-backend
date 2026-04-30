@@ -108,6 +108,11 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         if search:
             queryset = queryset.filter(description__icontains=search)
             
+        # Filtro por Tags (Etiquetas)
+        tag_ids = self.request.query_params.getlist('tagIds')
+        if tag_ids:
+            queryset = queryset.filter(tags__id__in=tag_ids).distinct()
+            
         return queryset.order_by('-date', '-created_at')
 
     @action(detail=False, methods=['post'])

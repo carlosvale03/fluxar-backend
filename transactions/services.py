@@ -180,6 +180,7 @@ class CategoryService:
     PLAN_LIMITS = {
         'FREE': {'max_roots': 20, 'max_subs_per_root': 5},
         'PREMIUM': {'max_roots': 9999, 'max_subs_per_root': 9999},
+        'PREMIUM_PLUS': {'max_roots': 9999, 'max_subs_per_root': 9999},
         'COMMON': {'max_roots': 9999, 'max_subs_per_root': 9999}
     }
 

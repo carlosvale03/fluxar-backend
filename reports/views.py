@@ -60,6 +60,31 @@ class ReportViewSet(viewsets.ViewSet):
         data = ReportService.get_monthly_comparison(request.user, months=months, month=month, year=year)
         return Response(data)
 
+    @action(detail=False, methods=['get'], url_path='charts/tag-insights')
+    def tag_insights(self, request):
+        tag_id = request.query_params.get('tag_id')
+        months = int(request.query_params.get('months', 6))
+        
+        if not tag_id:
+            return Response({"error": "tag_id é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        data = ReportService.get_tag_insights(request.user, tag_id, months=months)
+        if data is None:
+            return Response({"error": "Tag não encontrada"}, status=status.HTTP_404_NOT_FOUND)
+            
+        return Response(data)
+
+    @action(detail=False, methods=['get'], url_path='charts/tag-distribution')
+    def tag_distribution(self, request):
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+        period = request.query_params.get('period') or request.query_params.get('days')
+        
+        data = ReportService.get_tag_distribution(request.user, month, year, period_days=period)
+        return Response(data)
+
+
+
 class FocusedMonitorViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
     serializer_class = FocusedMonitorItemSerializer

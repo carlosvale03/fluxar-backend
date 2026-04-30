@@ -37,6 +37,9 @@ class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     serializer_class = CreditCardSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
     def perform_destroy(self, instance):
         # Soft delete
         # TODO: Validar se não há faturas abertas com dívida antes de deletar

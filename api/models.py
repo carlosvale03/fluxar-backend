@@ -107,3 +107,28 @@ class PasswordResetToken(models.Model):
 
     def is_valid(self):
         return not self.used and self.expires_at > timezone.now()
+
+class SystemLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='system_logs', null=True, blank=True)
+    action = models.CharField(max_length=100)
+    description = models.TextField()
+    admin_name = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        user_email = self.user.email if self.user else "System"
+        return f"{self.action} - {user_email} - {self.timestamp}"
+
+class GlobalSetting(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    key = models.CharField(max_length=100, unique=True)
+    value = models.TextField()
+    description = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key}: {self.value}"
