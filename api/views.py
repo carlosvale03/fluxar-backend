@@ -22,8 +22,10 @@ from .serializers import (
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
 from .utils.email_service import send_verification_email, send_password_reset_email
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 # --- Auth Views ---
 
@@ -55,6 +57,11 @@ class RegisterView(generics.CreateAPIView):
             args=(user, token)
         )
         email_thread.start()
+        logger.warning(
+            "Thread de email de verificacao iniciada para %s (token=%s)",
+            user.email,
+            str(token.token)[:8],
+        )
 
 class CustomLoginView(TokenObtainPairView):
     """
@@ -136,9 +143,17 @@ class ForgotPasswordView(APIView):
                     args=(user, token)
                 )
                 email_thread.start()
+                logger.warning(
+                    "Thread de email de reset iniciada para %s (token=%s)",
+                    user.email,
+                    str(token.token)[:8],
+                )
             except User.DoesNotExist:
                 # Para não revelar emails cadastrados, fingimos sucesso
-                pass
+                logger.warning(
+                    "Solicitacao de reset recebida para email nao cadastrado: %s",
+                    email,
+                )
             
             return Response({"message": "Se o e-mail existir, um link de recuperação foi enviado."}, status=status.HTTP_200_OK)
         

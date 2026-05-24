@@ -20,3 +20,4 @@ cloudinary
 django-cloudinary-storage
 Pillow
 resend
+requests>=2.31,<3.0
