@@ -32,6 +32,20 @@ def _debug_log(message):
         logger.warning("[EMAIL DEBUG] %s", message)
 
 
+def _get_frontend_url():
+    frontend_url = os.getenv('FRONTEND_URL') or getattr(settings, 'FRONTEND_URL', None)
+    if frontend_url:
+        return frontend_url.rstrip('/')
+
+    fallback_url = 'http://localhost:3000'
+    if not settings.DEBUG:
+        logger.warning(
+            "FRONTEND_URL nao configurada em producao. Usando fallback %s",
+            fallback_url,
+        )
+    return fallback_url
+
+
 def _send_via_resend(subject, html_content, to_email):
     api_key = os.getenv('RESEND_API_KEY')
     if not api_key:
@@ -185,8 +199,7 @@ def send_verification_email(user, token):
     """
     Envia email de verificação premium via Django SMTP (Gmail).
     """
-    # Usa variável de ambiente ou fallback para localhost
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = _get_frontend_url()
     verification_url = f"{frontend_url}/auth/verify-email?token={token.token}"
     
     subject = "Ative sua conta no Fluxar"
@@ -265,7 +278,7 @@ def send_password_reset_email(user, token):
     """
     Envia email de redefinição de senha premium via Django SMTP (Gmail).
     """
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = _get_frontend_url()
     reset_url = f"{frontend_url}/auth/reset-password?token={token.token}"
     
     subject = "Redefinição de senha - Fluxar"
