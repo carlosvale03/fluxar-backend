@@ -187,6 +187,9 @@ if CORS_ALLOWED_ORIGINS_ENV:
 else:
     CORS_ALLOW_ALL_ORIGINS = True
 
+# Frontend URL used in transactional email links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
