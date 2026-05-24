@@ -198,15 +198,24 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# Email Configuration (Gmail SMTP)
+# Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_TIMEOUT = 20  # Aumentado para dar margem ao handshake lento no Render
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER # Gmail sobrescreve o nome se for diferente do login
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+# Email provider flags
+USE_EMAILJS_TESTING_FALLBACK = os.getenv('USE_EMAILJS_TESTING_FALLBACK', 'False').lower() in ('1', 'true', 'yes', 'on')
+ENABLE_RESEND_PROVIDER = os.getenv('ENABLE_RESEND_PROVIDER', 'True').lower() in ('1', 'true', 'yes', 'on')
+ENABLE_SMTP_FALLBACK = os.getenv('ENABLE_SMTP_FALLBACK', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# EmailJS credentials (test-only fallback)
+EMAILJS_SERVICE_ID = os.getenv('EMAILJS_SERVICE_ID')
+EMAILJS_TEMPLATE_ID = os.getenv('EMAILJS_TEMPLATE_ID')
+EMAILJS_PUBLIC_KEY = os.getenv('EMAILJS_PUBLIC_KEY')
+EMAILJS_PRIVATE_KEY = os.getenv('EMAILJS_PRIVATE_KEY')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
