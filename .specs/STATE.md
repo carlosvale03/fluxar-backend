@@ -226,13 +226,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-029
+- **Decision**: Relatórios, dashboard, orçamentos e demais totais de gastos contam as despesas efetivadas na data delas e as compras no cartão na data da compra, mesmo com a fatura aberta; numa compra parcelada, a parcela N conta N-1 meses depois da data da compra. As despesas pendentes aparecem à parte, como "A pagar". Receitas contam só as efetivadas. Transferências, pagamentos de fatura e ajustes de saldo ficam fora de receitas e despesas. O patrimônio é a soma das contas ativas menos as compras não pagas dos cartões; os cofrinhos entram como reservas e ficam fora do dinheiro disponível. O dinheiro guardado no mês é o que entra em cofrinhos e investimentos vindo das outras contas, menos o que sai deles.
+- **Reason**: decisão do usuário. Hoje cada relatório escolhe as transações do seu jeito, soma pendências e deixa os cofrinhos fora de tudo (FIN-26 e FIN-33).
+- **Trade-off**: uma despesa lançada como pendente só entra nos gráficos quando é efetivada, e o patrimônio fica menor para quem tem fatura aberta.
+- **Scope**: relatorios, dashboard, orçamentos (gasto do orçamento), classes-de-despesa (divisão por classe), gestao-do-salario (histórico e comprometido), vinculo-entre-transacoes (gastos puxados) e metas.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37) e `metas` (META-01 a META-45) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes` e `metas` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45) e `relatorios` (REL-01 a REL-25) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas` e `relatorios` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `relatorios`, na mesma branch e com um commit próprio. Depois dela, falta o painel admin; os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`, e PROP-04 e PROP-05 não viram spec agora.
+- **Next step**: especificar a feature `painel-admin`, na mesma branch e com um commit próprio. Depois dela, os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`; PROP-04 e PROP-05 não viram spec agora.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
