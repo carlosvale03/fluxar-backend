@@ -24,7 +24,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Bloquear uma compra acima do limite disponível | Não foi pedido; esta spec só unifica o cálculo do limite exibido |
 | Exclusão de cartão com faturas em aberto | Ciclo de vida do cartão; fica para uma feature de cartões |
 | Relatórios e dashboard que somam faturas (faturas do mês, patrimônio) | Feature `relatorios` |
-| Importação de extratos de cartão | Feature `importacao` |
+| Importação de extratos de cartão | Não existe hoje e não foi pedida; a spec `importacao` também a deixa de fora |
 | Impedir que um usuário acesse o cartão de outro (SEG-01) | Autorização; fica numa feature de segurança |
 
 ---

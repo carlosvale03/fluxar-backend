@@ -66,13 +66,21 @@
 - **Date**: 2026-09-25
 - **Status**: active
 
+### AD-009
+- **Decision**: Um valor em texto no formato brasileiro é lido assim: com vírgula, a vírgula é o separador decimal e os pontos são de milhar; sem vírgula, os pontos são de milhar quando todos os grupos depois deles têm três dígitos e a parte antes do primeiro ponto não é zero, e decimal nos demais casos ("1.500" é 1500; "12.5" é 12,50; "0.50" é 0,50).
+- **Reason**: é a leitura que um usuário brasileiro espera. A regra atual troca vírgula por ponto e lê "1.500" como 1,50 (FIN-22), e o mesmo erro aparece nos formulários de meta (FE-06).
+- **Trade-off**: um valor escrito no formato americano com três casas decimais sem vírgula ("1.500" querendo dizer 1,5) é lido como milhar.
+- **Scope**: importacao e qualquer campo que receba valor em texto, inclusive os formulários de metas.
+- **Date**: 2026-09-25
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47) e `faturas` (FATURA-01 a FATURA-45) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo/spec.md`, `saldo/context.md`, `faturas/spec.md`, `faturas/context.md`
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45) e `importacao` (IMPORT-01 a IMPORT-41) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas` e `importacao` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `importacao` na mesma branch, com um commit próprio.
+- **Next step**: especificar a próxima feature da série na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
