@@ -234,13 +234,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-030
+- **Decision**: Toda ação de administrador vira um registro no log de auditoria, com quem fez, quando, a ação, o usuário afetado e os valores de antes e de depois. O registro identifica as pessoas só pelo identificador interno e pelo e-mail mascarado, é somente leitura pela API e continua depois da exclusão da conta do usuário afetado. Eventos de segurança dos próprios usuários ficam fora do log de auditoria.
+- **Reason**: decisão do usuário. Hoje o log aparece vazio na tela (CON-10), a exclusão definitiva não deixa registro e o nome do administrador vai para o log.
+- **Trade-off**: toda ação de administração nova precisa gravar o log, e um problema de segurança do lado do usuário não aparece no painel.
+- **Scope**: painel-admin, permissoes-e-planos (travas e liberação para testes), sessao (modo manutenção), lgpd (exclusão pelo administrador) e autenticacao (redefinição de senha pelo administrador).
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45) e `relatorios` (REL-01 a REL-25) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas` e `relatorios` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45), `relatorios` (REL-01 a REL-25) e `painel-admin` (ADMIN-01 a ADMIN-29) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas`, `relatorios` e `painel-admin` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `painel-admin`, na mesma branch e com um commit próprio. Depois dela, os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`; PROP-04 e PROP-05 não viram spec agora.
+- **Next step**: levar os preparativos da PROP-04 às specs `lgpd` (finalidade de melhoria do produto e aceite dos termos por versão) e `importacao` (correções de categoria), com um commit próprio. Depois, o push e o PR da branch; PROP-04 e PROP-05 não viram spec agora.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
