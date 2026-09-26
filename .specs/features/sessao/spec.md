@@ -21,7 +21,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Cadastro, verificação de e-mail, login, "esqueci a senha", redefinição e limites de tentativas | Feature `autenticacao` |
 | Política de segurança de conteúdo (CSP) e outros cabeçalhos de segurança (SEG-05, SEG-13) | Feature de infraestrutura |
 | Tela de sessões ativas e encerramento de uma sessão específica | Não foi pedido |
-| Unificar `role` e `is_staff` na definição de administrador (SEG-06) | Feature do painel admin |
+| Unificar `role` e `is_staff` na definição de administrador (SEG-06) | Feature `permissoes-e-planos` |
 | Link da página de manutenção para `/suporte`, que não existe (FE-17) | Ajuste de interface fora desta feature |
 
 ---
@@ -42,7 +42,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Erro de rede ou 5xx durante a sessão | A sessão continua, e a tela oferece tentar de novo | Hoje um 502 do Render desloga o usuário (FE-01) | sim |
 | Conta desativada ou excluída | Os tokens dela são recusados a partir da próxima requisição | A conta não pode mais usar o app | sim |
 | Sessões antigas guardadas no `localStorage` | São descartadas na implantação, e todos entram de novo uma vez | A troca da `SECRET_KEY` (AUTH-42) já encerra essas sessões | sim |
-| Administrador durante a manutenção | Quem o backend reconhece como administrador | Hoje o frontend usa `role` e o backend usa `is_staff`; a unificação fica na feature do painel admin (SEG-06) | sim |
+| Administrador durante a manutenção | Quem o backend reconhece como administrador | Hoje o frontend usa `role` e o backend usa `is_staff`; a unificação fica na feature `permissoes-e-planos` (AD-016) | sim |
 | Tempo para ligar ou desligar a manutenção valer | Até 30 segundos, sem consulta ao banco em cada requisição | Hoje cada requisição faz uma consulta ao banco só para isso (PERF-06) | sim |
 | Volta da página de manutenção | A página verifica o estado a cada 30 segundos e volta sozinha para a página anterior | O usuário não precisa recarregar nem entrar de novo | sim |
 | Rotas abertas para não administradores na manutenção | Login, renovação, `/auth/me`, logout e `/api/health/`; cadastro, verificação e redefinição ficam fechados | A manutenção não deve aceitar contas novas nem mudanças | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.

@@ -122,13 +122,29 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-016
+- **Decision**: O administrador do app é definido só pelo papel `role = ADMIN`, lido do banco a cada requisição. O `is_staff` deixa de dar acesso à API e serve apenas para o admin do Django, definido por linha de comando.
+- **Reason**: decisão do usuário. O papel já é o que a interface, o token e a proteção do último admin usam; hoje o backend autoriza por `is_staff`, e rebaixar alguém no painel não tira o acesso à API (SEG-06).
+- **Trade-off**: quem hoje tem `is_staff` sem o papel `ADMIN` perde o acesso às rotas de administração até receber o papel.
+- **Scope**: permissoes-e-planos, sessao (quem acessa na manutenção), painel admin e qualquer rota de administração nova.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-017
+- **Decision**: O que cada plano libera é configurado pelo administrador no painel, não no código. Cada recurso ou limite que um plano pode travar tem uma chave num catálogo; o backend aplica a trava em cada rota, e o frontend só reflete o que o `/auth/me` informa. A liberação do premium para testes é uma única chave no painel.
+- **Reason**: decisão do usuário. Hoje a liberação está espalhada em cerca de oito pontos, com limites diferentes no frontend e no backend (SEG-08).
+- **Trade-off**: toda funcionalidade nova precisa entrar no catálogo de travas ou na lista de recursos essenciais, e cada rota do catálogo passa a consultar a configuração dos planos.
+- **Scope**: todas as features com telas ou rotas para o usuário.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44) e `sessao` (SESSAO-01 a SESSAO-25) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao` e `sessao` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25) e `permissoes-e-planos` (PERM-01 a PERM-29) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao` e `permissoes-e-planos` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `permissoes-e-planos` na mesma branch, com um commit próprio.
+- **Next step**: especificar a feature `lgpd` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
