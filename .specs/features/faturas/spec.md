@@ -50,7 +50,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Pedido de pagamento sem identificador | É tratado como tentativa nova | Frontend e backend sobem em momentos diferentes | sim |
 | Identificador reenviado depois de um estorno | Não paga de novo e repete a resposta original | Um reenvio atrasado não deve refazer um pagamento desfeito de propósito | sim |
 | Limite disponível | Limite do cartão menos as compras não pagas, na tela do cartão e no dashboard | Hoje há duas fórmulas (FIN-27); a spec `saldo` encaminhou o item para cá | sim |
-| Parcelas mal alocadas já gravadas | As parcelas pendentes de compras com duas parcelas na mesma fatura são redistribuídas | Corrige nos dados atuais o efeito de FIN-06; parcelas pagas não se movem | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-25.
+| Parcelas mal alocadas já gravadas | As parcelas pendentes de compras com duas parcelas na mesma fatura são redistribuídas | Corrige nos dados atuais o efeito de FIN-06; parcelas pagas não se movem | sim |
+
+**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-25.
 
 ---
 

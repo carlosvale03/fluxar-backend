@@ -39,7 +39,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Filtro de listagem, relatório ou exportação com ID de outro usuário | Resultado vazio, igual a um ID inexistente | É o comportamento atual; não revela nada | sim |
 | Categorias-modelo sem dono (`is_template`, criadas pelo `populate_templates`) | Não podem ser usadas em nenhuma relação | Não aparecem para o usuário, e a cópia para novos usuários nunca é chamada | sim |
 | Ligações cruzadas já gravadas | A correção desfaz cada uma e recalcula os saldos afetados | O Fluxar não tem compartilhamento entre usuários, então toda ligação cruzada é indevida | sim |
-| Mensagens de erro | Em português: "Conta não encontrada.", "Cartão não encontrado.", "Categoria não encontrada." e "Tag não encontrada." | Hoje o DRF responde em inglês ("Invalid pk") | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
+| Mensagens de erro | Em português: "Conta não encontrada.", "Cartão não encontrado.", "Categoria não encontrada." e "Tag não encontrada." | Hoje o DRF responde em inglês ("Invalid pk") | sim |
+
+**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
 
 ---
 

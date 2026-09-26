@@ -2,15 +2,16 @@
 
 ## Problem Statement
 
-A importação informa sucesso mesmo quando nada foi gravado: um erro numa linha desfaz o arquivo inteiro, e a resposta ainda diz que as linhas entraram (FIN-11). A leitura erra valores e tipos no formato brasileiro: "Crédito" com acento vira despesa (FIN-12) e "1.500" vira R$ 1,50 (FIN-22). Linhas de conta não mapeada caem na conta padrão ou ficam sem conta (FIN-23), a detecção de repetidos descarta compras reais (FIN-21), e não há limite de tamanho para um arquivo processado dentro da requisição (OPS-03).
+A importação informa sucesso mesmo quando nada foi gravado: um erro numa linha desfaz o arquivo inteiro, e a resposta ainda diz que as linhas entraram (FIN-11). A leitura erra valores e tipos no formato brasileiro: "Crédito" com acento vira despesa (FIN-12) e "1.500" vira R$ 1,50 (FIN-22). Linhas de conta não mapeada caem na conta padrão ou ficam sem conta (FIN-23), a detecção de repetidos descarta compras reais (FIN-21), e não há limite de tamanho para um arquivo processado dentro da requisição (OPS-03). E nada aproveita as categorias que o usuário escolhe depois de importar: a cada extrato, as mesmas descrições voltam sem categoria.
 
-Origem: seção 2 de `docs/auditoria-2026-09.md` (FIN-11, FIN-12, FIN-21, FIN-22, FIN-23) e seção 7 (OPS-03), no que se refere à importação.
+Origem: seção 2 de `docs/auditoria-2026-09.md` (FIN-11, FIN-12, FIN-21, FIN-22, FIN-23) e seção 7 (OPS-03), no que se refere à importação, e seção 11 (preparativos da PROP-04).
 
 ## Goals
 
 - [ ] Cada linha válida de um arquivo OFX, CSV ou XLSX é gravada com o valor, a data e o tipo que o usuário vê no arquivo.
 - [ ] A resposta sempre diz exatamente quantas linhas foram gravadas, ignoradas e rejeitadas, e por quê.
 - [ ] Reimportar um extrato nunca duplica lançamentos.
+- [ ] A categoria que o usuário escolhe para uma descrição volta sugerida nas próximas importações.
 
 ## Out of Scope
 
@@ -21,7 +22,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Exportação em PDF e XLSX (FIN-24, FIN-25) | Pedido do usuário; fica na feature `relatorios` |
 | Efeito das transações importadas no saldo | Spec `saldo` (AD-004); as transações importadas seguem as mesmas regras |
 | Importar extrato ou fatura de cartão como compras no cartão | Não existe hoje e não foi pedido |
-| Sugestão automática de categoria para as linhas | Não existe hoje e não foi pedida |
+| Sugestão de categoria por um modelo treinado com dados de vários usuários | Fica com a previsão de gastos (PROP-04); aqui a sugestão usa só as correções do próprio usuário |
 | Impedir que um usuário importe para a conta de outro (SEG-01) | Feature `isolamento-entre-usuarios` |
 
 ---
@@ -46,7 +47,17 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | OFX com mais de uma conta | Recusado, com mensagem pedindo um arquivo por conta | Cada importação tem uma única conta de destino | sim |
 | Tempo de resposta | Até 30 segundos para um arquivo dentro dos limites | Cabe com folga no timeout da requisição; o design decide como atingir | sim |
 | Número da linha na resposta | Como aparece na planilha, com o cabeçalho na linha 1; no OFX, a posição da transação no arquivo | Hoje a resposta usa um índice que começa em 0 e não bate com o Excel | sim |
-| Coluna de status | "pendente" ou "pending" importa como pendente; qualquer outro valor, como efetivada | É o comportamento atual e segue AD-002 | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-25.
+| Coluna de status | "pendente" ou "pending" importa como pendente; qualquer outro valor, como efetivada | É o comportamento atual e segue AD-002 | sim |
+| Correções de categoria | Registradas e usadas para sugerir a categoria nas próximas importações, pelo histórico do próprio usuário | Decisão do usuário (AD-031) | sim |
+| O que conta como correção | Definir ou trocar a categoria de uma transação importada | É o rótulo de que um classificador de categorias precisa | sim |
+| Comparação das descrições | Sem diferença de maiúsculas, acentos, espaços extras e dígitos | "UBER *TRIP 1234" e "UBER *TRIP 5678" são o mesmo estabelecimento | sim |
+| Qual correção vale | A mais recente para aquela descrição | O usuário pode ter mudado de ideia | sim |
+| Linhas com categoria no arquivo | Mantêm a categoria do arquivo, sem sugestão | A categoria informada pelo usuário tem prioridade | sim |
+| Como a sugestão aparece | A linha é gravada com a categoria sugerida e marcada como sugerida, e o resultado diz quantas foram | Revisar linha a linha antes de gravar não cabe em arquivos com milhares de linhas | sim |
+| Categoria da correção excluída | A linha fica sem sugestão | O app não sugere uma categoria que o usuário tirou | sim |
+| Uso das correções sem consentimento | Só nas sugestões do próprio usuário | O uso em modelos depende do consentimento de LGPD-33 | sim |
+
+**Open questions:** none. As decisões em aberto estão resolvidas ou registradas na tabela acima.
 
 ---
 
@@ -165,6 +176,26 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P2: Correções de categoria
+
+**User Story**: Como usuário, quero que a categoria que eu escolho para uma descrição volte sugerida nas próximas importações, para não classificar os mesmos gastos todo mês.
+
+**Why P2**: a importação funciona sem isso, mas hoje cada extrato traz de novo as mesmas descrições sem categoria, e essas escolhas são o dado de que um classificador futuro precisa (PROP-04).
+
+**Acceptance Criteria**:
+1. **IMPORT-42** WHEN o usuário define ou troca a categoria de uma transação importada THEN o sistema SHALL registrar a correção com a descrição, a conta, a categoria de antes, a de depois e a data.
+2. **IMPORT-43** WHEN uma linha importada sem categoria tem uma descrição que já recebeu correção do mesmo usuário, comparada sem diferença de maiúsculas, acentos, espaços extras e dígitos, THEN o sistema SHALL sugerir a categoria da correção mais recente para essa descrição.
+3. **IMPORT-44** WHEN o sistema sugere uma categoria THEN o sistema SHALL gravar a linha com ela e marcá-la como sugerida.
+4. **IMPORT-45** WHEN a importação termina THEN a interface SHALL mostrar quantas linhas receberam categoria sugerida, com um atalho para a lista de transações filtrada por elas.
+5. **IMPORT-46** WHEN a interface mostra uma transação com categoria sugerida THEN a interface SHALL indicar que a categoria veio do histórico do usuário.
+6. **IMPORT-47** IF a categoria da correção mais recente tiver sido excluída THEN o sistema SHALL deixar a linha sem sugestão.
+7. **IMPORT-48** WHEN a conta do usuário é apagada definitivamente THEN o sistema SHALL apagar as correções dele junto com os demais dados (AD-018).
+8. **IMPORT-49** WHILE o usuário não tiver dado o consentimento de LGPD-33, o sistema SHALL usar as correções dele só nas sugestões dele mesmo.
+
+**Independent Test**: depois de trocar para Transporte a categoria de uma transação importada "UBER *TRIP 1234", a próxima importação traz "UBER *TRIP 5678" já em Transporte, marcada como sugerida, e o resultado diz "1 linha com categoria sugerida"; uma linha da planilha que já vem com categoria mantém a do arquivo.
+
+---
+
 ## Edge Cases
 
 - Extrato que cresceu (janeiro a março e depois janeiro a abril): só as linhas de abril entram (IMPORT-34 a IMPORT-38).
@@ -177,6 +208,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 - A etapa de mapeamento de contas, que lê o arquivo antes da importação, aplica os mesmos formatos e limites (IMPORT-02, IMPORT-04 a IMPORT-06).
 - OFX importado antes desta mudança e reimportado depois: as transações antigas são reconhecidas pela data, valor, tipo e descrição (IMPORT-35).
 - Linha de uma conta excluída depois do mapeamento: rejeitada (IMPORT-21).
+- Descrição corrigida para duas categorias diferentes em momentos diferentes: vale a correção mais recente (IMPORT-43).
+- Transação com categoria sugerida que o usuário troca: a troca vira uma correção nova (IMPORT-42).
 
 ---
 
@@ -187,9 +220,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | IMPORT-02 a IMPORT-07, IMPORT-12, IMPORT-15, IMPORT-17, IMPORT-21, IMPORT-22, IMPORT-24, IMPORT-26 |
 | Falha e falha parcial | IMPORT-27, IMPORT-28 |
 | Idempotência, repetição e duplicidade | IMPORT-34 a IMPORT-39 |
-| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) na feature `autenticacao` |
+| Autorização e rate limiting | IMPORT-43 e IMPORT-49 (as correções servem só ao próprio usuário); a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01), e o rate limiting (SEG-02), na feature `autenticacao` |
 | Concorrência e ordem | IMPORT-39, IMPORT-41 |
-| Ciclo de vida dos dados | IMPORT-23, IMPORT-35 |
+| Ciclo de vida dos dados | IMPORT-23, IMPORT-35, IMPORT-47, IMPORT-48 |
 | Observabilidade | IMPORT-29, IMPORT-30 |
 | Falha de dependência externa | N/A because a importação lê um arquivo enviado pelo usuário e não chama serviço externo |
 | Integridade das transições de estado | IMPORT-20 |
@@ -243,8 +276,16 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-39 | P1: Linhas já importadas | - | Pending |
 | IMPORT-40 | P2: Tempo de processamento | - | Pending |
 | IMPORT-41 | P2: Tempo de processamento | - | Pending |
+| IMPORT-42 | P2: Correções de categoria | - | Pending |
+| IMPORT-43 | P2: Correções de categoria | - | Pending |
+| IMPORT-44 | P2: Correções de categoria | - | Pending |
+| IMPORT-45 | P2: Correções de categoria | - | Pending |
+| IMPORT-46 | P2: Correções de categoria | - | Pending |
+| IMPORT-47 | P2: Correções de categoria | - | Pending |
+| IMPORT-48 | P2: Correções de categoria | - | Pending |
+| IMPORT-49 | P2: Correções de categoria | - | Pending |
 
-**Coverage:** 41 total, 0 mapped to tasks, 41 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 49 total, 0 mapped to tasks, 49 unmapped ⚠️ (design e tasks ainda não iniciados)
 
 ---
 
@@ -253,3 +294,4 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 - [ ] Um arquivo de teste com todos os formatos de valor e de data desta spec grava cada linha com o valor, a data e o tipo esperados.
 - [ ] Importar o mesmo extrato duas vezes grava cada lançamento uma única vez.
 - [ ] Um arquivo de 10.000 linhas é importado em até 30 segundos sem atrasar as requisições de outros usuários.
+- [ ] Depois de corrigir uma vez a categoria de uma descrição, as próximas importações trazem essa descrição já na categoria escolhida, marcada como sugerida.

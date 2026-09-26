@@ -189,7 +189,7 @@
 ### AD-024
 - **Decision**: A API mantém o formato de erro do DRF (erros de validação por campo; `detail` com `code` nos demais), com todas as mensagens em português. A interface trata os erros num único lugar: erro de campo aparece no campo, os demais num aviso do Sonner, que é o único sistema de avisos, e toda requisição tem tempo máximo.
 - **Reason**: hoje as mensagens padrão saem em inglês, nove telas usam um sistema de avisos que nunca aparece (FE-02) e erros de campo são descartados (FE-08).
-- **Trade-off**: códigos de erro próprios de outras specs (`plan_locked`, `deletion_pending`, `email_not_verified`) continuam dentro do formato do DRF, e a interface precisa conhecer cada um.
+- **Trade-off**: códigos de erro próprios de outras specs (`plan_locked`, `deletion_pending`, `email_not_verified`, `terms_acceptance_required`) continuam dentro do formato do DRF, e a interface precisa conhecer cada um.
 - **Scope**: todas as rotas e todas as telas.
 - **Date**: 2026-09-26
 - **Status**: active
@@ -242,13 +242,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-031
+- **Decision**: O aceite dos termos e da política de privacidade é registrado por versão, com data, e toda versão nova precisa ser aceita antes de o usuário voltar a usar o app; sem o aceite, continuam liberados só o login, a renovação, `/auth/me`, o logout, o próprio aceite, o download dos dados, o pedido de exclusão da conta e o health check. O uso de dados anonimizados para melhorar o produto e treinar modelos depende de um consentimento separado e opcional, que começa desmarcado, pode ser retirado a qualquer momento e não é presumido para quem já tem conta. As correções de categoria das transações importadas ficam registradas e já sugerem a categoria nas próximas importações do mesmo usuário.
+- **Reason**: decisão do usuário, a partir da PROP-04. Os dados coletados a partir de agora só servem aos modelos futuros se a finalidade estiver declarada e o consentimento, registrado (LGPD, arts. 6º e 8º).
+- **Trade-off**: o conjunto para modelos fica menor, só com quem consentir, e cada mudança nos termos pede um novo aceite de todos os usuários.
+- **Scope**: lgpd, autenticacao (cadastro), sessao e todas as rotas (bloqueio sem o aceite), importacao (correções de categoria), a previsão de gastos (PROP-04) e o Open Finance (PROP-05).
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45), `relatorios` (REL-01 a REL-25) e `painel-admin` (ADMIN-01 a ADMIN-29) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-49), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-39), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45), `relatorios` (REL-01 a REL-25) e `painel-admin` (ADMIN-01 a ADMIN-29) concluídas e aprovadas; Design de nenhuma delas iniciado
 - **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas`, `relatorios` e `painel-admin` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: levar os preparativos da PROP-04 às specs `lgpd` (finalidade de melhoria do produto e aceite dos termos por versão) e `importacao` (correções de categoria), com um commit próprio. Depois, o push e o PR da branch; PROP-04 e PROP-05 não viram spec agora.
+- **Next step**: o usuário faz o push e abre o PR da branch para a `development`. Depois do merge, começar o Design e a implementação pela fase 1 do plano de ação da auditoria (CON-01, SEG-01 a SEG-04 e FIN-05), numa branch nova a partir da `development` atualizada. Os preparativos da PROP-04 já estão nas specs `lgpd` (LGPD-26 a LGPD-39) e `importacao` (IMPORT-42 a IMPORT-49); PROP-04 e PROP-05 não viram spec agora.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09

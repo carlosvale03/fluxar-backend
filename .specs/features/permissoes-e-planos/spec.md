@@ -97,7 +97,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Contas em que `role` e `is_staff` divergem hoje | São listadas na implantação, sem mudança automática | O administrador decide caso a caso | sim |
 | Página de planos | Mostra o que cada plano libera e os limites, sem compra | O pagamento está fora do escopo | sim |
 | Tempo para uma mudança de trava valer | Até 30 segundos | É o mesmo padrão do modo manutenção (SESSAO-24) | sim |
-| Cofrinho criado por uma meta | Não conta no limite de contas | Senão criar uma meta poderia travar a criação de contas do usuário | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
+| Cofrinho criado por uma meta | Não conta no limite de contas | Senão criar uma meta poderia travar a criação de contas do usuário | sim |
+
+**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
 
 ---
 

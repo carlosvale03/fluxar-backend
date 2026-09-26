@@ -51,7 +51,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validade dos links | 24 horas para a verificação e 1 hora para a redefinição | É o comportamento atual | sim |
 | IP usado nos limites | O IP do cliente informado pelo proxy do Render | Atrás do proxy, o IP da conexão é sempre o do próprio proxy | sim |
 | Troca da `SECRET_KEY` na implantação | Encerra todas as sessões abertas, e os usuários entram de novo | A chave original está no histórico público do repositório (SEG-03) | sim |
-| Contas existentes com e-mails que diferem só na caixa | São listadas e ficam como estão até uma resolução manual | Juntar duas contas automaticamente poderia misturar dados de pessoas diferentes | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
+| Contas existentes com e-mails que diferem só na caixa | São listadas e ficam como estão até uma resolução manual | Juntar duas contas automaticamente poderia misturar dados de pessoas diferentes | sim |
+
+**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
 
 ---
 

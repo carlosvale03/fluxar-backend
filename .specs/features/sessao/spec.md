@@ -45,7 +45,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Administrador durante a manutenção | Quem o backend reconhece como administrador | Hoje o frontend usa `role` e o backend usa `is_staff`; a unificação fica na feature `permissoes-e-planos` (AD-016) | sim |
 | Tempo para ligar ou desligar a manutenção valer | Até 30 segundos, sem consulta ao banco em cada requisição | Hoje cada requisição faz uma consulta ao banco só para isso (PERF-06) | sim |
 | Volta da página de manutenção | A página verifica o estado a cada 30 segundos e volta sozinha para a página anterior | O usuário não precisa recarregar nem entrar de novo | sim |
-| Rotas abertas para não administradores na manutenção | Login, renovação, `/auth/me`, logout e `/api/health/`; cadastro, verificação e redefinição ficam fechados | A manutenção não deve aceitar contas novas nem mudanças | sim |**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
+| Rotas abertas para não administradores na manutenção | Login, renovação, `/auth/me`, logout e `/api/health/`; cadastro, verificação e redefinição ficam fechados | A manutenção não deve aceitar contas novas nem mudanças | sim |
+
+**Open questions:** none. As suposições da tabela foram aprovadas pelo usuário em 2026-09-26.
 
 ---
 

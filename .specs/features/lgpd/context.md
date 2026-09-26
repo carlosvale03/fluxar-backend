@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/lgpd/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada, com o acréscimo de termos e consentimento (LGPD-26 a LGPD-39) aprovado em 2026-09-26; design não iniciado
 
 ---
 
@@ -26,6 +26,14 @@ Como os dados pessoais são guardados, a exclusão da própria conta pelo usuár
 
 - 30 dias, com a conta desativada na hora e a exclusão definitiva feita por uma rotina diária agendada.
 
+### Uso dos dados para melhorar o produto (acréscimo de 2026-09-26)
+
+- Consentimento separado e opcional, desmarcado no cadastro e nas configurações; só entram os dados de quem marcar (AD-031).
+
+### Novo aceite quando os termos mudam (acréscimo de 2026-09-26)
+
+- Obrigatório antes de voltar a usar o app; até aceitar, o usuário ainda baixa os dados e pede a exclusão da conta (AD-031).
+
 ### Agent's Discretion
 
 Nenhuma: as escolhas do agente foram apresentadas como suposições e aprovadas pelo usuário em 2026-09-26.
@@ -40,6 +48,7 @@ Registradas na tabela Assumptions & Open Questions da spec e aprovadas junto com
 - Exclusão pelo administrador, falha no meio da exclusão e conteúdo do registro.
 - O que nunca aparece em log.
 - Correção dos dados já gravados.
+- Acréscimo de 2026-09-26, aprovado junto com as suposições dele: rotas liberadas e bloqueio sem o aceite, versão dos termos, histórico de aceites, serviços citados na política, texto sobre segurança, retirada do consentimento, usuários existentes e log do usuário na exclusão definitiva (ajustado à AD-030).
 
 ---
 
@@ -62,6 +71,12 @@ Onde há dado pessoal ou financeiro em log hoje:
 | `transactions/views.py:40`, `:44` e `:46` | `print` com o payload inteiro da criação de categoria |
 | `goals/views.py:52` e `:82` | `print` com o valor do aporte e do resgate |
 | `transactions/services.py:166` | `print` com o nome do cartão |
+
+Termos e consentimento hoje:
+
+- A página "Termos & Privacidade" é uma só, datada de 26 de abril de 2026, sem número de versão (`fluxar-frontend/src/app/termos/page.tsx:32-33`), e não fala em compartilhamento com serviços, análise agregada, melhoria do produto nem IA.
+- Os termos, o cadastro e a página Sobre prometem "criptografia de ponta a ponta" (`fluxar-frontend/src/app/termos/page.tsx:89-95`, `fluxar-frontend/src/app/auth/register/page.tsx:209` e `fluxar-frontend/src/app/sobre/page.tsx:80` e `:82`).
+- O cadastro tem uma única caixa obrigatória para termos e política (`fluxar-frontend/src/app/auth/register/page.tsx:187-217`), e o backend guarda só `terms_accepted` e `terms_accepted_at` (`api/models.py:66-69`); o serializer exige o campo, mas não recusa um aceite falso (`api/serializers.py:14-17` e `:31-37`).
 
 ---
 
