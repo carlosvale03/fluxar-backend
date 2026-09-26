@@ -98,13 +98,37 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-013
+- **Decision**: O token de renovação fica num cookie httpOnly, Secure e SameSite, restrito às rotas de sessão, e o token de acesso fica só na memória da aba. Para o cookie funcionar em todos os navegadores, o frontend e a API passam a ficar no mesmo site, por domínio próprio compartilhado ou por proxy do Next.js.
+- **Reason**: decisão do usuário. Um XSS ou uma dependência comprometida não consegue ler o token de renovação, como consegue hoje no `localStorage` (SEG-05).
+- **Trade-off**: o deploy passa a exigir o mesmo site para frontend e API (hoje Vercel e Render são sites diferentes), a rota de renovação precisa de proteção contra pedidos de outras origens e cada recarga de página faz uma renovação.
+- **Scope**: sessao, autenticacao (respostas de login e verificação), o frontend inteiro e a infraestrutura de deploy.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-014
+- **Decision**: Trocar a senha encerra todas as outras sessões do usuário e mantém a atual; redefinir a senha por link ou pelo administrador encerra todas. Os tokens de acesso dessas sessões são recusados já na próxima requisição, e o mesmo vale para uma conta desativada ou excluída.
+- **Reason**: decisão do usuário. Quem troca a senha por suspeita de invasão precisa derrubar o invasor na hora.
+- **Trade-off**: o backend confere a cada requisição se a sessão do token ainda vale.
+- **Scope**: sessao, autenticacao (redefinição por link) e o painel admin (redefinição e desativação).
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-015
+- **Decision**: Durante o modo manutenção, só administradores usam a API; os demais recebem 503 com o código `maintenance_mode`, sem perder a sessão. Login, renovação, `/auth/me`, logout e `/api/health/` continuam respondendo para todos.
+- **Reason**: decisão do usuário. Hoje a manutenção desloga até os administradores, e o health check do Render passa a falhar (OPS-04).
+- **Trade-off**: toda rota nova precisa respeitar a regra da manutenção, e a definição de administrador depende da feature do painel admin (SEG-06).
+- **Scope**: sessao, painel admin e todas as rotas da API.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18) e `autenticacao` (AUTH-01 a AUTH-44) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios` e `autenticacao` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44) e `sessao` (SESSAO-01 a SESSAO-25) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao` e `sessao` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `sessao` na mesma branch, com um commit próprio.
+- **Next step**: especificar a feature `permissoes-e-planos` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
