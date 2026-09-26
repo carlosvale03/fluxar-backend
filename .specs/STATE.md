@@ -218,13 +218,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-028
+- **Decision**: O valor de uma meta é a soma dos aportes menos os resgates registrados para ela, calculada a partir desses registros e não guardada à parte. Várias metas podem usar o mesmo cofrinho; o que entra ou sai dele por fora de aporte e resgate muda só o saldo livre do cofrinho, sem rateio entre as metas. Aporte e resgate podem usar o saldo livre do próprio cofrinho sem criar transferência, e excluir ou mudar a transação de um aporte ou resgate muda a meta na mesma operação.
+- **Reason**: decisão do usuário. Acaba com o valor que não volta (FIN-09), a meta inflada pelo próprio cofrinho (FIN-20), o crédito de um lado só entre cofrinhos (FIN-37) e os centavos do rateio (FIN-38).
+- **Trade-off**: o dinheiro que entra no cofrinho por fora não vai sozinho para as metas; o usuário aloca o saldo livre, e o app avisa quando o cofrinho tem menos do que as metas somam.
+- **Scope**: metas, saldo (transferências de e para cofrinhos), gestao-do-salario (aportes da divisão), permissoes-e-planos (PERM-22) e o frontend.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56) e `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37) e `metas` (META-01 a META-45) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes` e `metas` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: PROP-04 e PROP-05 não viram spec agora (seção 11 da auditoria). Faltam as features que as outras specs já citam e que ainda não têm spec: `metas`, `relatorios` e o painel admin. Os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`. O próximo passo depende da escolha do usuário.
+- **Next step**: especificar a feature `relatorios`, na mesma branch e com um commit próprio. Depois dela, falta o painel admin; os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`, e PROP-04 e PROP-05 não viram spec agora.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
