@@ -138,13 +138,37 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-018
+- **Decision**: A exclusão da conta pelo usuário desativa a conta na hora, encerra as sessões e dá 30 dias para desistir; no fim do prazo, uma rotina diária apaga tudo (dados pessoais, financeiros e imagens no Cloudinary) e guarda só um registro sem dados pessoais. Antes de confirmar, o usuário pode baixar os dados financeiros em XLSX, qualquer que seja o plano. A exclusão pelo administrador é imediata e faz a mesma limpeza.
+- **Reason**: decisão do usuário. Atende o direito de exclusão da LGPD sem apagar por engano, e o usuário leva os próprios dados antes.
+- **Trade-off**: exige uma rotina diária agendada no Render, e toda feature que guarde dados do usuário precisa entrar na lista do que a exclusão apaga.
+- **Scope**: lgpd, autenticacao (login durante o prazo), sessao (fim das sessões), permissoes-e-planos (exportação essencial no fluxo de exclusão) e toda feature que guarde dados do usuário.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-019
+- **Decision**: Nenhum log ou registro de auditoria contém e-mail completo, nome, CPF, telefone, data de nascimento, renda, senha, token ou parte dele, conteúdo de requisição, nem descrição, valor ou nome de conta, cartão, categoria ou meta. Para identificar um usuário, vale o identificador interno ou o e-mail mascarado. Mensagens passam só pelo log com nível, nunca por `print`.
+- **Reason**: hoje o e-mail inteiro aparece a cada login e em todo envio de e-mail, junto com pedaços de tokens e payloads (SEG-09), e os logs ficam guardados por terceiros.
+- **Trade-off**: depurar um problema de um usuário específico exige cruzar o identificador interno com o banco.
+- **Scope**: todo o backend e qualquer log novo.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-020
+- **Decision**: CPF, telefone, data de nascimento e renda mensal ficam criptografados no banco, com uma chave própria obrigatória em produção. O CPF deixa de ser único, e o painel admin mostra esses dados mascarados ou ocultos.
+- **Reason**: são dados pessoais que o app só exibe e não usa para buscar nem somar; hoje ficam em texto puro, e a unicidade do CPF revela se ele está cadastrado (SEG-09).
+- **Trade-off**: não dá para buscar nem ordenar por esses campos no banco, e perder a chave torna os dados ilegíveis.
+- **Scope**: lgpd, painel admin e qualquer dado pessoal novo que não seja usado em buscas.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25) e `permissoes-e-planos` (PERM-01 a PERM-29) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao` e `permissoes-e-planos` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29) e `lgpd` (LGPD-01 a LGPD-25) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos` e `lgpd` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `lgpd` na mesma branch, com um commit próprio.
+- **Next step**: especificar a feature `contratos-frontend-backend` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09

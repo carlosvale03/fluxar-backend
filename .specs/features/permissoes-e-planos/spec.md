@@ -67,6 +67,7 @@ Ficam liberados em todos os planos e não têm trava:
 - Transferências entre contas.
 - Categorias: listar, usar e criar dentro do limite.
 - Pagamento e estorno de faturas existentes e movimentação das contas-cofrinho das metas (PERM-22).
+- Download dos dados financeiros em XLSX dentro do fluxo de exclusão da conta (LGPD-02).
 - Página de planos.
 
 ---
