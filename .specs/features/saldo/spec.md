@@ -26,7 +26,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Fuso horário dos relatórios (FIN-34) | Feature `relatorios`. Aqui só a data de "hoje" nas regras de saldo segue o fuso de Brasília |
 | Validação do mês do orçamento (FIN-40) | Feature de orçamentos |
 | Exclusão definitiva de usuário e limpeza de dados pelo admin (FIN-28, FIN-42) | Painel admin. Os dados do usuário somem por inteiro e não resta saldo a manter |
-| Impedir que um usuário movimente a conta de outro (SEG-01) | Autorização; fica numa feature de segurança |
+| Impedir que um usuário movimente a conta de outro (SEG-01) | Feature `isolamento-entre-usuarios` |
 | Performance de listagens e relatórios (PERF-01 a PERF-04) | Não muda o comportamento; fica para o design ou para uma feature própria |
 | Reativar uma conta excluída | Não existe hoje e não foi pedido |
 
@@ -50,7 +50,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Dados já gravados em produção | Na implantação, as ocorrências geradas por série (exceto a primeira) que estejam efetivadas e tenham data futura voltam a pendentes, e o saldo de todas as contas é recalculado | Corrige o efeito de FIN-01 e as divergências dos outros bugs (FIN-29) sem exigir ação do usuário | sim |
 | Contas já excluídas com saldo diferente de zero antes da correção | Continuam excluídas e fora dos totais | O card "Saldo em Contas" já as ignora hoje; só o saldo total e o patrimônio mudam | sim |
 | Ajuste de saldo | O usuário informa o novo saldo; a diferença, calculada em decimal, vira uma transação efetivada com a data de hoje | É o fluxo atual da tela de ajuste, sem o erro de ponto flutuante (CON-06) | sim |
-| Data de "hoje" | A data corrente no fuso de Brasília (`America/Sao_Paulo`) | Os usuários estão no Brasil e o servidor roda em UTC (FIN-34) | sim |
+| Data de "hoje" | A data corrente no fuso de Brasília (`America/Sao_Paulo`), conforme AD-008 | Os usuários estão no Brasil e o servidor roda em UTC (FIN-34) | sim |
 | Status das pernas de uma transferência | As duas pernas têm sempre o mesmo status | Uma perna efetivada sem a outra criaria ou destruiria dinheiro | sim |
 
 **Open questions:** none. As decisões dos itens marcados como suposição foram delegadas ao agente pelo usuário em 2026-09-25.
@@ -127,7 +127,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. **SALDO-23** WHEN uma fatura é paga com o valor V a partir de uma conta THEN o sistema SHALL diminuir o saldo dessa conta exatamente em V.
 2. **SALDO-24** WHEN o pagamento de uma fatura é estornado THEN o sistema SHALL somar de volta à conta de pagamento exatamente o valor pago.
 3. **SALDO-25** WHEN uma fatura é paga, estornada e paga de novo com o mesmo valor THEN o sistema SHALL deixar a conta de pagamento com um único débito desse valor.
-4. **SALDO-26** IF uma fatura já paga, ou com um pagamento em andamento, receber outro pedido de pagamento THEN o sistema SHALL processar um único pagamento e recusar os demais com HTTP 400 e a mensagem "Fatura já está paga."
+4. **SALDO-26** IF uma fatura já paga, ou com um pagamento em andamento, receber o pedido de outra tentativa de pagamento THEN o sistema SHALL processar um único pagamento e recusar os demais com HTTP 400 e a mensagem "Fatura já está paga."; a repetição da mesma tentativa segue FATURA-30 (AD-007).
 5. **SALDO-27** IF o usuário pedir o estorno de uma fatura que não está paga THEN o sistema SHALL recusá-lo com HTTP 400, sem alterar nenhum saldo.
 6. **SALDO-46** IF o usuário tentar efetivar uma compra no cartão fora do pagamento da fatura THEN o sistema SHALL recusar a operação com HTTP 400.
 
@@ -225,7 +225,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | SALDO-09, SALDO-17, SALDO-18, SALDO-19, SALDO-35 |
 | Falha e falha parcial | SALDO-10 |
 | Idempotência, repetição e duplicidade | SALDO-26, SALDO-27, SALDO-45 |
-| Autorização e rate limiting | N/A because a posse das contas (SEG-01) e o rate limiting (SEG-02) ficam na feature de segurança |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) na feature `autenticacao` |
 | Concorrência e ordem | SALDO-26, SALDO-44, SALDO-45 |
 | Ciclo de vida dos dados | SALDO-32 a SALDO-38, SALDO-47 |
 | Observabilidade | SALDO-39 |
