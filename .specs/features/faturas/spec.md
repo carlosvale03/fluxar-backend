@@ -25,7 +25,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Exclusão de cartão com faturas em aberto | Ciclo de vida do cartão; fica para uma feature de cartões |
 | Relatórios e dashboard que somam faturas (faturas do mês, patrimônio) | Feature `relatorios` |
 | Importação de extratos de cartão | Não existe hoje e não foi pedida; a spec `importacao` também a deixa de fora |
-| Impedir que um usuário acesse o cartão de outro (SEG-01) | Autorização; fica numa feature de segurança |
+| Impedir que um usuário acesse o cartão de outro (SEG-01) | Feature `isolamento-entre-usuarios` |
 
 ---
 
@@ -219,7 +219,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | FATURA-05, FATURA-26, FATURA-32, SALDO-09 |
 | Falha e falha parcial | FATURA-28 |
 | Idempotência, repetição e duplicidade | FATURA-29 a FATURA-33 |
-| Autorização e rate limiting | N/A because a posse dos cartões (SEG-01) e o rate limiting (SEG-02) ficam na feature de segurança |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) numa feature de autenticação |
 | Concorrência e ordem | FATURA-31, SALDO-26 |
 | Ciclo de vida dos dados | FATURA-07, FATURA-19, FATURA-20, FATURA-39 a FATURA-41 |
 | Observabilidade | FATURA-27 |

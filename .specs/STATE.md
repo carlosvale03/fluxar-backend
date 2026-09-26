@@ -74,13 +74,21 @@
 - **Date**: 2026-09-25
 - **Status**: active
 
+### AD-010
+- **Decision**: Toda relação gravável pela API só aceita objetos do usuário da requisição. Um ID de outro usuário no corpo da requisição recebe HTTP 400, com o erro no campo e a mesma mensagem de um ID inexistente; no endereço, recebe HTTP 404, também igual a um objeto inexistente.
+- **Reason**: decisão do usuário. O 400 mantém o erro por campo nos formulários, e a resposta idêntica à de um ID inexistente não revela que o ID existe em outra conta.
+- **Trade-off**: as views que hoje respondem 404 para um ID do corpo (aporte e resgate de meta, importação) mudam para 400.
+- **Scope**: todas as features; qualquer relação nova precisa seguir esta regra.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45) e `importacao` (IMPORT-01 a IMPORT-41) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas` e `importacao` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41) e `isolamento-entre-usuarios` (ISOL-01 a ISOL-18) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao` e `isolamento-entre-usuarios` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a próxima feature da série na mesma branch, com um commit próprio.
+- **Next step**: especificar a feature `autenticacao` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09

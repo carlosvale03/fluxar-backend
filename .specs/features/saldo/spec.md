@@ -26,7 +26,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Fuso horário dos relatórios (FIN-34) | Feature `relatorios`. Aqui só a data de "hoje" nas regras de saldo segue o fuso de Brasília |
 | Validação do mês do orçamento (FIN-40) | Feature de orçamentos |
 | Exclusão definitiva de usuário e limpeza de dados pelo admin (FIN-28, FIN-42) | Painel admin. Os dados do usuário somem por inteiro e não resta saldo a manter |
-| Impedir que um usuário movimente a conta de outro (SEG-01) | Autorização; fica numa feature de segurança |
+| Impedir que um usuário movimente a conta de outro (SEG-01) | Feature `isolamento-entre-usuarios` |
 | Performance de listagens e relatórios (PERF-01 a PERF-04) | Não muda o comportamento; fica para o design ou para uma feature própria |
 | Reativar uma conta excluída | Não existe hoje e não foi pedido |
 
@@ -225,7 +225,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | SALDO-09, SALDO-17, SALDO-18, SALDO-19, SALDO-35 |
 | Falha e falha parcial | SALDO-10 |
 | Idempotência, repetição e duplicidade | SALDO-26, SALDO-27, SALDO-45 |
-| Autorização e rate limiting | N/A because a posse das contas (SEG-01) e o rate limiting (SEG-02) ficam na feature de segurança |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) numa feature de autenticação |
 | Concorrência e ordem | SALDO-26, SALDO-44, SALDO-45 |
 | Ciclo de vida dos dados | SALDO-32 a SALDO-38, SALDO-47 |
 | Observabilidade | SALDO-39 |
