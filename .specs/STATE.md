@@ -42,13 +42,37 @@
 - **Date**: 2026-09-25
 - **Status**: active
 
+### AD-006
+- **Decision**: Quando uma regra usa um dia do mês que não existe naquele mês (29, 30 ou 31), vale o último dia do mês. O ajuste não se acumula: no mês seguinte volta o dia original.
+- **Reason**: decisão do usuário. É o que os bancos fazem com fechamento e vencimento, e mantém cada data no próprio mês.
+- **Trade-off**: em meses curtos o ciclo da fatura fica um ou dois dias menor.
+- **Scope**: faturas (fechamento e vencimento) e qualquer regra mensal por dia, inclusive as séries recorrentes mensais.
+- **Date**: 2026-09-25
+- **Status**: active
+
+### AD-007
+- **Decision**: O pagamento de fatura é idempotente. Cada tentativa leva um identificador; a repetição com o mesmo identificador recebe a mesma resposta do primeiro processamento e não gera outro pagamento. Um pagamento com outro identificador, ou sem identificador, numa fatura já paga é recusado com HTTP 400.
+- **Reason**: decisão do usuário. Um reenvio depois de timeout, comum no cold start do Render, não pode cobrar duas vezes nem mostrar um erro falso.
+- **Trade-off**: o backend guarda o identificador de cada pagamento, e o frontend precisa gerar e reaproveitar o identificador da tentativa.
+- **Scope**: faturas, saldo (SALDO-26) e o frontend.
+- **Date**: 2026-09-25
+- **Status**: active
+
+### AD-008
+- **Decision**: Toda regra que depende da data de hoje usa a data corrente no fuso de Brasília (`America/Sao_Paulo`).
+- **Reason**: os usuários estão no Brasil e o servidor roda em UTC; depois das 21h o "hoje" do servidor já é o dia seguinte (FIN-34).
+- **Trade-off**: um usuário em outro fuso vê a virada do dia no horário de Brasília.
+- **Scope**: saldo (data do ajuste), faturas (fatura aberta ou fechada, próximo vencimento), relatorios e séries recorrentes.
+- **Date**: 2026-09-25
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: saldo (`.specs/features/saldo/`)
-- **Phase / Task**: Specify concluída e aprovada; Design não iniciado
-- **Completed**: `spec.md` (SALDO-01 a SALDO-47) e `context.md`
+- **Feature**: série de specs da auditoria (`.specs/features/`)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47) e `faturas` (FATURA-01 a FATURA-45) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo/spec.md`, `saldo/context.md`, `faturas/spec.md`, `faturas/context.md`
 - **In-progress** (file:line): nenhum
-- **Next step**: fazer o Design da feature saldo a partir de `spec.md`, respeitando AD-001 a AD-005.
+- **Next step**: especificar a feature `importacao` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: docs/spec-saldo-contas-e-dashboard
+- **Branch**: docs/specs-features-auditoria-2026-09
