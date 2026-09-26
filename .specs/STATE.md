@@ -162,13 +162,45 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-021
+- **Decision**: Coleções pequenas (contas, cartões, faturas de um cartão, categorias, tags, orçamentos, metas e monitores de foco) vêm completas, sem paginação. Transações e as listas de usuários e de logs do admin vêm paginadas num formato único (`count`, `total_pages`, `current_page`, `next`, `previous` e `results`), com 20 itens por padrão e no máximo 100.
+- **Reason**: decisão do usuário. Hoje oito rotas cortam no 10º item, e a interface lê só a primeira página (CON-02).
+- **Trade-off**: uma coleção pequena que cresça muito vem inteira numa única resposta.
+- **Scope**: todas as rotas de lista e todas as telas que as consomem.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-022
+- **Decision**: Filtros com vários valores repetem o parâmetro (`categoryId=a&categoryId=b`), e escolher uma categoria-pai inclui as subcategorias. A lista, a exportação e os relatórios aceitam os mesmos filtros com o mesmo significado, e uma rota que recebe um filtro desconhecido responde 400.
+- **Reason**: decisão do usuário. Hoje o filtro aplica só a última categoria (CON-05), a exportação entende "despesas" de outro jeito (FIN-25) e filtros desconhecidos são ignorados em silêncio (CON-07, CON-12).
+- **Trade-off**: toda tela que envia um parâmetro fora do contrato passa a receber erro, em vez de um resultado ignorado.
+- **Scope**: transações, exportações, relatórios e qualquer rota de lista com filtro.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-023
+- **Decision**: Valores em dinheiro trafegam como texto decimal com duas casas e ponto ("1234.56") em todas as rotas, inclusive nos relatórios, e o frontend não faz conta em ponto flutuante nem tem formatação de moeda própria em cada tela. Datas sem hora trafegam como `AAAA-MM-DD` e são tratadas como datas de calendário, sem fuso; datas com hora usam ISO 8601 com o fuso.
+- **Reason**: hoje os relatórios enviam números de ponto flutuante, o frontend soma e subtrai valores em ponto flutuante e datas sem hora perdem um dia no fuso de Brasília (FE-03, CON-06, CON-11, FIN-44).
+- **Trade-off**: gráficos e contas do frontend precisam converter o texto decimal antes de usar os valores.
+- **Scope**: todas as rotas e telas que mostram ou recebem valores e datas.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-024
+- **Decision**: A API mantém o formato de erro do DRF (erros de validação por campo; `detail` com `code` nos demais), com todas as mensagens em português. A interface trata os erros num único lugar: erro de campo aparece no campo, os demais num aviso do Sonner, que é o único sistema de avisos, e toda requisição tem tempo máximo.
+- **Reason**: hoje as mensagens padrão saem em inglês, nove telas usam um sistema de avisos que nunca aparece (FE-02) e erros de campo são descartados (FE-08).
+- **Trade-off**: códigos de erro próprios de outras specs (`plan_locked`, `deletion_pending`, `email_not_verified`) continuam dentro do formato do DRF, e a interface precisa conhecer cada um.
+- **Scope**: todas as rotas e todas as telas.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29) e `lgpd` (LGPD-01 a LGPD-25) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos` e `lgpd` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25) e `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd` e `contratos-frontend-backend` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `contratos-frontend-backend` na mesma branch, com um commit próprio.
+- **Next step**: levantar as novas ideias do usuário (gestão do salário, classes de despesa, vínculo entre transações, previsão de gastos e Open Finance), acrescentar o levantamento a `docs/auditoria-2026-09.md` depois da aprovação e especificar as features que saírem dele na mesma branch, um commit por spec.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
