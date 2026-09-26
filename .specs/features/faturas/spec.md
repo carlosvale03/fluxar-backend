@@ -219,7 +219,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | FATURA-05, FATURA-26, FATURA-32, SALDO-09 |
 | Falha e falha parcial | FATURA-28 |
 | Idempotência, repetição e duplicidade | FATURA-29 a FATURA-33 |
-| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) numa feature de autenticação |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) na feature `autenticacao` |
 | Concorrência e ordem | FATURA-31, SALDO-26 |
 | Ciclo de vida dos dados | FATURA-07, FATURA-19, FATURA-20, FATURA-39 a FATURA-41 |
 | Observabilidade | FATURA-27 |

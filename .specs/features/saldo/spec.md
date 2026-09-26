@@ -225,7 +225,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | SALDO-09, SALDO-17, SALDO-18, SALDO-19, SALDO-35 |
 | Falha e falha parcial | SALDO-10 |
 | Idempotência, repetição e duplicidade | SALDO-26, SALDO-27, SALDO-45 |
-| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) numa feature de autenticação |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) na feature `autenticacao` |
 | Concorrência e ordem | SALDO-26, SALDO-44, SALDO-45 |
 | Ciclo de vida dos dados | SALDO-32 a SALDO-38, SALDO-47 |
 | Observabilidade | SALDO-39 |

@@ -19,8 +19,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | Feature | Reason |
 | ------- | ------ |
 | Painel admin, que acessa todos os usuários por desenho, e a regra de quem é administrador (SEG-06) | Regra de administrador; fica numa feature própria |
-| Rate limiting e força bruta no login, cadastro e redefinição de senha (SEG-02) | Autenticação; fica numa feature própria |
-| Sessão, tokens e revogação (SEG-05) | Autenticação; fica numa feature própria |
+| Rate limiting e força bruta no login, cadastro e redefinição de senha (SEG-02) | Feature `autenticacao` |
+| Sessão, tokens e revogação (SEG-05) | Feature `sessao` |
 | Admin do Django (`/admin/`) | Acesso restrito a staff |
 | Compartilhar contas ou dados entre usuários | Não existe e não foi pedido |
 | Registrar no log as tentativas de usar IDs de outro usuário | Não foi pedido; a verificação de ISOL-16 cobre os dados gravados |

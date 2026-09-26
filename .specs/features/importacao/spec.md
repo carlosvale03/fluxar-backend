@@ -187,7 +187,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Validação de entrada e limites | IMPORT-02 a IMPORT-07, IMPORT-12, IMPORT-15, IMPORT-17, IMPORT-21, IMPORT-22, IMPORT-24, IMPORT-26 |
 | Falha e falha parcial | IMPORT-27, IMPORT-28 |
 | Idempotência, repetição e duplicidade | IMPORT-34 a IMPORT-39 |
-| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) numa feature de autenticação |
+| Autorização e rate limiting | N/A because a posse dos dados fica na feature `isolamento-entre-usuarios` (SEG-01) e o rate limiting (SEG-02) na feature `autenticacao` |
 | Concorrência e ordem | IMPORT-39, IMPORT-41 |
 | Ciclo de vida dos dados | IMPORT-23, IMPORT-35 |
 | Observabilidade | IMPORT-29, IMPORT-30 |

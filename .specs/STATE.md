@@ -82,13 +82,29 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-011
+- **Decision**: E-mails transacionais são enviados dentro da própria requisição, tentando os provedores em ordem (Resend e depois SMTP), com no máximo 10 segundos no total e sem thread em segundo plano. Todo texto vindo do usuário é escapado no HTML, e o endereço aparece mascarado nos logs.
+- **Reason**: decisão do usuário: a falha no envio não bloqueia o cadastro, e o usuário pede o reenvio. Dispensa fila e rotina agendada, e acaba com os e-mails perdidos em threads soltas quando o worker reinicia (OPS-05).
+- **Trade-off**: sem nova tentativa automática, um e-mail que falha depende de o usuário pedir o reenvio; a requisição pode levar até 10 segundos a mais quando os provedores estão lentos.
+- **Scope**: autenticacao e qualquer e-mail transacional futuro.
+- **Date**: 2026-09-26
+- **Status**: active
+
+### AD-012
+- **Decision**: Em produção (`DEBUG` desligado), o backend não sobe sem a configuração obrigatória (`SECRET_KEY` e `FRONTEND_URL`), e a falta da lista de CORS não libera nenhuma origem. Nenhuma configuração de segurança tem valor padrão que falhe aberto.
+- **Reason**: hoje a `SECRET_KEY` tem um fallback público, que permitiria forjar tokens de qualquer usuário, e o CORS libera todas as origens quando a variável falta (SEG-03).
+- **Trade-off**: um deploy com variável faltando falha na hora, em vez de subir degradado.
+- **Scope**: todas as features e qualquer configuração nova.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41) e `isolamento-entre-usuarios` (ISOL-01 a ISOL-18) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao` e `isolamento-entre-usuarios` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18) e `autenticacao` (AUTH-01 a AUTH-44) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios` e `autenticacao` (`spec.md` e `context.md` de cada uma)
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `autenticacao` na mesma branch, com um commit próprio.
+- **Next step**: especificar a feature `sessao` na mesma branch, com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
