@@ -210,13 +210,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-027
+- **Decision**: Uma despesa ou compra no cartão pode ser dependente de uma transação principal, num nível só: a dependente tem uma principal só, e a principal não é dependente de outra. O vínculo é só informação: não altera saldo, fatura nem orçamento, cada dependente conta só na própria categoria, e excluir a principal apenas desfaz o vínculo. A compra parcelada se liga inteira, pela primeira parcela. O vínculo fica só no app, fora dos arquivos de exportação e importação.
+- **Reason**: decisão do usuário (PROP-03). Mostra o custo real de um gasto sem distorcer os totais por categoria.
+- **Trade-off**: cadeias, como um gasto que puxa outro que puxa um terceiro, ficam achatadas num nível, e a planilha exportada não leva o vínculo.
+- **Scope**: vinculo-entre-transacoes, relatorios (contagem por categoria), exportação (filtro), faturas (parcelas) e o frontend.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40) e `gestao-do-salario` (SALARIO-01 a SALARIO-56) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa` e `gestao-do-salario` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56) e `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `vinculo-entre-transacoes` a partir da PROP-03 (`docs/auditoria-2026-09.md`, seção 11), na mesma branch e com um commit próprio.
+- **Next step**: PROP-04 e PROP-05 não viram spec agora (seção 11 da auditoria). Faltam as features que as outras specs já citam e que ainda não têm spec: `metas`, `relatorios` e o painel admin. Os preparativos da PROP-04 entram nas specs `lgpd` e `importacao`. O próximo passo depende da escolha do usuário.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09
