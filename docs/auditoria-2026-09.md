@@ -1,6 +1,6 @@
 # Auditoria técnica do Fluxar — setembro de 2026
 
-Levantamento de integridade financeira, segurança, contratos entre frontend e backend, performance, operação e manutenibilidade dos repositórios `fluxar-backend` e `fluxar-frontend`.
+Levantamento de integridade financeira, segurança, contratos entre frontend e backend, performance, operação e manutenibilidade dos repositórios `fluxar-backend` e `fluxar-frontend`, e análise das funcionalidades novas propostas.
 
 | | |
 |---|---|
@@ -8,6 +8,7 @@ Levantamento de integridade financeira, segurança, contratos entre frontend e b
 | Backend | `fluxar-backend`, branch `development`, commit `f85219f` (mesmo conteúdo da `main`) |
 | Frontend | `fluxar-frontend`, branch `development`, commit `f2c74d5` (mesmo conteúdo da `main`) |
 | Método | Leitura do código não gerado (~7,3 mil linhas de Python e ~28 mil de TS/TSX), execução isolada das funções de cálculo, `npm audit --omit=dev`, `tsc --noEmit` e `npm run lint` |
+| Seção 11 | Acrescentada em 26/09/2026, com pesquisa externa sobre Open Finance e LGPD (Apêndice C) |
 
 ## Como ler este documento
 
@@ -38,8 +39,10 @@ Levantamento de integridade financeira, segurança, contratos entre frontend e b
 8. [Manutenibilidade](#8-manutenibilidade)
 9. [Pontos positivos](#9-pontos-positivos)
 10. [Plano de ação sugerido](#10-plano-de-ação-sugerido)
+11. [Novas funcionalidades propostas](#11-novas-funcionalidades-propostas)
 - [Apêndice A — Resultados de ferramentas](#apêndice-a--resultados-de-ferramentas)
 - [Apêndice B — Histórico e segredos](#apêndice-b--histórico-e-segredos)
+- [Apêndice C — Fontes externas da seção 11](#apêndice-c--fontes-externas-da-seção-11)
 
 ## Sumário executivo
 
@@ -54,6 +57,8 @@ Além disso, há fluxos essenciais quebrados por divergência de contrato entre 
 | MÉDIO | 41 |
 | BAIXO | 41 |
 | **Total** | **112** |
+
+A seção 11, acrescentada depois, analisa cinco funcionalidades novas propostas e não entra nessa contagem.
 
 As cinco ações de maior retorno imediato:
 
@@ -851,6 +856,187 @@ is_admin_user = request.user.is_authenticated and request.user.is_staff
 
 ---
 
+## 11. Novas funcionalidades propostas
+
+Acrescentada em 26/09/2026, a partir de ideias do usuário. As referências valem para os mesmos commits do cabeçalho. Estes itens não são defeitos e ficam fora da contagem do sumário executivo: cada um descreve a ideia, o que o código já tem, o que falta, os pontos críticos e o que decidir na spec.
+
+| ID | Ideia | Vira spec agora? | Depende de |
+|---|---|---|---|
+| PROP-01 | Gestão do salário | Sim, depois da PROP-02 | specs `saldo` e `permissoes-e-planos`, PROP-02 |
+| PROP-02 | Classes de despesa | Sim, primeiro | spec `contratos-frontend-backend` (filtros) |
+| PROP-03 | Vínculo entre transações | Sim | specs `isolamento-entre-usuarios` e `contratos-frontend-backend` |
+| PROP-04 | Previsão de gastos com machine learning | Não; só os preparativos | correções das seções 2 e 5, spec `lgpd`, PROP-02, PROP-03 e PROP-05 |
+| PROP-05 | Open Finance | Não; antes, a cobrança dos planos, a escolha do provedor e a regra final do Banco Central | cobrança dos planos, specs `permissoes-e-planos`, `lgpd` e `importacao` |
+
+### PROP-01 · Gestão do salário
+
+**A ideia:** quando o salário cai, o usuário entra na gestão do salário e monta o plano de divisão do valor entre contas e cofrinhos. Primeiro separa o que vai guardar e o que já está comprometido no mês; o resto fica livre para gastar. No fim, gera todas as transações do plano com um único clique, depois de uma confirmação forte, e pode desfazer a geração inteira.
+
+**O que já existe**
+
+- Transferência atômica entre contas, com as duas pontas ligadas pelo `transfer_id` (`transactions/services.py:49-72`).
+- Cofrinho é um tipo de conta (`PIGGY_BANK`, `accounts/models.py:11`). O aporte numa meta é uma transferência real para a conta-cofrinho da meta mais um registro em `GoalDeposit` (`goals/services.py:43-68`), e a meta já calcula quanto guardar por mês até a data-alvo (`goals/services.py:137-170`).
+- A categoria padrão "Salário" (`transactions/signals.py:9`), os orçamentos mensais por categoria (`budgets/models.py:6-26`), a receita esperada do mês (a do mês corrente ou a média dos últimos 90 dias, `reports/services.py:181-212`) e o relatório de gastos fixos e variáveis, que adivinha por palavras-chave e recorrência (`reports/services.py:793-845`).
+
+**O que falta**
+
+- Nada marca uma receita como salário nem guarda o dia do pagamento: "Salário" é uma categoria como as outras.
+- Não há plano de divisão salvo, geração de várias transações de uma vez, forma de desfazer um lote nem aviso ao usuário. A exclusão em lote só existe por série recorrente ou por transferência (`transactions/views.py:162-177`), e não existe modelo de notificação, push nem rotina agendada.
+- `User.monthly_income` existe (`api/models.py:56`), mas nenhuma tela o preenche e nenhuma regra o lê.
+
+**Pontos críticos**
+
+1. **O Fluxar não move dinheiro.** A divisão só é verdade se o usuário também fizer as transferências no banco. Registrá-las como efetivadas sem isso afasta o saldo do app do saldo do banco. A spec escolhe entre transferências registradas como pendentes até o usuário confirmar cada uma (como a AD-002 faz com as recorrências), uma reserva virtual dentro da própria conta ou as duas.
+2. **Tudo ou nada, sem repetição.** O clique único cria várias transferências e aportes de uma vez. Se uma parte falhar, nada fica gravado, e um reenvio depois de timeout (comum no cold start) não gera o lote de novo, como a AD-007 já exige do pagamento de fatura.
+3. **Confirmação forte.** Antes de gerar, o usuário revê a lista completa do que será criado, com origem, destino, valor e data de cada transação e o total, e confirma de forma explícita, sabendo quantas transações e quanto dinheiro vão ser lançados. Um mesmo recebimento de salário só é dividido uma vez: gerar de novo exige desfazer a geração anterior.
+4. **Desfazer.** A geração inteira pode ser desfeita de uma vez: todas as transações criadas por ela saem juntas, e saldos, metas e orçamentos voltam ao que eram, pelas regras da spec `saldo` (AD-004). Para isso, cada transação guarda o identificador da geração que a criou. Hoje, excluir uma transação não devolve o valor da meta (`goals/signals.py:92-102`, FIN-09), e o desfazer herdaria esse erro. A spec define até quando dá para desfazer e o que acontece quando parte do lote já mudou: uma transação editada ou excluída à mão, ou um cofrinho que já teve resgate e não tem mais o valor aportado.
+5. **Centavos.** Dividir R$ 3.000,00 em três partes de 33,33% deixa R$ 0,01 sem destino. A regra diz para onde vai a sobra.
+6. **Salário diferente do plano.** Quando cai menos que o previsto, ou menos que a soma dos valores fixos, a spec define o que é reduzido primeiro. O mesmo vale para salário pago em duas partes (adiantamento e restante), 13º, férias e rendas extras.
+7. **Rateio automático das metas.** Toda transação criada numa conta-cofrinho é repartida entre todas as metas ativas daquela conta, proporcionalmente e sem olhar o status (`goals/signals.py:11-90`). Um depósito da divisão numa conta compartilhada por várias metas cai nesse rateio, e não na meta escolhida.
+8. **Erros que a divisão herdaria.** A API de transferência não confere se origem e destino são diferentes nem se o valor é positivo (`transactions/serializers.py:248-261`), e o aporte a partir do próprio cofrinho infla a meta (FIN-20). A divisão segue as regras da spec `saldo` (AD-004) e cria transferências só pela operação de transferência (AD-005).
+9. **Renda do perfil.** Pela AD-020, `monthly_income` passa a ser criptografado e não entra em contas. O valor esperado do salário sai das receitas marcadas como salário; usar o campo do perfil exigiria rever a AD-020.
+10. **O gatilho.** "No momento em que recebe" depende de o app saber que o salário caiu. Sem Open Finance, esse momento é quando o usuário efetiva a receita marcada como salário (AD-002). Com Open Finance (PROP-05), o próprio crédito no banco pode abrir a divisão.
+
+**Decisões para a spec**
+
+- Transferências registradas, reserva virtual ou as duas.
+- Regras em percentual, em valor fixo ou nos dois, e a ordem de prioridade ("guardar primeiro").
+- O que conta como comprometido no mês: recorrências pendentes, faturas que vencem no mês e orçamentos das categorias essenciais (PROP-02).
+- Se o app sugere a divisão a partir do histórico e se oferece um modelo inicial, como o 50/30/20 (essenciais, dispensáveis e guardar).
+- Como o salário é reconhecido: pela categoria, por uma recorrência marcada como salário ou pelo próprio plano de divisão.
+- A forma da confirmação forte: a revisão da lista com o total, um botão que diz a quantidade e o valor, ou digitar o total.
+- Até quando a geração pode ser desfeita e, quando parte do lote já mudou, se o desfazer é bloqueado ou desfaz só o que não mudou.
+- Se é recurso travável ou essencial no catálogo de planos (AD-017).
+
+**Recomendação:** vira spec logo depois da PROP-02, porque as classes de despesa são a base das sugestões e do modelo 50/30/20.
+
+### PROP-02 · Classes de despesa
+
+**A ideia:** separar as categorias de despesa em classes, como despesas fundamentais (casa, comida, transporte) e dispensáveis (streaming, doces), para o usuário ver quanto do dinheiro vai para o necessário e quanto vai para o que dá para cortar.
+
+**Nome:** "master categoria" se confunde com a categoria-mãe que já existe. Sugestão: **classe** da despesa, com os valores **Essencial** e **Dispensável**. "Tipo" já quer dizer receita ou despesa (`Transaction.type`), e "supérfluo" julga o gasto.
+
+**O que já existe**
+
+- Categorias em dois níveis pelo campo `parent` (`transactions/models.py:5-35`), copiadas para cada usuário no cadastro (`transactions/signals.py:8-33`): Casa (com Aluguel e Energia), Comida, Transporte, Lazer, Educação, Eletrônicos, Doces, Doação e Presente.
+- Nenhum campo de classe, natureza ou prioridade em `Category` ou `Transaction`. O mais perto disso é o relatório de fixos e variáveis, que adivinha por palavras-chave no nome da categoria ou na descrição (`reports/services.py:793-808`).
+
+**Pontos críticos**
+
+1. **A classe é um campo da categoria, não mais um nível na árvore.** Um nível acima (classe, categoria e subcategoria) obriga a categoria inteira a ter uma classe só, e o caso comum é misto: "Comida" é essencial, mas um "Delivery" criado dentro dela pode ser dispensável. Como campo, a subcategoria herda a classe da mãe e pode trocá-la, e a árvore e a regra da AD-022 (a categoria-mãe inclui as filhas) ficam como estão.
+2. **A classe é do usuário.** Transporte é essencial para quem vai de carro ao trabalho e dispensável para quem só sai no fim de semana. As categorias padrão vêm com uma classe inicial, e o usuário troca.
+3. **Categorias sem classe.** As que já existem, as criadas pelo usuário e as que a importação cria pelo nome (`data_exchange/services.py:278-290`) nascem sem classe. A spec decide se "Sem classe" aparece nos relatórios ou se a classe é obrigatória.
+4. **Mesmo filtro em todo lugar.** O filtro por classe vale na lista, na exportação e nos relatórios com o mesmo significado (AD-022) e entra no contrato das rotas; fora dele, recebe o 400 de filtro desconhecido.
+5. **Onde a classe aparece.** Nos relatórios (hoje a pizza agrupa pelo nome da categoria raiz, `reports/services.py:393-400`), nos orçamentos, na coluna da exportação e no mapeamento da importação.
+
+**Decisões para a spec**
+
+- O nome e os valores, e se existe uma terceira classe (por exemplo, dívidas e parcelamentos).
+- Se a subcategoria pode ter classe diferente da mãe.
+- Se receitas também ganham classe (fixa e variável), o que ajudaria a PROP-01 a reconhecer o salário.
+- Se a classe entra nos orçamentos (limite por classe) ou só nos relatórios.
+
+**Recomendação:** primeira spec. É pequena, não mexe em saldo e é a base da PROP-01 e da PROP-04.
+
+### PROP-03 · Vínculo entre transações
+
+**A ideia:** registrar que uma transação só aconteceu por causa de outra. No exemplo, o cinema custou R$ 50 em Lazer e o transporte até lá, R$ 45 em Transporte: o passeio custou R$ 95, e os R$ 45 só existiram por causa dele.
+
+**O que já existe**
+
+- Nenhum vínculo genérico. Os campos que ligam transações têm outro significado: `transfer_id` junta as duas pontas de uma transferência (`transactions/models.py:91`), `parent_transaction` junta as parcelas de uma compra (`:97`), `recurring_source` aponta para a série recorrente (`:100`) e `invoice`, para a fatura (`:72`).
+- As tags (`transactions/models.py:38-50`, ligadas às transações em `:76`) agrupam à mão, mas não dizem qual gasto puxou qual, e uma tag por passeio enche a lista de tags.
+
+**Pontos críticos**
+
+1. **Campo próprio.** `parent_transaction` já significa "parcela da compra" e apaga as parcelas em cascata. O vínculo de causa precisa de um campo novo, e excluir a transação principal só desfaz o vínculo, sem apagar as outras.
+2. **Um nível só.** Uma principal com suas dependentes, sem dependente de dependente, evita ciclos (A por causa de B e B por causa de A) e cadeias difíceis de mostrar.
+3. **Tipos que podem se ligar.** Despesas e compras no cartão. Transferências e pagamentos de fatura, não. Uma receita ligada a uma despesa (o amigo que devolve metade do jantar) é outro conceito, reembolso ou divisão de conta, e fica fora.
+4. **Parcelas e recorrências.** Uma compra parcelada se liga inteira, pela primeira parcela; as ocorrências de uma recorrência não herdam o vínculo.
+5. **Sem contar duas vezes.** Os R$ 45 continuam em Transporte nos totais por categoria, e o custo do passeio é uma visão à parte. Somar a dependente também na categoria da principal dobra o gasto nos relatórios.
+6. **Isolamento e saldo.** Só se liga a uma transação do próprio usuário, e um ID de outro usuário recebe a mesma resposta de um inexistente (AD-010). O vínculo é só informação: criar ou desfazer não altera saldo, fatura nem orçamento.
+
+**Decisões para a spec**
+
+- Vínculo com direção (principal e dependentes) ou agrupamento sem direção (um "evento" com várias transações).
+- O que aparece na tela: o custo total na principal, um filtro de vinculadas e um relatório de gastos puxados por outros (por exemplo, quanto do Transporte vem do Lazer).
+- Se o vínculo vai para a exportação e volta pela importação.
+
+**Recomendação:** vira spec e não depende das outras. O relatório de gastos puxados é um bom insumo para a PROP-04.
+
+### PROP-04 · Previsão de gastos com machine learning
+
+**A ideia:** um modelo que ajude a prever gastos e outros comportamentos, treinado no futuro com os dados dos próprios usuários da plataforma, daqui a 2 ou 3 anos.
+
+**O que já existe**
+
+- Nenhuma biblioteca de machine learning. O `requirements.txt` tem pandas, usado só na importação (`data_exchange/services.py:2`), mas não scikit-learn, statsmodels nem similares.
+- Previsões por estatística simples, calculadas a cada requisição: o "Próximo Grande Gasto (Predição Inteligente)" (`reports/services.py:654-765`), o monitor de foco comparado à média de 6 meses (`:569-652`), o risco pelo coeficiente de variação (`:862-904`), o gasto diário seguro (`:847-860`), a receita esperada (`:181-212`) e a projeção das metas no navegador (`fluxar-frontend/src/components/goals/GoalDetails.tsx:158-189`).
+- A página de termos não fala em uso dos dados para melhorar o produto, em análise agregada nem em IA, e o aceite guarda só `terms_accepted` e a data, sem a versão aceita (`api/models.py:66-69`; `fluxar-frontend/src/app/termos/page.tsx`).
+
+**Pontos críticos**
+
+1. **Os dados de hoje ensinam errado.** Receitas recorrentes lançadas 12 meses de uma vez (FIN-01), compras no cartão com a data do vencimento no lugar da data da compra (FIN-15), datas um dia antes (FE-03), transferências com uma ponta só (FIN-16) e lançamentos reais descartados como duplicata na importação (FIN-21). Um modelo treinado nesses dados aprende os erros; o histórico útil começa quando as specs da auditoria estiverem implementadas.
+2. **A finalidade precisa estar declarada desde já.** A LGPD exige finalidade específica e informada e uso posterior compatível com ela (art. 6º, I a III), e o consentimento genérico é nulo (art. 8º, § 4º). Para treinar modelos daqui a 2 ou 3 anos, os termos e a política de privacidade precisam dizer isso a partir de agora, com o aceite registrado por versão.
+3. **Base legal.** O consentimento é o caminho mais seguro. O legítimo interesse exige o teste do guia da ANPD, e em 2024 a ANPD suspendeu o treino de IA da Meta feito com essa base até haver aviso aos usuários e uma forma fácil de recusar.
+4. **Anonimização e exclusão.** Dado anonimizado fica fora da LGPD, desde que a anonimização não possa ser revertida com esforço razoável (art. 12), mas a previsão feita para uma pessoa identificada continua sendo dado pessoal (art. 12, § 2º). Como a AD-018 apaga tudo em 30 dias, o conjunto de treino é anonimizado de forma irreversível antes, ou apagado junto. A spec `lgpd` não trata disso.
+5. **Dados do Open Finance só servem à finalidade consentida** (Resolução Conjunta nº 1/2020, art. 12), e mudar a finalidade exige nova concordância do usuário (art. 10, §§ 7º e 8º). Se essas transações forem alimentar modelos, a categorização e a previsão precisam constar do consentimento desde a primeira conexão (PROP-05).
+6. **Volume.** Um modelo com os dados de todos os usuários precisa de muitos usuários com meses de histórico limpo. Até lá, regras estatísticas por usuário entregam quase o mesmo com menos risco, e todo modelo novo precisa superar as heurísticas que já existem.
+7. **Infraestrutura.** O backend roda um único worker e já faz trabalho pesado dentro da requisição (OPS-03). O treino roda fora do servidor web, e a previsão é gravada por uma rotina, não calculada a cada tela.
+
+Os pontos 2 a 5 vêm de pesquisa externa (Apêndice C) e não são parecer jurídico.
+
+**O que dá para preparar agora, sem machine learning**
+
+- Declarar nos termos e na política o uso de dados anonimizados e agregados para melhorar o produto, com versão e registro do aceite. Isso vira requisito da spec `lgpd`.
+- Guardar cada correção de categoria feita pelo usuário, na importação e depois no Open Finance. É o rótulo de que um classificador automático de categorias precisa, e categorizar sozinho é o que mais poupa trabalho do usuário.
+- Uma previsão de saldo do fim do mês por regras: saldo atual, mais receitas pendentes, menos despesas pendentes e faturas do mês. Atende boa parte da ideia sem treino.
+
+**Recomendação:** não vira spec agora. Os preparativos entram nas specs existentes ou numa spec pequena de previsão por regras. A categorização dos provedores de Open Finance (PROP-05) também adianta parte da ideia sem treinar nada.
+
+### PROP-05 · Open Finance
+
+**A ideia:** conectar as contas e os cartões do usuário via Open Finance, com a Belvo ou outro provedor, para importar as transações sozinho e analisar os gastos. Só planos pagos têm acesso, e o recurso precisa se pagar.
+
+**O que já existe**
+
+- `Account` já tem `external_id` ("ID da conta na API externa de Open Finance") e `is_manual` (`accounts/models.py:24-25`), sem uso.
+- A importação de OFX, CSV e XLSX, sem identificador externo por transação: o OFX ignora o `FITID`, e a deduplicação por data, valor e descrição descarta lançamentos reais (FIN-21).
+- Nenhuma integração com provedor, nenhum endpoint de webhook e nenhuma fila ou rotina agendada.
+
+**Pontos críticos**
+
+1. **Ainda não existe plano pago.** Não há gateway de pagamento nem assinatura. O plano muda só pelo admin (`api/views.py:334-356`), e a receita do painel é estimada com preços fixos no código, R$ 19,90 e R$ 39,90 (`api/views.py:471-476`), diferentes dos R$ 29,90 da aba "Assinatura" simulada (`fluxar-frontend/src/app/(admin)/admin/usuarios/[id]/page.tsx:467-511`). "Só para planos pagos" exige antes a cobrança dos planos: checkout, renovação, falha de pagamento e troca de plano.
+2. **O custo é uma mensalidade mínima, não um valor por usuário.** A Pluggy parte de R$ 2.500 por mês, com o excedente cobrado por requisição. A Belvo não publica preço para o Brasil (a página global mostra US$ 1.000 por mês no plano de entrada), e um desenvolvedor relata cotação de cerca de R$ 6 mil por mês. Só o mínimo da Pluggy pede cerca de 126 assinantes a R$ 19,90, ou 63 a R$ 39,90, antes de taxas, impostos e excedente; com a cotação relatada da Belvo, 302 ou 151. Abaixo disso, o recurso não se paga.
+3. **A sincronização controla o custo variável.** Cada leitura conta como requisição na Pluggy, e a Belvo limita as consultas por CPF a cada mês (por exemplo, 8 cargas completas de transações). O catálogo de travas (AD-017) define quantas conexões cada plano tem e com que frequência sincroniza, e as conexões são encerradas quando o usuário sai do plano pago, para o Fluxar parar de pagar por elas.
+4. **Regulação em revisão.** O Fluxar não é instituição autorizada: só recebe dados do Open Finance por um participante regulado, com o consentimento prévio e expresso do usuário para a parceria (Resolução Conjunta nº 1/2020, arts. 1º, 2º e 36). Belvo e Pluggy fazem esse papel como iniciadoras de pagamento autorizadas pelo Banco Central. O Banco Central está revisando esse modelo de parceria, com conclusão prevista para dezembro de 2026, e a mudança pode exigir novo fluxo de consentimento e novos contratos. Assinar antes da regra final arrisca retrabalho.
+5. **O consentimento é do usuário.** Ele pode revogar a qualquer momento, com efeito imediato (art. 15), e, desde 2023, quando caiu o limite de 12 meses, o prazo só precisa ser compatível com a finalidade (art. 10, § 1º). O Fluxar trata a revogação e a expiração que o provedor avisa por webhook: a conexão para de sincronizar, e as transações já importadas continuam com o usuário.
+6. **Termos e LGPD.** Os termos dizem hoje que o Fluxar não coleta dados das contas bancárias e que toda importação é manual (`fluxar-frontend/src/app/termos/page.tsx:76`). É preciso atualizar os termos e a política, firmar o contrato de operador com o provedor, guardar os identificadores da conexão criptografados (como na AD-020), nunca registrar dado bancário em log (AD-019) e revogar as conexões na exclusão da conta (AD-018). A finalidade consentida limita o uso dos dados (PROP-04).
+7. **Dados que esbarram nas regras do app.** Transação pendente no banco entra pendente (AD-002). A transação que o usuário já lançou à mão é reconhecida, não duplicada. A fatura que vem do banco pode divergir do ciclo que o Fluxar calcula (spec `faturas`), e, segundo a documentação da Pluggy, a fatura aberta pode só aparecer depois de fechada. O saldo informado pelo banco vira a referência do ajuste de saldo (spec `saldo`). Cada transação guarda o identificador do provedor, para sincronizar de novo sem duplicar.
+8. **Nada de senha do banco.** Conexões por usuário e senha do banco ainda existem como alternativa (o plano da Pluggy inclui "acesso direto"), mas guardam credenciais, não têm as garantias de consentimento e revogação do Open Finance e contradizem os termos. Só a conexão regulada.
+9. **Infraestrutura paga.** Webhooks e sincronização agendada não combinam com um servidor que hiberna: o aviso de cold start fala em "recursos gratuitos" e "hibernação" (`fluxar-frontend/src/components/ui/server-wakeup-overlay.tsx:73`) [inferido]. O recurso pede instância sempre ligada e uma rotina de sincronização, custos que entram na conta do ponto 2.
+
+Os pontos 2 a 5, 7 e 8 vêm de pesquisa externa feita em 26/09/2026 (Apêndice C). Preços e regras mudam e precisam ser confirmados com os provedores.
+
+**Decisões antes da spec**
+
+- O provedor, comparando mínimo mensal, preço do excedente, cobertura de bancos e dados de cartão. Belvo e Pluggy têm sandbox gratuito, e a Pluggy dá 15 dias de teste em produção.
+- O gateway de cobrança e o preço dos planos.
+- O que o recurso entrega: só a importação automática ou também a análise de gastos do provedor (a Pluggy inclui categorização, estabelecimentos e detecção de recorrência), que adianta parte da PROP-04.
+- A partir de quantos assinantes o contrato se paga.
+
+**Recomendação:** ainda não vira spec. Primeiro, a spec da cobrança dos planos e um estudo de viabilidade com o custo por assinante, esperando a regra final do Banco Central sobre parcerias. Depois, a spec do Open Finance, reaproveitando as regras da `importacao`. A conexão também resolve o gatilho da PROP-01: o crédito do salário no banco avisa o usuário na hora.
+
+### Ordem sugerida
+
+1. PROP-02, classes de despesa: pequena e base das outras.
+2. PROP-01, gestão do salário.
+3. PROP-03, vínculo entre transações.
+4. Cobrança dos planos e estudo de viabilidade do Open Finance, depois da regra final do Banco Central; então, a PROP-05.
+5. Os preparativos da PROP-04 entram agora nas specs existentes; o modelo, quando houver volume de dados limpos.
+
+---
+
 ## Apêndice A — Resultados de ferramentas
 
 ### `npm audit --omit=dev` (frontend, 23/09/2026)
@@ -895,3 +1081,22 @@ Total: 7 vulnerabilidades (1 crítica, 5 altas e 1 moderada). O `npm audit fix -
 - Nenhum arquivo `.env` foi versionado em nenhum dos dois repositórios, e não há strings com formato de segredo no histórico do frontend.
 - A única chave real encontrada no histórico do backend é a `SECRET_KEY` gerada pelo `startproject`, presente em `core/settings.py` entre os commits `be6e077` (14/12/2025) e `4e9dce2` (16/12/2025). O `docker-compose.yml` teve, no commit `c716938`, uma chave de desenvolvimento diferente dessa.
 - O `last_error.html` versionado mostra `SECRET_KEY` e `EMAIL_HOST_PASSWORD` mascarados e `DATABASE_URL` vazio.
+
+## Apêndice C — Fontes externas da seção 11
+
+Pesquisa feita em 26/09/2026. Preços e regras mudam: confirmar com os provedores e com um advogado antes de decidir. Nada aqui é parecer jurídico. A LGPD é a Lei nº 13.709/2018.
+
+- Regras do Open Finance, Resolução Conjunta nº 1/2020 consolidada: https://normativos.bcb.gov.br/Lists/Normativos/Attachments/51028/Res_Conj_0001_v9_L.pdf
+- Revisão das parcerias de dados pelo Banco Central, com conclusão prevista para dezembro de 2026 (03/09/2026): https://www.letsmoney.com.br/noticias/banco-central-revisa-parcerias-dados-open-finance/
+- Proposta do Banco Central para as parcerias (19/03/2026): https://finsidersbrasil.com.br/economia-open/bc-propoe-novas-regras-para-uso-de-dados-de-clientes-no-open-finance/
+- Fim do limite de 12 meses do consentimento (26/10/2023): https://finsidersbrasil.com.br/regulamentacao/bc-acaba-com-limite-de-12-meses-para-compartilhamento-de-dados-no-open-finance/
+- Belvo, licença de iniciadora de pagamento (27/09/2022): https://belvo.com/blog/belvo-receives-license-to-initiate-payments-in-brazil/
+- Belvo, agregação no Brasil: https://developers.belvo.com/products/aggregation_brazil/aggregation-brazil-introduction
+- Belvo, limites de consulta por CPF: https://developers.belvo.com/products/aggregation_brazil/aggregation-brazil-data-retrieval-limits
+- Belvo, planos e preços: https://belvo.com/plans-and-pricing/
+- Pluggy, preços: https://www.pluggy.ai/precos
+- Pluggy, licença de iniciadora de pagamento (13/06/2024): https://finsidersbrasil.com.br/economia-open/pluggy-recebe-licenca-de-iniciador-de-pagamento/
+- Pluggy, fatura aberta: https://docs.pluggy.ai/docs/considerations-faq
+- Cotações relatadas por um desenvolvedor, relato individual: https://www.tabnews.com.br/GuilhermeVieira/estou-desenvolvendo-um-app-de-financas-pessoais-e-nao-consigo-pagar-o-open-finance-pluggy-r2-5k-mes-belvo-r6k-mes-tecnospeed-r1-5k-de-entrada-r540
+- Guia da ANPD sobre legítimo interesse (02/02/2024): https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia_legitimo_interesse.pdf
+- Decisões da ANPD sobre o treino de IA da Meta (28/10/2024): https://fpf.org/blog/processing-of-personal-data-for-ai-training-in-brazil-takeaways-from-anpds-preliminary-decisions-in-the-meta-case/
