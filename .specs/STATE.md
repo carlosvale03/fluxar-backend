@@ -202,13 +202,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-026
+- **Decision**: A divisão do salário cria, num lote único e já efetivadas, as transferências da conta do salário para as contas do plano e os aportes nas metas do plano. O lote é tudo ou nada, idempotente pelo identificador da tentativa, e marca cada transação com o identificador da divisão. Ele pode ser desfeito inteiro em até 7 dias, se nenhuma transação dele mudou, devolvendo saldos e valores das metas. O aporte gerado entra só na meta escolhida, sem o rateio automático do cofrinho compartilhado.
+- **Reason**: decisão do usuário: um clique para gerar, com confirmação forte e desfazer. O rateio automático desviaria o aporte da meta escolhida (PROP-01).
+- **Trade-off**: as transações nascem efetivadas e dependem de o usuário ter feito as transferências no banco; depois de 7 dias ou de uma edição, corrigir a divisão exige remover as transações à mão.
+- **Scope**: gestao-do-salario, saldo (regras de saldo das transferências e aportes), metas (aporte sem rateio e valor devolvido no desfazer) e o frontend.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35) e `classes-de-despesa` (CLASSE-01 a CLASSE-40) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend` e `classes-de-despesa` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40) e `gestao-do-salario` (SALARIO-01 a SALARIO-56) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa` e `gestao-do-salario` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature `gestao-do-salario` a partir da PROP-01 (`docs/auditoria-2026-09.md`, seção 11), na mesma branch e com um commit próprio.
+- **Next step**: especificar a feature `vinculo-entre-transacoes` a partir da PROP-03 (`docs/auditoria-2026-09.md`, seção 11), na mesma branch e com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09

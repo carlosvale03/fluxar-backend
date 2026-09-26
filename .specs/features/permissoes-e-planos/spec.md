@@ -48,6 +48,7 @@ Cada trava tem uma chave. Um recurso é ligado ou desligado por plano; um limite
 | `exportacao_pdf` | Recurso | Exportação de transações em PDF | `GET /api/export/transactions/pdf/` |
 | `exportacao_xlsx` | Recurso | Exportação de transações em XLSX | `GET /api/export/transactions/xls/` |
 | `personalizar_dashboard` | Recurso | Personalização do layout do dashboard | Só na interface, porque o layout fica no navegador |
+| `gestao_do_salario` | Recurso | Tela Gestão do salário: plano de divisão, simulação, divisão, desfazer e o aviso ao lançar o salário (spec `gestao-do-salario`) | As rotas da gestão do salário |
 | `limite_contas` | Limite | Contas ativas, sem contar os cofrinhos criados por metas | `POST /api/accounts/` |
 | `limite_cartoes` | Limite | Cartões ativos | `POST /api/credit-cards/` |
 | `limite_categorias` | Limite | Categorias principais ativas | `POST /api/categories/` sem `parent` |
@@ -80,7 +81,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | --------------------- | -------------- | --------- | ---------- |
 | Campo que define quem é administrador | O papel `role = ADMIN`; `is_staff` serve só para o admin do Django | Decisão do usuário (AD-016). É o que a interface, o token e a proteção do último admin já usam | sim |
 | O que cada plano libera | Não fica no código: o administrador configura as travas no painel | Decisão do usuário (AD-017) | sim |
-| Catálogo de travas | Os 16 recursos e 6 limites da seção Catálogo de travas | Cobre as telas e funcionalidades que existem hoje, inclusive as que o código já tentava travar | sim |
+| Catálogo de travas | Os 17 recursos e 6 limites da seção Catálogo de travas | Cobre as telas e funcionalidades que existem hoje, inclusive as que o código já tentava travar | sim |
 | Recursos essenciais | Os da seção Recursos essenciais, sempre liberados | Sem eles o usuário não consegue usar o app nem mexer no próprio dinheiro | sim |
 | Configuração inicial | Liberação para testes ligada, e todas as travas liberadas e sem limite nos três planos | Mantém o comportamento atual até o administrador configurar as travas | sim |
 | Onde fica a liberação para testes | Uma chave no painel admin, junto do modo manutenção | Muda sem novo deploy, num único ponto | sim |
