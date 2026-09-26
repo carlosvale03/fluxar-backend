@@ -194,13 +194,21 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-025
+- **Decision**: As categorias de despesa têm classe. Cada usuário tem as classes Essencial e Dispensável, que não podem ser excluídas nem renomeadas, e pode criar outras até o total de 5. A classe é um campo da categoria: a subcategoria sem classe própria herda a da mãe, categorias de receita não têm classe, e relatórios e filtros usam a classe efetiva atual, inclusive nos meses passados.
+- **Reason**: decisão do usuário. Mostra quanto das despesas vai para o necessário e quanto vai para o que dá para cortar, e é a base das sugestões da gestão do salário (PROP-01).
+- **Trade-off**: mudar a classe de uma categoria muda também os relatórios dos meses passados, e o orçamento continua só por categoria.
+- **Scope**: classes-de-despesa, relatorios, filtros da lista de transações, exportação, importação e a gestão do salário.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25) e `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd` e `contratos-frontend-backend` (`spec.md` e `context.md` de cada uma)
+- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-41), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-25), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35) e `classes-de-despesa` (CLASSE-01 a CLASSE-40) concluídas e aprovadas; Design de nenhuma delas iniciado
+- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend` e `classes-de-despesa` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
 - **In-progress** (file:line): nenhum
-- **Next step**: levantar as novas ideias do usuário (gestão do salário, classes de despesa, vínculo entre transações, previsão de gastos e Open Finance), acrescentar o levantamento a `docs/auditoria-2026-09.md` depois da aprovação e especificar as features que saírem dele na mesma branch, um commit por spec.
+- **Next step**: especificar a feature `gestao-do-salario` a partir da PROP-01 (`docs/auditoria-2026-09.md`, seção 11), na mesma branch e com um commit próprio.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: docs/specs-features-auditoria-2026-09

@@ -61,11 +61,11 @@ Ficam liberados em todos os planos e não têm trava:
 
 - Cadastro, verificação de e-mail, login, sessão e redefinição de senha.
 - Perfil, configurações e preferências.
-- Dashboard: resumo, saldos e gráficos simples (`/api/reports/dashboard/` e `/api/reports/charts/simple/`).
+- Dashboard: resumo, saldos e gráficos simples (`/api/reports/dashboard/` e `/api/reports/charts/simple/`), inclusive a divisão das despesas por classe (CLASSE-28).
 - Contas: listar, criar dentro do limite, editar, ajustar saldo e excluir.
 - Transações avulsas: listar, filtrar, criar, editar, efetivar e excluir, inclusive as ocorrências já criadas de uma série.
 - Transferências entre contas.
-- Categorias: listar, usar e criar dentro do limite.
+- Categorias: listar, usar e criar dentro do limite, inclusive as classes de despesa e a classe de cada categoria (CLASSE-13).
 - Pagamento e estorno de faturas existentes e movimentação das contas-cofrinho das metas (PERM-22).
 - Download dos dados financeiros em XLSX dentro do fluxo de exclusão da conta (LGPD-02).
 - Página de planos.
