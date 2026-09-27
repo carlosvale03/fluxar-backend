@@ -192,14 +192,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_escrita_transacoes.py` cobre criação e edição com cada relação de B: 400 no campo, corpo igual ao de um UUID inexistente, nenhuma transação criada ou alterada e saldo de B intacto
-- [ ] Uma tag de B entre tags de A recusa a transação inteira
-- [ ] O caminho feliz com objetos de A continua criando a transação
-- [ ] Quick gate passa
-- [ ] Test count: 26 tests pass
+- [x] `tests/isolamento/test_escrita_transacoes.py` cobre criação e edição com cada relação de B: 400 no campo, corpo igual ao de um UUID inexistente, nenhuma transação criada ou alterada e saldo de B intacto
+- [x] Uma tag de B entre tags de A recusa a transação inteira
+- [x] O caminho feliz com objetos de A continua criando a transação
+- [x] Quick gate passa
+- [x] Test count: 26 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa conta, cartão, categoria e tag de outro usuário`
 

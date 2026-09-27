@@ -4,6 +4,10 @@ from dateutil.relativedelta import relativedelta
 from .models import Transaction, Category, Tag, RecurringTransaction
 from accounts.models import Account, CreditCard
 from .services import TransactionService, CategoryService
+from core.fields import (
+    OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
+)
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
@@ -39,11 +43,30 @@ class TransactionSerializer(serializers.ModelSerializer):
     account_detail = serializers.SerializerMethodField()
     category_detail = CategorySerializer(source='category', read_only=True)
     tags_detail = TagSerializer(source='tags', many=True, read_only=True)
+
+    # Relações graváveis: só objetos do usuário da requisição (AD-032)
+    account = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    credit_card = OwnedPrimaryKeyRelatedField(
+        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+        required=False, allow_null=True,
+    )
+    category = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    tags = OwnedPrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
+        many=True, required=False,
+    )
     
     # Transfer details
     related_transaction = serializers.SerializerMethodField()
-    target_account_id = serializers.PrimaryKeyRelatedField(
-        queryset=Account.objects.none(), 
+    target_account_id = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.filter(is_active=True),
+        not_found_message=CONTA_NAO_ENCONTRADA,
         write_only=True, 
         required=False, 
     )
@@ -78,13 +101,6 @@ class TransactionSerializer(serializers.ModelSerializer):
             'transfer_id', 'related_transaction', 'signed_amount', 'recurring_source',
             'created_at', 'updated_at'
         ]
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            self.fields['target_account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
 
     def to_representation(self, instance):
         """
@@ -208,7 +224,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         # 1. Update Partner Account if requested
         if target_account and instance.transfer_id:
             partner = Transaction.objects.filter(
-                transfer_id=instance.transfer_id
+                transfer_id=instance.transfer_id, user=instance.user
             ).exclude(id=instance.id).first()
             
             if partner:
