@@ -48,6 +48,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Audit Dependencies
+      # Falha se alguma dependência tiver vulnerabilidade conhecida
+      run: |
+        pip install pip-audit
+        pip-audit -r requirements.txt
+
     - name: Check for Syntax Errors
       run: |
         python -m compileall -q .
