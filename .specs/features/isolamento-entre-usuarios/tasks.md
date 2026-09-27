@@ -393,13 +393,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_monitor_foco.py` cobre categoria de B, tag de B e inexistentes, com 400 no campo, respostas idênticas e nada gravado
-- [ ] Um monitor de A ligado à força à tag de B não mostra o nome da tag
-- [ ] Quick gate passa
-- [ ] Test count: 69 tests pass
+- [x] `tests/isolamento/test_monitor_foco.py` cobre categoria de B, tag de B e inexistentes, com 400 no campo, respostas idênticas e nada gravado
+- [x] Um monitor de A ligado à força à tag de B não mostra o nome da tag
+- [x] Quick gate passa
+- [x] Test count: 69 tests pass (71 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(reports): recusa categoria e tag de outro usuário no monitor de foco`
 
