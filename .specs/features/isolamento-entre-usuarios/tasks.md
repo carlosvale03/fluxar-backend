@@ -508,14 +508,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_leitura_transacoes.py` grava à força uma transação de A com conta, categoria e tag de B e confere que a resposta não traz nome nem dado de B
-- [ ] Uma transferência com a parceira forjada em outro usuário não mostra a parceira
-- [ ] O formato da resposta das transações normais não muda
-- [ ] Quick gate passa
-- [ ] Test count: 85 tests pass
+- [x] `tests/isolamento/test_leitura_transacoes.py` grava à força uma transação de A com conta, categoria e tag de B e confere que a resposta não traz nome nem dado de B
+- [x] Uma transferência com a parceira forjada em outro usuário não mostra a parceira
+- [x] O formato da resposta das transações normais não muda
+- [x] Quick gate passa
+- [x] Test count: 85 tests pass (87 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): mostra só dados do dono nos detalhes da transação`
 

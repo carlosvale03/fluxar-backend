@@ -111,6 +111,21 @@ class TransactionSerializer(serializers.ModelSerializer):
         Injeta is_recurring e frequency no output baseado no recurring_source.
         """
         representation = super().to_representation(instance)
+
+        # Conta, categoria e tags de outro usuário não aparecem (ISOL-15)
+        dono = instance.user_id
+        if instance.account_id and instance.account.user_id != dono:
+            representation['account'] = None
+            representation['account_detail'] = None
+        if instance.category_id and instance.category.user_id != dono:
+            representation['category'] = None
+            representation['category_detail'] = None
+        tags_alheias = {str(tag.id) for tag in instance.tags.all() if tag.user_id != dono}
+        if tags_alheias:
+            representation['tags'] = [i for i in representation['tags'] if str(i) not in tags_alheias]
+            representation['tags_detail'] = [
+                tag for tag in representation['tags_detail'] if tag['id'] not in tags_alheias
+            ]
         
         # Se tem recurring_source, é recorrente
         has_recurrence = instance.recurring_source is not None
@@ -138,12 +153,16 @@ class TransactionSerializer(serializers.ModelSerializer):
         if obj.transfer_id:
             # Tenta achar a parceira
             # Cachear isso seria bom, mas para detail view ok.
-            qs = Transaction.objects.filter(transfer_id=obj.transfer_id).exclude(id=obj.id)
+            # Só a parceira do dono da transação, com a conta dele (ISOL-14, ISOL-15)
+            qs = Transaction.objects.filter(
+                transfer_id=obj.transfer_id, user_id=obj.user_id
+            ).exclude(id=obj.id)
             partner = qs.first()
             if partner:
+                 conta_do_dono = partner.account if partner.account and partner.account.user_id == obj.user_id else None
                  return {
                      'id': partner.id,
-                     'account_name': partner.account.name if partner.account else 'Desconhecida',
+                     'account_name': conta_do_dono.name if conta_do_dono else 'Desconhecida',
                      'amount': partner.amount,
                      'type': partner.type
                  }
