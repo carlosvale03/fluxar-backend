@@ -816,15 +816,16 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_correcao.py` confere cada correção da tabela, e depois dela `find_cross_links` devolve a lista vazia
-- [ ] O saldo guardado da conta que recebia transações de outro usuário bate com SALDO-01, e o total da fatura e o valor da meta afetados batem com os registros restantes
-- [ ] Rodar a correção duas vezes dá o mesmo resultado
-- [ ] Os dados sem ligação cruzada não mudam
-- [ ] Full gate passa
-- [ ] Test count: 121 tests pass
+- [x] `tests/isolamento/test_correcao.py` confere cada correção da tabela, e depois dela `find_cross_links` devolve a lista vazia
+- [x] O saldo guardado da conta que recebia transações de outro usuário bate com SALDO-01, e o total da fatura e o valor da meta afetados batem com os registros restantes
+- [x] Rodar a correção duas vezes dá o mesmo resultado
+- [x] Os dados sem ligação cruzada não mudam
+- [x] Full gate passa
+- [x] Test count: 121 tests pass (131 na execução)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): desfaz ligações entre dados de usuários diferentes`
 
