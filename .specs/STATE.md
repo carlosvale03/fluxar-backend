@@ -268,11 +268,12 @@
 
 ## Handoff
 
-- **Feature**: `isolamento-entre-usuarios` (primeira da fase de implementação)
-- **Phase / Task**: Design e Tasks aprovados em 2026-09-27; Execute de T1 a T24 em andamento
-- **Completed**: as 15 specs da auditoria, aprovadas e mergeadas na `development` (PR #60); design e tasks do isolamento
+- **Feature**: `isolamento-entre-usuarios` concluída
+- **Phase / Task**: Execute concluído (T1 a T38) e verificado: `validation.md` com PASS na 4ª rodada, 175 testes, sensor com 12 de 12 mutações mortas
+- **Completed**: ISOL-01 a ISOL-18 verificados; CI do backend roda os testes com Postgres em `main` e `development`; migração `transactions/0007_corrige_isolamento` e comando `check_isolation`
 - **In-progress** (file:line): nenhum
-- **Next step**: com a aprovação, executar T1 a T24 na branch `fix/isolamento-entre-usuarios`, um commit por tarefa. Depois, na ordem combinada com o usuário: atualização de dependências (SEG-04), `autenticacao`, `sessao`, `saldo`, `faturas`, `contratos-frontend-backend`, `importacao`, `permissoes-e-planos`, `metas`, `relatorios`, `lgpd`, `painel-admin`, e então as features novas (`classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`), cada uma numa branch nova a partir da `development` atualizada.
+- **Riscos residuais** (só com ligação entre usuários gravada antes da correção, que a migração 0007 apaga no mesmo deploy): filtros de lista contam a transação própria ligada a ID alheio (sonda S3); filtros `account__type` e `invoice__year/month` dos relatórios seguem a relação antiga; o estorno de fatura não reverte o saldo guardado (spec `saldo`); a rejeição "Conta não mapeada" na importação fica com IMPORT-21
+- **Next step**: o usuário faz o push da branch e abre o PR para a `development`. Depois do deploy, rodar `python manage.py check_isolation` em produção e confirmar zero ligações. Próxima branch, a partir da `development` atualizada: atualização de dependências (SEG-04), depois `autenticacao`, `sessao`, `saldo`, `faturas`, `contratos-frontend-backend`, `importacao`, `permissoes-e-planos`, `metas`, `relatorios`, `lgpd`, `painel-admin` e as features novas. Nas próximas, o Verifier usa o sensor leve (6 a 8 mutações)
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: fix/isolamento-entre-usuarios

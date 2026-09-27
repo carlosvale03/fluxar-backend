@@ -59,20 +59,20 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-008 - State whether server-side operations that copy or batch-update already-linked records must re-check the ownership of the relations they carry
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec) (+1 more)
-- last seen: 2026-09-27T19:55:27Z
+- evidence: spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec) (+2 more)
+- last seen: 2026-09-27T20:27:25Z
 
 ### L-009 - When auditing owner isolation, include reports and exports that render related-object names through the user's own records, not only serializers
 - signal: `ac_gap` · recurrence: 1 feature(s) · scope: `reports-exports` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports)
-- last seen: 2026-09-27T19:55:26Z
+- evidence: ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports) (+1 more)
+- last seen: 2026-09-27T20:27:24Z
 
 ### L-010 - Forge cross-owner fixtures with every relation pointing at the victim's objects so an owner filter cannot be swapped for a relation filter unnoticed
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests)
-- last seen: 2026-09-27T19:55:27Z
+- evidence: N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests) (+1 more)
+- last seen: 2026-09-27T20:27:25Z
 
 ## Quarantined (failed when applied - ignore)
 

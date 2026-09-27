@@ -150,10 +150,11 @@
       "harmful": 0,
       "evidence": [
         "spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)",
-        "rodada 3 spec-precision gap 3: reports/services.py:396, accounts/services.py:195 (spec)"
+        "rodada 3 spec-precision gap 3: reports/services.py:396, accounts/services.py:195 (spec)",
+        "spec-precision gap 3 (rodada 4): sonda S3 transactions/views.py:85 (filtro por ID de B com ligação antiga traz a transação de A); reports/services.py:112 (account__type) (spec)"
       ],
       "created": "2026-09-27T19:26:59Z",
-      "last_seen": "2026-09-27T19:55:27Z"
+      "last_seen": "2026-09-27T20:27:25Z"
     },
     {
       "id": "L-009",
@@ -168,10 +169,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports)"
+        "ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports)",
+        "RESOLVIDO rodada 4: T36 12e7688 reports/services.py:14, T37 5b02de0 data_exchange/services.py:436; test_relatorios_nomes.py:53, test_exportacao_nomes.py:60; V01-V08 mortas, sonda S1 limpa (reports-exports)"
       ],
       "created": "2026-09-27T19:55:26Z",
-      "last_seen": "2026-09-27T19:55:26Z"
+      "last_seen": "2026-09-27T20:27:24Z"
     },
     {
       "id": "L-010",
@@ -186,10 +188,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests)"
+        "N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests)",
+        "RESOLVIDO rodada 4: T38 99ce9d9 test_pagamento_fatura.py:101, :118; V09 (N03) e V10 (N03 no estorno) mortas (tests)"
       ],
       "created": "2026-09-27T19:55:27Z",
-      "last_seen": "2026-09-27T19:55:27Z"
+      "last_seen": "2026-09-27T20:27:25Z"
     }
   ]
 }
