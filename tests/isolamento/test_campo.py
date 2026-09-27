@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import serializers
 
 from accounts.models import Account, CreditCardInvoice
@@ -98,6 +99,30 @@ class CampoDoDonoTests(DoisUsuariosTestCase):
 
         self.assertFalse(valido)
         self.assertEqual(serializer.errors, {'account': ['Conta não encontrada.']})
+
+    def test_sem_usuario_autenticado_recusa_categoria_modelo_e_objetos_de_qualquer_usuario(self):
+        """
+        Sem `request`, ou com usuário anônimo, o campo não pode cair num filtro
+        por dono nulo, que aceitaria a categoria-modelo (ISOL-10).
+        """
+        casos = [
+            ({'category': str(self.categoria_modelo.id)}, 'category', 'Categoria não encontrada.'),
+            ({'category': str(self.b.categoria.id)}, 'category', 'Categoria não encontrada.'),
+            ({'category': str(self.a.categoria.id)}, 'category', 'Categoria não encontrada.'),
+            ({'account': str(self.b.conta.id)}, 'account', 'Conta não encontrada.'),
+            ({'tags': [str(self.a.tag.id)]}, 'tags', 'Tag não encontrada.'),
+        ]
+        contextos = {
+            'sem request': {},
+            'usuario anonimo': {'request': SimpleNamespace(user=AnonymousUser())},
+        }
+        for nome, contexto in contextos.items():
+            for dados, campo, mensagem in casos:
+                with self.subTest(contexto=nome, dados=dados):
+                    serializer = RelacoesDeTesteSerializer(data=dados, context=contexto)
+
+                    self.assertFalse(serializer.is_valid())
+                    self.assertEqual(serializer.errors, {campo: [mensagem]})
 
     def test_mantem_o_filtro_extra_do_queryset(self):
         self.a.conta.is_active = False

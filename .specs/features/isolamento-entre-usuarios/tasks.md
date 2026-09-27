@@ -1092,12 +1092,13 @@ T35
 
 **Done when**:
 
-- [ ] O teste falha se o ramo sem `request` de `core/fields.py` for removido (conferido na tarefa e desfeito)
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 1 teste
+- [x] O teste falha se o ramo sem `request` de `core/fields.py` for removido (conferido na tarefa e desfeito)
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 1 teste (160 na execução, +1)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(isolamento): cobre o campo sem requisição com categoria-modelo`
 
