@@ -99,6 +99,7 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         goal = self.get_object()
-        deposits = goal.deposits.all().order_by('-created_at')
+        # Só movimentos em contas do dono da meta, como em GoalSerializer.deposits (ISOL-15)
+        deposits = goal.deposits.filter(account__user_id=goal.user_id).order_by('-created_at')
         serializer = GoalDepositSerializer(deposits, many=True)
         return Response(serializer.data)

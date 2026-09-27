@@ -703,12 +703,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_historico_meta.py` grava à força um movimento do cofrinho de A numa meta de B e confere que `GET /api/goals/{meta de B}/history/` não o traz, enquanto os movimentos próprios de B continuam aparecendo
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_historico_meta.py` grava à força um movimento do cofrinho de A numa meta de B e confere que `GET /api/goals/{meta de B}/history/` não o traz, enquanto os movimentos próprios de B continuam aparecendo
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (2 novos, 120 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(goals): mostra no histórico da meta só movimentos do dono`
 
