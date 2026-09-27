@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 9,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -74,10 +74,11 @@
       "harmful": 0,
       "evidence": [
         "spec.md edge case 5 (IMPORT-21) (spec)",
-        "spec.md edge case 5 (IMPORT-21) rodada 2: deferido, sonda P2 (spec)"
+        "spec.md edge case 5 (IMPORT-21) rodada 2: deferido, sonda P2 (spec)",
+        "rodada 3: edge case 5 (IMPORT-21) test_importacao.py:99 (spec)"
       ],
       "created": "2026-09-27T19:01:03Z",
-      "last_seen": "2026-09-27T19:26:59Z"
+      "last_seen": "2026-09-27T19:55:27Z"
     },
     {
       "id": "L-005",
@@ -93,10 +94,11 @@
       "harmful": 0,
       "evidence": [
         "ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)",
-        "ISOL-13 test_relatorios.py:46 (rodada 2, nota mantida) (spec)"
+        "ISOL-13 test_relatorios.py:46 (rodada 2, nota mantida) (spec)",
+        "rodada 3: ISOL-13 test_relatorios.py:46 (spec)"
       ],
       "created": "2026-09-27T19:01:03Z",
-      "last_seen": "2026-09-27T19:26:59Z"
+      "last_seen": "2026-09-27T19:55:27Z"
     },
     {
       "id": "L-006",
@@ -147,10 +149,47 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)"
+        "spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)",
+        "rodada 3 spec-precision gap 3: reports/services.py:396, accounts/services.py:195 (spec)"
       ],
       "created": "2026-09-27T19:26:59Z",
-      "last_seen": "2026-09-27T19:26:59Z"
+      "last_seen": "2026-09-27T19:55:27Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::when auditing owner isolation include reports and exports that render related object names through the user s own records not only serializers",
+      "text": "When auditing owner isolation, include reports and exports that render related-object names through the user's own records, not only serializers",
+      "signal": "ac_gap",
+      "scope": "reports-exports",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports)"
+      ],
+      "created": "2026-09-27T19:55:26Z",
+      "last_seen": "2026-09-27T19:55:26Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::forge cross owner fixtures with every relation pointing at the victim s objects so an owner filter cannot be swapped for a relation filter unnoticed",
+      "text": "Forge cross-owner fixtures with every relation pointing at the victim's objects so an owner filter cannot be swapped for a relation filter unnoticed",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests)"
+      ],
+      "created": "2026-09-27T19:55:27Z",
+      "last_seen": "2026-09-27T19:55:27Z"
     }
   ]
 }
