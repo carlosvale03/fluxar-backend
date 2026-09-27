@@ -308,13 +308,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_escrita_orcamentos.py` cobre criação e edição com categoria de B, inexistente e categoria-modelo, com 400 em `category`, respostas idênticas e nada gravado
-- [ ] Orçamento com categoria de A continua funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 49 tests pass
+- [x] `tests/isolamento/test_escrita_orcamentos.py` cobre criação e edição com categoria de B, inexistente e categoria-modelo, com 400 em `category`, respostas idênticas e nada gravado
+- [x] Orçamento com categoria de A continua funcionando
+- [x] Quick gate passa
+- [x] Test count: 49 tests pass (51 na execução: a fase 2 terminou com 46, e não 44)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(budgets): recusa categoria de outro usuário`
 
