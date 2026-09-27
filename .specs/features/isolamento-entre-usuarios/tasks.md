@@ -618,13 +618,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_relatorios.py` grava à força uma subcategoria de B sob a categoria monitorada por A e confere que o monitor de A não usa essa subcategoria
-- [ ] O relatório de tag responde 404 igual para tag de B, tag inexistente e `tag_id` malformado
-- [ ] Quick gate passa
-- [ ] Test count: 95 tests pass
+- [x] `tests/isolamento/test_relatorios.py` grava à força uma subcategoria de B sob a categoria monitorada por A e confere que o monitor de A não usa essa subcategoria
+- [x] O relatório de tag responde 404 igual para tag de B, tag inexistente e `tag_id` malformado
+- [x] Quick gate passa
+- [x] Test count: 95 tests pass (97 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(reports): considera só categorias e tags do usuário`
 

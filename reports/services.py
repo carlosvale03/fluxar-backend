@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import date, datetime, timedelta
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Sum, Q, Count, Avg, F, Case, When
 from django.db.models.functions import TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
@@ -577,7 +578,8 @@ class ReportService:
             if item.category:
                 def get_all_child_categories(cat_id):
                     all_ids = [cat_id]
-                    children = Category.objects.filter(parent_id=cat_id).values_list('id', flat=True)
+                    # Só subcategorias do usuário (ISOL-14)
+                    children = Category.objects.filter(parent_id=cat_id, user=user).values_list('id', flat=True)
                     for child_id in children:
                         all_ids.extend(get_all_child_categories(child_id))
                     return all_ids
@@ -1130,7 +1132,11 @@ class ReportService:
         """
         Retorna Monitor de Foco e Gráfico de Histórico para uma tag específica.
         """
-        tag = Tag.objects.filter(user=user, id=tag_id).first()
+        try:
+            tag = Tag.objects.filter(user=user, id=tag_id).first()
+        except (ValueError, DjangoValidationError):
+            # tag_id malformado vale como tag inexistente (ISOL-12)
+            tag = None
         if not tag:
             return None
 
