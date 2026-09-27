@@ -873,14 +873,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_migracao.py` chama a função da migração com o registro de models sobre ligações gravadas à força e confere que nenhuma sobra
-- [ ] A migração depende das últimas migrações de `accounts`, `budgets`, `goals` e `reports`
-- [ ] `makemigrations --check` continua sem mudanças pendentes
-- [ ] Build gate passa
-- [ ] Test count: 125 tests pass
+- [x] `tests/isolamento/test_migracao.py` chama a função da migração com o registro de models sobre ligações gravadas à força e confere que nenhuma sobra
+- [x] A migração depende das últimas migrações de `accounts`, `budgets`, `goals` e `reports`
+- [x] `makemigrations --check` continua sem mudanças pendentes
+- [x] Build gate passa
+- [x] Test count: 125 tests pass (138 na execução)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): corrige ligações entre usuários já gravadas`
 
