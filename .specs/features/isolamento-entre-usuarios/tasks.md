@@ -941,12 +941,13 @@ T31
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_uso_orcamento.py` grava à força uma subcategoria de B sob a categoria do orçamento de A, com uma despesa de A nessa subcategoria, e confere que o gasto do orçamento de A não a soma, enquanto a despesa de A numa subcategoria própria continua somando
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_uso_orcamento.py` grava à força uma subcategoria de B sob a categoria do orçamento de A, com uma despesa de A nessa subcategoria, e confere que o gasto do orçamento de A não a soma, enquanto a despesa de A numa subcategoria própria continua somando
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (143 na execução, +2)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(budgets): soma no uso do orçamento só subcategorias do dono`
 
