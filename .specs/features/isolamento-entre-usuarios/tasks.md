@@ -968,14 +968,15 @@ T31
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_edicao_parcial.py` liga à força uma transação de A à conta de B e confere que um PATCH só com `description` responde 400 em `account` com "Conta não encontrada." e não altera a transação; o mesmo para categoria e tag
-- [ ] Um PATCH que troca a relação cruzada por uma própria é aceito
-- [ ] Uma transação sem ligação cruzada continua aceitando PATCH parcial
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/isolamento/test_edicao_parcial.py` liga à força uma transação de A à conta de B e confere que um PATCH só com `description` responde 400 em `account` com "Conta não encontrada." e não altera a transação; o mesmo para categoria e tag
+- [x] Um PATCH que troca a relação cruzada por uma própria é aceito
+- [x] Uma transação sem ligação cruzada continua aceitando PATCH parcial
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (152 na execução, +9)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa edição de transação ainda ligada a outro usuário`
 

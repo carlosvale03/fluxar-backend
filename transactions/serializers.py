@@ -176,6 +176,26 @@ class TransactionSerializer(serializers.ModelSerializer):
                  }
         return None
 
+    def validate(self, attrs):
+        # Edição de transação ainda ligada a objeto de outro usuário, ou a
+        # categoria-modelo, é recusada até o corpo desfazer a ligação (ISOL-02)
+        if self.instance is not None:
+            dono = self.instance.user_id
+            erros = {}
+            for campo, mensagem in (
+                ('account', CONTA_NAO_ENCONTRADA),
+                ('credit_card', CARTAO_NAO_ENCONTRADO),
+                ('category', CATEGORIA_NAO_ENCONTRADA),
+            ):
+                atual = getattr(self.instance, campo)
+                if campo not in attrs and atual is not None and atual.user_id != dono:
+                    erros[campo] = [mensagem]
+            if 'tags' not in attrs and self.instance.tags.exclude(user_id=dono).exists():
+                erros['tags'] = [TAG_NAO_ENCONTRADA]
+            if erros:
+                raise serializers.ValidationError(erros)
+        return attrs
+
     @transaction.atomic
     def create(self, validated_data):
         user = self.context['request'].user
