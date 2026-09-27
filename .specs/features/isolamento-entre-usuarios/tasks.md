@@ -1038,12 +1038,13 @@ T35
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_parcelas_futuras.py` grava à força uma parcela de B na série de A, edita com `update_scope=ALL_FUTURE` e confere que o valor e a categoria da parcela de B não mudam, enquanto as parcelas futuras de A mudam
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_parcelas_futuras.py` grava à força uma parcela de B na série de A, edita com `update_scope=ALL_FUTURE` e confere que o valor e a categoria da parcela de B não mudam, enquanto as parcelas futuras de A mudam
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (157 na execução, +2)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): edita em lote só parcelas futuras do dono`
 

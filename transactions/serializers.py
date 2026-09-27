@@ -288,10 +288,12 @@ class TransactionSerializer(serializers.ModelSerializer):
             root_id = instance.parent_transaction_id or instance.id
             
             # Busca parcelas futuras (excluindo a atual, que será atualizada pelo super().update)
+            # Só parcelas do dono da transação editada (ISOL-14)
             futures = Transaction.objects.filter(
                 Q(id=root_id) | Q(parent_transaction_id=root_id)
             ).filter(
-                installment_number__gt=instance.installment_number
+                installment_number__gt=instance.installment_number,
+                user_id=instance.user_id,
             )
             
             for txn in futures:
