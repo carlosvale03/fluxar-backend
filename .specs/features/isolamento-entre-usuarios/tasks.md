@@ -77,6 +77,8 @@ T19
 T20
 T25
 T26
+T27
+T28
 ```
 
 ### Phase 5: Correção dos dados existentes
@@ -715,6 +717,58 @@ T22 → T24
 
 ---
 
+#### T27: Monitores de foco no relatório avançado
+
+**What**: `get_advanced_charts` monta a lista de monitores só com categoria ou tag do dono do monitor e ignora o monitor ligado a objeto de outro usuário. Acrescentada durante a execução: o lote 3 encontrou essa leitura, que a tabela do design não listava.
+**Where**: `reports/services.py`
+**Depends on**: None
+**Reuses**: o laço atual dos monitores
+**Requirement**: ISOL-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_relatorio_avancado.py` liga à força um monitor de A à categoria de B e outro à tag de B e confere que `/api/reports/charts/advanced/` não traz nome, ícone nem cor de B, enquanto o monitor próprio de A continua aparecendo
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(reports): ignora monitores ligados a dados de outro usuário`
+
+---
+
+#### T28: Total da fatura só com compras do dono
+
+**What**: o signal `update_invoice_total` soma só as compras do dono do cartão da fatura. Acrescentada durante a execução: o lote 3 encontrou essa soma, que a tabela do design não listava.
+**Where**: `transactions/signals.py`
+**Depends on**: None
+**Reuses**: a soma atual
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_total_fatura.py` grava à força uma compra de B na fatura de A, salva uma compra de A na mesma fatura e confere que o total guardado soma só as compras de A
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(transactions): soma no total da fatura só compras do dono do cartão`
+
+---
+
 ### Phase 5: Correção dos dados existentes
 
 #### T21: Verificação das ligações cruzadas
@@ -835,7 +889,7 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
 Phase 3:  T8 · T9 · T10 · T11 · T12 · T13 → T14
-Phase 4:  T17 · T18 · T19 · T20 · T25 · T26 · T15 → T16
+Phase 4:  T17 · T18 · T19 · T20 · T25 · T26 · T27 · T28 · T15 → T16
 Phase 5:  T21 → T22 → T23
           T22 → T24
 ```
@@ -870,6 +924,8 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T20: Endereço e filtros | 1 arquivo de testes | ✅ Granular |
 | T25: Parceira nos signals | 2 signals no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
 | T26: Histórico da meta | 1 endpoint | ✅ Granular |
+| T27: Relatório avançado | 1 função | ✅ Granular |
+| T28: Total da fatura | 1 signal | ✅ Granular |
 | T21: Verificação | 1 função | ✅ Granular |
 | T22: Correção | 1 função | ✅ Granular |
 | T23: Comando | 1 comando | ✅ Granular |
@@ -898,6 +954,8 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T20 | None | isolada na fase 4 | ✅ Match |
 | T25 | None | isolada na fase 4 | ✅ Match |
 | T26 | None | isolada na fase 4 | ✅ Match |
+| T27 | None | isolada na fase 4 | ✅ Match |
+| T28 | None | isolada na fase 4 | ✅ Match |
 | T21 | None | início da fase 5 | ✅ Match |
 | T22 | T21 | T21 → T22 | ✅ Match |
 | T23 | T22 | T22 → T23 | ✅ Match |
@@ -922,6 +980,8 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T20: Endereço e filtros | Views da API | integration | integration | ✅ OK |
 | T25: Signals da transferência | Services, signals e leituras | integration | integration | ✅ OK |
 | T26: Histórico da meta | Views da API | integration | integration | ✅ OK |
+| T27: Relatório avançado | Services, signals e leituras | integration | integration | ✅ OK |
+| T28: Total da fatura | Services, signals e leituras | integration | integration | ✅ OK |
 | T21, T22: Verificação e correção | Correção de dados | integration | integration | ✅ OK |
 | T23: Comando | Correção de dados | integration | integration | ✅ OK |
 | T24: Migração | Correção de dados | integration | integration | ✅ OK |

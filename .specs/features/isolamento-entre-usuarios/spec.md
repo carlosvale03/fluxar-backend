@@ -147,8 +147,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ISOL-11 | P1: Relações só com objetos do próprio usuário | T3, T4, T6, T10 | Pending |
 | ISOL-12 | P1: Leitura restrita ao dono | T19, T20 | Pending |
 | ISOL-13 | P1: Leitura restrita ao dono | T20 | Pending |
-| ISOL-14 | P1: Leitura restrita ao dono | T15 a T19, T25 | Pending |
-| ISOL-15 | P1: Leitura restrita ao dono | T9, T11, T12, T15, T16, T26 | Pending |
+| ISOL-14 | P1: Leitura restrita ao dono | T15 a T19, T25, T28 | Pending |
+| ISOL-15 | P1: Leitura restrita ao dono | T9, T11, T12, T15, T16, T26, T27 | Pending |
 | ISOL-16 | P1: Correção dos dados existentes | T21, T23 | Pending |
 | ISOL-17 | P1: Correção dos dados existentes | T22, T24 | Pending |
 | ISOL-18 | P1: Correção dos dados existentes | T22, T24 | Pending |
