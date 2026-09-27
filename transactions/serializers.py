@@ -12,6 +12,10 @@ from core.fields import (
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
     parent_name = serializers.ReadOnlyField(source='parent.name')
+    parent = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
 
     class Meta:
         model = Category

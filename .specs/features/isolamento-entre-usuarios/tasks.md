@@ -221,13 +221,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_escrita_categorias.py` cobre pai de B, pai inexistente e pai categoria-modelo, na criação e na edição, com 400 em `parent`, respostas idênticas e nada gravado
-- [ ] Subcategoria sob categoria própria continua funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 33 tests pass
+- [x] `tests/isolamento/test_escrita_categorias.py` cobre pai de B, pai inexistente e pai categoria-modelo, na criação e na edição, com 400 em `parent`, respostas idênticas e nada gravado
+- [x] Subcategoria sob categoria própria continua funcionando
+- [x] Quick gate passa
+- [x] Test count: 33 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa categoria-pai de outro usuário`
 
