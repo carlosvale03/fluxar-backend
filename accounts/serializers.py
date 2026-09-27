@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account, CreditCard, CreditCardInvoice
 from .services import AccountService, CreditCardService
 from core.services.plan_limits import PlanLimitsService
+from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
 
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,14 +36,12 @@ class CreditCardInvoiceSerializer(serializers.ModelSerializer):
 class InvoicePaymentSerializer(serializers.Serializer):
 
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
-    account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none(), required=True)
+    # Só contas ativas do usuário da requisição (AD-032)
+    account_id = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
+        required=True,
+    )
     date = serializers.DateField(required=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-             self.fields['account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
 
 
 class CreditCardSerializer(serializers.ModelSerializer):
@@ -50,9 +49,10 @@ class CreditCardSerializer(serializers.ModelSerializer):
     current_invoice_total = serializers.SerializerMethodField()
     next_due_date = serializers.SerializerMethodField()
     
-    # Campos para vínculo com conta (FE-002)
-    account_id = serializers.PrimaryKeyRelatedField(
-        queryset=Account.objects.none(), # Placeholder, populado no __init__
+    # Campos para vínculo com conta (FE-002); só contas ativas do usuário da requisição (AD-032)
+    account_id = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.filter(is_active=True),
+        not_found_message=CONTA_NAO_ENCONTRADA,
         source='account',
         required=False,
         allow_null=True
@@ -70,12 +70,13 @@ class CreditCardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'available_limit', 'current_invoice_total']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Filtra contas apenas do usuário logado
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-             self.fields['account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Conta de outro usuário não aparece no cartão (ISOL-15)
+        if instance.account_id and instance.account.user_id != instance.user_id:
+            ret['account'] = None
+            ret['account_id'] = None
+        return ret
 
     def validate(self, data):
         if 'closing_day' in data:

@@ -421,13 +421,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_cartao_fatura.py` cobre criação e edição de cartão com conta de B e pagamento de fatura com conta de B, com 400 em `account_id`, respostas idênticas e nada gravado
-- [ ] Um cartão de A ligado à força à conta de B mostra `account` nulo
-- [ ] Quick gate passa
-- [ ] Test count: 75 tests pass
+- [x] `tests/isolamento/test_cartao_fatura.py` cobre criação e edição de cartão com conta de B e pagamento de fatura com conta de B, com 400 em `account_id`, respostas idênticas e nada gravado
+- [x] Um cartão de A ligado à força à conta de B mostra `account` nulo
+- [x] Quick gate passa
+- [x] Test count: 75 tests pass (77 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): recusa conta de outro usuário no cartão e no pagamento de fatura`
 
