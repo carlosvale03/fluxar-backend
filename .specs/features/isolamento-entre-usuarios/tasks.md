@@ -449,13 +449,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_importacao.py` envia um OFX e uma planilha com `account_id` de B e inexistente: 400 em `account_id`, respostas idênticas e nenhuma transação criada
-- [ ] Um mapeamento de contas que aponta para uma conta de B não grava nada na conta de B
-- [ ] Quick gate passa
-- [ ] Test count: 80 tests pass
+- [x] `tests/isolamento/test_importacao.py` envia um OFX e uma planilha com `account_id` de B e inexistente: 400 em `account_id`, respostas idênticas e nenhuma transação criada
+- [x] Um mapeamento de contas que aponta para uma conta de B não grava nada na conta de B
+- [x] Quick gate passa
+- [x] Test count: 80 tests pass (82 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(data_exchange): responde 400 no campo para conta alheia na importação`
 
