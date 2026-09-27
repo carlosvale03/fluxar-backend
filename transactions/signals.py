@@ -86,8 +86,9 @@ def update_invoice_total(sender, instance, **kwargs):
         # Geralmente INVOICE_PAYMENT não tem FK invoice preenchido (é pagamento DA fatura, não item DA fatura).
         # Mas vamos garantir filtrando por type='CREDIT_CARD' para evitar somar pagamentos se algo mudar.
         
+        # Só compras do dono do cartão da fatura (ISOL-14)
         total = instance.invoice.transactions.filter(
-            type='CREDIT_CARD'
+            type='CREDIT_CARD', user_id=instance.invoice.card.user_id
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Atualiza a invoice sem disparar signals da invoice (loop?) - Invoice não tem signals ainda.

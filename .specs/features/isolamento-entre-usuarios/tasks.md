@@ -759,12 +759,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_total_fatura.py` grava à força uma compra de B na fatura de A, salva uma compra de A na mesma fatura e confere que o total guardado soma só as compras de A
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_total_fatura.py` grava à força uma compra de B na fatura de A, salva uma compra de A na mesma fatura e confere que o total guardado soma só as compras de A
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (2 novos, 124 na execução)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): soma no total da fatura só compras do dono do cartão`
 
