@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 9,
   "lessons": [
     {
       "id": "L-001",
@@ -36,10 +36,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "ISOL-14 budgets/services.py:24 (services)"
+        "ISOL-14 budgets/services.py:24 (services)",
+        "ISOL-14 accounts/services.py:132 (rodada 2, gap 1) (services)"
       ],
       "created": "2026-09-27T19:01:02Z",
-      "last_seen": "2026-09-27T19:01:02Z"
+      "last_seen": "2026-09-27T19:26:59Z"
     },
     {
       "id": "L-003",
@@ -72,10 +73,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "spec.md edge case 5 (IMPORT-21) (spec)"
+        "spec.md edge case 5 (IMPORT-21) (spec)",
+        "spec.md edge case 5 (IMPORT-21) rodada 2: deferido, sonda P2 (spec)"
       ],
       "created": "2026-09-27T19:01:03Z",
-      "last_seen": "2026-09-27T19:01:03Z"
+      "last_seen": "2026-09-27T19:26:59Z"
     },
     {
       "id": "L-005",
@@ -90,10 +92,11 @@
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)"
+        "ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)",
+        "ISOL-13 test_relatorios.py:46 (rodada 2, nota mantida) (spec)"
       ],
       "created": "2026-09-27T19:01:03Z",
-      "last_seen": "2026-09-27T19:01:03Z"
+      "last_seen": "2026-09-27T19:26:59Z"
     },
     {
       "id": "L-006",
@@ -112,6 +115,42 @@
       ],
       "created": "2026-09-27T19:01:03Z",
       "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-007",
+      "key": "surviving_mutant::test each defensive fallback branch with the specific input it exists to block not only with an ordinary valid object",
+      "text": "Test each defensive fallback branch with the specific input it exists to block, not only with an ordinary valid object",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 core/fields.py:42 (test_campo.py:96) (tests)"
+      ],
+      "created": "2026-09-27T19:26:59Z",
+      "last_seen": "2026-09-27T19:26:59Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::state whether server side operations that copy or batch update already linked records must re check the ownership of the relations they carry",
+      "text": "State whether server-side operations that copy or batch-update already-linked records must re-check the ownership of the relations they carry",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)"
+      ],
+      "created": "2026-09-27T19:26:59Z",
+      "last_seen": "2026-09-27T19:26:59Z"
     }
   ]
 }

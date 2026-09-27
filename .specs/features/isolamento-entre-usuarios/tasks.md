@@ -97,6 +97,17 @@ T29 → T30
 T31
 ```
 
+### Phase 7: Correções da segunda verificação
+
+Lacunas apontadas pelo verificador na segunda rodada.
+
+```
+T32
+T33
+T34
+T35
+```
+
 ---
 
 ## Task Breakdown
@@ -982,10 +993,117 @@ T31
 
 ---
 
+### Phase 7: Correções da segunda verificação
+
+#### T32: Pagamento e estorno da fatura só com compras do dono
+
+**What**: `pay_invoice` e o estorno em `accounts/services.py` alteram só as compras do dono do cartão da fatura (hoje `invoice.transactions.filter(...)` sem dono, linhas 132 e 236).
+**Where**: `accounts/services.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_pagamento_fatura.py` grava à força uma compra de B na fatura de A, paga a fatura e confere que a compra de B continua como estava (status, conta) e que o saldo guardado da conta de A desconta só as compras de A
+- [ ] O estorno do pagamento não muda a compra de B
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 3 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(accounts): paga e estorna na fatura só compras do dono do cartão`
+
+---
+
+#### T33: Edição de parcelas futuras só do dono
+
+**What**: A edição `ALL_FUTURE` do `TransactionSerializer.update` altera só parcelas do dono da transação editada.
+**Where**: `transactions/serializers.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_parcelas_futuras.py` grava à força uma parcela de B na série de A, edita com `update_scope=ALL_FUTURE` e confere que o valor e a categoria da parcela de B não mudam, enquanto as parcelas futuras de A mudam
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(transactions): edita em lote só parcelas futuras do dono`
+
+---
+
+#### T34: Importação de orçamentos sem categoria de outro usuário
+
+**What**: `bulk_import` de orçamentos pula o orçamento de origem cuja categoria não é do usuário, contando-o como ignorado.
+**Where**: `budgets/views.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_importar_orcamentos.py` liga à força um orçamento de A à categoria de B, importa para outro mês e confere que nenhum orçamento novo aponta para a categoria de B, enquanto os orçamentos de categorias próprias são importados
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(budgets): não copia categoria de outro usuário na importação de orçamentos`
+
+---
+
+#### T35: Campo sem requisição recusa categoria-modelo
+
+**What**: Teste do ramo sem `request` do `OwnedPrimaryKeyRelatedField` com a entrada que ele existe para bloquear: categoria-modelo e objeto de qualquer usuário (mutante M13 da segunda verificação).
+**Where**: `tests/isolamento/test_campo.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-10, ISOL-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste falha se o ramo sem `request` de `core/fields.py` for removido (conferido na tarefa e desfeito)
+- [ ] Build gate passa
+- [ ] Test count: suíte cresce em pelo menos 1 teste
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(isolamento): cobre o campo sem requisição com categoria-modelo`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
@@ -994,6 +1112,7 @@ Phase 4:  T17 · T18 · T19 · T20 · T25 · T26 · T27 · T28 · T15 → T16
 Phase 5:  T21 → T22 → T23
           T22 → T24
 Phase 6:  T31 · T29 → T30
+Phase 7:  T32 · T33 · T34 · T35
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism. A single agent (or batch worker) works one task at a time, in order.
@@ -1035,6 +1154,10 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T29: Leitura do orçamento | 1 serializer | ✅ Granular |
 | T30: Uso do orçamento | 1 função | ✅ Granular |
 | T31: Edição parcial | 1 serializer | ✅ Granular |
+| T32: Pagamento e estorno | 2 funções no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
+| T33: Parcelas futuras | 1 método | ✅ Granular |
+| T34: Importação de orçamentos | 1 endpoint | ✅ Granular |
+| T35: Campo sem requisição | 1 teste | ✅ Granular |
 
 ---
 
@@ -1068,6 +1191,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T29 | None | início da fase 6 | ✅ Match |
 | T30 | T29 | T29 → T30 | ✅ Match |
 | T31 | None | isolada na fase 6 | ✅ Match |
+| T32 a T35 | None | isoladas na fase 7 | ✅ Match |
 
 ---
 
@@ -1096,3 +1220,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T29: Leitura do orçamento | Serializers da API | integration | integration | ✅ OK |
 | T30: Uso do orçamento | Services, signals e leituras | integration | integration | ✅ OK |
 | T31: Edição parcial | Serializers da API | integration | integration | ✅ OK |
+| T32: Pagamento e estorno | Services, signals e leituras | integration | integration | ✅ OK |
+| T33: Parcelas futuras | Serializers da API | integration | integration | ✅ OK |
+| T34: Importação de orçamentos | Views da API | integration | integration | ✅ OK |
+| T35: Campo sem requisição | Campo de relação e helper | integration | integration | ✅ OK |

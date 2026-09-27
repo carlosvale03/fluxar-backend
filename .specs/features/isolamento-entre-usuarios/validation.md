@@ -1,13 +1,13 @@
 # Isolamento entre usuarios Validation
 
-## Validation: isolamento-entre-usuarios - FAIL ❌
+## Validation: isolamento-entre-usuarios (rodada 2) - FAIL ❌
 
 **Date**: 2026-09-27
 **Spec**: `.specs/features/isolamento-entre-usuarios/spec.md`
-**Diff range**: `development..fix/isolamento-entre-usuarios` (base `f4f560e`, HEAD `0253099`, 33 commits)
-**Verifier**: sub-agente independente (autor ≠ verificador), evidence-or-zero
+**Diff range**: `development..fix/isolamento-entre-usuarios` (base `f4f560e`, HEAD `8b3da34`, 36 commits; Phase 6 = `53dfcbd`, `9858af6`, `8b3da34`)
+**Verifier**: sub-agente independente da rodada 2 (autor ≠ verificador), evidence-or-zero; o relatório da rodada 1 não foi usado como evidência, e as citações antigas foram conferidas linha a linha
 
-O motivo do FAIL: um caminho de leitura do ISOL-15 não foi tratado nem testado (orçamento mostra a categoria de outro usuário) e dois edge cases só têm cobertura parcial. As 32 mutações foram mortas e o gate passa. Os três gaps só aparecem com ligação cruzada já gravada, e a migração `0007_corrige_isolamento` apaga essa ligação no mesmo deploy. Por isso a gravidade é baixa, mas as falhas existem no código e ficam sem teste.
+Resumo: T29, T30 e T31 fecharam os gaps 1 a 3 da rodada 1, e cada mudança tem teste que mata as mutações correspondentes. O gap 4 fica para a IMPORT-21 e o gap 5 é só nota de precisão; nenhum dos dois bloqueia. O FAIL vem de três caminhos novos, achados nesta rodada e confirmados por sonda. Nos três, uma ação de A mexe em dados de B ou copia uma ligação cruzada quando essa ligação já está gravada. O mais sério é o pagamento de fatura (ISOL-14, "compras de um cartão"). Há também um mutante sobrevivente no ramo "sem `request`" do campo. É a mesma classe de gravidade dos gaps 1 e 2 da rodada 1: tudo depende de uma ligação cruzada gravada antes da correção, e a migração `0007_corrige_isolamento` desfaz essas ligações no mesmo deploy.
 
 ---
 
@@ -15,61 +15,62 @@ O motivo do FAIL: um caminho de leitura do ISOL-15 não foi tratado nem testado 
 
 | Task | Status | Notes |
 | ---- | ------ | ----- |
-| T1 a T28 (T25 a T28 acrescentadas na execução) | ✅ Done | Todas marcadas `✅ Complete` em `tasks.md`, com os "Done when" marcados |
+| T1 a T28 | ✅ Done | Marcadas `✅ Complete` em `tasks.md` |
+| T29 (leitura do orçamento) | ✅ Done | `53dfcbd`; `budgets/serializers.py:27-33` |
+| T30 (uso do orçamento) | ✅ Done | `9858af6`; `budgets/services.py:24-26` |
+| T31 (edição parcial com ligação cruzada) | ✅ Done | `8b3da34`; `transactions/serializers.py:179-197` |
 
 ---
 
 ## Gate Check
 
 - **Gate command**: `docker compose exec -T backend sh -c "python -m compileall -q -x venv . && python manage.py makemigrations --check --dry-run && python manage.py test --noinput"`
-- **Resultado**: exit 0. `compileall` sem erro; `makemigrations --check`: "No changes detected"; `Ran 138 tests ... OK`
-- **Passaram**: 138; **falharam**: 0; **pulados**: 0
-- **Testes antes da feature**: 0 (`api/tests.py` e `data_exchange/tests.py` são o modelo vazio do Django)
-- **Testes depois da feature**: 138 (todos em `tests/isolamento/`)
-- **Delta**: +138
-- **CI**: `.github/workflows/ci-backend.yml` dispara em push e PR para `main` e `development`, sem `paths`, com serviço `postgres:15`, e o último passo é `python manage.py test --noinput`. Os critérios de T1 e da AD-033 foram atendidos.
+- **Resultado**: exit 0. `compileall` sem erro; `makemigrations --check`: "No changes detected"; `Found 152 test(s)` … `Ran 152 tests in 14.796s` … `OK`
+- **Passaram**: 152; **falharam**: 0; **pulados**: 0
+- **Testes antes da feature**: 0. **Rodada 1**: 138. **Agora**: 152. A Phase 6 acrescentou 14 (3 + 2 + 9), e nenhum arquivo de teste antigo mudou (`git diff --stat 0253099..HEAD -- tests` mostra só os 3 arquivos novos)
+- **Prints**: o diff não acrescenta nenhum `print(` fora de `tests/` (AD-019). Os `DEBUG` da saída já existiam antes da feature
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Helper usado nas recusas: `tests/isolamento/base.py:100-106` (`assert_mesma_recusa`). Ele confere status 400 nas duas respostas (`:100-101`), o campo no corpo (`:102`), a igualdade exata dos corpos alheio e inexistente (`:104`) e, quando recebe `mensagem`, `resp.data[campo] == [mensagem]` (`:106`). Toda chamada de escrita abaixo passa a mensagem em português. O próprio helper é testado: `test_base.py:44-70` confirma que ele falha quando status, campo, chaves ou mensagem divergem.
+Helper das recusas: `tests/isolamento/base.py:94-106` (`assert_mesma_recusa`). Ele confere 400 nas duas respostas (`:100-101`), o campo (`:102`), as mesmas chaves (`:103`), o corpo idêntico ao de um ID inexistente (`:104`) e `resp.data[campo] == [mensagem]` (`:106`).
 
 | Criterion | Spec-defined outcome | `file:line` + assertion | Result |
 | --------- | -------------------- | ----------------------- | ------ |
-| ISOL-01 (invariante: toda relação só com objetos do dono) | Nenhuma relação gravável aceita objeto de outro usuário | `tests/isolamento/test_inventario.py:121` - `assertIsInstance(relacao, OwnedPrimaryKeyRelatedField)` para todo campo de relação gravável das rotas e dos módulos `serializers`; `:125` - `assertEqual(ESPERADAS - verificadas, set())` (17 relações); para os dados gravados, `test_correcao.py:83` - `assertEqual(find_cross_links(apps), [])` | ✅ |
-| ISOL-02 transação (criar/editar) com conta, cartão, categoria, tag ou conta-destino de B | 400, erro no campo, mesma mensagem de inexistente, nada gravado | `test_escrita_transacoes.py:73` - `assert_mesma_recusa(resp_alheio, resp_inexistente, campo, mensagem)`; `:74` - `assertEqual(Transaction.objects.count(), total_antes)`; `:75` → `:55-60` saldo de B = 1000.00 e nenhuma transação ligada a B; edição `:136` e `:137` - `assertEqual(self.estado(t), antes)`; casos em `:77-90` e `:140-153` | ✅ |
-| ISOL-03 edição em lote com categoria de B | 400 em `category`, nenhuma ocorrência alterada | `test_escrita_lote.py:50` - `assert_mesma_recusa(resp, resp_inexistente, 'category', 'Categoria não encontrada.')`; `:52` - `assertEqual(self.estado_da_serie(), antes)`; `:53` - 3 ocorrências | ✅ |
-| ISOL-04 categoria-pai de B (criar/editar) | 400 em `parent`, nada gravado | `test_escrita_categorias.py:37` - `assert_mesma_recusa(resp, resp_inexistente, 'parent', 'Categoria não encontrada.')`; `:39-40` contagem e nome; edição `:51`, `:54` - `assertIsNone(categoria.parent_id)` | ✅ |
-| ISOL-05 orçamento com categoria de B (criar/editar) | 400 em `category`, nada gravado | `test_escrita_orcamentos.py:28` - `assert_mesma_recusa(..., 'category', 'Categoria não encontrada.')`; `:29-30` estado igual e nenhum orçamento em 10/2026; edição `:49`, `:51-52` | ✅ |
-| ISOL-06 meta com conta de B (criar/editar) | 400 em `account`, nada gravado | `test_metas.py:24` - `assert_mesma_recusa(resp, resp_inexistente, 'account', 'Conta não encontrada.')`; `:25-27` contagens de metas e contas; edição `:34`, `:35` - conta continua `a.cofrinho` | ✅ |
-| ISOL-07 monitor de foco com categoria ou tag de B | 400 no campo, nada gravado | `test_monitor_foco.py:20` - `assert_mesma_recusa(resp, resp_inexistente, campo, mensagem)`; `:21` estado igual; casos `:23-30` (categoria de B, categoria-modelo, tag de B) | ✅ |
-| ISOL-08 cartão com conta de pagamento de B (criar/editar) | 400 em `account_id` | `test_cartao_fatura.py:24` - `assert_mesma_recusa(resp, resp_inexistente, 'account_id', 'Conta não encontrada.')`; `:25-26`; edição `:33-34` | ✅ |
-| ISOL-09 compra no cartão, transferência, pagamento de fatura, aporte/resgate e importação | 400 no campo do corpo | transferência e compra: `test_escrita_transferencia_cartao.py:40` + `:41-44` (nenhuma transação ou fatura criada, saldo e fatura de B intactos), casos `:48-95`; pagamento: `test_cartao_fatura.py:93` + `:94-98`; aporte/resgate nos 4 nomes de campo: `test_aporte_resgate.py:32` + `:33-36`, casos `:53-71`; importação: `test_importacao.py:76-77` (OFX) e `:84-85` (planilha) | ✅ |
-| ISOL-10 categoria-modelo sem dono | Recusa igual à de inexistente | `test_campo.py:70-72` - `assert_recusa({'category': modelo}, 'category', 'Categoria não encontrada.')` (`:45` - `assertEqual(serializer.errors, {campo: [mensagem]})`); pela API: `test_escrita_categorias.py:16`+`:37`, `test_escrita_lote.py:43`+`:50`, `test_escrita_orcamentos.py:35-36`, `test_escrita_transferencia_cartao.py:85-89`, `test_monitor_foco.py:26-27`; helper: `test_campo.py:129`+`:135` | ✅ (sem caso na API para `TransactionSerializer.category`, mas o campo é a mesma classe) |
-| ISOL-11 formato da recusa | 400, erro no campo, mesma mensagem de inexistente, texto em português | `base.py:100-106` (acima); UUID malformado `test_campo.py:74-77`; tipo errado `:79-82`; sem `request` `:96-100`; `get_owned_or_400` `:122-135` - `assertEqual(ctx.exception.detail, {'campo_x': [mensagem]})` | ✅ |
-| ISOL-12 ID de B no endereço (ler/editar/excluir) | 404 igual ao de inexistente | `test_endereco_filtros.py:55-57` - `assertEqual(resp.status_code, 404)` e `assertEqual(resp.data, resp_inexistente.data)` para GET/PATCH/PUT/DELETE de conta, cartão, fatura (`pay`/`unpay` 404; PATCH/DELETE 405 igual), categoria, tag, transação, orçamento, meta (`deposit`/`withdraw`/`history`) e monitor (`:67-138`), com o objeto de B intacto; relatório de tag `test_relatorios.py:46-48` e UUID malformado `:55-56` | ✅ |
-| ISOL-13 filtros com ID de B | Resultado vazio, igual ao de inexistente | `test_endereco_filtros.py:158` - `assertEqual(resp.data['results'], [])`; `:159` - `assertEqual(resp.data, resp_inexistente.data)`; `:161` controle positivo com ID de A; `accountId`/`account`, `credit_card`, `invoice`, `categoryId`/`category`, `tagIds` (`:163-178`), orçamentos `category` (`:180-181`); exportação PDF/XLS `:201-203` | ✅ |
-| ISOL-14 listas e somas só com dados do dono | Subcategorias, transações da conta, compras do cartão, metas do cofrinho, parceira | subcategorias `test_leitura_categorias.py:25`, `:30`; saldo `test_saldo_limite.py:23` - `get_balance == 900.00` e `:29` dashboard; limite `:44` - `available_limit == 1700.00`; total da fatura `test_total_fatura.py:33` (350.00), `:41` (300.00); metas do cofrinho `test_signal_metas.py:27-28`, `:44-45`; parceira `test_leitura_transacoes.py:70`, `test_signal_transferencia.py:42`, `:53`, `test_escrita_transacoes.py:219`; subcategorias no monitor `test_relatorios.py:34` (40.0) | ⚠️ Coberto no que foi tratado; `BudgetService.get_budget_usage` (`budgets/services.py:24`) soma `budget.category.subcategories` sem filtro do dono e não tem teste (gap 2) |
-| ISOL-15 respostas só com objetos relacionados do dono | Nome da conta, categoria, subcategorias, tags e conta da meta, só do dono | transação `test_leitura_transacoes.py:43-50`; nome da conta da parceira `:88` (`'Desconhecida'`); pai da categoria `test_leitura_categorias.py:40-41`; meta `test_metas.py:87-88`, `:96-97`; histórico `test_historico_meta.py:30`; monitor `test_monitor_foco.py:61-64`; cartão `test_cartao_fatura.py:63-64`, `:70-71`; relatório avançado `test_relatorio_avancado.py:34-35`, `:47-48` | ❌ GAP: `BudgetSerializer.category_detail` (`budgets/serializers.py:13`) mostra a categoria de outro usuário. Sonda P1: um orçamento de A ligado à categoria de B devolve `category_detail.name == 'Mercado B'` em `GET /api/budgets/`. Sem código nem teste (gap 1) |
-| ISOL-16 verificação lista cada ligação com tipo, ID e relação | Uma linha por registro cruzado | `test_verificacao.py:31` - `assertEqual(como_tuplas(links), sorted(registros.esperadas))` (18 ligações, cada linha da tabela do design, mais parcela e série de origem); `:22` - base limpa → `[]`; comando `test_comando.py:35-36`; saída só com tipos e IDs (AD-019) `:46-50` | ✅ |
-| ISOL-17 correção desfaz cada ligação conforme a tabela | Relações anuladas; orçamentos, monitores e aportes excluídos | `test_correcao.py:58` - `relatorio.ligacoes == 18`; `:66` - `assertIsNone(getattr(transacao, f'{relacao}_id'))`; `:70` - tag de B removida; `:73` série; `:75-77` pai, conta do cartão e conta da meta nulas; `:79-81` Budget, monitores e aporte excluídos; `:83` sem sobras; idempotência `:117-118`; dados sem ligação intactos `:146-147`; migração `test_migracao.py:37`, com registro histórico `:47-49`, dependências `:20-30` | ✅ |
-| ISOL-18 recálculo do saldo pela SALDO-01 | Saldo = inicial + entradas efetivadas − saídas efetivadas, só do dono | `test_correcao.py:87` antes = 1400.00; `:93` - `balance == 900.00` (1000 − 100; a receita pendente fica fora); fatura `:95` (120.00); meta `:97` (250.00, AD-028); `test_comando.py:61` e `test_migracao.py:39`, `:50` (1000.00) | ✅ |
+| ISOL-01 invariante | Registro ligado só a objetos do dono, ou a nenhum | `test_inventario.py:121` - `assertIsInstance(relacao, OwnedPrimaryKeyRelatedField)`; `:125` - `assertEqual(ESPERADAS - verificadas, set())`; dados gravados: `test_correcao.py:83` - `assertEqual(find_cross_links(apps), [])` | ⚠️ Coberto na entrada pela API e na correção. Dois caminhos internos criam uma ligação cruzada nova a partir de uma já gravada: sondas P1 e P3 (gaps 1 e 3) |
+| ISOL-02 transação com conta, cartão, categoria ou tag de B | 400 no campo, mesma mensagem de inexistente, nada gravado | criação `test_escrita_transacoes.py:73` - `assert_mesma_recusa(...)`, `:74` - `assertEqual(Transaction.objects.count(), total_antes)`; edição `:136`, `:137` - `assertEqual(self.estado(t), antes)`; edição de transação já cruzada (T31): `test_edicao_parcial.py:65` - `assert_mesma_recusa(resp, resp_inexistente, campo, mensagem)`, `:66` - `assertEqual(resp.data, {campo: [mensagem]})`, `:67` - `assertEqual(self.estado(t), antes)` para conta, cartão, categoria, categoria-modelo e tag (`:71-89`) | ✅ |
+| ISOL-03 edição em lote com categoria de B | 400 em `category`, nenhuma ocorrência alterada | `test_escrita_lote.py:50` - `assert_mesma_recusa(resp, resp_inexistente, 'category', 'Categoria não encontrada.')`; `:52` - `assertEqual(self.estado_da_serie(), antes)` | ✅ |
+| ISOL-04 categoria-pai de B | 400 em `parent`, nada gravado | `test_escrita_categorias.py:37` - `assert_mesma_recusa(..., 'parent', 'Categoria não encontrada.')`; `:54` - `assertIsNone(categoria.parent_id)` | ✅ |
+| ISOL-05 orçamento com categoria de B | 400 em `category`, nada gravado | `test_escrita_orcamentos.py:28` - `assert_mesma_recusa(..., 'category', 'Categoria não encontrada.')`; `:29` - `assertEqual(self.estado_dos_orcamentos(), antes)` | ✅ |
+| ISOL-06 meta com conta de B | 400 em `account` | `test_metas.py:24` - `assert_mesma_recusa(resp, resp_inexistente, 'account', 'Conta não encontrada.')` | ✅ |
+| ISOL-07 monitor com categoria ou tag de B | 400 no campo | `test_monitor_foco.py:20` - `assert_mesma_recusa(resp, resp_inexistente, campo, mensagem)` | ✅ |
+| ISOL-08 cartão com conta de B | 400 em `account_id` | `test_cartao_fatura.py:24` - `assert_mesma_recusa(resp, resp_inexistente, 'account_id', 'Conta não encontrada.')` | ✅ |
+| ISOL-09 compra no cartão, transferência, pagamento de fatura, aporte/resgate e importação | 400 no campo do corpo | `test_escrita_transferencia_cartao.py:40` - `assert_mesma_recusa(...)`; `test_cartao_fatura.py:93` - `assert_mesma_recusa(..., 'account_id', 'Conta não encontrada.')`; `test_aporte_resgate.py:32` - `assert_mesma_recusa(resp, resp_inexistente, campo, 'Conta não encontrada.')`; `test_importacao.py:76` (OFX) e `:84` (planilha) - `assert_mesma_recusa(..., 'account_id', 'Conta não encontrada.')` | ✅ |
+| ISOL-10 categoria-modelo | Recusa igual à de inexistente | `test_campo.py:45` - `assertEqual(serializer.errors, {campo: [mensagem]})` via `:70`; edição de transação já ligada à categoria-modelo: `test_edicao_parcial.py:83-85`; leitura do orçamento com categoria-modelo: `test_leitura_orcamentos.py:50-55` | ✅ (o ramo "sem `request`" deixa passar a categoria-modelo, mutante M13; ver gap 4) |
+| ISOL-11 formato da recusa | 400, erro no campo, mesma mensagem em português | `base.py:100-106`; `test_edicao_parcial.py:66` - corpo exatamente `{campo: [mensagem]}` | ✅ |
+| ISOL-12 ID de B no endereço | 404 igual a inexistente | `test_endereco_filtros.py:56` - `assertEqual(resp_inexistente.status_code, status)`; `:57` - `assertEqual(resp.data, resp_inexistente.data)` | ✅ |
+| ISOL-13 filtros com ID de B | Vazio, igual a inexistente | `test_endereco_filtros.py:158` - `assertEqual(resp.data['results'], [])`; `:159` - `assertEqual(resp.data, resp_inexistente.data)`; exportação `:201` - `assertEqual(self.transacoes_exportadas(...), [])`; relatório de tag `test_relatorios.py:46-48` (404 igual a inexistente) | ✅ (nota de precisão sobre o relatório de tag; ver gap 5 da rodada 1) |
+| ISOL-14 listas e somas só com dados do dono | Subcategorias, transações da conta, compras do cartão, metas do cofrinho, parceira | subcategorias `test_leitura_categorias.py:25`; saldo `test_saldo_limite.py:23` - `assertEqual(AccountService.get_balance(self.a.conta), Decimal('900.00'))`; limite `:44` - `Decimal('1700.00')`; fatura `test_total_fatura.py:33` - `Decimal('350.00')`; metas `test_signal_metas.py:27`; parceira `test_leitura_transacoes.py:70`; **uso do orçamento (T30)**: `test_uso_orcamento.py:33` - `assertEqual(self.uso(), (Decimal('0.00'), Decimal('0.00'), 'OK'))` e `:40` - `(Decimal('60.00'), Decimal('20.00'), 'OK')` | ❌ GAP: o pagamento e o estorno de fatura (`accounts/services.py:132`, `:236`) percorrem as compras da fatura sem filtrar pelo dono, e a edição `ALL_FUTURE` (`transactions/serializers.py:291-292`) percorre as parcelas sem esse filtro. Sondas P3, P4 e P5, sem teste (gaps 1 e 2) |
+| ISOL-15 respostas só com relacionados do dono | Nome da conta, categoria, subcategorias, tags, conta da meta | transação `test_leitura_transacoes.py:43` - `assertIsNone(dados['account'])`; `:88` - `'Desconhecida'`; **orçamento (T29)**: `test_leitura_orcamentos.py:36` - `assertIsNone(dados['category'])`, `:37` - `assertIsNone(dados['category_detail'])`, `:39` - `assertNotIn(str(categoria.id), texto)`, `:41` - `assertNotIn(trecho, texto)` para nome, subcategoria, ícone e cor de B, no detalhe e na lista (`:35`); formato próprio inalterado `:63-73` | ✅ |
+| ISOL-16 verificação | Uma linha por ligação, com tipo, ID e relação | `test_verificacao.py:31` - `assertEqual(como_tuplas(links), sorted(registros.esperadas, key=str))` | ✅ |
+| ISOL-17 correção | Relações anuladas; orçamentos, monitores e aportes excluídos | `test_correcao.py:58` - `relatorio.ligacoes == 18`; `:66` - `assertIsNone(getattr(transacao, f'{relacao}_id'))`; `:79` - `assertFalse(Budget.objects.filter(pk=r.orcamento.pk).exists())`; `:83` | ✅ |
+| ISOL-18 recálculo SALDO-01 | Saldo = inicial + entradas − saídas efetivadas do dono | `test_correcao.py:93` - `assertEqual(Account.objects.get(pk=self.b.conta.pk).balance, Decimal('900.00'))` | ✅ |
 
-**Status**: ❌ 1 AC com gap (ISOL-15), 1 AC com cobertura parcial (ISOL-14) e 16/18 ACs com evidência que confere com o resultado definido na spec.
+**Status**: ❌ 16/18 ACs com evidência que confere com a spec. ISOL-14 tem gap. ISOL-01 está coberto na entrada e na correção, mas a sonda mostra caminhos internos que copiam uma ligação cruzada já gravada.
 
-**Regra de payload e conjunção**: atendida. As recusas conferem status, campo, mensagem e corpo idêntico, e também o estado gravado (contagens, `estado()`, saldo e fatura de B). As leituras conferem valores (`None`, listas exatas de IDs e nomes, somas decimais), não só a existência de chaves.
+**Regra de payload e conjunção**: atendida nos testes novos. T29 confere `None` nos dois campos e a ausência do ID, do nome, da subcategoria, do ícone e da cor, no detalhe e na lista. T30 confere a tupla exata (`total_spent`, `percentage_used`, `status`), com controle positivo. T31 confere o corpo exato, a igualdade com um ID inexistente e o estado inteiro da transação (conta, cartão, categoria, descrição, valor, `updated_at` e tags).
 
 ---
 
 ## Edge Cases
 
-- [x] ID inexistente e ID de outro usuário dão respostas idênticas: `base.py:104` (corpo) e `test_endereco_filtros.py:57` (endereço).
-- [x] Tag de outro usuário entre tags próprias recusa a transação inteira: `test_escrita_transacoes.py:100-102`, `:164-166`; compra `test_escrita_transferencia_cartao.py:94`; campo `test_campo.py:87-90`.
-- [x] Transferência com origem própria e destino de outro usuário: `test_escrita_transferencia_cartao.py:54-58`.
-- [x] Conta própria excluída: fora do escopo, vai para SALDO-35. O campo mantém o filtro `is_active` (`test_campo.py:102-106`).
-- [ ] ⚠️ Mapeamento de importação para uma conta de B: coberto só em parte. A conta padrão de B recusa a importação inteira (`test_importacao.py:76`). O mapeamento para a conta de B não grava nada em B (`test_importacao.py:99-101`), mas a spec diz que a linha é "rejeitada como 'Conta não mapeada' (IMPORT-21)", e isso não é conferido. Sonda P3: resposta 200 com `{'imported': 1, 'errors': 0}`; a linha foi importada com `account=None` e não foi rejeitada. A rejeição depende da IMPORT-21, de outra spec (gap 4).
-- [ ] ⚠️ Edição de transação própria já ligada à conta de B antes da correção: coberto só em parte. O PUT que reenvia `account` de B recebe 400 (`test_escrita_transacoes.py:192-195`). Sonda P2: um PATCH só com `description` recebe 200, grava a descrição e mantém a ligação cruzada. A spec diz "a gravação é recusada até a ligação cruzada ser desfeita", sem dizer se isso vale para uma edição parcial que não manda a relação (gap 3, spec-precision).
+- [x] ID inexistente e ID de B dão respostas idênticas: `base.py:104` (corpo) e `test_endereco_filtros.py:57` (endereço).
+- [x] Tag de B entre tags próprias recusa a transação inteira: `test_escrita_transacoes.py:100`.
+- [x] Transferência com origem própria e destino de B: `test_escrita_transferencia_cartao.py:54-58`.
+- [x] Conta própria excluída: fica com a SALDO-35, fora do escopo.
+- [x] Mapeamento de importação para conta de B: o isolamento está garantido. Nada é gravado em B nem ligado a B (`test_importacao.py:99` - `assertFalse(Transaction.objects.filter(account=self.b.conta).exists())`, `:100`, `:101`), e a sonda P2 mostra que a resposta e o resultado são idênticos aos de um ID inexistente (`200`, mesmo corpo, linha de A com `account=None`). A rejeição "Conta não mapeada" é da IMPORT-21, `Pending` em `.specs/features/importacao/spec.md:117,258`, e fica para essa feature. A conta padrão de B recusa a importação inteira: `test_importacao.py:84`.
+- [x] Edição de transação própria já ligada a B (T31): `test_edicao_parcial.py:62-67`. Um PATCH só com `description` recebe 400 no campo cruzado, igual ao de um ID inexistente, sem alterar nada. Outra relação ainda cruzada mantém a recusa (`:91-100`). Trocar a relação por uma própria (`:104-132`) ou por nula (`:134-150`) é aceito. O PATCH parcial sem ligação cruzada continua funcionando (`:152-162`).
 
 ---
 
@@ -77,62 +78,57 @@ Helper usado nas recusas: `tests/isolamento/base.py:100-106` (`assert_mesma_recu
 
 | Critério | Evidência | Status |
 | -------- | --------- | ------ |
-| Um teste automatizado percorre todas as relações graváveis com IDs de outro usuário: 400 em todas, com o corpo de ID inexistente | O inventário (`test_inventario.py:121`, `:125`) garante o tipo do campo nas 17 relações. Cada relação tem o próprio teste HTTP com `assert_mesma_recusa` (tabela acima), e as views sem serializer também (lote, aporte/resgate, importação). A cobertura é da suíte, não de um único teste | ✅ |
-| Depois da correção em produção, a verificação não lista nenhum registro | É operacional. O equivalente em teste está em `test_correcao.py:83`, `test_comando.py:59`, `:62` e `test_migracao.py:37` | ⏭️ Só verificável em produção |
-| Nenhum endpoint devolve dado de outro usuário no teste com dois usuários | `GET /api/budgets/` devolve o nome da categoria de B quando há um orçamento forjado (sonda P1) | ❌ (gap 1) |
+| Teste automatizado percorre todas as relações graváveis com IDs de B: 400 com o corpo de inexistente | `test_inventario.py:121`, `:125` e o teste HTTP de cada relação (tabela acima) | ✅ |
+| Depois da correção em produção, a verificação não lista nada | Operacional; em teste: `test_correcao.py:83` | ⏭️ Só verificável em produção |
+| Nenhum endpoint devolve dado de B no teste com dois usuários | O orçamento já não mostra a categoria de B (T29). Sem ligação cruzada gravada, nenhum endpoint vazou. Com ligação cruzada gravada, `POST /api/invoices/{id}/pay/` **altera** a compra de B (sonda P3), sem devolver os dados dela | ⚠️ Leitura ✅; escrita indireta, gap 1 |
 
 ---
 
 ## Discrimination Sensor
 
-**Profundidade**: ampliada (P0, segurança): 32 mutações de comportamento, feitas à mão.
-**Isolamento**: `git worktree add --detach ../fluxar-backend-verif HEAD`. Os testes rodaram num container avulso, `docker run --rm --network fluxar-backend_default --env-file .env -e DB_HOST=db -v <worktree>:/app fluxar-backend-backend python manage.py test tests.isolamento --noinput`, contra o serviço `db` do compose. Cada mutação foi aplicada e depois revertida por um script, e a worktree foi removida com `git worktree remove --force`. `git status --porcelain` da árvore real: vazio antes e vazio depois (bate com o baseline). Não houve `git stash`.
-**Controle**: a worktree sem mutação rodou 138 testes e passou; M01 foi morta, o que mostra que o container montou a worktree.
+**Profundidade**: ampliada (P0, segurança): 24 mutações de comportamento, feitas à mão.
+**Isolamento**: baseline `git status --porcelain` da árvore real: vazio. Worktree `git worktree add --detach ../fluxar-backend-verif2 HEAD`. Os testes rodaram com `docker run --rm --network fluxar-backend_default --env-file .env -e DB_HOST=db -v <worktree>:/app fluxar-backend-backend python manage.py test tests.isolamento --noinput`. Um script aplicava e revertia cada mutação, e a worktree terminou sem mudanças (`WORKTREE PORCELAIN: ''`). Depois, `git worktree remove --force` e `git worktree prune`. Porcelain da árvore real no fim: vazio, igual ao baseline. Não houve `git stash`.
+**Controle**: a worktree sem mutação rodou 152 testes, `OK`.
+**Nota**: a worktree saiu com CRLF. Dez mutações de várias linhas não casaram na primeira passada e rodaram de novo depois que o script passou a tratar o CRLF. Cada mutação da tabela foi aplicada de fato: o script confere uma ocorrência exata antes de aplicar.
 
 | Mutação | File:line | Descrição | Killed? |
 | ------- | --------- | --------- | ------- |
-| M01 | `core/fields.py:44` | `get_queryset` sem filtro do dono | ✅ Killed (42 falhas) |
-| M02 | `core/fields.py:47` | Mensagem diferente ("Sem permissão.") para ID de outro usuário | ✅ Killed (40) |
-| M03 | `core/fields.py:43` | Sem `request`, o campo aceita qualquer objeto | ✅ Killed (1) |
-| M04 | `core/fields.py:58` | `get_owned_or_400` sem filtro do dono | ✅ Killed (12) |
-| M05 | `accounts/services.py:21` | `get_balance` sem filtro do dono | ✅ Killed (1) |
-| M06 | `accounts/services.py:52` | Limite do cartão soma compras de outro usuário | ✅ Killed (1) |
-| M07 | `goals/signals.py:38` | Signal de metas sem filtro do dono | ✅ Killed (2) |
-| M08 | `core/isolation.py:40` | Correção e verificação pulam a linha do Budget | ✅ Killed (4) |
-| M09 | `core/isolation.py:150` | Correção não recalcula saldos | ✅ Killed (4) |
-| M10 | `core/isolation.py:151` | Correção não recalcula faturas | ✅ Killed (1) |
-| M11 | `core/isolation.py:152` | Correção não recalcula metas | ✅ Killed (1) |
-| M12 | `core/isolation.py:72` | Verificação e correção ignoram tags | ✅ Killed (4) |
-| M13 | `transactions/views.py:196` | `bulk_update` volta a não validar a categoria | ✅ Killed (3) |
-| M14 | `transactions/serializers.py:35` | `get_subcategories` sem filtro do dono | ✅ Killed (1) |
-| M15 | `transactions/serializers.py:29` | Categoria mostra pai de outro usuário | ✅ Killed (1) |
-| M16 | `transactions/serializers.py:126` | Transação mostra conta de outro usuário | ✅ Killed (1) |
-| M17 | `transactions/serializers.py:132` | Transação mostra tags de outro usuário | ✅ Killed (1) |
-| M18 | `transactions/serializers.py:166` | `related_transaction` sem filtro do dono | ✅ Killed (1) |
-| M19 | `transactions/serializers.py:258` | Troca de conta da parceira sem filtro do dono | ✅ Killed (1) |
-| M20 | `transactions/signals.py:91` | Total da fatura soma compras de outro usuário | ✅ Killed (2) |
-| M21 | `transactions/signals.py:108` | `sync_transfer_update` sem filtro do dono | ✅ Killed (1) |
-| M22 | `transactions/signals.py:125` | `sync_transfer_delete` sem filtro do dono | ✅ Killed (1) |
-| M23 | `goals/views.py:103` | `history` sem filtro do dono | ✅ Killed (2) |
-| M24 | `goals/serializers.py:64` | `GoalSerializer.deposits` sem filtro do dono | ✅ Killed (1) |
-| M25 | `goals/serializers.py:52` | Meta mostra conta de outro usuário | ✅ Killed (1) |
-| M26 | `goals/views.py:49` | Aporte manda o erro para o campo errado | ✅ Killed (1) |
-| M27 | `reports/services.py:577` | Relatório avançado inclui monitor ligado a dado de outro usuário | ✅ Killed (2) |
-| M28 | `reports/services.py:586` | Monitor soma subcategoria de outro usuário | ✅ Killed (1) |
-| M29 | `reports/services.py:1141` | `tag_id` malformado volta a dar 500 | ✅ Killed (1 erro) |
-| M30 | `reports/serializers.py:32` | Monitor mostra tag de outro usuário | ✅ Killed (1) |
-| M31 | `accounts/serializers.py:77` | Cartão mostra conta de outro usuário | ✅ Killed (1) |
-| M32 | `data_exchange/views.py:27` | Importação OFX aceita conta de outro usuário | ✅ Killed (1) |
+| M01 | `budgets/serializers.py:30-32` | T29: remove o bloco que anula `category` e `category_detail` | ✅ Killed (2) |
+| M02 | `budgets/serializers.py:31` | T29: anula só `category_detail`; o ID de B continua em `category` | ✅ Killed (2) |
+| M03 | `budgets/serializers.py:30` | T29: a categoria-modelo (`user_id None`) volta a aparecer | ✅ Killed (1) |
+| M04 | `budgets/services.py:25` | T30: subcategorias sem filtro do dono | ✅ Killed (2) |
+| M05 | `budgets/services.py:25` | T30: descarta também as subcategorias próprias | ✅ Killed (1) |
+| M06 | `transactions/serializers.py:193` | T31: não confere as tags atuais | ✅ Killed (1) |
+| M07 | `transactions/serializers.py:190` | T31: confere a relação atual mesmo quando o corpo a substitui | ✅ Killed (6) |
+| M08 | `transactions/serializers.py:187` | T31: deixa de conferir o cartão atual | ✅ Killed (1) |
+| M09 | `transactions/serializers.py:190` | T31: aceita a categoria-modelo atual | ✅ Killed (1) |
+| M10 | `transactions/serializers.py:191` | T31: erro em `non_field_errors` em vez do campo | ✅ Killed (5) |
+| M11 | `core/fields.py:44` | `get_queryset` sem filtro do dono | ✅ Killed (42) |
+| M12 | `core/fields.py:58` | `get_owned_or_400` sem filtro do dono | ✅ Killed (12) |
+| M13 | `core/fields.py:42-43` | Sem `request`, o campo filtra por `user=None` e aceita a categoria-modelo | ❌ **Survived** (gap 4) |
+| M14 | `core/isolation.py:40` | Verificação e correção pulam `Budget.category` | ✅ Killed (4) |
+| M15 | `core/isolation.py:150` | Correção não recalcula saldos | ✅ Killed (4) |
+| M16 | `core/isolation.py:93` | O recálculo do saldo deixa de filtrar pelo dono da conta | ⚪ Survived, **equivalente**: `fix_cross_links` anula todo `Transaction.account` cruzado (`:148`) antes de `_recalcular_saldos` (`:150`), então o filtro não muda o resultado |
+| M17 | `core/isolation.py:71` | Verificação e correção ignoram tags | ✅ Killed (4) |
+| M18 | `core/isolation.py:47` | `GoalDeposit` sai de `EXCLUIDOS` (a correção tenta anular a conta) | ✅ Killed (9 erros) |
+| M19 | `accounts/services.py:21` | `get_balance` soma transações de outro usuário | ✅ Killed (1) |
+| M20 | `accounts/services.py:53` | Limite do cartão soma compras de outro usuário | ✅ Killed (1) |
+| M21 | `goals/signals.py:38` | Signal usa metas de outro usuário | ✅ Killed (2) |
+| M22 | `transactions/serializers.py:125` | Transação mostra a conta de outro usuário | ✅ Killed (1) |
+| M23 | `transactions/serializers.py:35` | Árvore de categorias com subcategoria de outro usuário | ✅ Killed (1) |
+| M24 | `transactions/serializers.py:131` | Transação mostra tags de outro usuário | ✅ Killed (1) |
 
-Sensor: 32/32 mortas. Todos os caminhos tratados pela feature se mostraram discriminados pelos testes.
+**Resultado**: 24 mutações; 22 mortas, 1 sobrevivente real (M13) e 1 equivalente (M16). As mutações de T29, T30 e T31 (M01 a M10) foram todas mortas. Sensor: ❌ por M13.
 
-**Sondas extras** (arquivo temporário só na worktree, já removida). Elas não são mutações; servem para caracterizar caminhos que a suíte não confere:
+**Sondas** (teste temporário só na worktree, removido antes da limpeza). Não são mutações; mostram o que o código faz num caminho que a suíte não confere:
 
-| Sonda | Cenário | Observado |
-| ----- | ------- | --------- |
-| P1 | Orçamento de A gravado à força com a categoria de B; `GET /api/budgets/` como A | 200, `category_detail.name == 'Mercado B'` |
-| P2 | Transação de A com `account` de B gravada à força; `PATCH {'description': 'Nova'}` | 200, descrição gravada, ligação cruzada mantida |
-| P3 | Planilha com mapeamento `{'Banco B': conta de B}` e sem conta padrão | 200, `imported: 1, errors: 0`, linha gravada com `account=None` |
+| Sonda | Cenário (ligação cruzada gravada à força) | Observado |
+| ----- | ----------------------------------------- | --------- |
+| P1 | Orçamento de A com a categoria de B; `POST /api/budgets/bulk_import/` com esse orçamento como origem | `201`, `imported_count: 1`; o orçamento novo de A fica ligado à categoria de B |
+| P2 | Planilha com `account_mapping` para a conta de B e, em outra chamada, para um UUID inexistente | Respostas idênticas (`200`, `{'total': 1, 'imported': 1, ...}`); nas duas, a linha fica com A e `account=None` |
+| P3 | Compra de B ligada à fatura de A; A paga a fatura (`/pay/`, 150.00 do cofrinho de A) | `200`; a compra de B passa a `COMPLETED` com `account` = cofrinho de A, e o saldo do cofrinho de A fica em `-150.00`, com os 50.00 de B |
+| P4 | Mesmo cenário; A estorna (`/unpay/`) | `200`; a compra de B volta a `PENDING` |
+| P5 | Parcela de B com `parent_transaction` = parcela 1 de A; `PATCH` da parcela de A com `amount=10.00` e `update_scope=ALL_FUTURE` | `200`; o valor da parcela de B passa a `10.00` |
 
 ---
 
@@ -140,79 +136,95 @@ Sensor: 32/32 mortas. Todos os caminhos tratados pela feature se mostraram discr
 
 | Principle | Status |
 | --------- | ------ |
-| Mínimo de código | ✅ Campo e helper únicos em `core/fields.py`; os `__init__` que filtravam à mão foram removidos |
-| Mudanças cirúrgicas | ✅ |
-| Sem scope creep | ✅ T25 a T28 cobrem caminhos de ISOL-14 e ISOL-15 que a tabela do design não listava |
-| Segue os padrões do projeto | ✅ |
-| Spec-anchored (valores conferem com a spec) | ⚠️ Gaps 1 a 4 |
-| Cobertura por camada (campo com todos os ramos; rotas com caminho feliz, recusa e erro) | ✅ `test_campo.py` cobre todos os ramos da matriz; cada rota tem caminho feliz e recusa |
-| Todo teste mapeia um AC, edge case ou Done-when | ✅ |
-| Diretrizes documentadas | nenhuma além de AD-010, AD-019, AD-024, AD-032 e AD-033, todas seguidas. Nenhum `print` foi acrescentado no diff; a saída do comando só traz tipos e IDs (`test_comando.py:46-50`) |
-| SPEC_DEVIATION | `core/isolation.py:28-33`: `parent_transaction` e `recurring_source` entram na correção além da tabela do design. Justificada e coberta (`ligacoes.py:73-74`, `test_correcao.py:63-66`) |
+| Mínimo de código | ✅ T29: 6 linhas; T30: 1 filtro; T31: 1 `validate` com as mensagens de `core/fields.py` |
+| Mudanças cirúrgicas | ✅ Cada commit da Phase 6 toca só o arquivo da tarefa, o teste e `tasks.md` |
+| Sem scope creep | ✅ |
+| Segue os padrões | ✅ T29 repete a convenção do `TransactionSerializer.to_representation`; T31 usa as constantes de `core/fields.py` |
+| Spec-anchored | ⚠️ Gaps 1 a 3 |
+| Cobertura por camada | ⚠️ `test_campo.py:96-100` testa o ramo "sem `request`" só com objeto próprio (M13) |
+| Todo teste mapeia um AC, edge case ou Done-when | ✅ `test_leitura_orcamentos.py` → ISOL-15; `test_uso_orcamento.py` → ISOL-14; `test_edicao_parcial.py` → edge case 6 / ISOL-02 |
+| Diretrizes documentadas | AD-010, AD-019, AD-024, AD-032 e AD-033 seguidas. O trade-off da AD-032 diz que as gravações internas "continuam responsáveis por usar só objetos já validados", e os gaps 1 a 3 são justamente gravações internas que usam uma relação já gravada, sem conferir o dono |
+| SPEC_DEVIATION | `core/isolation.py:28-33` (`parent_transaction` e `recurring_source` entram na correção). Justificada e coberta. É ela que garante que a correção desfaz o pré-requisito da sonda P5 |
+
+---
+
+## Resolução dos gaps da rodada 1
+
+| Gap R1 | Resolução | Evidência |
+| ------ | --------- | --------- |
+| 1. ISOL-15, orçamento mostra a categoria de B | ✅ Resolvido (T29) | `budgets/serializers.py:27-33`; `test_leitura_orcamentos.py:36-41` (detalhe e lista, categoria de B e categoria-modelo), `:63-73` (formato próprio). M01, M02 e M03 mortas |
+| 2. ISOL-14, uso do orçamento soma a subcategoria de B | ✅ Resolvido (T30) | `budgets/services.py:24-26`; `test_uso_orcamento.py:33`, `:40`. M04 e M05 mortas |
+| 3. Edge case 6, PATCH parcial em transação já cruzada | ✅ Resolvido (T31). A decisão tomada foi recusar, que é a leitura literal do edge case | `transactions/serializers.py:179-197`; `test_edicao_parcial.py:62-67`, `:91-100`, `:104-162`. M06 a M10 mortas |
+| 4. Edge case 5, mapeamento de importação para conta de B | ✅ Não bloqueia: fica com a IMPORT-21. A garantia que é desta feature (nada gravado em B nem ligado a B, resposta igual à de um ID inexistente) está coberta | `test_importacao.py:99-101`; sonda P2 (respostas idênticas). A mensagem "Conta não mapeada" depende da IMPORT-21 (`importacao/spec.md:117`, `Pending`). Recomendação: o teste deveria comparar com a resposta de um ID inexistente, como faz a sonda P2 |
+| 5. ISOL-13, `tag_id` do relatório de tag dá 404, não "vazio" | ✅ Não bloqueia: é nota de precisão. `tag-insights` é o relatório de um único recurso, a própria tag, e não uma lista filtrada. A resposta é idêntica à de um ID inexistente (`test_relatorios.py:46-48`, também com UUID malformado `:55-56`), que é a garantia pedida pela suposição "não revela nada" | Recomendação: registrar na spec que um relatório de recurso único segue ISOL-12 (404) |
 
 ---
 
 ## Spec-precision gaps
 
-1. **Edge case 6 (ISOL-02/ISOL-17)**: a spec diz que "a gravação é recusada até a ligação cruzada ser desfeita", mas não diz se isso vale para um PATCH que não manda a relação cruzada. Hoje esse PATCH passa (sonda P2).
-2. **Edge case 5 (IMPORT-21)**: a spec diz que a linha é rejeitada como "Conta não mapeada", uma regra de outra spec (importação). O teste confere só o isolamento, sem gravação em B, e o código hoje importa a linha sem conta (sonda P3).
-3. **ISOL-13 "relatório"**: o único filtro por ID nos relatórios é o `tag_id` do relatório de tag, que responde 404 e não "resultado vazio". Ele bate com "como para um ID inexistente" (`test_relatorios.py:46-48`), mas não com a palavra "vazio".
+1. **ISOL-13, relatório de recurso único**: continua a nota da rodada 1 (gap 5), sem efeito sobre o isolamento.
+2. **Edge case 5 → IMPORT-21**: a rejeição da linha é da outra spec. Aqui fica só a garantia de isolamento.
+3. **Caminhos internos que copiam ou percorrem uma relação já gravada** (novo): a spec trata a ligação cruzada já gravada em ISOL-14 e ISOL-15 (leitura e soma), no edge case 6 (edição da transação) e em ISOL-17 (correção). Ela não diz se as operações de servidor que **copiam** ou **alteram em série** registros ligados precisam conferir o dono: pagar e estornar fatura, `ALL_FUTURE` e `bulk_import`. O pagamento de fatura está dentro do texto de ISOL-14 ("compras de um cartão"), por isso conta como gap. Os outros dois ficam na zona cinzenta.
 
 ---
 
 ## Ranked gaps e Fix Plans
 
-### Fix 1 (Major): ISOL-15, orçamento mostra a categoria de outro usuário
+Todos dependem de uma ligação cruzada gravada antes da correção: `Transaction.invoice`, `Transaction.parent_transaction` ou `Budget.category`. A migração `0007` desfaz essas três relações (`core/isolation.py:26`, `:32`, `:40`; `test_correcao.py:58-83`), e a API não cria nenhuma delas (ISOL-01/ISOL-05). A gravidade é baixa, a mesma dos gaps 1 e 2 da rodada 1.
 
-- **Root cause**: `BudgetSerializer.category_detail = CategorySerializer(source='category')` (`budgets/serializers.py:13`) não confere o dono; o caminho não estava na tabela de leituras do design.
-- **Fix task**: em `BudgetSerializer.to_representation`, anular `category` e `category_detail` quando `instance.category.user_id != instance.user_id`, como já é feito em `TransactionSerializer`. Teste em `tests/isolamento/`: orçamento de A gravado à força com a categoria de B, e `GET /api/budgets/` e `/api/budgets/{id}/` sem `'Mercado B'` nem o ID de B.
-- **Mitigação atual**: a migração `0007` exclui esses orçamentos (`test_correcao.py:79`), e a API não deixa criar novos (ISOL-05).
+### Gap 1 (Major): ISOL-14, pagamento e estorno de fatura mexem em compras de outro usuário
 
-### Fix 2 (Minor): ISOL-14, uso do orçamento soma subcategorias sem filtro do dono
+- **Root cause**: `CreditCardService.pay_invoice` (`accounts/services.py:132`) e `unpay_invoice` (`:236`) usam `invoice.transactions.filter(type='CREDIT_CARD', status=...)` sem `user_id=invoice.card.user_id`. No pagamento, `tx.account = account` (`:164`, `:183`) liga a compra de B à conta de A, o que cria uma ligação cruzada nova, e o saldo guardado da conta de A passa a contar a compra de B. No pagamento parcial, a compra de B também é dividida e movida para a próxima fatura (`:178-211`).
+- **Fix task**: filtrar as duas buscas por `user_id=invoice.card.user_id`, como `update_invoice_total` já faz desde a T28. Teste em `tests/isolamento/`: compra de B gravada à força na fatura de A. Depois do `pay`, a compra de B continua `PENDING`, com a conta de B, e o saldo do cofrinho de A cai só o valor da compra de A. Depois do `unpay`, a compra de B não muda.
 
-- **Root cause**: `budgets/services.py:24` usa `budget.category.subcategories.values_list('id')` sem `user_id=budget.user_id`.
-- **Fix task**: filtrar as subcategorias por `user_id=budget.user_id` e testar com uma subcategoria de B pendurada à força na categoria do orçamento de A, com uma transação de A ligada a ela, conferindo `total_spent`.
-- **Mitigação atual**: a transação só é somada se for de A (`user=budget.user`), e a correção desfaz a ligação da subcategoria.
+### Gap 2 (Minor): ISOL-14, a edição `ALL_FUTURE` altera parcelas de outro usuário
 
-### Fix 3 (Minor, spec-precision): edge case 6, edição parcial de transação já cruzada
+- **Root cause**: `transactions/serializers.py:291-292` busca `Q(id=root_id) | Q(parent_transaction_id=root_id)` sem filtrar pelo dono. Uma parcela de B com `parent_transaction` apontando para a parcela de A recebe o valor e a categoria de A (sonda P5).
+- **Fix task**: acrescentar `user_id=instance.user_id` à busca e testar com a parcela de B forjada: o `amount` dela não muda.
 
-- **Decisão pendente**: o PATCH sem a relação cruzada deve ser recusado? Se sim, validar no `TransactionSerializer.validate` a relação atual da instância (conta, cartão, categoria, tags) e testar o PATCH só com `description`. Se não, ajustar o texto do edge case.
+### Gap 3 (Minor): ISOL-01, `bulk_import` de orçamentos copia a categoria de outro usuário
 
-### Fix 4 (Minor, spec-precision / outra spec): edge case 5, linha mapeada para conta de B
+- **Root cause**: `budgets/views.py:100` copia `budget.category` do orçamento de origem sem conferir o dono da categoria (sonda P1).
+- **Fix task**: ignorar (ou contar como `skipped`) as origens cuja categoria não é do usuário (`category__user=request.user` na busca de `:75`). Testar com um orçamento forjado de A ligado à categoria de B: nenhum orçamento novo fica ligado à categoria de B.
 
-- **Decisão pendente**: implementar a rejeição "Conta não mapeada" aqui ou deixá-la com a IMPORT-21. Em qualquer caso, o teste deve conferir o resultado da linha (`errors`/`imported`), e não só a ausência de gravação em B.
+### Gap 4 (Minor, teste): mutante M13 sobrevive no ramo "sem `request`"
+
+- **Root cause**: `test_campo.py:96-100` só confere que um objeto **próprio** é recusado sem `request`. Se o ramo `core/fields.py:42-43` for removido, o campo filtra por `user=None` e passa a aceitar a categoria-modelo, e nenhum teste falha. Hoje nenhum código de produção usa esses serializers sem `request` (busca por `Serializer(data=` sem `context`), então é uma fraqueza latente.
+- **Fix task**: no mesmo teste, ou num teste irmão, conferir que a categoria-modelo também é recusada sem `request`.
+
+**Alternativa ao ciclo de correção**: esta é a rodada 2 de 3. Se o usuário preferir não abrir mais uma rodada, a opção é registrar uma decisão em STATE.md: as operações internas sobre ligações cruzadas gravadas antes da correção ficam cobertas pela ISOL-17/migração `0007`, sem filtro próprio. Nesse caso, os gaps 1 a 3 seriam aceitos como risco residual, e só o gap 4 (teste) precisaria de tarefa.
 
 ---
 
 ## Requirement Traceability Update
 
-A verificação não edita `spec.md`. Os status abaixo são a recomendação para quem aplicar os fixes:
+Recomendação (a verificação não edita `spec.md`):
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| ISOL-01 a ISOL-13, ISOL-16 a ISOL-18 | Pending | ✅ Verified |
-| ISOL-14 | Pending | ⚠️ Verified com gap menor (Fix 2) |
-| ISOL-15 | Pending | ❌ Needs Fix (Fix 1) |
+| ISOL-02 a ISOL-13, ISOL-15 a ISOL-18 | Pending | ✅ Verified |
+| ISOL-01 | Pending | ⚠️ Verified na entrada e na correção; gap 3 (cópia interna) |
+| ISOL-14 | Pending | ❌ Needs Fix (gaps 1 e 2) |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready. Os gaps têm gravidade baixa, porque a migração no mesmo deploy remove a condição que os dispara.
+**Overall**: ❌ Not Ready. A gravidade é baixa, porque a migração no mesmo deploy remove o pré-requisito dos gaps 1 a 3.
 
-**Spec-anchored check**: 16/18 ACs conferem com a spec; ISOL-15 tem gap e ISOL-14 tem gap parcial; 3 spec-precision gaps.
-**Sensor**: 32/32 mutações mortas.
-**Gate**: 138 passaram, 0 falharam, 0 pulados.
+**Spec-anchored check**: 16/18 ACs conferem com a spec. ISOL-14 tem gap; ISOL-01 tem gap parcial em caminho interno; há 3 spec-precision gaps.
+**Sensor**: 24 mutações; 22 mortas, 1 sobrevivente (M13), 1 equivalente (M16).
+**Gate**: 152 passaram, 0 falharam, 0 pulados.
 
-**O que funciona**: recusa por campo com mensagem única em todas as relações graváveis, 404 no endereço e lista vazia nos filtros, leituras de transação, categoria, meta, monitor, cartão, saldo, limite, fatura, signals e relatórios, e a verificação, a correção, o comando e a migração, com recálculo SALDO-01.
+**O que funciona**: os gaps 1 a 3 da rodada 1 estão resolvidos e discriminados pelos testes (M01 a M10 mortas). A recusa por campo, o 404 no endereço, as listas vazias e as leituras e somas tratadas pela feature, além da verificação, da correção, do comando e da migração, continuam de pé.
 
-**Próximos passos**: Fix 1 e Fix 2 como tarefas de implementação; decidir Fix 3 e Fix 4 com o usuário; depois, nova verificação.
+**Próximos passos**: rotear os gaps 1 a 4 como T32 a T35 (ou aceitar os gaps 1 a 3 por decisão, como descrito acima) e verificar de novo na rodada 3.
 
 ---
 
 ## validate_state
 
-`python validate_state.py isolamento-entre-usuarios --root .` terminou com exit 1, que é o esperado para um FAIL:
+`python validate_state.py isolamento-entre-usuarios --root .` terminou com exit 1, o esperado para um FAIL:
 
 ```
 ERROR isolamento-entre-usuarios: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)

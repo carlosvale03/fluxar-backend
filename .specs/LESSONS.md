@@ -23,8 +23,8 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-002 - Filter reverse-relation traversals such as subcategories by the owner of the starting object in every service that sums them
 - signal: `ac_gap` · recurrence: 1 feature(s) · scope: `services` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: ISOL-14 budgets/services.py:24 (services)
-- last seen: 2026-09-27T19:01:02Z
+- evidence: ISOL-14 budgets/services.py:24 (services) (+1 more)
+- last seen: 2026-09-27T19:26:59Z
 
 ### L-003 - State whether a rule about already-invalid persisted relations also applies to partial updates that omit the relation
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
@@ -35,20 +35,32 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-004 - When an edge case cites a rule owned by another spec, either assert its observable outcome or mark it explicitly as deferred
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: spec.md edge case 5 (IMPORT-21) (spec)
-- last seen: 2026-09-27T19:01:03Z
+- evidence: spec.md edge case 5 (IMPORT-21) (spec) (+1 more)
+- last seen: 2026-09-27T19:26:59Z
 
 ### L-005 - Define the expected response per endpoint kind when one rule covers both list filters and single-resource reports
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
 - features: isolamento-entre-usuarios
-- evidence: ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)
-- last seen: 2026-09-27T19:01:03Z
+- evidence: ISOL-13 tests/isolamento/test_relatorios.py:46 (spec) (+1 more)
+- last seen: 2026-09-27T19:26:59Z
 
 ### L-006 - Include server-set relations in cross-owner data corrections even when the API never accepts them as input
 - signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `data-migration` · harmful: 0
 - features: isolamento-entre-usuarios
 - evidence: SPEC_DEVIATION core/isolation.py:28 (data-migration)
 - last seen: 2026-09-27T19:01:03Z
+
+### L-007 - Test each defensive fallback branch with the specific input it exists to block, not only with an ordinary valid object
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: isolamento-entre-usuarios
+- evidence: M13 core/fields.py:42 (test_campo.py:96) (tests)
+- last seen: 2026-09-27T19:26:59Z
+
+### L-008 - State whether server-side operations that copy or batch-update already-linked records must re-check the ownership of the relations they carry
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: isolamento-entre-usuarios
+- evidence: spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)
+- last seen: 2026-09-27T19:26:59Z
 
 ## Quarantined (failed when applied - ignore)
 
