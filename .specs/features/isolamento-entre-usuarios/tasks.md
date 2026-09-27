@@ -1131,13 +1131,14 @@ T38
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_relatorios_nomes.py` liga à força transações de A à categoria, à tag e à conta de B e confere que nenhum dos relatórios dessas linhas traz nome, ícone ou cor de B (entre eles `/api/reports/charts/simple/` e `/api/reports/charts/tag-distribution/`)
-- [ ] Os totais de A continuam aparecendo com as categorias, tags e contas próprias
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/isolamento/test_relatorios_nomes.py` liga à força transações de A à categoria, à tag e à conta de B e confere que nenhum dos relatórios dessas linhas traz nome, ícone ou cor de B (entre eles `/api/reports/charts/simple/` e `/api/reports/charts/tag-distribution/`)
+- [x] Os totais de A continuam aparecendo com as categorias, tags e contas próprias
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (171 na execução, +11)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(reports): ignora nomes de outro usuário nos relatórios`
 
