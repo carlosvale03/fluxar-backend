@@ -675,13 +675,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_signal_transferencia.py` grava à força uma transação de B com o `transfer_id` de uma transferência de A e confere que editar a perna de A não muda data nem valor da transação de B, e que excluir a perna de A não exclui a transação de B
-- [ ] A parceira de A continua sendo atualizada e excluída junto
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/isolamento/test_signal_transferencia.py` grava à força uma transação de B com o `transfer_id` de uma transferência de A e confere que editar a perna de A não muda data nem valor da transação de B, e que excluir a perna de A não exclui a transação de B
+- [x] A parceira de A continua sendo atualizada e excluída junto
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (4 novos, 118 na execução)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): sincroniza só a parceira do dono na transferência`
 

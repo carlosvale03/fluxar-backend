@@ -104,8 +104,9 @@ def sync_transfer_update(sender, instance, created, **kwargs):
         # Atualiza a transação parceira com dados comuns.
         # NÃO atualiza account aqui (isso é especifico de cada perna).
         # Usa update() para não disparar signals recursivamente.
+        # Só a parceira do dono da transação (ISOL-14).
         Transaction.objects.filter(
-            transfer_id=instance.transfer_id
+            transfer_id=instance.transfer_id, user_id=instance.user_id
         ).exclude(
             id=instance.id
         ).update(
@@ -120,8 +121,9 @@ def sync_transfer_delete(sender, instance, **kwargs):
     Cascade delete para transações de transferência.
     """
     if instance.transfer_id:
+        # Só a parceira do dono da transação (ISOL-14)
         Transaction.objects.filter(
-            transfer_id=instance.transfer_id
+            transfer_id=instance.transfer_id, user_id=instance.user_id
         ).exclude(
             id=instance.id
         ).delete()
