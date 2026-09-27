@@ -564,12 +564,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_signal_metas.py` liga à força uma meta de B ao cofrinho de A, lança uma transação no cofrinho e confere que nenhum registro de aporte nasce na meta de B, enquanto a meta de A recebe o dela
-- [ ] Full gate passa: `docker compose exec -T backend python manage.py test --noinput`
-- [ ] Test count: 89 tests pass
+- [x] `tests/isolamento/test_signal_metas.py` liga à força uma meta de B ao cofrinho de A, lança uma transação no cofrinho e confere que nenhum registro de aporte nasce na meta de B, enquanto a meta de A recebe o dela
+- [x] Full gate passa: `docker compose exec -T backend python manage.py test --noinput`
+- [x] Test count: 89 tests pass (91 na execução)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(goals): repassa movimentos do cofrinho só às metas do dono`
 
