@@ -266,34 +266,29 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 # Serializers Específicos para Ações
 class TransferSerializer(serializers.Serializer):
-    account_from = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none())
-    account_to = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none())
+    account_from = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+    )
+    account_to = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+    )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
 
-    def __init__(self, *args, **kwargs):
-        # Filtra querysets pelo usuario
-        request = kwargs.get('context', {}).get('request')
-        super().__init__(*args, **kwargs)
-        if request and request.user:
-            self.fields['account_from'].queryset = Account.objects.filter(user=request.user)
-            self.fields['account_to'].queryset = Account.objects.filter(user=request.user)
-
 
 class CreditCardExpenseSerializer(serializers.Serializer):
-    credit_card = serializers.PrimaryKeyRelatedField(queryset=CreditCard.objects.none())
+    credit_card = OwnedPrimaryKeyRelatedField(
+        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+    )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255)
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.none())
+    category = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+    )
     installments = serializers.IntegerField(default=1, min_value=1)
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.none(), many=True, required=False)
-
-    def __init__(self, *args, **kwargs):
-        request = kwargs.get('context', {}).get('request')
-        super().__init__(*args, **kwargs)
-        if request and request.user:
-            self.fields['credit_card'].queryset = CreditCard.objects.filter(user=request.user)
-            self.fields['category'].queryset = Category.objects.filter(user=request.user)
-            self.fields['tags'].queryset = Tag.objects.filter(user=request.user)
+    tags = OwnedPrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
+        many=True, required=False,
+    )

@@ -249,13 +249,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_escrita_transferencia_cartao.py` cobre origem de B, destino de B, cartão de B, categoria de B e tag de B, com 400 no campo, respostas idênticas às de UUID inexistente e nenhuma transação criada
-- [ ] Transferência e compra com objetos de A continuam funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 40 tests pass
+- [x] `tests/isolamento/test_escrita_transferencia_cartao.py` cobre origem de B, destino de B, cartão de B, categoria de B e tag de B, com 400 no campo, respostas idênticas às de UUID inexistente e nenhuma transação criada
+- [x] Transferência e compra com objetos de A continuam funcionando
+- [x] Quick gate passa
+- [x] Test count: 40 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): padroniza a recusa de IDs alheios na transferência e na compra no cartão`
 
