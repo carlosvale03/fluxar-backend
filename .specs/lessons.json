@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::when auditing owner isolation check every serializer that nests a related object for display not only the writable relations",
+      "text": "When auditing owner isolation, check every serializer that nests a related object for display, not only the writable relations",
+      "signal": "ac_gap",
+      "scope": "serializers",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-15 budgets/serializers.py:13 (serializers)"
+      ],
+      "created": "2026-09-27T19:01:02Z",
+      "last_seen": "2026-09-27T19:01:02Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::filter reverse relation traversals such as subcategories by the owner of the starting object in every service that sums them",
+      "text": "Filter reverse-relation traversals such as subcategories by the owner of the starting object in every service that sums them",
+      "signal": "ac_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-14 budgets/services.py:24 (services)"
+      ],
+      "created": "2026-09-27T19:01:02Z",
+      "last_seen": "2026-09-27T19:01:02Z"
+    },
+    {
+      "id": "L-003",
+      "key": "spec_precision_gap::state whether a rule about already invalid persisted relations also applies to partial updates that omit the relation",
+      "text": "State whether a rule about already-invalid persisted relations also applies to partial updates that omit the relation",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md edge case 6 (ISOL-02, ISOL-17) (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::when an edge case cites a rule owned by another spec either assert its observable outcome or mark it explicitly as deferred",
+      "text": "When an edge case cites a rule owned by another spec, either assert its observable outcome or mark it explicitly as deferred",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md edge case 5 (IMPORT-21) (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_precision_gap::define the expected response per endpoint kind when one rule covers both list filters and single resource reports",
+      "text": "Define the expected response per endpoint kind when one rule covers both list filters and single-resource reports",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_deviation::include server set relations in cross owner data corrections even when the api never accepts them as input",
+      "text": "Include server-set relations in cross-owner data corrections even when the API never accepts them as input",
+      "signal": "spec_deviation",
+      "scope": "data-migration",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION core/isolation.py:28 (data-migration)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    }
+  ]
+}

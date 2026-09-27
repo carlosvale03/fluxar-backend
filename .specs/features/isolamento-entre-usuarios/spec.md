@@ -135,7 +135,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ISOL-01 | P1: Relações só com objetos do próprio usuário | T14 | Pending |
-| ISOL-02 | P1: Relações só com objetos do próprio usuário | T4 | Pending |
+| ISOL-02 | P1: Relações só com objetos do próprio usuário | T4, T31 | Pending |
 | ISOL-03 | P1: Relações só com objetos do próprio usuário | T7 | Pending |
 | ISOL-04 | P1: Relações só com objetos do próprio usuário | T5 | Pending |
 | ISOL-05 | P1: Relações só com objetos do próprio usuário | T8 | Pending |
@@ -144,11 +144,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ISOL-08 | P1: Relações só com objetos do próprio usuário | T12 | Pending |
 | ISOL-09 | P1: Relações só com objetos do próprio usuário | T6, T10, T12, T13 | Pending |
 | ISOL-10 | P1: Relações só com objetos do próprio usuário | T3, T5 | Pending |
-| ISOL-11 | P1: Relações só com objetos do próprio usuário | T3, T4, T6, T10 | Pending |
+| ISOL-11 | P1: Relações só com objetos do próprio usuário | T3, T4, T6, T10, T31 | Pending |
 | ISOL-12 | P1: Leitura restrita ao dono | T19, T20 | Pending |
 | ISOL-13 | P1: Leitura restrita ao dono | T20 | Pending |
-| ISOL-14 | P1: Leitura restrita ao dono | T15 a T19, T25, T28 | Pending |
-| ISOL-15 | P1: Leitura restrita ao dono | T9, T11, T12, T15, T16, T26, T27 | Pending |
+| ISOL-14 | P1: Leitura restrita ao dono | T15 a T19, T25, T28, T30 | Pending |
+| ISOL-15 | P1: Leitura restrita ao dono | T9, T11, T12, T15, T16, T26, T27, T29 | Pending |
 | ISOL-16 | P1: Correção dos dados existentes | T21, T23 | Pending |
 | ISOL-17 | P1: Correção dos dados existentes | T22, T24 | Pending |
 | ISOL-18 | P1: Correção dos dados existentes | T22, T24 | Pending |

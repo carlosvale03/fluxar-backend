@@ -88,6 +88,15 @@ T21 → T22 → T23
 T22 → T24
 ```
 
+### Phase 6: Correções da verificação
+
+Lacunas apontadas pelo verificador na primeira rodada.
+
+```
+T29 → T30
+T31
+```
+
 ---
 
 ## Task Breakdown
@@ -887,10 +896,93 @@ T22 → T24
 
 ---
 
+### Phase 6: Correções da verificação
+
+#### T29: Categoria do orçamento na leitura
+
+**What**: o `BudgetSerializer` mostra `category` e `category_detail` como nulos quando a categoria não é do dono do orçamento, como o `TransactionSerializer` faz desde a T15.
+**Where**: `budgets/serializers.py`
+**Depends on**: None
+**Reuses**: a convenção de leitura da T15
+**Requirement**: ISOL-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_leitura_orcamentos.py` liga à força um orçamento de A à categoria de B e confere que a listagem e o detalhe não trazem id, nome, ícone nem cor da categoria de B
+- [ ] O orçamento com categoria própria continua com o mesmo formato
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(budgets): oculta categoria de outro usuário na leitura do orçamento`
+
+---
+
+#### T30: Subcategorias no uso do orçamento
+
+**What**: `BudgetService.get_budget_usage` considera só as subcategorias do dono do orçamento.
+**Where**: `budgets/services.py`
+**Depends on**: T29
+**Reuses**: a soma atual
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_uso_orcamento.py` grava à força uma subcategoria de B sob a categoria do orçamento de A, com uma despesa de A nessa subcategoria, e confere que o gasto do orçamento de A não a soma, enquanto a despesa de A numa subcategoria própria continua somando
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(budgets): soma no uso do orçamento só subcategorias do dono`
+
+---
+
+#### T31: Edição parcial de transação com ligação cruzada
+
+**What**: a edição de uma transação própria que ainda aponta para conta, cartão, categoria ou tag de outro usuário é recusada, mesmo quando o corpo não traz esse campo, até a ligação ser desfeita (edge case da spec). O erro sai no campo da relação cruzada, com a mensagem de ISOL-11.
+**Where**: `transactions/serializers.py`
+**Depends on**: None
+**Reuses**: as mensagens de `core/fields.py`
+**Requirement**: ISOL-02, ISOL-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_edicao_parcial.py` liga à força uma transação de A à conta de B e confere que um PATCH só com `description` responde 400 em `account` com "Conta não encontrada." e não altera a transação; o mesmo para categoria e tag
+- [ ] Um PATCH que troca a relação cruzada por uma própria é aceito
+- [ ] Uma transação sem ligação cruzada continua aceitando PATCH parcial
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 4 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(transactions): recusa edição de transação ainda ligada a outro usuário`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
@@ -898,6 +990,7 @@ Phase 3:  T8 · T9 · T10 · T11 · T12 · T13 → T14
 Phase 4:  T17 · T18 · T19 · T20 · T25 · T26 · T27 · T28 · T15 → T16
 Phase 5:  T21 → T22 → T23
           T22 → T24
+Phase 6:  T31 · T29 → T30
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism. A single agent (or batch worker) works one task at a time, in order.
@@ -936,6 +1029,9 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T22: Correção | 1 função | ✅ Granular |
 | T23: Comando | 1 comando | ✅ Granular |
 | T24: Migração | 1 migração | ✅ Granular |
+| T29: Leitura do orçamento | 1 serializer | ✅ Granular |
+| T30: Uso do orçamento | 1 função | ✅ Granular |
+| T31: Edição parcial | 1 serializer | ✅ Granular |
 
 ---
 
@@ -966,6 +1062,9 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T22 | T21 | T21 → T22 | ✅ Match |
 | T23 | T22 | T22 → T23 | ✅ Match |
 | T24 | T22 | T22 → T24 | ✅ Match |
+| T29 | None | início da fase 6 | ✅ Match |
+| T30 | T29 | T29 → T30 | ✅ Match |
+| T31 | None | isolada na fase 6 | ✅ Match |
 
 ---
 
@@ -991,3 +1090,6 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T21, T22: Verificação e correção | Correção de dados | integration | integration | ✅ OK |
 | T23: Comando | Correção de dados | integration | integration | ✅ OK |
 | T24: Migração | Correção de dados | integration | integration | ✅ OK |
+| T29: Leitura do orçamento | Serializers da API | integration | integration | ✅ OK |
+| T30: Uso do orçamento | Services, signals e leituras | integration | integration | ✅ OK |
+| T31: Edição parcial | Serializers da API | integration | integration | ✅ OK |
