@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Goal, GoalDeposit
 from .services import GoalService
+from accounts.models import Account
+from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
 
 class GoalDepositSerializer(serializers.ModelSerializer):
     account_name = serializers.ReadOnlyField(source='account.name')
@@ -18,7 +20,13 @@ class GoalSerializer(serializers.ModelSerializer):
     suggested_monthly_saving = serializers.SerializerMethodField()
     months_remaining = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
-    deposits = GoalDepositSerializer(many=True, read_only=True)
+    deposits = serializers.SerializerMethodField()
+
+    # Só contas do usuário da requisição (AD-032)
+    account = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
     
     # Campos auxiliares para criação de cofrinho customizado
     cofrinho_name = serializers.CharField(write_only=True, required=False)
@@ -39,6 +47,9 @@ class GoalSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
+        # Conta de outro usuário não aparece na meta (ISOL-15)
+        if instance.account_id and instance.account.user_id != instance.user_id:
+            ret['account'] = None
         # Força o campo image a retornar a URL absoluta da CDN
         if instance.image:
             request = self.context.get('request')
@@ -47,6 +58,11 @@ class GoalSerializer(serializers.ModelSerializer):
             else:
                 ret['image'] = instance.image.url
         return ret
+
+    def get_deposits(self, obj):
+        # Só movimentos em contas do dono da meta (ISOL-15)
+        deposits = obj.deposits.filter(account__user_id=obj.user_id)
+        return GoalDepositSerializer(deposits, many=True).data
 
     def _get_prog(self, obj):
         if not hasattr(self, '_prog_cache'):

@@ -336,14 +336,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_metas.py` cobre criação e edição com conta de B e inexistente, com 400 em `account`, respostas idênticas e nada gravado
-- [ ] Com uma meta de B ligada à força ao cofrinho de A, B recebe `account` nulo e nenhum movimento do cofrinho de A
-- [ ] Meta com cofrinho automático e com conta de A continua funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 55 tests pass
+- [x] `tests/isolamento/test_metas.py` cobre criação e edição com conta de B e inexistente, com 400 em `account`, respostas idênticas e nada gravado
+- [x] Com uma meta de B ligada à força ao cofrinho de A, B recebe `account` nulo e nenhum movimento do cofrinho de A
+- [x] Meta com cofrinho automático e com conta de A continua funcionando
+- [x] Quick gate passa
+- [x] Test count: 55 tests pass (57 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(goals): recusa e oculta conta de outro usuário na meta`
 
