@@ -788,13 +788,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_verificacao.py` grava à força uma ligação de cada linha da tabela de correção do design e confere que cada uma aparece uma vez, com tipo, ID e relação
-- [ ] Uma base sem ligações cruzadas devolve a lista vazia
-- [ ] Quick gate passa
-- [ ] Test count: 115 tests pass
+- [x] `tests/isolamento/test_verificacao.py` grava à força uma ligação de cada linha da tabela de correção do design e confere que cada uma aparece uma vez, com tipo, ID e relação
+- [x] Uma base sem ligações cruzadas devolve a lista vazia
+- [x] Quick gate passa
+- [x] Test count: 115 tests pass (126 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): lista ligações entre dados de usuários diferentes`
 
