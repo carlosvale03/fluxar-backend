@@ -433,6 +433,16 @@ class ImportService:
             'total': total, 'created': created_count, 'ignored': ignored_count, 'errors': errors
         }
 
+def _do_dono(tx, relacionado):
+    """
+    O objeto relacionado (conta, categoria ou tag) se for do dono da
+    transação; senão None, como se a transação não tivesse a relação (ISOL-15).
+    """
+    if relacionado is not None and relacionado.user_id == tx.user_id:
+        return relacionado
+    return None
+
+
 class ExportService:
     @staticmethod
     def generate_pdf(queryset, user):
@@ -476,8 +486,10 @@ class ExportService:
 
             date = tx.date.strftime("%d/%m/%Y")
             type_ = tx.get_type_display()
-            account = tx.account.name[:15]
-            category = tx.category.name if tx.category else "-"
+            conta = _do_dono(tx, tx.account)
+            categoria = _do_dono(tx, tx.category)
+            account = conta.name[:15] if conta else "-"
+            category = categoria.name if categoria else "-"
             amount = f"R$ {tx.amount:,.2f}"
             
             if tx.type == 'INCOME':
@@ -520,22 +532,25 @@ class ExportService:
             sign = "+" if tx.type == 'INCOME' else "-"
             formatted_amount = f"{sign} {tx.amount:.2f}"
             
+            conta = _do_dono(tx, tx.account)
+            categoria = _do_dono(tx, tx.category)
+
             # Categoria e Subcategoria
-            category_name = tx.category.name if tx.category else ''
+            category_name = categoria.name if categoria else ''
             subcategory_name = ''
-            if tx.category and tx.category.parent_id: # Check for parent category
-                subcategory_name = tx.category.name
-                category_name = tx.category.parent.name
+            if categoria and _do_dono(tx, categoria.parent): # Check for parent category
+                subcategory_name = categoria.name
+                category_name = categoria.parent.name
 
             data.append({
                 'Data': tx.date.strftime('%d/%m/%Y'),
                 'Descrição': tx.description,
                 'Valor': formatted_amount,
-                'Conta': tx.account.name if tx.account else '',
+                'Conta': conta.name if conta else '',
                 'Situação': 'Liquidado' if tx.status == 'COMPLETED' else 'Pendente',
                 'Categoria': category_name,
                 'Subcategoria': subcategory_name,
-                'Tags': ', '.join([t.name for t in tx.tags.all()]),
+                'Tags': ', '.join([t.name for t in tx.tags.all() if _do_dono(tx, t)]),
                 'Tipo': tx.get_type_display()
             })
             

@@ -1159,13 +1159,14 @@ T38
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_exportacao_nomes.py` liga à força transações de A à conta, à categoria e à tag de B e confere que o XLS exportado não contém os nomes de B, e que o PDF é gerado sem eles
-- [ ] As transações de A continuam exportadas com os nomes próprios
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_exportacao_nomes.py` liga à força transações de A à conta, à categoria e à tag de B e confere que o XLS exportado não contém os nomes de B, e que o PDF é gerado sem eles
+- [x] As transações de A continuam exportadas com os nomes próprios
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (173 na execução, +2)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(data_exchange): não exporta nomes de outro usuário`
 
