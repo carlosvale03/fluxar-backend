@@ -2,20 +2,38 @@ name: CI Backend
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'fluxar-backend/**'
+    branches: [ main, development ]
   pull_request:
-    branches: [ main ]
-    paths:
-      - 'fluxar-backend/**'
+    branches: [ main, development ]
 
 jobs:
   build-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./fluxar-backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: fluxar_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: fluxar_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      SECRET_KEY: chave-somente-para-o-ci
+      DEBUG: '0'
 
     steps:
     - uses: actions/checkout@v4
@@ -32,9 +50,13 @@ jobs:
 
     - name: Check for Syntax Errors
       run: |
-        python -m compileall .
+        python -m compileall -q .
 
     - name: Run Migrations Check
       # Verifica se faltou gerar algum arquivo de migração
       run: |
         python manage.py makemigrations --check --dry-run
+
+    - name: Run Tests
+      run: |
+        python manage.py test --noinput

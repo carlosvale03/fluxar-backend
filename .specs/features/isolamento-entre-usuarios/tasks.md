@@ -105,14 +105,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] O gatilho cobre `main` e `development` e não tem `paths`
-- [ ] Os passos rodam na raiz do repositório
-- [ ] O job tem o serviço `postgres:15` e as variáveis `DB_*`, `SECRET_KEY` e `DEBUG` de teste
-- [ ] O último passo é `python manage.py test --noinput`
-- [ ] Build gate passa: `docker compose exec -T backend sh -c "python -m compileall -q -x venv . && python manage.py makemigrations --check --dry-run && python manage.py test --noinput"`
+- [x] O gatilho cobre `main` e `development` e não tem `paths`
+- [x] Os passos rodam na raiz do repositório
+- [x] O job tem o serviço `postgres:15` e as variáveis `DB_*`, `SECRET_KEY` e `DEBUG` de teste
+- [x] O último passo é `python manage.py test --noinput`
+- [x] Build gate passa: `docker compose exec -T backend sh -c "python -m compileall -q -x venv . && python manage.py makemigrations --check --dry-run && python manage.py test --noinput"`
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `ci(backend): roda testes com Postgres em main e development`
 
