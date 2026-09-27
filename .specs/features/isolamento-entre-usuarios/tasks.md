@@ -1010,13 +1010,14 @@ T35
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_pagamento_fatura.py` grava à força uma compra de B na fatura de A, paga a fatura e confere que a compra de B continua como estava (status, conta) e que o saldo guardado da conta de A desconta só as compras de A
-- [ ] O estorno do pagamento não muda a compra de B
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/isolamento/test_pagamento_fatura.py` grava à força uma compra de B na fatura de A, paga a fatura e confere que a compra de B continua como estava (status, conta) e que o saldo guardado da conta de A desconta só as compras de A
+- [x] O estorno do pagamento não muda a compra de B
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (155 na execução, +3)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): paga e estorna na fatura só compras do dono do cartão`
 

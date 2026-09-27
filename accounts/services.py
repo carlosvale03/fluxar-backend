@@ -131,7 +131,8 @@ class CreditCardService:
         # Apenas despesas de cartão, ignorando eventuais ajustes manuais por enquanto
         pending_txs = invoice.transactions.filter(
             type='CREDIT_CARD', 
-            status='PENDING'
+            status='PENDING',
+            user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         ).order_by('date', 'amount')
         
         remaining_payment = amount
@@ -235,7 +236,8 @@ class CreditCardService:
         # 1. Buscar transações pagas
         paid_txs = invoice.transactions.filter(
             type='CREDIT_CARD',
-            status='COMPLETED'
+            status='COMPLETED',
+            user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         )
         
         # 2. Reverter Status
