@@ -134,13 +134,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_base.py` confere que cada objeto criado pertence ao usuário certo e que A não enxerga nada de B na listagem de contas
-- [ ] `assert_mesma_recusa` compara status, chaves de erro e mensagens
-- [ ] Quick gate passa: `docker compose exec -T backend python manage.py test tests.isolamento --noinput`
-- [ ] Test count: 2 tests pass
+- [x] `tests/isolamento/test_base.py` confere que cada objeto criado pertence ao usuário certo e que A não enxerga nada de B na listagem de contas
+- [x] `assert_mesma_recusa` compara status, chaves de erro e mensagens
+- [x] Quick gate passa: `docker compose exec -T backend python manage.py test tests.isolamento --noinput`
+- [x] Test count: 2 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `test(isolamento): cria base de testes com dois usuários`
 
