@@ -22,9 +22,17 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active']
         read_only_fields = ['id', 'subcategories', 'parent_name']
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Categoria-pai de outro usuário não aparece (ISOL-15)
+        if instance.parent_id and instance.parent.user_id != instance.user_id:
+            ret['parent'] = None
+            ret['parent_name'] = None
+        return ret
+
     def get_subcategories(self, obj):
-        # Retorna subcategorias de 1º nível
-        subs = obj.subcategories.filter(is_active=True)
+        # Retorna subcategorias de 1º nível, só as do dono da categoria (ISOL-14)
+        subs = obj.subcategories.filter(is_active=True, user_id=obj.user_id)
         return CategorySerializer(subs, many=True).data
 
     def create(self, validated_data):

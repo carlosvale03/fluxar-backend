@@ -537,12 +537,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_leitura_categorias.py` grava à força uma subcategoria de B sob uma categoria de A e confere que A não a vê na árvore e que B não recebe o nome da categoria de A
-- [ ] Quick gate passa
-- [ ] Test count: 87 tests pass
+- [x] `tests/isolamento/test_leitura_categorias.py` grava à força uma subcategoria de B sob uma categoria de A e confere que A não a vê na árvore e que B não recebe o nome da categoria de A
+- [x] Quick gate passa
+- [x] Test count: 87 tests pass (89 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): monta a árvore de categorias só com as do dono`
 
