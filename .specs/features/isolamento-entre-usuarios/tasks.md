@@ -108,6 +108,16 @@ T34
 T35
 ```
 
+### Phase 8: Correções da terceira verificação
+
+Lacunas apontadas pelo verificador na terceira rodada; o usuário escolheu corrigir as duas.
+
+```
+T36
+T37
+T38
+```
+
 ---
 
 ## Task Breakdown
@@ -1104,10 +1114,92 @@ T35
 
 ---
 
+### Phase 8: Correções da terceira verificação
+
+#### T36: Nomes de outro usuário nos relatórios
+
+**What**: Os relatórios que mostram nome, ícone ou cor de categoria, tag ou conta a partir das transações do usuário (`reports/services.py:396-419`, `:697`, `:748-749`, `:903-910`, `:1251`, `:1278`) ignoram a relação de outro usuário, como se a transação não tivesse aquela categoria, tag ou conta.
+**Where**: `reports/services.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_relatorios_nomes.py` liga à força transações de A à categoria, à tag e à conta de B e confere que nenhum dos relatórios dessas linhas traz nome, ícone ou cor de B (entre eles `/api/reports/charts/simple/` e `/api/reports/charts/tag-distribution/`)
+- [ ] Os totais de A continuam aparecendo com as categorias, tags e contas próprias
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 3 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(reports): ignora nomes de outro usuário nos relatórios`
+
+---
+
+#### T37: Nomes de outro usuário na exportação
+
+**What**: A exportação em PDF e XLS (`data_exchange/services.py:479-480` e `:524-538`) não escreve nome de conta, categoria ou tag de outro usuário.
+**Where**: `data_exchange/services.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_exportacao_nomes.py` liga à força transações de A à conta, à categoria e à tag de B e confere que o XLS exportado não contém os nomes de B, e que o PDF é gerado sem eles
+- [ ] As transações de A continuam exportadas com os nomes próprios
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(data_exchange): não exporta nomes de outro usuário`
+
+---
+
+#### T38: Pagamento de fatura com compra forjada no cartão da vítima
+
+**What**: Casos de teste em que a compra de B aponta para o cartão e a fatura de A, no pagamento e no estorno (mutante N03 da terceira verificação).
+**Where**: `tests/isolamento/test_pagamento_fatura.py`
+**Depends on**: None
+**Reuses**: o filtro pelo dono usado nas fases anteriores
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste falha se o filtro de `pay_invoice` trocar o dono do cartão por `credit_card_id=invoice.card_id` (conferido na tarefa e desfeito), e o mesmo para `unpay_invoice`
+- [ ] Build gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(isolamento): cobre compra forjada no cartão da vítima no pagamento da fatura`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
@@ -1117,6 +1209,7 @@ Phase 5:  T21 → T22 → T23
           T22 → T24
 Phase 6:  T31 · T29 → T30
 Phase 7:  T32 · T33 · T34 · T35
+Phase 8:  T36 · T37 · T38
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism. A single agent (or batch worker) works one task at a time, in order.
@@ -1162,6 +1255,9 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T33: Parcelas futuras | 1 método | ✅ Granular |
 | T34: Importação de orçamentos | 1 endpoint | ✅ Granular |
 | T35: Campo sem requisição | 1 teste | ✅ Granular |
+| T36: Nomes nos relatórios | várias funções no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
+| T37: Nomes na exportação | 2 funções no mesmo arquivo | ⚠️ Coeso |
+| T38: Teste da fatura | 1 arquivo de testes | ✅ Granular |
 
 ---
 
@@ -1196,6 +1292,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T30 | T29 | T29 → T30 | ✅ Match |
 | T31 | None | isolada na fase 6 | ✅ Match |
 | T32 a T35 | None | isoladas na fase 7 | ✅ Match |
+| T36 a T38 | None | isoladas na fase 8 | ✅ Match |
 
 ---
 
@@ -1228,3 +1325,6 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T33: Parcelas futuras | Serializers da API | integration | integration | ✅ OK |
 | T34: Importação de orçamentos | Views da API | integration | integration | ✅ OK |
 | T35: Campo sem requisição | Campo de relação e helper | integration | integration | ✅ OK |
+| T36: Nomes nos relatórios | Services, signals e leituras | integration | integration | ✅ OK |
+| T37: Nomes na exportação | Services, signals e leituras | integration | integration | ✅ OK |
+| T38: Teste da fatura | Services, signals e leituras | integration | integration | ✅ OK |
