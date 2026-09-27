@@ -846,12 +846,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_comando.py` roda o comando com `call_command` e confere as linhas, o total, a ausência de nomes, valores e e-mails na saída e a correção com `--fix`
-- [ ] Quick gate passa
-- [ ] Test count: 124 tests pass
+- [x] `tests/isolamento/test_comando.py` roda o comando com `call_command` e confere as linhas, o total, a ausência de nomes, valores e e-mails na saída e a correção com `--fix`
+- [x] Quick gate passa
+- [x] Test count: 124 tests pass (135 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(transactions): adiciona comando que verifica o isolamento entre usuários`
 
