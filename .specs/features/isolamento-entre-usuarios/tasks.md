@@ -76,6 +76,7 @@ T18
 T19
 T20
 T25
+T26
 ```
 
 ### Phase 5: Correção dos dados existentes
@@ -680,6 +681,32 @@ T22 → T24
 
 ---
 
+#### T26: Histórico de movimentos da meta
+
+**What**: a rota `history` do `GoalViewSet` devolve só os movimentos cuja conta é do dono da meta, como o `GoalSerializer.deposits` da T9. Acrescentada durante a execução: o lote 2 encontrou essa leitura, que a tabela do design não listava.
+**Where**: `goals/views.py`
+**Depends on**: None
+**Reuses**: o filtro `account__user=goal.user` da T9
+**Requirement**: ISOL-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_historico_meta.py` grava à força um movimento do cofrinho de A numa meta de B e confere que `GET /api/goals/{meta de B}/history/` não o traz, enquanto os movimentos próprios de B continuam aparecendo
+- [ ] Quick gate passa
+- [ ] Test count: suíte cresce em pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(goals): mostra no histórico da meta só movimentos do dono`
+
+---
+
 ### Phase 5: Correção dos dados existentes
 
 #### T21: Verificação das ligações cruzadas
@@ -800,7 +827,7 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
 Phase 3:  T8 · T9 · T10 · T11 · T12 · T13 → T14
-Phase 4:  T17 · T18 · T19 · T20 · T25 · T15 → T16
+Phase 4:  T17 · T18 · T19 · T20 · T25 · T26 · T15 → T16
 Phase 5:  T21 → T22 → T23
           T22 → T24
 ```
@@ -834,6 +861,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T19: Relatórios | 2 funções no mesmo arquivo | ⚠️ Coeso |
 | T20: Endereço e filtros | 1 arquivo de testes | ✅ Granular |
 | T25: Parceira nos signals | 2 signals no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
+| T26: Histórico da meta | 1 endpoint | ✅ Granular |
 | T21: Verificação | 1 função | ✅ Granular |
 | T22: Correção | 1 função | ✅ Granular |
 | T23: Comando | 1 comando | ✅ Granular |
@@ -861,6 +889,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T19 | T11 (fase 3) | isolada na fase 4 | ✅ Match |
 | T20 | None | isolada na fase 4 | ✅ Match |
 | T25 | None | isolada na fase 4 | ✅ Match |
+| T26 | None | isolada na fase 4 | ✅ Match |
 | T21 | None | início da fase 5 | ✅ Match |
 | T22 | T21 | T21 → T22 | ✅ Match |
 | T23 | T22 | T22 → T23 | ✅ Match |
@@ -884,6 +913,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T17 a T19: Signal e services | Services, signals e leituras | integration | integration | ✅ OK |
 | T20: Endereço e filtros | Views da API | integration | integration | ✅ OK |
 | T25: Signals da transferência | Services, signals e leituras | integration | integration | ✅ OK |
+| T26: Histórico da meta | Views da API | integration | integration | ✅ OK |
 | T21, T22: Verificação e correção | Correção de dados | integration | integration | ✅ OK |
 | T23: Comando | Correção de dados | integration | integration | ✅ OK |
 | T24: Migração | Correção de dados | integration | integration | ✅ OK |
