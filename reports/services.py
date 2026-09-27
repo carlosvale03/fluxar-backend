@@ -572,6 +572,10 @@ class ReportService:
         
         custom_monitoring = []
         for item in items:
+            # Monitor ligado a categoria ou tag de outro usuário fica de fora (ISOL-15)
+            alvo = item.category or item.tag
+            if alvo.user_id != user.id:
+                continue
             name = item.category.name if item.category else item.tag.name
             
             # Se for categoria, buscamos ela e todas as subcategorias recursivamente

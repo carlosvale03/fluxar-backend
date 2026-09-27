@@ -732,12 +732,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_relatorio_avancado.py` liga à força um monitor de A à categoria de B e outro à tag de B e confere que `/api/reports/charts/advanced/` não traz nome, ícone nem cor de B, enquanto o monitor próprio de A continua aparecendo
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_relatorio_avancado.py` liga à força um monitor de A à categoria de B e outro à tag de B e confere que `/api/reports/charts/advanced/` não traz nome, ícone nem cor de B, enquanto o monitor próprio de A continua aparecendo
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (2 novos, 122 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(reports): ignora monitores ligados a dados de outro usuário`
 
