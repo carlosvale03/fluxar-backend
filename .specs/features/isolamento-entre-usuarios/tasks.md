@@ -162,13 +162,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_campo.py` cobre objeto próprio, de outro usuário, inexistente, categoria-modelo sem dono, UUID malformado, número no lugar do UUID, `many=True` com uma tag alheia no meio e serializer sem `request`
-- [ ] `get_owned_or_400` devolve o objeto próprio e levanta `{campo: [mensagem]}` nos demais casos
-- [ ] Quick gate passa
-- [ ] Test count: 12 tests pass
+- [x] `tests/isolamento/test_campo.py` cobre objeto próprio, de outro usuário, inexistente, categoria-modelo sem dono, UUID malformado, número no lugar do UUID, `many=True` com uma tag alheia no meio e serializer sem `request`
+- [x] `get_owned_or_400` devolve o objeto próprio e levanta `{campo: [mensagem]}` nos demais casos
+- [x] Quick gate passa
+- [x] Test count: 12 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): adiciona campo de relação que só aceita objetos do usuário`
 
