@@ -591,12 +591,13 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_saldo_limite.py` grava à força transações de B na conta de A e compras de B no cartão de A e confere que o saldo e o limite disponível de A não mudam
-- [ ] Full gate passa
-- [ ] Test count: 91 tests pass
+- [x] `tests/isolamento/test_saldo_limite.py` grava à força transações de B na conta de A e compras de B no cartão de A e confere que o saldo e o limite disponível de A não mudam
+- [x] Full gate passa
+- [x] Test count: 91 tests pass (93 na execução)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): soma no saldo e no limite só transações do dono`
 
