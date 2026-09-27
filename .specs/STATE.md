@@ -268,12 +268,12 @@
 
 ## Handoff
 
-- **Feature**: `isolamento-entre-usuarios` concluída
-- **Phase / Task**: Execute concluído (T1 a T38) e verificado: `validation.md` com PASS na 4ª rodada, 175 testes, sensor com 12 de 12 mutações mortas
-- **Completed**: ISOL-01 a ISOL-18 verificados; CI do backend roda os testes com Postgres em `main` e `development`; migração `transactions/0007_corrige_isolamento` e comando `check_isolation`
+- **Feature**: `atualizacao-de-dependencias` concluída (SEG-04), nos dois repositórios
+- **Phase / Task**: Execute concluído e verificado: `validation.md` com PASS, 8 de 8 ACs, sensor leve com 7 de 7 mutações mortas
+- **Completed**: backend no Django 5.2.17 LTS, DRF 3.18.1, SimpleJWT 5.5.1, PyJWT 2.15.0, gunicorn 26.2.0 e demais pacotes corrigidos, com `pip-audit` zerado e no CI; handler de 404 em `core/exceptions.py` mantém o "Not found." de antes. Frontend no Next 16.3.6 e axios 1.20.0, com `npm audit --omit=dev` zerado; CI do frontend passa a rodar em `main` e `development`, com auditoria e TypeScript
 - **In-progress** (file:line): nenhum
-- **Riscos residuais** (só com ligação entre usuários gravada antes da correção, que a migração 0007 apaga no mesmo deploy): filtros de lista contam a transação própria ligada a ID alheio (sonda S3); filtros `account__type` e `invoice__year/month` dos relatórios seguem a relação antiga; o estorno de fatura não reverte o saldo guardado (spec `saldo`); a rejeição "Conta não mapeada" na importação fica com IMPORT-21
-- **Next step**: o usuário faz o push da branch e abre o PR para a `development`. Depois do deploy, rodar `python manage.py check_isolation` em produção e confirmar zero ligações. Próxima branch, a partir da `development` atualizada: atualização de dependências (SEG-04), depois `autenticacao`, `sessao`, `saldo`, `faturas`, `contratos-frontend-backend`, `importacao`, `permissoes-e-planos`, `metas`, `relatorios`, `lgpd`, `painel-admin` e as features novas. Nas próximas, o Verifier usa o sensor leve (6 a 8 mutações)
+- **Notas**: o lint do frontend roda sem bloquear no CI (168 erros antigos, MAN-04); o Django 6 fica para quando o backend for para o Python 3.12
+- **Next step**: o usuário faz o push das duas branches `chore/atualiza-dependencias` e abre um PR em cada repositório para a `development`. Depois do merge, a próxima feature é `autenticacao` (CON-01, SEG-02, SEG-03), numa branch nova a partir da `development` atualizada, com o verificador leve
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/isolamento-entre-usuarios
+- **Branch**: chore/atualiza-dependencias (backend e frontend)

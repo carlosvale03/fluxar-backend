@@ -8,9 +8,9 @@ Origem: SEG-04 na seção 3 de `docs/auditoria-2026-09.md` e o CI do frontend ci
 
 ## Goals
 
-- [ ] Nenhuma vulnerabilidade conhecida nas dependências de produção dos dois repositórios.
-- [ ] Backend no Django 5.2 LTS, suportado até abril de 2028.
-- [ ] Os dois CIs rodam em `main` e `development` e falham se aparecer vulnerabilidade nova.
+- [x] Nenhuma vulnerabilidade conhecida nas dependências de produção dos dois repositórios.
+- [x] Backend no Django 5.2 LTS, suportado até abril de 2028.
+- [x] Os dois CIs rodam em `main` e `development` e falham se aparecer vulnerabilidade nova.
 
 ## Out of Scope
 
@@ -84,14 +84,14 @@ Origem: SEG-04 na seção 3 de `docs/auditoria-2026-09.md` e o CI do frontend ci
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| DEPS-01 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Pending |
-| DEPS-02 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Pending |
-| DEPS-03 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Pending |
-| DEPS-04 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Pending |
-| DEPS-05 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Pending |
-| DEPS-06 | P1: CI que confere as dependências | Execute | Pending |
-| DEPS-07 | P1: CI que confere as dependências | Execute | Pending |
-| DEPS-08 | P1: CI que confere as dependências | Execute | Pending |
+| DEPS-01 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Verified |
+| DEPS-02 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Verified |
+| DEPS-03 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Verified |
+| DEPS-04 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Verified |
+| DEPS-05 | P1: Dependências sem vulnerabilidades conhecidas | Execute | Verified |
+| DEPS-06 | P1: CI que confere as dependências | Execute | Verified |
+| DEPS-07 | P1: CI que confere as dependências | Execute | Verified |
+| DEPS-08 | P1: CI que confere as dependências | Execute | Verified |
 
 **Coverage:** 8 total, 8 mapped to Execute, 0 unmapped
 
@@ -99,6 +99,6 @@ Origem: SEG-04 na seção 3 de `docs/auditoria-2026-09.md` e o CI do frontend ci
 
 ## Success Criteria
 
-- [ ] `pip-audit` e `npm audit --omit=dev` sem vulnerabilidades.
-- [ ] 175 testes do backend passando no Django 5.2.
-- [ ] Build do frontend passando no Next 16.3.6.
+- [x] `pip-audit` e `npm audit --omit=dev` sem vulnerabilidades.
+- [x] 175 testes do backend passando no Django 5.2.
+- [x] Build do frontend passando no Next 16.3.6.
