@@ -250,13 +250,29 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-032
+- **Decision**: Toda relação gravável pela API usa o `OwnedPrimaryKeyRelatedField` de `core/fields.py`, que só encontra objetos do usuário da requisição; as views que leem IDs direto de `request.data` usam o `get_owned_or_400` do mesmo arquivo. Qualquer ID que não seja do usuário (de outro usuário, inexistente, categoria-modelo sem dono ou UUID malformado) recebe a mesma mensagem em português no campo. Um teste-inventário falha se um serializer de escrita tiver relação gravável sem esse campo.
+- **Reason**: aplica a AD-010 num lugar só, com as mensagens em português, e impede que uma relação nova escape da regra sem aviso.
+- **Trade-off**: gravações internas, feitas fora dos serializers, não passam pelo campo; os services continuam responsáveis por usar só objetos já validados.
+- **Scope**: todas as features com relação gravável.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-033
+- **Decision**: Os testes do backend usam o `TestCase` do Django e o `APITestCase` do DRF, ficam no pacote `tests/` da raiz, numa pasta por feature (`tests/<feature>/`), e rodam no Postgres 15: localmente com `docker compose exec -T backend python manage.py test`, e no CI com um serviço Postgres, em push e PR para `main` e `development`.
+- **Reason**: o repositório não tinha testes nem CI que rodasse; as ferramentas já estão instaladas, e o banco dos testes é o mesmo da produção.
+- **Trade-off**: rodar os testes localmente depende do container do `docker-compose.yml` estar de pé.
+- **Scope**: todas as features do backend.
+- **Date**: 2026-09-27
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-49), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-39), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45), `relatorios` (REL-01 a REL-25) e `painel-admin` (ADMIN-01 a ADMIN-29) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas`, `relatorios` e `painel-admin` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Feature**: `isolamento-entre-usuarios` (primeira da fase de implementação)
+- **Phase / Task**: Design e Tasks aprovados em 2026-09-27; Execute de T1 a T24 em andamento
+- **Completed**: as 15 specs da auditoria, aprovadas e mergeadas na `development` (PR #60); design e tasks do isolamento
 - **In-progress** (file:line): nenhum
-- **Next step**: o usuário faz o push e abre o PR da branch para a `development`. Depois do merge, começar o Design e a implementação pela fase 1 do plano de ação da auditoria (CON-01, SEG-01 a SEG-04 e FIN-05), numa branch nova a partir da `development` atualizada. Os preparativos da PROP-04 já estão nas specs `lgpd` (LGPD-26 a LGPD-39) e `importacao` (IMPORT-42 a IMPORT-49); PROP-04 e PROP-05 não viram spec agora.
+- **Next step**: com a aprovação, executar T1 a T24 na branch `fix/isolamento-entre-usuarios`, um commit por tarefa. Depois, na ordem combinada com o usuário: atualização de dependências (SEG-04), `autenticacao`, `sessao`, `saldo`, `faturas`, `contratos-frontend-backend`, `importacao`, `permissoes-e-planos`, `metas`, `relatorios`, `lgpd`, `painel-admin`, e então as features novas (`classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`), cada uma numa branch nova a partir da `development` atualizada.
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: docs/specs-features-auditoria-2026-09
+- **Branch**: fix/isolamento-entre-usuarios
