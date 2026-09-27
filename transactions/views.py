@@ -8,6 +8,7 @@ from .serializers import (
 )
 from .services import TransactionService
 from core.mixins import UserQuerySetMixin
+from core.fields import get_owned_or_400, CATEGORIA_NAO_ENCONTRADA
 
 class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_active=True)
@@ -190,6 +191,13 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         # Filtra apenas transações futuras/pendentes do grupo se solicitado? 
         # Por enquanto faz em todas do grupo.
         update_data = {k: v for k, v in request.data.items() if k in ['description', 'amount', 'category']}
+
+        # A categoria precisa ser do usuário, antes de alterar qualquer ocorrência
+        if update_data.get('category') is not None:
+            update_data['category'] = get_owned_or_400(
+                Category.objects.all(), request.user, update_data['category'],
+                'category', CATEGORIA_NAO_ENCONTRADA,
+            )
         
         updated_count = Transaction.objects.filter(
             user=request.user,

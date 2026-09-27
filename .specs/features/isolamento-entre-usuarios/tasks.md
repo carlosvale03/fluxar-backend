@@ -277,13 +277,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_escrita_lote.py` cobre categoria de B, inexistente e categoria-modelo: 400 em `category`, respostas idênticas e nenhuma ocorrência da série alterada
-- [ ] A edição em lote com categoria de A continua funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 44 tests pass
+- [x] `tests/isolamento/test_escrita_lote.py` cobre categoria de B, inexistente e categoria-modelo: 400 em `category`, respostas idênticas e nenhuma ocorrência da série alterada
+- [x] A edição em lote com categoria de A continua funcionando
+- [x] Quick gate passa
+- [x] Test count: 44 tests pass
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa categoria de outro usuário na edição em lote`
 
