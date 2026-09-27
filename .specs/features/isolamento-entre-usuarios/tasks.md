@@ -365,13 +365,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_aporte_resgate.py` cobre aporte e resgate com conta de B e inexistente, em cada nome de campo aceito: 400 no campo, respostas idênticas, nenhum registro de aporte ou transação criado
-- [ ] Aporte e resgate com conta de A continuam funcionando
-- [ ] Quick gate passa
-- [ ] Test count: 63 tests pass
+- [x] `tests/isolamento/test_aporte_resgate.py` cobre aporte e resgate com conta de B e inexistente, em cada nome de campo aceito: 400 no campo, respostas idênticas, nenhum registro de aporte ou transação criado
+- [x] Aporte e resgate com conta de A continuam funcionando
+- [x] Quick gate passa
+- [x] Test count: 63 tests pass (65 na execução)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(goals): responde 400 no campo para conta alheia no aporte e no resgate`
 
