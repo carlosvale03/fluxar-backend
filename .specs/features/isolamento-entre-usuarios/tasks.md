@@ -1065,12 +1065,13 @@ T35
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_importar_orcamentos.py` liga à força um orçamento de A à categoria de B, importa para outro mês e confere que nenhum orçamento novo aponta para a categoria de B, enquanto os orçamentos de categorias próprias são importados
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_importar_orcamentos.py` liga à força um orçamento de A à categoria de B, importa para outro mês e confere que nenhum orçamento novo aponta para a categoria de B, enquanto os orçamentos de categorias próprias são importados
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (159 na execução, +2)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(budgets): não copia categoria de outro usuário na importação de orçamentos`
 

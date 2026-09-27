@@ -93,7 +93,10 @@ class BudgetViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         new_budgets = []
         skipped_count = 0
         for budget in source_budgets:
-            if budget.category_id not in existing_categories:
+            # Categoria de outro usuário ou categoria-modelo não é copiada (ISOL-01)
+            if budget.category.user_id != request.user.id:
+                skipped_count += 1
+            elif budget.category_id not in existing_categories:
                 new_budgets.append(
                     Budget(
                         user=request.user,
