@@ -75,6 +75,7 @@ T17
 T18
 T19
 T20
+T25
 ```
 
 ### Phase 5: Correção dos dados existentes
@@ -645,6 +646,33 @@ T22 → T24
 
 ---
 
+#### T25: Parceira da transferência nos signals
+
+**What**: `sync_transfer_update` e `sync_transfer_delete` atualizam e excluem a parceira só entre as transações do dono da transação editada ou excluída. Acrescentada durante a execução: o lote 1 encontrou esse caminho, que a tabela de leituras do design não listava.
+**Where**: `transactions/signals.py`
+**Depends on**: None
+**Reuses**: os signals atuais
+**Requirement**: ISOL-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/isolamento/test_signal_transferencia.py` grava à força uma transação de B com o `transfer_id` de uma transferência de A e confere que editar a perna de A não muda data nem valor da transação de B, e que excluir a perna de A não exclui a transação de B
+- [ ] A parceira de A continua sendo atualizada e excluída junto
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 4 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(transactions): sincroniza só a parceira do dono na transferência`
+
+---
+
 ### Phase 5: Correção dos dados existentes
 
 #### T21: Verificação das ligações cruzadas
@@ -765,7 +793,7 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 Phase 1:  T1 → T2 → T3
 Phase 2:  T7 · T4 → T5 → T6
 Phase 3:  T8 · T9 · T10 · T11 · T12 · T13 → T14
-Phase 4:  T17 · T18 · T19 · T20 · T15 → T16
+Phase 4:  T17 · T18 · T19 · T20 · T25 · T15 → T16
 Phase 5:  T21 → T22 → T23
           T22 → T24
 ```
@@ -798,6 +826,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T18: Saldo e limite | 2 funções no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
 | T19: Relatórios | 2 funções no mesmo arquivo | ⚠️ Coeso |
 | T20: Endereço e filtros | 1 arquivo de testes | ✅ Granular |
+| T25: Parceira nos signals | 2 signals no mesmo arquivo, mesmo filtro | ⚠️ Coeso |
 | T21: Verificação | 1 função | ✅ Granular |
 | T22: Correção | 1 função | ✅ Granular |
 | T23: Comando | 1 comando | ✅ Granular |
@@ -824,6 +853,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T18 | T12 (fase 3) | isolada na fase 4 | ✅ Match |
 | T19 | T11 (fase 3) | isolada na fase 4 | ✅ Match |
 | T20 | None | isolada na fase 4 | ✅ Match |
+| T25 | None | isolada na fase 4 | ✅ Match |
 | T21 | None | início da fase 5 | ✅ Match |
 | T22 | T21 | T21 → T22 | ✅ Match |
 | T23 | T22 | T22 → T23 | ✅ Match |
@@ -846,6 +876,7 @@ Execution is strictly sequential - there is no intra-phase parallelism. A single
 | T15, T16: Leitura nos serializers | Serializers da API | integration | integration | ✅ OK |
 | T17 a T19: Signal e services | Services, signals e leituras | integration | integration | ✅ OK |
 | T20: Endereço e filtros | Views da API | integration | integration | ✅ OK |
+| T25: Signals da transferência | Services, signals e leituras | integration | integration | ✅ OK |
 | T21, T22: Verificação e correção | Correção de dados | integration | integration | ✅ OK |
 | T23: Comando | Correção de dados | integration | integration | ✅ OK |
 | T24: Migração | Correção de dados | integration | integration | ✅ OK |
