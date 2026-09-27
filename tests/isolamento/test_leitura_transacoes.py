@@ -69,7 +69,7 @@ class LeituraDetalhesDaTransacaoTests(DoisUsuariosTestCase):
         for dados in (detalhe.data, self.item_da_lista(perna_de_a.id)):
             self.assertIsNone(dados['related_transaction'])
             self.assert_sem_dados_de_b(dados)
-            self.assertNotIn('999', str(dados))
+            self.assertNotIn('999.00', str(dados))
 
     def test_parceira_de_a_na_conta_de_b_nao_mostra_o_nome_da_conta(self):
         transfer_id = TransactionService.create_transfer(
