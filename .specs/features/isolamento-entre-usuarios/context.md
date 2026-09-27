@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/isolamento-entre-usuarios/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada; implementada e verificada em 2026-09-27 (validation.md: PASS na 4ª rodada)
 
 ---
 

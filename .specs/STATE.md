@@ -250,13 +250,30 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-032
+- **Decision**: Toda relação gravável pela API usa o `OwnedPrimaryKeyRelatedField` de `core/fields.py`, que só encontra objetos do usuário da requisição; as views que leem IDs direto de `request.data` usam o `get_owned_or_400` do mesmo arquivo. Qualquer ID que não seja do usuário (de outro usuário, inexistente, categoria-modelo sem dono ou UUID malformado) recebe a mesma mensagem em português no campo. Um teste-inventário falha se um serializer de escrita tiver relação gravável sem esse campo.
+- **Reason**: aplica a AD-010 num lugar só, com as mensagens em português, e impede que uma relação nova escape da regra sem aviso.
+- **Trade-off**: gravações internas, feitas fora dos serializers, não passam pelo campo; os services continuam responsáveis por usar só objetos já validados.
+- **Scope**: todas as features com relação gravável.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-033
+- **Decision**: Os testes do backend usam o `TestCase` do Django e o `APITestCase` do DRF, ficam no pacote `tests/` da raiz, numa pasta por feature (`tests/<feature>/`), e rodam no Postgres 15: localmente com `docker compose exec -T backend python manage.py test`, e no CI com um serviço Postgres, em push e PR para `main` e `development`.
+- **Reason**: o repositório não tinha testes nem CI que rodasse; as ferramentas já estão instaladas, e o banco dos testes é o mesmo da produção.
+- **Trade-off**: rodar os testes localmente depende do container do `docker-compose.yml` estar de pé.
+- **Scope**: todas as features do backend.
+- **Date**: 2026-09-27
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: série de specs da auditoria (`.specs/features/`)
-- **Phase / Task**: Specify de `saldo` (SALDO-01 a SALDO-47), `faturas` (FATURA-01 a FATURA-45), `importacao` (IMPORT-01 a IMPORT-49), `isolamento-entre-usuarios` (ISOL-01 a ISOL-18), `autenticacao` (AUTH-01 a AUTH-44), `sessao` (SESSAO-01 a SESSAO-25), `permissoes-e-planos` (PERM-01 a PERM-29), `lgpd` (LGPD-01 a LGPD-39), `contratos-frontend-backend` (CONTRATO-01 a CONTRATO-35), `classes-de-despesa` (CLASSE-01 a CLASSE-40), `gestao-do-salario` (SALARIO-01 a SALARIO-56), `vinculo-entre-transacoes` (VINCULO-01 a VINCULO-37), `metas` (META-01 a META-45), `relatorios` (REL-01 a REL-25) e `painel-admin` (ADMIN-01 a ADMIN-29) concluídas e aprovadas; Design de nenhuma delas iniciado
-- **Completed**: `saldo`, `faturas`, `importacao`, `isolamento-entre-usuarios`, `autenticacao`, `sessao`, `permissoes-e-planos`, `lgpd`, `contratos-frontend-backend`, `classes-de-despesa`, `gestao-do-salario`, `vinculo-entre-transacoes`, `metas`, `relatorios` e `painel-admin` (`spec.md` e `context.md` de cada uma); seção 11 da auditoria, com as propostas PROP-01 a PROP-05
+- **Feature**: `isolamento-entre-usuarios` concluída
+- **Phase / Task**: Execute concluído (T1 a T38) e verificado: `validation.md` com PASS na 4ª rodada, 175 testes, sensor com 12 de 12 mutações mortas
+- **Completed**: ISOL-01 a ISOL-18 verificados; CI do backend roda os testes com Postgres em `main` e `development`; migração `transactions/0007_corrige_isolamento` e comando `check_isolation`
 - **In-progress** (file:line): nenhum
-- **Next step**: o usuário faz o push e abre o PR da branch para a `development`. Depois do merge, começar o Design e a implementação pela fase 1 do plano de ação da auditoria (CON-01, SEG-01 a SEG-04 e FIN-05), numa branch nova a partir da `development` atualizada. Os preparativos da PROP-04 já estão nas specs `lgpd` (LGPD-26 a LGPD-39) e `importacao` (IMPORT-42 a IMPORT-49); PROP-04 e PROP-05 não viram spec agora.
+- **Riscos residuais** (só com ligação entre usuários gravada antes da correção, que a migração 0007 apaga no mesmo deploy): filtros de lista contam a transação própria ligada a ID alheio (sonda S3); filtros `account__type` e `invoice__year/month` dos relatórios seguem a relação antiga; o estorno de fatura não reverte o saldo guardado (spec `saldo`); a rejeição "Conta não mapeada" na importação fica com IMPORT-21
+- **Next step**: o usuário faz o push da branch e abre o PR para a `development`. Depois do deploy, rodar `python manage.py check_isolation` em produção e confirmar zero ligações. Próxima branch, a partir da `development` atualizada: atualização de dependências (SEG-04), depois `autenticacao`, `sessao`, `saldo`, `faturas`, `contratos-frontend-backend`, `importacao`, `permissoes-e-planos`, `metas`, `relatorios`, `lgpd`, `painel-admin` e as features novas. Nas próximas, o Verifier usa o sensor leve (6 a 8 mutações)
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: docs/specs-features-auditoria-2026-09
+- **Branch**: fix/isolamento-entre-usuarios

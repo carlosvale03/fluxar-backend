@@ -134,26 +134,26 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ISOL-01 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-02 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-03 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-04 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-05 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-06 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-07 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-08 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-09 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-10 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-11 | P1: Relações só com objetos do próprio usuário | - | Pending |
-| ISOL-12 | P1: Leitura restrita ao dono | - | Pending |
-| ISOL-13 | P1: Leitura restrita ao dono | - | Pending |
-| ISOL-14 | P1: Leitura restrita ao dono | - | Pending |
-| ISOL-15 | P1: Leitura restrita ao dono | - | Pending |
-| ISOL-16 | P1: Correção dos dados existentes | - | Pending |
-| ISOL-17 | P1: Correção dos dados existentes | - | Pending |
-| ISOL-18 | P1: Correção dos dados existentes | - | Pending |
+| ISOL-01 | P1: Relações só com objetos do próprio usuário | T14, T34 | Verified |
+| ISOL-02 | P1: Relações só com objetos do próprio usuário | T4, T31 | Verified |
+| ISOL-03 | P1: Relações só com objetos do próprio usuário | T7 | Verified |
+| ISOL-04 | P1: Relações só com objetos do próprio usuário | T5 | Verified |
+| ISOL-05 | P1: Relações só com objetos do próprio usuário | T8 | Verified |
+| ISOL-06 | P1: Relações só com objetos do próprio usuário | T9 | Verified |
+| ISOL-07 | P1: Relações só com objetos do próprio usuário | T11 | Verified |
+| ISOL-08 | P1: Relações só com objetos do próprio usuário | T12 | Verified |
+| ISOL-09 | P1: Relações só com objetos do próprio usuário | T6, T10, T12, T13 | Verified |
+| ISOL-10 | P1: Relações só com objetos do próprio usuário | T3, T5, T35 | Verified |
+| ISOL-11 | P1: Relações só com objetos do próprio usuário | T3, T4, T6, T10, T31 | Verified |
+| ISOL-12 | P1: Leitura restrita ao dono | T19, T20 | Verified |
+| ISOL-13 | P1: Leitura restrita ao dono | T20 | Verified |
+| ISOL-14 | P1: Leitura restrita ao dono | T15 a T19, T25, T28, T30, T32, T33, T38 | Verified |
+| ISOL-15 | P1: Leitura restrita ao dono | T9, T11, T12, T15, T16, T26, T27, T29, T36, T37 | Verified |
+| ISOL-16 | P1: Correção dos dados existentes | T21, T23 | Verified |
+| ISOL-17 | P1: Correção dos dados existentes | T22, T24 | Verified |
+| ISOL-18 | P1: Correção dos dados existentes | T22, T24 | Verified |
 
-**Coverage:** 18 total, 0 mapped to tasks, 18 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 18 total, 18 mapped to tasks, 0 unmapped
 
 ---
 

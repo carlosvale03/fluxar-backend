@@ -4,19 +4,35 @@ from dateutil.relativedelta import relativedelta
 from .models import Transaction, Category, Tag, RecurringTransaction
 from accounts.models import Account, CreditCard
 from .services import TransactionService, CategoryService
+from core.fields import (
+    OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
+)
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
     parent_name = serializers.ReadOnlyField(source='parent.name')
+    parent = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active']
         read_only_fields = ['id', 'subcategories', 'parent_name']
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Categoria-pai de outro usuário não aparece (ISOL-15)
+        if instance.parent_id and instance.parent.user_id != instance.user_id:
+            ret['parent'] = None
+            ret['parent_name'] = None
+        return ret
+
     def get_subcategories(self, obj):
-        # Retorna subcategorias de 1º nível
-        subs = obj.subcategories.filter(is_active=True)
+        # Retorna subcategorias de 1º nível, só as do dono da categoria (ISOL-14)
+        subs = obj.subcategories.filter(is_active=True, user_id=obj.user_id)
         return CategorySerializer(subs, many=True).data
 
     def create(self, validated_data):
@@ -39,11 +55,30 @@ class TransactionSerializer(serializers.ModelSerializer):
     account_detail = serializers.SerializerMethodField()
     category_detail = CategorySerializer(source='category', read_only=True)
     tags_detail = TagSerializer(source='tags', many=True, read_only=True)
+
+    # Relações graváveis: só objetos do usuário da requisição (AD-032)
+    account = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    credit_card = OwnedPrimaryKeyRelatedField(
+        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+        required=False, allow_null=True,
+    )
+    category = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    tags = OwnedPrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
+        many=True, required=False,
+    )
     
     # Transfer details
     related_transaction = serializers.SerializerMethodField()
-    target_account_id = serializers.PrimaryKeyRelatedField(
-        queryset=Account.objects.none(), 
+    target_account_id = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.filter(is_active=True),
+        not_found_message=CONTA_NAO_ENCONTRADA,
         write_only=True, 
         required=False, 
     )
@@ -79,18 +114,26 @@ class TransactionSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
 
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            self.fields['target_account_id'].queryset = Account.objects.filter(user=request.user, is_active=True)
-
     def to_representation(self, instance):
         """
         Injeta is_recurring e frequency no output baseado no recurring_source.
         """
         representation = super().to_representation(instance)
+
+        # Conta, categoria e tags de outro usuário não aparecem (ISOL-15)
+        dono = instance.user_id
+        if instance.account_id and instance.account.user_id != dono:
+            representation['account'] = None
+            representation['account_detail'] = None
+        if instance.category_id and instance.category.user_id != dono:
+            representation['category'] = None
+            representation['category_detail'] = None
+        tags_alheias = {str(tag.id) for tag in instance.tags.all() if tag.user_id != dono}
+        if tags_alheias:
+            representation['tags'] = [i for i in representation['tags'] if str(i) not in tags_alheias]
+            representation['tags_detail'] = [
+                tag for tag in representation['tags_detail'] if tag['id'] not in tags_alheias
+            ]
         
         # Se tem recurring_source, é recorrente
         has_recurrence = instance.recurring_source is not None
@@ -118,16 +161,40 @@ class TransactionSerializer(serializers.ModelSerializer):
         if obj.transfer_id:
             # Tenta achar a parceira
             # Cachear isso seria bom, mas para detail view ok.
-            qs = Transaction.objects.filter(transfer_id=obj.transfer_id).exclude(id=obj.id)
+            # Só a parceira do dono da transação, com a conta dele (ISOL-14, ISOL-15)
+            qs = Transaction.objects.filter(
+                transfer_id=obj.transfer_id, user_id=obj.user_id
+            ).exclude(id=obj.id)
             partner = qs.first()
             if partner:
+                 conta_do_dono = partner.account if partner.account and partner.account.user_id == obj.user_id else None
                  return {
                      'id': partner.id,
-                     'account_name': partner.account.name if partner.account else 'Desconhecida',
+                     'account_name': conta_do_dono.name if conta_do_dono else 'Desconhecida',
                      'amount': partner.amount,
                      'type': partner.type
                  }
         return None
+
+    def validate(self, attrs):
+        # Edição de transação ainda ligada a objeto de outro usuário, ou a
+        # categoria-modelo, é recusada até o corpo desfazer a ligação (ISOL-02)
+        if self.instance is not None:
+            dono = self.instance.user_id
+            erros = {}
+            for campo, mensagem in (
+                ('account', CONTA_NAO_ENCONTRADA),
+                ('credit_card', CARTAO_NAO_ENCONTRADO),
+                ('category', CATEGORIA_NAO_ENCONTRADA),
+            ):
+                atual = getattr(self.instance, campo)
+                if campo not in attrs and atual is not None and atual.user_id != dono:
+                    erros[campo] = [mensagem]
+            if 'tags' not in attrs and self.instance.tags.exclude(user_id=dono).exists():
+                erros['tags'] = [TAG_NAO_ENCONTRADA]
+            if erros:
+                raise serializers.ValidationError(erros)
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
@@ -208,7 +275,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         # 1. Update Partner Account if requested
         if target_account and instance.transfer_id:
             partner = Transaction.objects.filter(
-                transfer_id=instance.transfer_id
+                transfer_id=instance.transfer_id, user=instance.user
             ).exclude(id=instance.id).first()
             
             if partner:
@@ -221,10 +288,12 @@ class TransactionSerializer(serializers.ModelSerializer):
             root_id = instance.parent_transaction_id or instance.id
             
             # Busca parcelas futuras (excluindo a atual, que será atualizada pelo super().update)
+            # Só parcelas do dono da transação editada (ISOL-14)
             futures = Transaction.objects.filter(
                 Q(id=root_id) | Q(parent_transaction_id=root_id)
             ).filter(
-                installment_number__gt=instance.installment_number
+                installment_number__gt=instance.installment_number,
+                user_id=instance.user_id,
             )
             
             for txn in futures:
@@ -246,34 +315,29 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 # Serializers Específicos para Ações
 class TransferSerializer(serializers.Serializer):
-    account_from = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none())
-    account_to = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none())
+    account_from = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+    )
+    account_to = OwnedPrimaryKeyRelatedField(
+        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+    )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
 
-    def __init__(self, *args, **kwargs):
-        # Filtra querysets pelo usuario
-        request = kwargs.get('context', {}).get('request')
-        super().__init__(*args, **kwargs)
-        if request and request.user:
-            self.fields['account_from'].queryset = Account.objects.filter(user=request.user)
-            self.fields['account_to'].queryset = Account.objects.filter(user=request.user)
-
 
 class CreditCardExpenseSerializer(serializers.Serializer):
-    credit_card = serializers.PrimaryKeyRelatedField(queryset=CreditCard.objects.none())
+    credit_card = OwnedPrimaryKeyRelatedField(
+        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+    )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255)
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.none())
+    category = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+    )
     installments = serializers.IntegerField(default=1, min_value=1)
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.none(), many=True, required=False)
-
-    def __init__(self, *args, **kwargs):
-        request = kwargs.get('context', {}).get('request')
-        super().__init__(*args, **kwargs)
-        if request and request.user:
-            self.fields['credit_card'].queryset = CreditCard.objects.filter(user=request.user)
-            self.fields['category'].queryset = Category.objects.filter(user=request.user)
-            self.fields['tags'].queryset = Tag.objects.filter(user=request.user)
+    tags = OwnedPrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
+        many=True, required=False,
+    )

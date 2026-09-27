@@ -20,8 +20,10 @@ class BudgetService:
         # Decisão: Incluir filhos é mais robusto (se orçamento é "Alimentação", inclui "Restaurante").
         
         relevant_categories = [budget.category.id]
-        # Pegar subcategorias (1 nivel)
-        relevant_categories += list(budget.category.subcategories.values_list('id', flat=True))
+        # Pegar subcategorias (1 nivel), só as do dono do orçamento (ISOL-14)
+        relevant_categories += list(
+            budget.category.subcategories.filter(user_id=budget.user_id).values_list('id', flat=True)
+        )
 
         from django.db.models import Q
         

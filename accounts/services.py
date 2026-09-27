@@ -17,17 +17,18 @@ class AccountService:
 
         balance = account.initial_balance
 
+        # Só transações do dono da conta (ISOL-14)
+        transacoes_do_dono = Transaction.objects.filter(account=account, user_id=account.user_id)
+
         # Receitas e Transferências Recebidas (Entradas)
-        incomes = Transaction.objects.filter(
-            account=account, 
+        incomes = transacoes_do_dono.filter(
             status='COMPLETED', # Apenas efetivadas
             type__in=['INCOME', 'TRANSFER_IN']
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
 
         # Despesas, Transferências Enviadas e Pagamento de Fatura (Saídas)
         # Nota: CREDIT_CARD "PAGO" (COMPLETED) impacta o saldo da conta vinculada.
-        expenses = Transaction.objects.filter(
-            account=account,
+        expenses = transacoes_do_dono.filter(
             status='COMPLETED', # Apenas efetivadas
             type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
@@ -46,9 +47,10 @@ class CreditCardService:
         from django.db.models import Sum
         from transactions.models import Transaction
 
-        # 1. Limite Utilizado (Total pendente no cartão)
+        # 1. Limite Utilizado (Total pendente no cartão), só compras do dono do cartão (ISOL-14)
         total_pending = Transaction.objects.filter(
             credit_card=card,
+            user_id=card.user_id,
             type='CREDIT_CARD',
             status='PENDING'
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
@@ -129,7 +131,8 @@ class CreditCardService:
         # Apenas despesas de cartão, ignorando eventuais ajustes manuais por enquanto
         pending_txs = invoice.transactions.filter(
             type='CREDIT_CARD', 
-            status='PENDING'
+            status='PENDING',
+            user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         ).order_by('date', 'amount')
         
         remaining_payment = amount
@@ -233,7 +236,8 @@ class CreditCardService:
         # 1. Buscar transações pagas
         paid_txs = invoice.transactions.filter(
             type='CREDIT_CARD',
-            status='COMPLETED'
+            status='COMPLETED',
+            user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         )
         
         # 2. Reverter Status

@@ -1,12 +1,12 @@
 import json
 from rest_framework import views, status, permissions, parsers
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.utils.dateparse import parse_datetime
 from accounts.models import Account
 from transactions.models import Transaction
 from .services import ImportService, ExportService
+from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 # Tenta importar IsPremium, fallback para IsAuthenticated se não existir (evita crash se BD-007 não tiver ok)
 try:
     from reports.permissions import IsPremium
@@ -24,7 +24,9 @@ class ImportOFXView(views.APIView):
         if not file_obj:
             return Response({'error': 'Arquivo não enviado.'}, status=400)
         
-        account = get_object_or_404(Account, id=account_id, user=request.user)
+        account = get_owned_or_400(
+            Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
+        )
         
         result = ImportService.process_ofx(file_obj, account, request.user)
         
@@ -87,7 +89,9 @@ class ImportSpreadsheetView(views.APIView):
         if not file_obj:
             return Response({'error': 'Arquivo não enviado.'}, status=400)
             
-        account = get_object_or_404(Account, id=account_id, user=request.user) if account_id else None
+        account = get_owned_or_400(
+            Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
+        ) if account_id else None
         
         result = ImportService.process_spreadsheet(
             file_obj, mapping, account, request.user, 

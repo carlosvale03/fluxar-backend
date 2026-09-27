@@ -86,8 +86,9 @@ def update_invoice_total(sender, instance, **kwargs):
         # Geralmente INVOICE_PAYMENT não tem FK invoice preenchido (é pagamento DA fatura, não item DA fatura).
         # Mas vamos garantir filtrando por type='CREDIT_CARD' para evitar somar pagamentos se algo mudar.
         
+        # Só compras do dono do cartão da fatura (ISOL-14)
         total = instance.invoice.transactions.filter(
-            type='CREDIT_CARD'
+            type='CREDIT_CARD', user_id=instance.invoice.card.user_id
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Atualiza a invoice sem disparar signals da invoice (loop?) - Invoice não tem signals ainda.
@@ -104,8 +105,9 @@ def sync_transfer_update(sender, instance, created, **kwargs):
         # Atualiza a transação parceira com dados comuns.
         # NÃO atualiza account aqui (isso é especifico de cada perna).
         # Usa update() para não disparar signals recursivamente.
+        # Só a parceira do dono da transação (ISOL-14).
         Transaction.objects.filter(
-            transfer_id=instance.transfer_id
+            transfer_id=instance.transfer_id, user_id=instance.user_id
         ).exclude(
             id=instance.id
         ).update(
@@ -120,8 +122,9 @@ def sync_transfer_delete(sender, instance, **kwargs):
     Cascade delete para transações de transferência.
     """
     if instance.transfer_id:
+        # Só a parceira do dono da transação (ISOL-14)
         Transaction.objects.filter(
-            transfer_id=instance.transfer_id
+            transfer_id=instance.transfer_id, user_id=instance.user_id
         ).exclude(
             id=instance.id
         ).delete()

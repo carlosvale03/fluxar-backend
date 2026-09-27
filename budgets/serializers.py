@@ -3,8 +3,13 @@ from .models import Budget
 from .services import BudgetService
 from transactions.models import Category
 from transactions.serializers import CategorySerializer
+from core.fields import OwnedPrimaryKeyRelatedField, CATEGORIA_NAO_ENCONTRADA
 
 class BudgetSerializer(serializers.ModelSerializer):
+    # Só categorias do usuário da requisição (AD-032)
+    category = OwnedPrimaryKeyRelatedField(
+        queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
+    )
     category_detail = CategorySerializer(source='category', read_only=True)
     total_spent = serializers.SerializerMethodField()
     percentage_used = serializers.SerializerMethodField()
@@ -18,6 +23,14 @@ class BudgetSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'total_spent', 'percentage_used', 'status']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Categoria de outro usuário, ou categoria-modelo, não aparece (ISOL-15)
+        if instance.category.user_id != instance.user_id:
+            ret['category'] = None
+            ret['category_detail'] = None
+        return ret
 
     def get_usage_data(self, obj):
         if not hasattr(obj, '_usage_data'):

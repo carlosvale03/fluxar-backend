@@ -34,7 +34,8 @@ def handle_transaction_for_goals(sender, instance, created, **kwargs):
         account = Account.objects.filter(id=account_id).first()
         if not account: return
 
-        goals = Goal.objects.filter(account=account, is_active=True)
+        # Só as metas do dono do cofrinho (ISOL-14)
+        goals = Goal.objects.filter(account=account, user_id=account.user_id, is_active=True)
         if not goals.exists(): return
 
         # Prevenção de duplicidade: ignore se esta transação já foi vinculada a alguma meta

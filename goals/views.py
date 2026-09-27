@@ -1,12 +1,12 @@
 from rest_framework import viewsets, permissions, status, decorators
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from .models import Goal
 from .serializers import GoalSerializer, GoalDepositSerializer
 from .services import GoalService
 from core.permissions import IsPremiumPlus
 from accounts.models import Account
 from core.mixins import UserQuerySetMixin
+from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 
 from decimal import Decimal
 
@@ -45,7 +45,11 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        account = get_object_or_404(Account, id=account_id, user=request.user)
+        # Erro no campo que a requisição usou (AD-010)
+        account_field = 'account_id' if request.data.get('account_id') else 'account_from'
+        account = get_owned_or_400(
+            Account.objects.all(), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
+        )
         
         try:
             description = request.data.get('description')
@@ -75,7 +79,11 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        account_to = get_object_or_404(Account, id=account_id, user=request.user)
+        # Erro no campo que a requisição usou (AD-010)
+        account_field = 'account_to' if request.data.get('account_to') else 'account_id'
+        account_to = get_owned_or_400(
+            Account.objects.all(), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
+        )
         
         try:
             description = request.data.get('description')
@@ -91,6 +99,7 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         goal = self.get_object()
-        deposits = goal.deposits.all().order_by('-created_at')
+        # Só movimentos em contas do dono da meta, como em GoalSerializer.deposits (ISOL-15)
+        deposits = goal.deposits.filter(account__user_id=goal.user_id).order_by('-created_at')
         serializer = GoalDepositSerializer(deposits, many=True)
         return Response(serializer.data)

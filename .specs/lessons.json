@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 11,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::when auditing owner isolation check every serializer that nests a related object for display not only the writable relations",
+      "text": "When auditing owner isolation, check every serializer that nests a related object for display, not only the writable relations",
+      "signal": "ac_gap",
+      "scope": "serializers",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-15 budgets/serializers.py:13 (serializers)"
+      ],
+      "created": "2026-09-27T19:01:02Z",
+      "last_seen": "2026-09-27T19:01:02Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::filter reverse relation traversals such as subcategories by the owner of the starting object in every service that sums them",
+      "text": "Filter reverse-relation traversals such as subcategories by the owner of the starting object in every service that sums them",
+      "signal": "ac_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-14 budgets/services.py:24 (services)",
+        "ISOL-14 accounts/services.py:132 (rodada 2, gap 1) (services)"
+      ],
+      "created": "2026-09-27T19:01:02Z",
+      "last_seen": "2026-09-27T19:26:59Z"
+    },
+    {
+      "id": "L-003",
+      "key": "spec_precision_gap::state whether a rule about already invalid persisted relations also applies to partial updates that omit the relation",
+      "text": "State whether a rule about already-invalid persisted relations also applies to partial updates that omit the relation",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md edge case 6 (ISOL-02, ISOL-17) (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::when an edge case cites a rule owned by another spec either assert its observable outcome or mark it explicitly as deferred",
+      "text": "When an edge case cites a rule owned by another spec, either assert its observable outcome or mark it explicitly as deferred",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md edge case 5 (IMPORT-21) (spec)",
+        "spec.md edge case 5 (IMPORT-21) rodada 2: deferido, sonda P2 (spec)",
+        "rodada 3: edge case 5 (IMPORT-21) test_importacao.py:99 (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:55:27Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_precision_gap::define the expected response per endpoint kind when one rule covers both list filters and single resource reports",
+      "text": "Define the expected response per endpoint kind when one rule covers both list filters and single-resource reports",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-13 tests/isolamento/test_relatorios.py:46 (spec)",
+        "ISOL-13 test_relatorios.py:46 (rodada 2, nota mantida) (spec)",
+        "rodada 3: ISOL-13 test_relatorios.py:46 (spec)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:55:27Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_deviation::include server set relations in cross owner data corrections even when the api never accepts them as input",
+      "text": "Include server-set relations in cross-owner data corrections even when the API never accepts them as input",
+      "signal": "spec_deviation",
+      "scope": "data-migration",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION core/isolation.py:28 (data-migration)"
+      ],
+      "created": "2026-09-27T19:01:03Z",
+      "last_seen": "2026-09-27T19:01:03Z"
+    },
+    {
+      "id": "L-007",
+      "key": "surviving_mutant::test each defensive fallback branch with the specific input it exists to block not only with an ordinary valid object",
+      "text": "Test each defensive fallback branch with the specific input it exists to block, not only with an ordinary valid object",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 core/fields.py:42 (test_campo.py:96) (tests)"
+      ],
+      "created": "2026-09-27T19:26:59Z",
+      "last_seen": "2026-09-27T19:26:59Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::state whether server side operations that copy or batch update already linked records must re check the ownership of the relations they carry",
+      "text": "State whether server-side operations that copy or batch-update already-linked records must re-check the ownership of the relations they carry",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec-precision gap 3: accounts/services.py:132, transactions/serializers.py:291, budgets/views.py:100 (spec)",
+        "rodada 3 spec-precision gap 3: reports/services.py:396, accounts/services.py:195 (spec)",
+        "spec-precision gap 3 (rodada 4): sonda S3 transactions/views.py:85 (filtro por ID de B com ligação antiga traz a transação de A); reports/services.py:112 (account__type) (spec)"
+      ],
+      "created": "2026-09-27T19:26:59Z",
+      "last_seen": "2026-09-27T20:27:25Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::when auditing owner isolation include reports and exports that render related object names through the user s own records not only serializers",
+      "text": "When auditing owner isolation, include reports and exports that render related-object names through the user's own records, not only serializers",
+      "signal": "ac_gap",
+      "scope": "reports-exports",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ISOL-15 reports/services.py:396, data_exchange/services.py:524 (sonda S1, rodada 3) (reports-exports)",
+        "RESOLVIDO rodada 4: T36 12e7688 reports/services.py:14, T37 5b02de0 data_exchange/services.py:436; test_relatorios_nomes.py:53, test_exportacao_nomes.py:60; V01-V08 mortas, sonda S1 limpa (reports-exports)"
+      ],
+      "created": "2026-09-27T19:55:26Z",
+      "last_seen": "2026-09-27T20:27:24Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::forge cross owner fixtures with every relation pointing at the victim s objects so an owner filter cannot be swapped for a relation filter unnoticed",
+      "text": "Forge cross-owner fixtures with every relation pointing at the victim's objects so an owner filter cannot be swapped for a relation filter unnoticed",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "isolamento-entre-usuarios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests)",
+        "RESOLVIDO rodada 4: T38 99ce9d9 test_pagamento_fatura.py:101, :118; V09 (N03) e V10 (N03 no estorno) mortas (tests)"
+      ],
+      "created": "2026-09-27T19:55:27Z",
+      "last_seen": "2026-09-27T20:27:25Z"
+    }
+  ]
+}

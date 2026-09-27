@@ -1,13 +1,30 @@
 from decimal import Decimal
 from datetime import date, datetime, timedelta
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Sum, Q, Count, Avg, F, Case, When
-from django.db.models.functions import TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
+from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
 from accounts.models import Account, CreditCard
 from .models import FocusedMonitorItem
 from transactions.models import Transaction, Category, Tag
 from budgets.models import Budget
 from budgets.services import BudgetService
+
+
+def _categoria_do_usuario(user, campo):
+    """
+    `campo` da categoria-pai da transação, ou da própria categoria, só quando
+    são do `user`. Categoria de outro usuário conta como ausente, e a
+    transação cai em "Sem Categoria"; categoria-pai de outro usuário também
+    (ISOL-15).
+    """
+    return Case(
+        When(category__user=user, then=Coalesce(
+            Case(When(category__parent__user=user, then=F(f'category__parent__{campo}'))),
+            F(f'category__{campo}'),
+        )),
+        output_field=models.CharField(),
+    )
 
 class ReportService:
     @staticmethod
@@ -387,7 +404,6 @@ class ReportService:
                 'expense': float(d['total_expenses'])
             })
             
-        from django.db.models.functions import Coalesce
         from django.db.models import F
 
         # 1. Agregação de Despesas
@@ -395,8 +411,8 @@ class ReportService:
         full_cat_expenses = Transaction.objects.filter(
             user=user
         ).filter(expense_q).annotate(
-            effective_name=Coalesce(F('category__parent__name'), F('category__name')),
-            effective_color=Coalesce(F('category__parent__color'), F('category__color'))
+            effective_name=_categoria_do_usuario(user, 'name'),
+            effective_color=_categoria_do_usuario(user, 'color')
         ).values('effective_name', 'effective_color').annotate(total=Sum('amount')).order_by('-total')
 
         for item in full_cat_expenses:
@@ -413,8 +429,8 @@ class ReportService:
         full_cat_incomes = Transaction.objects.filter(
             user=user
         ).filter(income_q).annotate(
-            effective_name=Coalesce(F('category__parent__name'), F('category__name')),
-            effective_color=Coalesce(F('category__parent__color'), F('category__color'))
+            effective_name=_categoria_do_usuario(user, 'name'),
+            effective_color=_categoria_do_usuario(user, 'color')
         ).values('effective_name', 'effective_color').annotate(total=Sum('amount')).order_by('-total')
 
         for item in full_cat_incomes:
@@ -571,13 +587,18 @@ class ReportService:
         
         custom_monitoring = []
         for item in items:
+            # Monitor ligado a categoria ou tag de outro usuário fica de fora (ISOL-15)
+            alvo = item.category or item.tag
+            if alvo.user_id != user.id:
+                continue
             name = item.category.name if item.category else item.tag.name
             
             # Se for categoria, buscamos ela e todas as subcategorias recursivamente
             if item.category:
                 def get_all_child_categories(cat_id):
                     all_ids = [cat_id]
-                    children = Category.objects.filter(parent_id=cat_id).values_list('id', flat=True)
+                    # Só subcategorias do usuário (ISOL-14)
+                    children = Category.objects.filter(parent_id=cat_id, user=user).values_list('id', flat=True)
                     for child_id in children:
                         all_ids.extend(get_all_child_categories(child_id))
                     return all_ids
@@ -688,7 +709,9 @@ class ReportService:
             d_str = t.date.strftime('%Y-%m-%d')
             if d_str not in candidates: candidates[d_str] = {'amount': Decimal('0'), 'desc': []}
             candidates[d_str]['amount'] += t.amount
-            candidates[d_str]['desc'].append(t.category.name if t.category else 'Geral')
+            # Categoria de outro usuário conta como ausente (ISOL-15)
+            proprio = t.category and t.category.user_id == user.id
+            candidates[d_str]['desc'].append(t.category.name if proprio else 'Geral')
 
         # C. Detecção de Padrões (Recorrência de 3 meses / Janela 5 dias)
         three_months_ago = end_date - timedelta(days=90)
@@ -739,7 +762,8 @@ class ReportService:
                         # Evitar duplicar se já houver agendado
                         if not any(cat_id == t.category_id for t in future_txns if t.date == proj_date):
                             candidates[d_str]['amount'] += avg_val
-                            cat_obj = Category.objects.filter(id=cat_id).first() if cat_id != "root" else None
+                            # Só categoria do usuário (ISOL-15)
+                            cat_obj = Category.objects.filter(id=cat_id, user=user).first() if cat_id != "root" else None
                             candidates[d_str]['desc'].append(cat_obj.name if cat_obj else 'Geral')
                 except ValueError: pass
 
@@ -803,7 +827,8 @@ class ReportService:
         
         fixed_q = Q(recurring_source__isnull=False)
         for kw in fixed_keywords:
-            fixed_q |= Q(category__name__icontains=kw) | Q(description__icontains=kw)
+            # Nome de categoria de outro usuário não classifica o gasto (ISOL-15)
+            fixed_q |= Q(category__user=user, category__name__icontains=kw) | Q(description__icontains=kw)
 
         fixed_expenses_qs = Transaction.objects.filter(
             user=user,
@@ -894,14 +919,17 @@ class ReportService:
                 date__gt=end_date - timedelta(days=180)
             ).exclude(
                 type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-            ).values('category__name').annotate(
+            ).annotate(
+                # Categoria de outro usuário conta como ausente (ISOL-15)
+                category_name=Case(When(category__user=user, then=F('category__name')))
+            ).values('category_name').annotate(
                 avg=Avg('amount'),
                 count=Count('id')
             ).filter(count__gt=2)
             
             if cat_variance:
                 # Simplificação: pegar a categoria com maior volume que não seja fixa
-                sensitive_category = cat_variance.order_by('-avg').first()['category__name']
+                sensitive_category = cat_variance.order_by('-avg').first()['category_name']
 
         # 10. Gastos por Dia da Semana (Migrado para Premium) - Agora como Média
         # Buscamos a data da primeira transação de gasto para ajustar o período de média se necessário
@@ -1130,7 +1158,11 @@ class ReportService:
         """
         Retorna Monitor de Foco e Gráfico de Histórico para uma tag específica.
         """
-        tag = Tag.objects.filter(user=user, id=tag_id).first()
+        try:
+            tag = Tag.objects.filter(user=user, id=tag_id).first()
+        except (ValueError, DjangoValidationError):
+            # tag_id malformado vale como tag inexistente (ISOL-12)
+            tag = None
         if not tag:
             return None
 
@@ -1234,11 +1266,11 @@ class ReportService:
         expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD']) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
         expenses = base_transactions.filter(expense_q)
         
-        # Sem tags
-        others_expenses = expenses.filter(tags__isnull=True).aggregate(total=Sum('amount'))['total'] or 0
+        # Sem tags (tag de outro usuário conta como ausente, ISOL-15)
+        others_expenses = expenses.exclude(tags__user=user).aggregate(total=Sum('amount'))['total'] or 0
         
-        # Por Tag
-        tag_expenses = expenses.filter(tags__isnull=False).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
+        # Por Tag, só as do usuário
+        tag_expenses = expenses.filter(tags__user=user).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
         
         expense_by_tag = []
         for item in tag_expenses:
@@ -1261,11 +1293,11 @@ class ReportService:
         income_q = Q(type='INCOME')
         incomes = base_transactions.filter(income_q)
         
-        # Sem tags
-        others_incomes = incomes.filter(tags__isnull=True).aggregate(total=Sum('amount'))['total'] or 0
+        # Sem tags (tag de outro usuário conta como ausente, ISOL-15)
+        others_incomes = incomes.exclude(tags__user=user).aggregate(total=Sum('amount'))['total'] or 0
         
-        # Por Tag
-        tag_incomes = incomes.filter(tags__isnull=False).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
+        # Por Tag, só as do usuário
+        tag_incomes = incomes.filter(tags__user=user).values('tags__id', 'tags__name', 'tags__color').annotate(total=Sum('amount')).order_by('-total')
         
         income_by_tag = []
         for item in tag_incomes:
