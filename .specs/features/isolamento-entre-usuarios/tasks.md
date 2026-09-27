@@ -646,14 +646,15 @@ T22 → T24
 
 **Done when**:
 
-- [ ] Leitura, edição e exclusão de conta, cartão, fatura, categoria, tag, transação, orçamento, meta e monitor de B respondem 404, igual a um ID inexistente
-- [ ] Os filtros `accountId`, `credit_card`, `invoice`, `categoryId` e `tagIds` com IDs de B devolvem a lista vazia na listagem de transações e na exportação, e `category` na listagem de orçamentos
-- [ ] Se algum caso falhar, o conserto entra nesta tarefa e é descrito no commit
-- [ ] Build gate passa
-- [ ] Test count: 113 tests pass
+- [x] Leitura, edição e exclusão de conta, cartão, fatura, categoria, tag, transação, orçamento, meta e monitor de B respondem 404, igual a um ID inexistente
+- [x] Os filtros `accountId`, `credit_card`, `invoice`, `categoryId` e `tagIds` com IDs de B devolvem a lista vazia na listagem de transações e na exportação, e `category` na listagem de orçamentos
+- [x] Se algum caso falhar, o conserto entra nesta tarefa e é descrito no commit
+- [x] Build gate passa
+- [x] Test count: 113 tests pass (114 na execução)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(isolamento): cobre endereço e filtros com IDs de outro usuário`
 
