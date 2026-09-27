@@ -477,13 +477,14 @@ T22 → T24
 
 **Done when**:
 
-- [ ] O teste lista cada serializer e campo verificado e passa com todas as relações convertidas
-- [ ] Trocar um campo convertido de volta para `PrimaryKeyRelatedField` faz o teste falhar (conferido na tarefa e desfeito)
-- [ ] Build gate passa
-- [ ] Test count: 81 tests pass
+- [x] O teste lista cada serializer e campo verificado e passa com todas as relações convertidas
+- [x] Trocar um campo convertido de volta para `PrimaryKeyRelatedField` faz o teste falhar (conferido na tarefa e desfeito)
+- [x] Build gate passa
+- [x] Test count: 81 tests pass (83 na execução)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(isolamento): garante que toda relação gravável confere o dono`
 
