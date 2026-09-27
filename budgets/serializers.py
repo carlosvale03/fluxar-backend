@@ -24,6 +24,14 @@ class BudgetSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'total_spent', 'percentage_used', 'status']
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Categoria de outro usuário, ou categoria-modelo, não aparece (ISOL-15)
+        if instance.category.user_id != instance.user_id:
+            ret['category'] = None
+            ret['category_detail'] = None
+        return ret
+
     def get_usage_data(self, obj):
         if not hasattr(obj, '_usage_data'):
             obj._usage_data = BudgetService.get_budget_usage(obj)

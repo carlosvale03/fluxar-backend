@@ -913,13 +913,14 @@ T31
 
 **Done when**:
 
-- [ ] `tests/isolamento/test_leitura_orcamentos.py` liga à força um orçamento de A à categoria de B e confere que a listagem e o detalhe não trazem id, nome, ícone nem cor da categoria de B
-- [ ] O orçamento com categoria própria continua com o mesmo formato
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/isolamento/test_leitura_orcamentos.py` liga à força um orçamento de A à categoria de B e confere que a listagem e o detalhe não trazem id, nome, ícone nem cor da categoria de B
+- [x] O orçamento com categoria própria continua com o mesmo formato
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (141 na execução, +3)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(budgets): oculta categoria de outro usuário na leitura do orçamento`
 
