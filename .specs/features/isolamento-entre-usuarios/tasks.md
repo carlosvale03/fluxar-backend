@@ -1187,12 +1187,13 @@ T38
 
 **Done when**:
 
-- [ ] O teste falha se o filtro de `pay_invoice` trocar o dono do cartão por `credit_card_id=invoice.card_id` (conferido na tarefa e desfeito), e o mesmo para `unpay_invoice`
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] O teste falha se o filtro de `pay_invoice` trocar o dono do cartão por `credit_card_id=invoice.card_id` (conferido na tarefa e desfeito), e o mesmo para `unpay_invoice`
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (175 na execução, +2)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(isolamento): cobre compra forjada no cartão da vítima no pagamento da fatura`
 

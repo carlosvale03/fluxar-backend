@@ -27,6 +27,10 @@ class PagamentoEEstornoSoComComprasDoDonoTests(DoisUsuariosTestCase):
     def forjar_compra_de_b(self, status='PENDING'):
         return self.compra(self.b.usuario, self.b.cartao, self.b.conta, '50.00', status)
 
+    def forjar_compra_de_b_no_cartao_de_a(self, status='PENDING'):
+        """Compra de B gravada à força com o cartão e a fatura de A."""
+        return self.compra(self.b.usuario, self.a.cartao, self.b.conta, '50.00', status)
+
     def estado(self, t):
         t.refresh_from_db()
         return (
@@ -82,6 +86,39 @@ class PagamentoEEstornoSoComComprasDoDonoTests(DoisUsuariosTestCase):
         # Compra de B já efetivada na conta de B, ligada à força à fatura de A
         compra_b = self.forjar_compra_de_b(status='COMPLETED')
         self.pagar('100.00')
+        antes_b = self.estado(compra_b)
+        saldo_b = self.saldo(self.b.conta)
+
+        resp = self.cliente.post(f'{self.url}unpay/', format='json')
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(self.estado(compra_b), antes_b)
+        self.assertEqual(antes_b[1:3], ('COMPLETED', self.b.conta.id))
+        self.assertEqual(self.saldo(self.b.conta), saldo_b)
+        self.assertEqual(self.estado(self.compra_a)[1], 'PENDING')
+        self.assertEqual(CreditCardInvoice.objects.get(pk=self.a.fatura.pk).status, 'OPEN')
+
+    def test_pagamento_nao_muda_a_compra_de_b_no_cartao_de_a(self):
+        compra_b = self.forjar_compra_de_b_no_cartao_de_a()
+        antes_b = self.estado(compra_b)
+        saldo_b = self.saldo(self.b.conta)
+
+        # O valor cobre as duas compras: só a de A pode ser paga
+        self.pagar('150.00')
+
+        self.assertEqual(self.estado(compra_b), antes_b)
+        self.assertEqual(antes_b[1:3], ('PENDING', self.b.conta.id))
+        self.assertEqual(
+            self.estado(self.compra_a)[1:4], ('COMPLETED', self.a.cofrinho.id, Decimal('100.00')),
+        )
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('-100.00'))
+        self.assertEqual(self.saldo(self.b.conta), saldo_b)
+        self.assertEqual(CreditCardInvoice.objects.get(pk=self.a.fatura.pk).status, 'PAID')
+
+    def test_estorno_nao_muda_a_compra_de_b_no_cartao_de_a(self):
+        compra_b = self.forjar_compra_de_b_no_cartao_de_a(status='COMPLETED')
+        self.pagar('100.00')
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('-100.00'))
         antes_b = self.estado(compra_b)
         saldo_b = self.saldo(self.b.conta)
 
