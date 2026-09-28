@@ -214,17 +214,18 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_email.py` confere o nome `<a href="x">clique</a>` escapado no HTML dos dois e-mails
-- [ ] Resend falhando e SMTP funcionando: envia pelo SMTP e registra a falha do Resend; os dois falhando: devolve `False`
-- [ ] O prazo passado ao SMTP é o que sobra dos 10 segundos (Resend simulado demorando)
-- [ ] Com `DEBUG` desligado, o EmailJS nunca é chamado
-- [ ] Os logs trazem tipo, provedor, resultado e e-mail mascarado, e nenhum traz o e-mail inteiro
-- [ ] O link usa o `FRONTEND_URL` configurado
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 8 testes
+- [x] `tests/autenticacao/test_email.py` confere o nome `<a href="x">clique</a>` escapado no HTML dos dois e-mails
+- [x] Resend falhando e SMTP funcionando: envia pelo SMTP e registra a falha do Resend; os dois falhando: devolve `False`
+- [x] O prazo passado ao SMTP é o que sobra dos 10 segundos (Resend simulado demorando)
+- [x] Com `DEBUG` desligado, o EmailJS nunca é chamado
+- [x] Os logs trazem tipo, provedor, resultado e e-mail mascarado, e nenhum traz o e-mail inteiro
+- [x] O link usa o `FRONTEND_URL` configurado
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 8 testes (real: +10 testes, suíte de 189 para 199)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): escapa, limita a 10 s e mascara o envio de e-mails`
 
