@@ -389,12 +389,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_pendente.py` confere que uma conta pendente criada há 60 dias continua existindo e que o comando não existe mais (`call_command` levanta `CommandError`)
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/autenticacao/test_pendente.py` confere que uma conta pendente criada há 60 dias continua existindo e que o comando não existe mais (`call_command` levanta `CommandError`)
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (real: +2 testes, suíte de 234 para 236)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): deixa de apagar contas que não verificaram o e-mail`
 
