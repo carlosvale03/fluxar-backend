@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 11,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -193,6 +193,24 @@
       ],
       "created": "2026-09-27T19:55:27Z",
       "last_seen": "2026-09-27T20:27:25Z"
+    },
+    {
+      "id": "L-011",
+      "key": "spec_deviation::when code adds a spec deviation pin its full documented response status code and side effects in the test not only the absence of the forbidden outcome",
+      "text": "When code adds a SPEC_DEVIATION, pin its full documented response (status, code and side effects) in the test, not only the absence of the forbidden outcome",
+      "signal": "spec_deviation",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "autenticacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION api/views.py:151; tests/autenticacao/test_verificacao.py:61 (tests)"
+      ],
+      "created": "2026-09-28T21:22:00Z",
+      "last_seen": "2026-09-28T21:22:00Z"
     }
   ]
 }

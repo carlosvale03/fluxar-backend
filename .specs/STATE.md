@@ -284,11 +284,12 @@
 
 ## Handoff
 
-- **Feature**: `autenticacao`
-- **Phase / Task**: Design e Tasks aprovados em 2026-09-28; Execute de T1 a T28 em andamento
-- **Completed**: `isolamento-entre-usuarios` e `atualizacao-de-dependencias` mergeadas na `development`
+- **Feature**: `autenticacao` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T29) e verificado: `validation.md` com PASS, 44 de 44 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: cadastro, verificação, reenvio, login, "esqueci a senha" e redefinição funcionando de ponta a ponta; limites de tentativas; e-mail síncrono com prazo de 10 s; configuração de produção que falha fechada; migração dos e-mails; testes do frontend com Vitest (31) e backend com 306 testes
 - **In-progress** (file:line): nenhum
-- **Next step**: com a aprovação, executar T1 a T28 nas branches `fix/autenticacao` do backend e do frontend, com o verificador leve no fim
+- **Deploy** (manual, no Render): SECRET_KEY nova, FRONTEND_URL, CORS_ALLOWED_ORIGINS, NUM_PROXIES e o Pre-Deploy Command `check --deploy && migrate --noinput && createcachetable`, descritos no `DEPLOY.md`; depois, rodar `check_isolation` e `check_email_case`
+- **Next step**: o usuário faz o push das duas branches `fix/autenticacao` e abre os PRs para a `development`. Depois do merge, a próxima feature é `sessao` (FE-01, SEG-05, OPS-04), com o verificador leve
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: fix/autenticacao (backend e frontend)
