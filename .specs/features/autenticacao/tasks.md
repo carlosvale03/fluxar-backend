@@ -419,14 +419,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_cadastro.py` confere "A senha é muito parecida com nome." e "... com e-mail." no campo `password`
-- [ ] Um cadastro com e-mail inválido e senha fraca devolve os dois erros, cada um no seu campo
-- [ ] `makemigrations --check` sem mudanças depois da migração nova
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/autenticacao/test_cadastro.py` confere "A senha é muito parecida com nome." e "... com e-mail." no campo `password`
+- [x] Um cadastro com e-mail inválido e senha fraca devolve os dois erros, cada um no seu campo
+- [x] `makemigrations --check` sem mudanças depois da migração nova
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: +3 testes, suíte de 236 para 239)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): mostra os nomes dos campos nas mensagens de senha`
 

@@ -90,9 +90,9 @@ class ValidacaoDoCadastroTests(APITestCase):
             email='contato@fluxar.teste', password='ricardoalmeida', password_confirm='ricardoalmeida',
         )
 
-        mensagens = self.assertRecusado(resposta, 'password')
-        self.assertEqual(len(mensagens), 1)
-        self.assertTrue(mensagens[0].startswith('A senha é muito parecida com'), mensagens)
+        self.assertEqual(
+            self.assertRecusado(resposta, 'password'), ['A senha é muito parecida com nome.'],
+        )
         self.assertFalse(User.objects.filter(email='contato@fluxar.teste').exists())
 
     def test_senha_parecida_com_o_email_recusada(self, envio):
@@ -101,9 +101,9 @@ class ValidacaoDoCadastroTests(APITestCase):
             password='girassol2026', password_confirm='girassol2026',
         )
 
-        mensagens = self.assertRecusado(resposta, 'password')
-        self.assertEqual(len(mensagens), 1)
-        self.assertTrue(mensagens[0].startswith('A senha é muito parecida com'), mensagens)
+        self.assertEqual(
+            self.assertRecusado(resposta, 'password'), ['A senha é muito parecida com e-mail.'],
+        )
 
     def test_senha_comum_recusada(self, envio):
         resposta = self.cadastrar(password='qwertyuiop', password_confirm='qwertyuiop')
@@ -120,6 +120,43 @@ class ValidacaoDoCadastroTests(APITestCase):
 
         self.assertEqual(self.assertRecusado(resposta, 'password'), ['As senhas não coincidem.'])
         self.assertNotIn('password_confirm', resposta.data)
+        self.assertFalse(User.objects.filter(email='ricardo@fluxar.teste').exists())
+
+    # AUTH-04 e AUTH-07: o erro da senha aparece junto com o dos outros campos
+
+    def test_email_invalido_e_senha_curta_devolvem_os_dois_erros(self, envio):
+        resposta = self.cadastrar(email='nao-e-email', password='Ab1!xyz', password_confirm='Ab1!xyz')
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            [str(m) for m in resposta.data['email']], ['Insira um endereço de email válido.'],
+        )
+        self.assertEqual(
+            [str(m) for m in resposta.data['password']],
+            ['Esta senha é muito curta. Ela precisa conter pelo menos 8 caracteres.'],
+        )
+
+    def test_email_ja_cadastrado_e_senha_parecida_com_ele_devolvem_os_dois_erros(self, envio):
+        User.objects.create_user(email='girassol@fluxar.teste', password=SENHA, name='Outro')
+
+        resposta = self.cadastrar(
+            name='Ana', email='girassol@fluxar.teste',
+            password='girassol2026', password_confirm='girassol2026',
+        )
+
+        self.assertEqual([str(m) for m in resposta.data['email']], [EMAIL_JA_CADASTRADO])
+        self.assertEqual(
+            [str(m) for m in resposta.data['password']], ['A senha é muito parecida com e-mail.'],
+        )
+
+    def test_termos_ausentes_e_confirmacao_diferente_devolvem_os_dois_erros(self, envio):
+        resposta = self.cadastrar(terms_accepted=AUSENTE, password_confirm='Cofre-Verde-2026')
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            [str(m) for m in resposta.data['terms_accepted']], ['É preciso aceitar os termos de uso.'],
+        )
+        self.assertEqual([str(m) for m in resposta.data['password']], ['As senhas não coincidem.'])
         self.assertFalse(User.objects.filter(email='ricardo@fluxar.teste').exists())
 
     # AUTH-05 -----------------------------------------------------------

@@ -48,8 +48,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    # Os nomes aparecem nas mensagens do validador de senha parecida (AUTH-04)
+    name = models.CharField('nome', max_length=255)
+    email = models.EmailField('e-mail', unique=True)
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='COMMON')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER')
     email_verified = models.BooleanField(default=False)

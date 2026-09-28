@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth import password_validation
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -45,17 +46,25 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(TERMOS_OBRIGATORIOS)
         return value
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({"password": ["As senhas não coincidem."]})
+    def validate_password(self, value):
+        # Validada no próprio campo, para o erro da senha aparecer mesmo quando
+        # outro campo também falha (AUTH-04, AUTH-07)
+        confirmacao = self.initial_data.get('password_confirm')
+        if confirmacao is not None and confirmacao != value:
+            raise serializers.ValidationError("As senhas não coincidem.")
         # Um usuário temporário, sem gravar, para o validador comparar a senha
-        # com o nome e o e-mail (AUTH-04)
-        candidato = User(name=attrs['name'], email=attrs['email'])
+        # com o nome e o e-mail como vieram no pedido
+        nome = self.initial_data.get('name')
+        email = self.initial_data.get('email')
+        candidato = User(
+            name=nome if isinstance(nome, str) else '',
+            email=email if isinstance(email, str) else '',
+        )
         try:
-            validate_password(attrs['password'], user=candidato)
+            password_validation.validate_password(value, user=candidato)
         except DjangoValidationError as erro:
-            raise serializers.ValidationError({"password": list(erro.messages)})
-        return attrs
+            raise serializers.ValidationError(list(erro.messages))
+        return value
 
     def create(self, validated_data):
         # Remove o campo de confirmação antes de criar
