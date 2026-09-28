@@ -64,10 +64,33 @@ class LinkDeVerificacaoTests(APITestCase):
 
         resposta = self.abrir(token.token)
 
+        self.assertEqual(resposta.status_code, 400)
+        self.assertEqual(
+            resposta.data, {'detail': 'Esta conta está desativada.', 'code': 'account_disabled'},
+        )
         self.assertNotIn('access', resposta.data)
         self.assertNotIn('refresh', resposta.data)
         self.usuario.refresh_from_db()
         self.assertFalse(self.usuario.is_active)
+        self.assertTrue(self.usuario.email_verified)
+        token.refresh_from_db()
+        self.assertTrue(token.used)
+
+    def test_link_usado_por_outra_requisicao_no_meio_do_caminho_e_recusado(self):
+        token = self.novo_token()
+        # Simula outra abertura que marcou o link como usado depois da leitura
+        original = EmailVerificationToken.is_valid
+        def valida_e_marca(instancia):
+            resultado = original(instancia)
+            EmailVerificationToken.objects.filter(pk=instancia.pk).update(used=True)
+            return resultado
+
+        with mock.patch.object(EmailVerificationToken, 'is_valid', valida_e_marca):
+            resposta = self.abrir(token.token)
+
+        self.assertEqual(resposta.status_code, 400)
+        self.assertEqual(resposta.data['code'], 'invalid_link')
+        self.assertNotIn('access', resposta.data)
 
     # AUTH-09 -----------------------------------------------------------
 

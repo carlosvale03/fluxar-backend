@@ -132,12 +132,16 @@ class VerifyEmailView(APIView):
 
         # Confirma o e-mail sem mexer em is_active: uma conta desativada pelo
         # administrador continua desativada (AD-035)
+        # O link vale uma vez só, mesmo com duas aberturas simultâneas
+        if not EmailVerificationToken.objects.filter(pk=token.pk, used=False).update(used=True):
+            return Response(
+                {"detail": "Link inválido ou expirado.", "code": "invalid_link"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         user = token.user
         user.email_verified = True
         user.save(update_fields=['email_verified'])
-
-        token.used = True
-        token.save(update_fields=['used'])
 
         # Registra a ação no log
         SystemLog.objects.create(
