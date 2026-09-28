@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
+from core.throttles import LoginFalhasEmailThrottle
+
 User = get_user_model()
 
 EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
@@ -207,6 +209,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             senha_certa = user.check_password(senha)
 
         if not senha_certa:
+            # Só a falha conta para o limite por e-mail (AUTH-32)
+            LoginFalhasEmailThrottle().registrar_falha(email)
             raise LoginRecusado("E-mail ou senha incorretos.", "invalid_credentials")
 
         if not user.is_active:

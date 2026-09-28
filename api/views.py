@@ -26,9 +26,12 @@ from .serializers import (
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
 from core.throttles import (
     CadastroIPThrottle,
+    EsqueciSenhaEmailThrottle,
     EsqueciSenhaIPThrottle,
     LinkIPThrottle,
+    LoginFalhasEmailThrottle,
     LoginIPThrottle,
+    ReenvioEmailThrottle,
     ReenvioIPThrottle,
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
@@ -81,7 +84,7 @@ class CustomLoginView(TokenObtainPairView):
     Login customizado que retorna JWT com dados extras do usuário no payload.
     """
     permission_classes = (permissions.AllowAny,)
-    throttle_classes = (LoginIPThrottle,)
+    throttle_classes = (LoginIPThrottle, LoginFalhasEmailThrottle)
     serializer_class = CustomTokenObtainPairSerializer
 
 class VerifyEmailView(APIView):
@@ -163,7 +166,7 @@ class ResendVerificationView(APIView):
     A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
     """
     permission_classes = (permissions.AllowAny,)
-    throttle_classes = (ReenvioIPThrottle,)
+    throttle_classes = (ReenvioIPThrottle, ReenvioEmailThrottle)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
@@ -196,7 +199,7 @@ class ForgotPasswordView(APIView):
     exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
     """
     permission_classes = (permissions.AllowAny,)
-    throttle_classes = (EsqueciSenhaIPThrottle,)
+    throttle_classes = (EsqueciSenhaIPThrottle, EsqueciSenhaEmailThrottle)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)

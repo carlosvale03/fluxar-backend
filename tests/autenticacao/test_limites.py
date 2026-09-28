@@ -14,6 +14,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.throttling import SimpleRateThrottle
 
+from api.models import User
+
 LOGIN = '/api/auth/login/'
 CADASTRO = '/api/auth/register/'
 ESQUECI = '/api/auth/forgot-password/'
@@ -21,6 +23,8 @@ REENVIAR = '/api/auth/resend-verification/'
 VERIFICAR = '/api/auth/verify-email/'
 REDEFINIR = '/api/auth/reset-password/'
 INICIO = 1_800_000_000.0
+SENHA = 'Cofre-Azul-2026'
+SENHA_ERRADA = 'Cofre-Roxo-2026'
 
 
 @override_settings(REST_FRAMEWORK={**settings.REST_FRAMEWORK, 'NUM_PROXIES': 1})
@@ -146,3 +150,125 @@ class LimitesPorIPTests(APITestCase):
         self.assertPassaram([self.login(n, ip=f'198.51.100.{n}') for n in range(5)])
 
         self.assertBloqueado(self.login(5, ip='198.51.100.99'))
+
+
+@override_settings(REST_FRAMEWORK={**settings.REST_FRAMEWORK, 'NUM_PROXIES': 1})
+@mock.patch('api.views.send_password_reset_email', return_value=True)
+@mock.patch('api.views.send_verification_email', return_value=True)
+class LimitesPorEmailTests(APITestCase):
+    """Cada tentativa sai de um IP diferente, para o limite por IP não interferir."""
+
+    def setUp(self):
+        cache.clear()
+        relogio = mock.patch.object(SimpleRateThrottle, 'timer', return_value=INICIO)
+        self.relogio = relogio.start()
+        self.addCleanup(relogio.stop)
+        self.ips = (f'198.51.100.{n}' for n in range(1, 255))
+        self.usuario = User.objects.create_user(
+            email='ana@x.com', password=SENHA, name='Ana', email_verified=True,
+        )
+
+    def avancar(self, segundos):
+        self.relogio.return_value = INICIO + segundos
+
+    def login(self, email='ana@x.com', senha=SENHA):
+        return self.client.post(
+            LOGIN, {'email': email, 'password': senha}, format='json',
+            HTTP_X_FORWARDED_FOR=next(self.ips),
+        )
+
+    def falhar(self, vezes, email='ana@x.com'):
+        respostas = [self.login(email, SENHA_ERRADA) for _ in range(vezes)]
+        self.assertEqual([r.status_code for r in respostas], [status.HTTP_400_BAD_REQUEST] * vezes)
+
+    def pedido(self, rota, corpo):
+        return self.client.post(rota, corpo, format='json', HTTP_X_FORWARDED_FOR=next(self.ips))
+
+    def assertBloqueado(self, resposta):
+        self.assertEqual(resposta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', resposta.headers)
+
+    # AUTH-32 -----------------------------------------------------------
+
+    def test_dez_senhas_erradas_de_ips_diferentes_bloqueiam_a_senha_certa_ate_a_hora_fechar(self, *_):
+        self.falhar(9)
+        self.assertEqual(self.login().status_code, status.HTTP_200_OK)
+
+        self.falhar(1)
+        self.assertBloqueado(self.login())
+        self.avancar(3599)
+        self.assertBloqueado(self.login())
+
+        self.avancar(3601)
+        self.assertEqual(self.login().status_code, status.HTTP_200_OK)
+
+    def test_login_certo_nao_conta_como_falha(self, *_):
+        self.falhar(9)
+        respostas = [self.login() for _ in range(3)]
+
+        self.assertEqual([r.status_code for r in respostas], [status.HTTP_200_OK] * 3)
+        self.assertEqual(self.login().status_code, status.HTTP_200_OK)
+
+    def test_resposta_de_conta_pendente_nao_conta_como_falha(self, *_):
+        User.objects.filter(pk=self.usuario.pk).update(email_verified=False)
+        self.falhar(9)
+        for _ in range(3):
+            self.assertEqual(self.login().data['code'], 'email_not_verified')
+
+        self.assertEqual(self.login().data['code'], 'email_not_verified')
+
+    def test_resposta_de_conta_desativada_nao_conta_como_falha(self, *_):
+        User.objects.filter(pk=self.usuario.pk).update(is_active=False)
+        self.falhar(9)
+        for _ in range(3):
+            self.assertEqual(self.login().data['code'], 'account_disabled')
+
+        self.assertEqual(self.login().data['code'], 'account_disabled')
+
+    def test_email_inexistente_tambem_acumula_falhas(self, *_):
+        self.falhar(10, email='ninguem@x.com')
+
+        self.assertBloqueado(self.login('ninguem@x.com'))
+        self.assertEqual(self.login().status_code, status.HTTP_200_OK)
+
+    def test_email_com_outra_caixa_conta_no_mesmo_contador(self, *_):
+        self.falhar(4, email='Ana@X.com')
+        self.falhar(3, email='ANA@x.COM')
+        self.falhar(3, email='ana@x.com')
+
+        self.assertBloqueado(self.login('aNa@x.com'))
+
+    # AUTH-34 -----------------------------------------------------------
+
+    def test_quarto_esqueci_a_senha_para_o_mesmo_email_bloqueado_ate_completar_a_hora(self, *_):
+        emails = ['ana@x.com', 'Ana@X.com', 'ANA@X.COM']
+        respostas = [self.pedido(ESQUECI, {'email': email}) for email in emails]
+        self.assertEqual([r.status_code for r in respostas], [status.HTTP_200_OK] * 3)
+
+        self.assertBloqueado(self.pedido(ESQUECI, {'email': 'ana@x.com'}))
+        self.assertEqual(self.pedido(ESQUECI, {'email': 'bia@x.com'}).status_code, status.HTTP_200_OK)
+
+        self.avancar(3601)
+        self.assertEqual(self.pedido(ESQUECI, {'email': 'ana@x.com'}).status_code, status.HTTP_200_OK)
+
+    def test_quarto_reenvio_para_o_mesmo_email_bloqueado_e_contado_a_parte_do_esqueci(self, *_):
+        for _ in range(3):
+            self.assertEqual(self.pedido(ESQUECI, {'email': 'ana@x.com'}).status_code, status.HTTP_200_OK)
+        for _ in range(3):
+            self.assertEqual(self.pedido(REENVIAR, {'email': 'ana@x.com'}).status_code, status.HTTP_200_OK)
+
+        self.assertBloqueado(self.pedido(REENVIAR, {'email': 'ANA@x.com'}))
+
+        self.avancar(3601)
+        self.assertEqual(self.pedido(REENVIAR, {'email': 'ana@x.com'}).status_code, status.HTTP_200_OK)
+
+    def test_pedido_sem_email_no_corpo_fica_so_com_o_limite_por_ip(self, *_):
+        respostas = [
+            self.client.post(ESQUECI, {}, format='json', HTTP_X_FORWARDED_FOR='203.0.113.50')
+            for _ in range(10)
+        ]
+        self.assertEqual([r.status_code for r in respostas], [status.HTTP_400_BAD_REQUEST] * 10)
+
+        self.assertBloqueado(
+            self.client.post(ESQUECI, {}, format='json', HTTP_X_FORWARDED_FOR='203.0.113.50')
+        )

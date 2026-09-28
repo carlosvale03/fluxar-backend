@@ -590,14 +590,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_limites.py` confere que 10 senhas erradas de IPs diferentes bloqueiam a senha certa até a hora fechar, e que login certo não conta como falha
-- [ ] O 4º "esqueci a senha" e o 4º reenvio para o mesmo e-mail em uma hora recebem 429
-- [ ] E-mail com outra caixa conta no mesmo contador
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 5 testes
+- [x] `tests/autenticacao/test_limites.py` confere que 10 senhas erradas de IPs diferentes bloqueiam a senha certa até a hora fechar, e que login certo não conta como falha
+- [x] O 4º "esqueci a senha" e o 4º reenvio para o mesmo e-mail em uma hora recebem 429
+- [x] E-mail com outra caixa conta no mesmo contador
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 5 testes (real: +9 testes, suíte de 276 para 285)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): limita tentativas por e-mail no login e nos pedidos`
 
