@@ -36,14 +36,19 @@ print(json.dumps({
 '''
 
 # Faz uma requisição simples e uma preflight com o cabeçalho Origin e devolve
-# o Access-Control-Allow-Origin de cada uma. As duas passam só por caminhos
-# que não consultam o banco.
+# o Access-Control-Allow-Origin de cada uma. O subprocesso usa o banco real,
+# não o de teste, e a rota de login consulta o cache dos limites de
+# tentativas; por isso o cache vira memória depois do setup, e o teste não
+# depende de a tabela fluxar_cache existir nesse banco (no CI, não existe).
 SCRIPT_CORS = SEM_DOTENV + '''
 import json, sys
 import django
 django.setup()
-from django.test.utils import setup_test_environment
+from django.test.utils import override_settings, setup_test_environment
 setup_test_environment()
+override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+).enable()
 from django.test import Client
 from django.conf import settings
 origem = sys.argv[1]
