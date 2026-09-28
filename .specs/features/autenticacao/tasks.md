@@ -899,12 +899,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/forgot-password.test.tsx` confere a mensagem neutra e a do 429
-- [ ] TypeScript, lint (sem erros novos), build e `npm test` passam
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/autenticacao/forgot-password.test.tsx` confere a mensagem neutra e a do 429
+- [x] TypeScript, lint (sem erros novos), build e `npm test` passam
+- [x] Test count: pelo menos 2 testes (real: +2 testes, frontend de 28 para 30; lint de 168 para 166 erros)
 
 **Tests**: unit (frontend)
 **Gate**: build (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra a resposta neutra do esqueci a senha`
 
