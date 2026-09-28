@@ -272,3 +272,63 @@ class LimitesPorEmailTests(APITestCase):
         self.assertBloqueado(
             self.client.post(ESQUECI, {}, format='json', HTTP_X_FORWARDED_FOR='203.0.113.50')
         )
+
+
+@override_settings(REST_FRAMEWORK={**settings.REST_FRAMEWORK, 'NUM_PROXIES': 1})
+@mock.patch('api.views.send_password_reset_email', return_value=True)
+class RespostaDoLimiteTests(APITestCase):
+
+    def setUp(self):
+        cache.clear()
+        relogio = mock.patch.object(SimpleRateThrottle, 'timer', return_value=INICIO)
+        self.relogio = relogio.start()
+        self.addCleanup(relogio.stop)
+
+    def avancar(self, segundos):
+        self.relogio.return_value = INICIO + segundos
+
+    def assertMensagem(self, resposta, retry_after, minutos):
+        self.assertEqual(resposta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(resposta.headers['Retry-After'], retry_after)
+        self.assertEqual(
+            resposta.data, {'detail': f'Muitas tentativas. Tente novamente em {minutos} minutos.'},
+        )
+
+    # AUTH-36 -----------------------------------------------------------
+
+    def test_bloqueio_de_um_minuto_informa_1_minuto(self, _):
+        def login():
+            return self.client.post(
+                LOGIN, {'email': 'ana@x.com', 'password': SENHA_ERRADA}, format='json',
+                HTTP_X_FORWARDED_FOR='203.0.113.10',
+            )
+        for _ in range(5):
+            login()
+
+        self.assertMensagem(login(), '60', 1)
+        self.avancar(30)
+        self.assertMensagem(login(), '30', 1)
+
+    def test_bloqueio_de_uma_hora_informa_os_minutos_arredondados_para_cima(self, _):
+        def pedido():
+            return self.client.post(
+                ESQUECI, {'email': 'ana@x.com'}, format='json', HTTP_X_FORWARDED_FOR='203.0.113.10',
+            )
+        for _ in range(3):
+            pedido()
+
+        self.assertMensagem(pedido(), '3600', 60)
+        self.avancar(3001)
+        self.assertMensagem(pedido(), '599', 10)
+
+
+class RespostaNaoEncontradoTests(APITestCase):
+
+    def test_404_tem_a_mensagem_unica_em_portugues(self, *_):
+        usuario = User.objects.create_user(email='ana@x.com', password=SENHA, name='Ana')
+        self.client.force_authenticate(usuario)
+
+        resposta = self.client.get('/api/accounts/00000000-0000-0000-0000-000000000000/')
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(resposta.data, {'detail': 'Não encontrado.'})
