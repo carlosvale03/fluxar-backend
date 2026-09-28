@@ -562,13 +562,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_limites.py` confere o 429 na 6ª tentativa de login em um minuto, no 6º cadastro, no 11º pedido de "esqueci a senha" e no 21º link por IP, e a liberação depois do período (tempo simulado)
-- [ ] IPs diferentes (por `X-Forwarded-For`) têm contadores separados
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/autenticacao/test_limites.py` confere o 429 na 6ª tentativa de login em um minuto, no 6º cadastro, no 11º pedido de "esqueci a senha" e no 21º link por IP, e a liberação depois do período (tempo simulado)
+- [x] IPs diferentes (por `X-Forwarded-For`) têm contadores separados
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: +8 testes, suíte de 268 para 276)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): limita tentativas por IP nas rotas de autenticação`
 

@@ -24,6 +24,13 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
+from core.throttles import (
+    CadastroIPThrottle,
+    EsqueciSenhaIPThrottle,
+    LinkIPThrottle,
+    LoginIPThrottle,
+    ReenvioIPThrottle,
+)
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 import logging
 
@@ -39,6 +46,7 @@ class RegisterView(generics.CreateAPIView):
     """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (CadastroIPThrottle,)
     serializer_class = UserRegisterSerializer
 
     def create(self, request, *args, **kwargs):
@@ -73,6 +81,7 @@ class CustomLoginView(TokenObtainPairView):
     Login customizado que retorna JWT com dados extras do usuário no payload.
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (LoginIPThrottle,)
     serializer_class = CustomTokenObtainPairSerializer
 
 class VerifyEmailView(APIView):
@@ -80,6 +89,7 @@ class VerifyEmailView(APIView):
     Verifica o e-mail do usuário através do token recebido.
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (LinkIPThrottle,)
 
     @staticmethod
     def _token_valido(token_str):
@@ -153,6 +163,7 @@ class ResendVerificationView(APIView):
     A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (ReenvioIPThrottle,)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
@@ -185,6 +196,7 @@ class ForgotPasswordView(APIView):
     exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (EsqueciSenhaIPThrottle,)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
@@ -219,6 +231,7 @@ class ResetPasswordView(APIView):
     Redefine a senha com um link de redefinição válido (AUTH-20 a AUTH-22).
     """
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = (LinkIPThrottle,)
 
     LINK_INVALIDO = {"detail": "Link inválido ou expirado.", "code": "invalid_link"}
 
