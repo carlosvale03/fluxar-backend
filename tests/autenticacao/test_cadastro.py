@@ -3,16 +3,22 @@ Cadastro (AUTH-01 a AUTH-06 e AUTH-26).
 
 Nenhum teste envia e-mail de verdade: o envio da verificação é simulado na view.
 """
+from datetime import timedelta
 from unittest import mock
 
+from django.db import IntegrityError
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import User
+from api.models import EmailVerificationToken, User
 
 REGISTRO = '/api/auth/register/'
 SENHA = 'Cofre-Azul-2026'
 EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
+EMAIL_NAO_ENVIADO = (
+    'Conta criada, mas não conseguimos enviar o e-mail de verificação. Use "Reenviar e-mail".'
+)
 AUSENTE = object()
 
 
@@ -153,3 +159,76 @@ class ValidacaoDoCadastroTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.get(email='ricardo@fluxar.teste').name, 'a' * 255)
+
+
+@mock.patch('api.views.send_verification_email', return_value=True)
+class CriacaoDaContaTests(APITestCase):
+
+    def cadastrar(self, **campos):
+        return self.client.post(REGISTRO, dados(**campos), format='json')
+
+    # AUTH-01 -----------------------------------------------------------
+
+    def test_cadastro_valido_cria_conta_pendente_com_link_de_24_horas_e_envia(self, envio):
+        antes = timezone.now()
+        resposta = self.cadastrar(email='Ricardo@Fluxar.teste')
+        depois = timezone.now()
+
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertIs(resposta.data['email_sent'], True)
+        self.assertEqual(
+            resposta.data['message'],
+            'Conta criada. Enviamos um link de verificação para o seu e-mail.',
+        )
+        usuario = User.objects.get(email='ricardo@fluxar.teste')
+        self.assertFalse(usuario.email_verified)
+        self.assertTrue(usuario.is_active)
+        self.assertTrue(usuario.terms_accepted)
+        self.assertTrue(usuario.check_password(SENHA))
+        token = EmailVerificationToken.objects.get(user=usuario)
+        self.assertFalse(token.used)
+        self.assertGreaterEqual(token.expires_at, antes + timedelta(hours=24))
+        self.assertLessEqual(token.expires_at, depois + timedelta(hours=24))
+        envio.assert_called_once()
+        usuario_enviado, token_enviado = envio.call_args.args
+        self.assertEqual(usuario_enviado.pk, usuario.pk)
+        self.assertEqual(token_enviado.pk, token.pk)
+
+    def test_envio_na_propria_requisicao_sem_thread(self, envio):
+        with mock.patch('threading.Thread') as thread:
+            resposta = self.cadastrar()
+
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        thread.assert_not_called()
+        envio.assert_called_once()
+
+    # AUTH-26 -----------------------------------------------------------
+
+    def test_provedores_falhando_mantem_a_conta_e_avisa(self, envio):
+        envio.return_value = False
+
+        resposta = self.cadastrar()
+
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertIs(resposta.data['email_sent'], False)
+        self.assertEqual(resposta.data['message'], EMAIL_NAO_ENVIADO)
+        usuario = User.objects.get(email='ricardo@fluxar.teste')
+        self.assertFalse(usuario.email_verified)
+        self.assertTrue(usuario.is_active)
+        self.assertTrue(EmailVerificationToken.objects.filter(user=usuario, used=False).exists())
+
+    # AUTH-06 -----------------------------------------------------------
+
+    def test_cadastro_simultaneo_com_integrity_error_responde_como_email_ja_cadastrado(self, envio):
+        # Simula o outro pedido gravando o mesmo e-mail entre a validação e o INSERT
+        with mock.patch.object(
+            User.objects, 'create_user',
+            side_effect=IntegrityError('duplicate key value violates unique constraint "api_user_email_key"'),
+        ):
+            resposta = self.cadastrar()
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual([str(m) for m in resposta.data['email']], [EMAIL_JA_CADASTRADO])
+        self.assertFalse(User.objects.filter(email='ricardo@fluxar.teste').exists())
+        self.assertFalse(EmailVerificationToken.objects.exists())
+        envio.assert_not_called()

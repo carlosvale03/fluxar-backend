@@ -304,15 +304,16 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_cadastro.py` confere a conta pendente, o token de 24 horas e o e-mail enviado com `email_sent: true`
-- [ ] Com os provedores falhando, 201 com `email_sent: false`, a mensagem de AUTH-26 e a conta criada
-- [ ] Um `IntegrityError` simulado no `create_user` responde 400 com a mensagem de AUTH-03
-- [ ] Nenhuma thread é criada
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/autenticacao/test_cadastro.py` confere a conta pendente, o token de 24 horas e o e-mail enviado com `email_sent: true`
+- [x] Com os provedores falhando, 201 com `email_sent: false`, a mensagem de AUTH-26 e a conta criada
+- [x] Um `IntegrityError` simulado no `create_user` responde 400 com a mensagem de AUTH-03
+- [x] Nenhuma thread é criada
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: +4 testes, suíte de 217 para 221)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): cria a conta pendente e envia a verificação na requisição`
 

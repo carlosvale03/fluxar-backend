@@ -4,10 +4,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
 from .serializers import (
+    EMAIL_JA_CADASTRADO,
     UserRegisterSerializer,
     UserProfileSerializer,
     UserAvatarSerializer,
@@ -38,30 +40,32 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = UserRegisterSerializer
 
-    def perform_create(self, serializer):
-        user = serializer.save()
-        # Define como inativo até confirmar e-mail
-        user.is_active = False
-        user.save()
-        
-        # Cria token de verificação e envia e-mail
-        token = EmailVerificationToken.objects.create(
-            user=user,
-            expires_at=timezone.now() + timedelta(hours=24)
-        )
-        
-        # Envio assíncrono para evitar timeout no Render
-        import threading
-        email_thread = threading.Thread(
-            target=send_verification_email,
-            args=(user, token)
-        )
-        email_thread.start()
-        logger.warning(
-            "Thread de email de verificacao iniciada para %s (token=%s)",
-            user.email,
-            str(token.token)[:8],
-        )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # A conta nasce pendente: email_verified=False e is_active=True (AD-035)
+        try:
+            with transaction.atomic():
+                user = serializer.save()
+                token = EmailVerificationToken.objects.create(
+                    user=user,
+                    expires_at=timezone.now() + timedelta(hours=24)
+                )
+        except IntegrityError:
+            # Outro cadastro gravou o mesmo e-mail depois da validação (AUTH-06)
+            return Response({"email": [EMAIL_JA_CADASTRADO]}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Envio na própria requisição; a falha não desfaz o cadastro (AD-011)
+        email_sent = send_verification_email(user, token)
+        if email_sent:
+            message = "Conta criada. Enviamos um link de verificação para o seu e-mail."
+        else:
+            message = (
+                'Conta criada, mas não conseguimos enviar o e-mail de verificação. '
+                'Use "Reenviar e-mail".'
+            )
+        return Response({"message": message, "email_sent": email_sent}, status=status.HTTP_201_CREATED)
 
 class CustomLoginView(TokenObtainPairView):
     """
