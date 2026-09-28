@@ -845,12 +845,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/verify-email.test.tsx` confere o sucesso com login e, no 400, a mensagem e o reenvio
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/autenticacao/verify-email.test.tsx` confere o sucesso com login e, no 400, a mensagem e o reenvio
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes (real: +2 testes, frontend de 22 para 24)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): oferece o reenvio quando o link de verificação falha`
 
