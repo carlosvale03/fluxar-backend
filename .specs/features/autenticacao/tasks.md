@@ -531,14 +531,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_redefinicao.py` troca a senha, entra com a nova e recebe a recusa ao reabrir o link
-- [ ] Link vencido, senha fraca e confirmação diferente dão 400 com a mensagem no campo
-- [ ] A redefinição numa conta pendente confirma o e-mail; numa conta desativada, a conta continua desativada
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/autenticacao/test_redefinicao.py` troca a senha, entra com a nova e recebe a recusa ao reabrir o link
+- [x] Link vencido, senha fraca e confirmação diferente dão 400 com a mensagem no campo
+- [x] A redefinição numa conta pendente confirma o e-mail; numa conta desativada, a conta continua desativada
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: +13 testes, suíte de 255 para 268)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): corrige a redefinição de senha por link`
 

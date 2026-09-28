@@ -216,36 +216,44 @@ class ForgotPasswordView(APIView):
 
 class ResetPasswordView(APIView):
     """
-    Redefine a senha usando o token recebido.
+    Redefine a senha com um link de redefinição válido (AUTH-20 a AUTH-22).
     """
     permission_classes = (permissions.AllowAny,)
 
+    LINK_INVALIDO = {"detail": "Link inválido ou expirado.", "code": "invalid_link"}
+
+    @staticmethod
+    def _token_valido(token_str):
+        """Devolve o token só se ele existir, não tiver sido usado e não tiver vencido."""
+        try:
+            valor = uuid.UUID(str(token_str))
+        except ValueError:
+            return None
+        token = PasswordResetToken.objects.filter(token=valor).select_related('user').first()
+        if token is None or not token.is_valid():
+            return None
+        return token
+
     def post(self, request):
-        serializer = ResetPasswordSerializer(data=request.data)
-        if serializer.is_valid():
-            token_str = serializer.validated_data['token']
-            new_password = serializer.validated_data['new_password']
+        token = self._token_valido(request.data.get('token'))
+        if token is None:
+            return Response(self.LINK_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
 
-            try:
-                token = PasswordResetToken.objects.get(token=token_str)
-            except PasswordResetToken.DoesNotExist:
-                return Response({"token": ["Token inválido."]}, status=status.HTTP_400_BAD_REQUEST)
+        user = token.user
+        serializer = ResetPasswordSerializer(data=request.data, context={'user': user})
+        serializer.is_valid(raise_exception=True)
 
-            if not token.is_valid():
-                return Response({"token": ["Token expirado ou já utilizado."]}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            # Marca o uso só se ninguém o marcou antes, para o link valer uma vez
+            if not PasswordResetToken.objects.filter(pk=token.pk, used=False).update(used=True):
+                return Response(self.LINK_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(serializer.validated_data['new_password'])
+            # Confirma o e-mail sem mexer em is_active: a conta desativada
+            # continua desativada (AUTH-20, AD-035)
+            user.email_verified = True
+            user.save(update_fields=['password', 'email_verified'])
 
-            # Redefine senha
-            user = token.user
-            user.set_password(new_password)
-            user.save()
-
-            # Invalida token
-            token.used = True
-            token.save()
-
-            return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
 class MeView(APIView):
     """

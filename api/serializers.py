@@ -236,14 +236,22 @@ class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 class ResetPasswordSerializer(serializers.Serializer):
-    token = serializers.UUIDField(required=True)
-    new_password = serializers.CharField(required=True, validators=[validate_password])
+    """
+    Senha nova da redefinição por link. O link é conferido na view, que passa
+    o dono dele em context['user'] para o validador de senha parecida (AUTH-22).
+    """
+    new_password = serializers.CharField(required=True)
     new_password_confirm = serializers.CharField(required=True)
 
-    def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password_confirm']:
-            raise serializers.ValidationError({"new_password": "As senhas não coincidem."})
-        return attrs
+    def validate_new_password(self, value):
+        confirmacao = self.initial_data.get('new_password_confirm')
+        if confirmacao is not None and confirmacao != value:
+            raise serializers.ValidationError("As senhas não coincidem.")
+        try:
+            password_validation.validate_password(value, user=self.context['user'])
+        except DjangoValidationError as erro:
+            raise serializers.ValidationError(list(erro.messages))
+        return value
 
 class SystemLogSerializer(serializers.ModelSerializer):
     class Meta:
