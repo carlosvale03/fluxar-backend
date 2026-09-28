@@ -706,12 +706,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_comando_email.py` confere a listagem do par do Caio com IDs e e-mail mascarado, nenhum e-mail inteiro na saída e nenhuma conta alterada
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/autenticacao/test_comando_email.py` confere a listagem do par do Caio com IDs e e-mail mascarado, nenhum e-mail inteiro na saída e nenhuma conta alterada
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (real: +4 testes, suíte de 300 para 304)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): lista contas com e-mails que só diferem na caixa`
 
