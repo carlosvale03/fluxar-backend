@@ -578,7 +578,7 @@ T28
 **Done when**:
 
 - [ ] `tests/autenticacao/test_limites.py` confere o `Retry-After` e a mensagem com N certo para bloqueio de 1 minuto e de 1 hora
-- [ ] O 404 continua com "Not found."
+- [ ] O 404 continua com uma mensagem única para qualquer objeto não encontrado ("Não encontrado.", em português desde a T2, conforme AD-024)
 - [ ] Quick gate passa
 - [ ] Test count: suíte cresce em pelo menos 2 testes
 
