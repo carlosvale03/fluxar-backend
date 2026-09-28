@@ -70,6 +70,7 @@ T10
 ### Phase 4: Login e redefinição
 
 ```
+T29
 T11 → T12
 T12 → T13
 T13 → T14
@@ -402,6 +403,34 @@ T28
 ---
 
 ### Phase 4: Login e redefinição
+
+#### T29: Mensagens de senha no cadastro
+
+**What**: `verbose_name` "nome" e "e-mail" nos campos do `User` (migração só de estado), para a mensagem de senha parecida sair "A senha é muito parecida com nome", e a validação da senha no cadastro também quando outro campo tem erro. Acrescentada na execução, a partir do lote 2.
+**Where**: `api/models.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: AUTH-04, AUTH-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/autenticacao/test_cadastro.py` confere "A senha é muito parecida com nome." e "... com e-mail." no campo `password`
+- [ ] Um cadastro com e-mail inválido e senha fraca devolve os dois erros, cada um no seu campo
+- [ ] `makemigrations --check` sem mudanças depois da migração nova
+- [ ] Full gate passa
+- [ ] Test count: suíte cresce em pelo menos 3 testes
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(api): mostra os nomes dos campos nas mensagens de senha`
+
+---
 
 #### T11: Login sem revelar a conta
 
@@ -914,6 +943,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T8: Link de verificação | 1 arquivo | ✅ Granular |
 | T9: Reenvio da verificação | 1 arquivo | ✅ Granular |
 | T10: Contas pendentes sem exclusão automática | 1 arquivo | ✅ Granular |
+| T29: Mensagens de senha no cadastro | 1 model, 1 migração e o serializer | ⚠️ Coeso |
 | T11: Login sem revelar a conta | 1 arquivo | ✅ Granular |
 | T12: Fim da rota /api/token/ | 1 arquivo | ✅ Granular |
 | T13: Esqueci a senha | 1 arquivo | ✅ Granular |
@@ -947,6 +977,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T8 | T7 | T7 → T8 | ✅ Match |
 | T9 | T8 | T8 → T9 | ✅ Match |
 | T10 | None | sem seta dentro da fase | ✅ Match |
+| T29 | None | sem seta dentro da fase | ✅ Match |
 | T11 | None | sem seta dentro da fase | ✅ Match |
 | T12 | T11 | T11 → T12 | ✅ Match |
 | T13 | T12 | T12 → T13 | ✅ Match |
@@ -980,6 +1011,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T8: Link de verificação | Backend | integration | integration | ✅ OK |
 | T9: Reenvio da verificação | Backend | integration | integration | ✅ OK |
 | T10: Contas pendentes sem exclusão automática | Backend | integration | integration | ✅ OK |
+| T29: Mensagens de senha no cadastro | Backend | integration | integration | ✅ OK |
 | T11: Login sem revelar a conta | Backend | integration | integration | ✅ OK |
 | T12: Fim da rota /api/token/ | Backend | integration | integration | ✅ OK |
 | T13: Esqueci a senha | Backend | integration | integration | ✅ OK |

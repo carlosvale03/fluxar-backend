@@ -248,10 +248,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | AUTH-01 | P1: Cadastro | T7 | Pending |
 | AUTH-02 | P1: Cadastro | T5 | Pending |
 | AUTH-03 | P1: Cadastro | T6, T7 | Pending |
-| AUTH-04 | P1: Cadastro | T6 | Pending |
+| AUTH-04 | P1: Cadastro | T6, T29 | Pending |
 | AUTH-05 | P1: Cadastro | T6 | Pending |
 | AUTH-06 | P1: Cadastro | T7 | Pending |
-| AUTH-07 | P1: Cadastro | T23 | Pending |
+| AUTH-07 | P1: Cadastro | T23, T29 | Pending |
 | AUTH-08 | P1: Verificação de e-mail e conta não verificada | T8 | Pending |
 | AUTH-09 | P1: Verificação de e-mail e conta não verificada | T8, T25 | Pending |
 | AUTH-10 | P1: Verificação de e-mail e conta não verificada | T9, T22 | Pending |
