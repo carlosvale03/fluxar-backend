@@ -127,13 +127,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/smoke.test.tsx` renderiza o `AuthShell` e confere o título
-- [ ] `npm test` roda no CI do frontend, depois da checagem de TypeScript
-- [ ] TypeScript, lint (sem erros novos) e build continuam passando
-- [ ] Test count: 1 teste
+- [x] `tests/autenticacao/smoke.test.tsx` renderiza o `AuthShell` e confere o título
+- [x] `npm test` roda no CI do frontend, depois da checagem de TypeScript
+- [x] TypeScript, lint (sem erros novos) e build continuam passando
+- [x] Test count: 1 teste (real: 1 teste no frontend)
 
 **Tests**: unit (frontend)
 **Gate**: build (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `test(frontend): configura Vitest e Testing Library`
 
