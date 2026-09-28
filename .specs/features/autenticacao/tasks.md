@@ -735,13 +735,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/api-client.test.ts` confere que as seis rotas saem sem `Authorization` mesmo com token no `localStorage`, que um 401 delas não redireciona e que `/auth/me/` continua com o token
-- [ ] `mensagemDeErro` devolve o `detail` do 429
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 4 testes no frontend
+- [x] `tests/autenticacao/api-client.test.ts` confere que as seis rotas saem sem `Authorization` mesmo com token no `localStorage`, que um 401 delas não redireciona e que `/auth/me/` continua com o token
+- [x] `mensagemDeErro` devolve o `detail` do 429
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 4 testes no frontend (real: +11 testes, frontend de 1 para 12)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): envia as rotas públicas de auth sem token`
 
