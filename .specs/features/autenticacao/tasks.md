@@ -928,12 +928,13 @@ T28
 
 **Done when**:
 
-- [ ] O teste percorre o fluxo inteiro sem passo manual e confere cada resposta pela mensagem da spec
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 1 teste
+- [x] O teste percorre o fluxo inteiro sem passo manual e confere cada resposta pela mensagem da spec
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 1 teste (real: +1 teste, suíte de 304 para 305)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(autenticacao): cobre o fluxo completo de entrada pela API`
 
