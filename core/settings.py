@@ -128,6 +128,9 @@ else:
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        # O padrão procura username, first_name e last_name, que o User do
+        # Fluxar não tem; sem isto a senha parecida com o nome passaria (AUTH-04)
+        'OPTIONS': {'user_attributes': ('name', 'email')},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',

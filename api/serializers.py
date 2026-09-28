@@ -1,24 +1,60 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
+EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
+TERMOS_OBRIGATORIOS = 'É preciso aceitar os termos de uso.'
+NOME_OBRIGATORIO = 'Informe o nome.'
+
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    name = serializers.CharField(
+        max_length=255,
+        error_messages={
+            'required': NOME_OBRIGATORIO,
+            'blank': NOME_OBRIGATORIO,
+            'null': NOME_OBRIGATORIO,
+            'max_length': 'O nome pode ter no máximo 255 caracteres.',
+        },
+    )
+    # Declarado aqui para trocar o UniqueValidator do modelo, que compara com
+    # a caixa exata, pela conferência sem caixa de validate_email (AUTH-02, AUTH-03)
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(write_only=True, required=True)
     password_confirm = serializers.CharField(write_only=True, required=True)
+    terms_accepted = serializers.BooleanField(
+        required=True,
+        error_messages={'required': TERMOS_OBRIGATORIOS, 'null': TERMOS_OBRIGATORIOS},
+    )
 
     class Meta:
         model = User
         fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted')
-        extra_kwargs = {
-            'terms_accepted': {'required': True}
-        }
+
+    def validate_email(self, value):
+        email = User.objects.normalize_email(value)
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError(EMAIL_JA_CADASTRADO)
+        return email
+
+    def validate_terms_accepted(self, value):
+        if value is not True:
+            raise serializers.ValidationError(TERMOS_OBRIGATORIOS)
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({"password": "As senhas não coincidem."})
+            raise serializers.ValidationError({"password": ["As senhas não coincidem."]})
+        # Um usuário temporário, sem gravar, para o validador comparar a senha
+        # com o nome e o e-mail (AUTH-04)
+        candidato = User(name=attrs['name'], email=attrs['email'])
+        try:
+            validate_password(attrs['password'], user=candidato)
+        except DjangoValidationError as erro:
+            raise serializers.ValidationError({"password": list(erro.messages)})
         return attrs
 
     def create(self, validated_data):

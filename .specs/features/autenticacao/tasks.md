@@ -276,13 +276,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_cadastro.py` cobre e-mail repetido (inclusive com outra caixa), senha curta, parecida com o nome, comum, só números e diferente da confirmação, termos falsos ou ausentes e nome vazio ou longo, cada um com 400 e a mensagem no campo
-- [ ] As mensagens de senha saem em português
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 10 testes
+- [x] `tests/autenticacao/test_cadastro.py` cobre e-mail repetido (inclusive com outra caixa), senha curta, parecida com o nome, comum, só números e diferente da confirmação, termos falsos ou ausentes e nome vazio ou longo, cada um com 400 e a mensagem no campo
+- [x] As mensagens de senha saem em português
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 10 testes (real: +14 testes, suíte de 203 para 217)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): valida o cadastro com mensagens por campo`
 
