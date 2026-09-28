@@ -790,13 +790,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/register.test.tsx` confere as mensagens de `email`, `password`, `name` e `terms_accepted` vindas do backend em cada campo
-- [ ] Com `email_sent: false`, a tela mostra a mensagem e o reenvio
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/autenticacao/register.test.tsx` confere as mensagens de `email`, `password`, `name` e `terms_accepted` vindas do backend em cada campo
+- [x] Com `email_sent: false`, a tela mostra a mensagem e o reenvio
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: +4 testes, frontend de 15 para 19)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra os erros do cadastro em cada campo`
 
