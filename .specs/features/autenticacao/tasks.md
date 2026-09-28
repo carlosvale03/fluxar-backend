@@ -818,12 +818,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/login.test.tsx` confere o reenvio com `email_not_verified`, a mensagem de conta desativada e a do 429
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/autenticacao/login.test.tsx` confere o reenvio com `email_not_verified`, a mensagem de conta desativada e a do 429
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: +3 testes, frontend de 19 para 22)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): oferece o reenvio no login de conta não verificada`
 
