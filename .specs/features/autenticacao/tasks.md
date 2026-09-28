@@ -155,14 +155,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_configuracao.py` importa as settings num subprocesso com `DEBUG=0` sem `SECRET_KEY`, e depois sem `FRONTEND_URL`, e confere o erro com o nome da variável
-- [ ] Sem `CORS_ALLOWED_ORIGINS`, uma requisição com `Origin` de outro site não recebe `Access-Control-Allow-Origin`
-- [ ] Os testes existentes continuam passando (o `.env` local tem `DEBUG=1`)
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/autenticacao/test_configuracao.py` importa as settings num subprocesso com `DEBUG=0` sem `SECRET_KEY`, e depois sem `FRONTEND_URL`, e confere o erro com o nome da variável
+- [x] Sem `CORS_ALLOWED_ORIGINS`, uma requisição com `Origin` de outro site não recebe `Access-Control-Allow-Origin`
+- [x] Os testes existentes continuam passando (o `.env` local tem `DEBUG=1`)
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: +7 testes, suíte de 175 para 182)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(core): impede configuração insegura em produção`
 

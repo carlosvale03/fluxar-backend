@@ -9,6 +9,9 @@ python manage.py migrate --noinput
 echo "📍 Criando Superusuário (se necessário)..."
 python create_admin.py
 
+echo "📍 Criando a tabela de cache..."
+python manage.py createcachetable
+
 echo "📍 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput
 
