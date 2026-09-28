@@ -8,6 +8,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
+import uuid
 from .serializers import (
     EMAIL_JA_CADASTRADO,
     UserRegisterSerializer,
@@ -80,27 +81,44 @@ class VerifyEmailView(APIView):
     """
     permission_classes = (permissions.AllowAny,)
 
-    def get(self, request):
-        token_str = request.query_params.get('token')
+    @staticmethod
+    def _token_valido(token_str):
+        """
+        Devolve o token só se ele existir, não tiver sido usado, não tiver
+        vencido e for o mais recente do usuário (AUTH-09).
+        """
         if not token_str:
-            return Response({"error": "Token não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
-
+            return None
         try:
-            token = EmailVerificationToken.objects.get(token=token_str)
-        except EmailVerificationToken.DoesNotExist:
-             return Response({"error": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
+            uuid.UUID(str(token_str))
+        except ValueError:
+            return None
+        token = EmailVerificationToken.objects.filter(token=token_str).select_related('user').first()
+        if token is None or not token.is_valid():
+            return None
+        mais_recente = (
+            EmailVerificationToken.objects.filter(user=token.user).order_by('-created_at', '-pk').first()
+        )
+        if mais_recente.pk != token.pk:
+            return None
+        return token
 
-        if not token.is_valid():
-            return Response({"error": "Token expirado ou já utilizado."}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        token = self._token_valido(request.query_params.get('token'))
+        if token is None:
+            return Response(
+                {"detail": "Link inválido ou expirado.", "code": "invalid_link"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # Atualiza usuário e token
+        # Confirma o e-mail sem mexer em is_active: uma conta desativada pelo
+        # administrador continua desativada (AD-035)
         user = token.user
         user.email_verified = True
-        user.is_active = True # Ativa a conta
-        user.save()
+        user.save(update_fields=['email_verified'])
 
         token.used = True
-        token.save()
+        token.save(update_fields=['used'])
 
         # Registra a ação no log
         SystemLog.objects.create(
@@ -109,6 +127,15 @@ class VerifyEmailView(APIView):
             description=f"E-mail verificado com sucesso via token.",
             admin_name="Sistema"
         )
+
+        if not user.is_active:
+            # SPEC_DEVIATION: a spec não define a verificação de uma conta desativada.
+            # Reason: devolver tokens daria sessão a uma conta que o administrador
+            # desativou; a resposta usa a mesma mensagem do login (AUTH-16).
+            return Response(
+                {"detail": "Esta conta está desativada.", "code": "account_disabled"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Gera tokens para login automático
         from rest_framework_simplejwt.tokens import RefreshToken

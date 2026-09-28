@@ -334,12 +334,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_verificacao.py` cobre link válido (tokens na resposta e `email_verified` verdadeiro), aberto duas vezes, vencido há 25 horas e substituído por um mais novo
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 5 testes
+- [x] `tests/autenticacao/test_verificacao.py` cobre link válido (tokens na resposta e `email_verified` verdadeiro), aberto duas vezes, vencido há 25 horas e substituído por um mais novo
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 5 testes (real: +8 testes, suíte de 221 para 229)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): padroniza a recusa do link de verificação`
 
