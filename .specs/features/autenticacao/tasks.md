@@ -677,14 +677,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_migracao.py` chama a função da migração sobre "Ana@x.com", "bia@X.com", "Caio@x.com" e "caio@x.com" e confere as duas primeiras em minúsculas e o par do Caio intacto
-- [ ] Uma conta com `email_verified=False` e `is_active=False` passa a `is_active=True`; uma verificada e desativada continua desativada
-- [ ] `makemigrations --check` sem mudanças
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/autenticacao/test_migracao.py` chama a função da migração sobre "Ana@x.com", "bia@X.com", "Caio@x.com" e "caio@x.com" e confere as duas primeiras em minúsculas e o par do Caio intacto
+- [x] Uma conta com `email_verified=False` e `is_active=False` passa a `is_active=True`; uma verificada e desativada continua desativada
+- [x] `makemigrations --check` sem mudanças
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: +5 testes, suíte de 295 para 300)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): passa os e-mails para minúsculas e ativa as contas pendentes`
 
