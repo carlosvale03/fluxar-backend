@@ -872,12 +872,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/reset-password.test.tsx` confere o corpo da requisição com os três campos, o erro de `new_password` no campo e o link para "Esqueci a senha" no 400 de link inválido
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/autenticacao/reset-password.test.tsx` confere o corpo da requisição com os três campos, o erro de `new_password` no campo e o link para "Esqueci a senha" no 400 de link inválido
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: +4 testes, frontend de 24 para 28)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): envia os campos certos na redefinição de senha`
 
