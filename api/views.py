@@ -24,7 +24,7 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
-from .utils.email_service import send_verification_email, send_password_reset_email
+from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 import logging
 
 User = get_user_model()
@@ -181,46 +181,38 @@ class ResendVerificationView(APIView):
 
 class ForgotPasswordView(APIView):
     """
-    Solicita redefinição de senha (envia link por e-mail).
+    Envia um link de redefinição de senha. A resposta é sempre a mesma,
+    exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
     """
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            try:
-                user = User.objects.get(email=email)
-                # Invalida tokens anteriores não usados (opcional, mas boa prática)
-                PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+        serializer.is_valid(raise_exception=True)
 
+        try:
+            user = User.objects.get_by_natural_key(serializer.validated_data['email'])
+        except User.DoesNotExist:
+            user = None
+
+        # Vale também para a conta desativada; a redefinição não a reativa (AUTH-20)
+        if user is not None:
+            with transaction.atomic():
+                PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
                 token = PasswordResetToken.objects.create(
                     user=user,
                     expires_at=timezone.now() + timedelta(hours=1)
                 )
-                
-                # Envio assíncrono para evitar timeout no Render
-                import threading
-                email_thread = threading.Thread(
-                    target=send_password_reset_email,
-                    args=(user, token)
-                )
-                email_thread.start()
+            # Envio na própria requisição (AD-011)
+            if not send_password_reset_email(user, token):
                 logger.warning(
-                    "Thread de email de reset iniciada para %s (token=%s)",
-                    user.email,
-                    str(token.token)[:8],
+                    "Redefinição de senha não enviada destinatario=%s", _mask_email(user.email),
                 )
-            except User.DoesNotExist:
-                # Para não revelar emails cadastrados, fingimos sucesso
-                logger.warning(
-                    "Solicitacao de reset recebida para email nao cadastrado: %s",
-                    email,
-                )
-            
-            return Response({"message": "Se o e-mail existir, um link de recuperação foi enviado."}, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"message": "Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha."},
+            status=status.HTTP_200_OK,
+        )
 
 class ResetPasswordView(APIView):
     """

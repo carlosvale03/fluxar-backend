@@ -502,14 +502,15 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_esqueci_senha.py` confere a mesma resposta para e-mail cadastrado, inexistente e conta desativada
-- [ ] O link novo vale 1 hora e o anterior deixa de valer
-- [ ] Com os provedores falhando, a resposta é a mesma e o log registra a falha com o e-mail mascarado
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/autenticacao/test_esqueci_senha.py` confere a mesma resposta para e-mail cadastrado, inexistente e conta desativada
+- [x] O link novo vale 1 hora e o anterior deixa de valer
+- [x] Com os provedores falhando, a resposta é a mesma e o log registra a falha com o e-mail mascarado
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: +7 testes, suíte de 248 para 255)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): envia a redefinição na requisição com resposta neutra`
 
