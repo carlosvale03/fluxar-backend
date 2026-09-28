@@ -448,12 +448,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_login.py` com conta verificada, pendente e desativada: senha errada dá a mesma resposta nas três e num e-mail inexistente; senha certa entra na verificada e dá as mensagens e códigos de AUTH-13 e AUTH-16 nas outras
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/autenticacao/test_login.py` com conta verificada, pendente e desativada: senha errada dá a mesma resposta nas três e num e-mail inexistente; senha certa entra na verificada e dá as mensagens e códigos de AUTH-13 e AUTH-16 nas outras
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: +8 testes, suíte de 239 para 247)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): só avisa o estado da conta com a senha correta`
 

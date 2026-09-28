@@ -29,7 +29,10 @@ class EmailSemDiferencaDeCaixaTests(APITestCase):
         self.assertEqual(usuario.email, 'admin@x.com')
 
     def test_login_com_outra_caixa_entra_na_conta(self):
-        usuario = User.objects.create_user(email='Ana@X.com', password=SENHA, name='Ana')
+        # Verificada, porque a conta pendente não entra (AUTH-13)
+        usuario = User.objects.create_user(
+            email='Ana@X.com', password=SENHA, name='Ana', email_verified=True,
+        )
 
         resposta = self.client.post(LOGIN, {'email': 'ANA@X.COM', 'password': SENHA}, format='json')
 
@@ -39,7 +42,9 @@ class EmailSemDiferencaDeCaixaTests(APITestCase):
         self.assertEqual(User.objects.get_by_natural_key('ANA@X.COM').pk, usuario.pk)
 
     def test_conta_antiga_com_maiusculas_entra_com_o_email_exato(self):
-        usuario = User.objects.create_user(email='caio@x.com', password=SENHA, name='Caio')
+        usuario = User.objects.create_user(
+            email='caio@x.com', password=SENHA, name='Caio', email_verified=True,
+        )
         # Grava à força o e-mail com maiúsculas, como uma conta de antes da correção
         User.objects.filter(pk=usuario.pk).update(email='Caio@x.com')
 

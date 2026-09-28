@@ -1,9 +1,12 @@
-from rest_framework import serializers
+from rest_framework import exceptions, serializers, status
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth import password_validation
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
 User = get_user_model()
 
@@ -169,30 +172,53 @@ class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
+class LoginRecusado(exceptions.APIException):
+    """
+    HTTP 400 com `detail` e `code` no corpo (AD-024). Um ValidationError do
+    serializer poria cada valor numa lista.
+    """
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, detail, code):
+        super().__init__({"detail": detail, "code": code})
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Customiza o payload do JWT para incluir dados extras do usuário no token
-    e fornece mensagens de erro claras para contas inativas.
+    Login por e-mail e senha, com dados extras do usuário no token.
+
+    A senha é conferida antes do estado da conta: o aviso de conta desativada
+    ou pendente só aparece com a senha correta (AUTH-13 a AUTH-16).
     """
     def validate(self, attrs):
+        email = attrs[self.username_field]
+        senha = attrs['password']
+
         try:
-            # Tenta autenticar normalmente via SimpleJWT
-            data = super().validate(attrs)
-            return data
-        except Exception as e:
-            # Se a autenticação falhou, vamos investigar se o usuário existe mas está inativo
-            email = attrs.get("email") or attrs.get("username")
-            user = User.objects.filter(email=email).first()
-            
-            if user and not user.is_active:
-                raise serializers.ValidationError({
-                    "detail": "Sua conta ainda não foi ativada. Por favor, verifique seu e-mail para confirmar seu cadastro."
-                })
-            
-            # Se não for caso de conta inativa, relança o erro original (ou genérico)
-            raise serializers.ValidationError({
-                "detail": "E-mail ou senha incorretos. Verifique suas credenciais."
-            })
+            user = User.objects.get_by_natural_key(email)
+        except User.DoesNotExist:
+            user = None
+
+        if user is None:
+            # Gera um hash à toa, para o tempo de resposta não revelar se a conta existe
+            make_password(senha)
+            senha_certa = False
+        else:
+            senha_certa = user.check_password(senha)
+
+        if not senha_certa:
+            raise LoginRecusado("E-mail ou senha incorretos.", "invalid_credentials")
+
+        if not user.is_active:
+            raise LoginRecusado("Esta conta está desativada.", "account_disabled")
+        if not user.email_verified:
+            raise LoginRecusado("Confirme seu e-mail para entrar.", "email_not_verified")
+
+        self.user = user
+        refresh = self.get_token(user)
+        if jwt_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, user)
+        return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
     @classmethod
     def get_token(cls, user):
