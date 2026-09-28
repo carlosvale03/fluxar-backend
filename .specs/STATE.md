@@ -266,14 +266,29 @@
 - **Date**: 2026-09-27
 - **Status**: active
 
+### AD-034
+- **Decision**: Os testes do frontend usam Vitest, Testing Library e jsdom, ficam em `tests/<feature>/` no repositório do frontend, com a API simulada, e rodam no CI com `npm test`. O fluxo completo, de ponta a ponta, é testado pela API no backend.
+- **Reason**: decisão do usuário; o frontend não tinha nenhum teste, e esse conjunto roda rápido no CI, sem navegador.
+- **Trade-off**: nenhum teste passa por um navegador real; problemas de integração entre as telas e a API real dependem do teste de fluxo do backend e da conferência manual.
+- **Scope**: todas as features com telas.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-035
+- **Decision**: Uma conta pendente de verificação tem `email_verified=False` e `is_active=True`. O `is_active=False` passa a significar só a desativação pelo administrador (ou pela exclusão da própria conta, na spec `lgpd`).
+- **Reason**: com os dois estados no mesmo campo, o login não conseguia distinguir a conta pendente (AUTH-13) da desativada (AUTH-16).
+- **Trade-off**: uma conta antiga desativada pelo administrador antes de verificar o e-mail volta a ficar ativa na migração, mas continua sem entrar até verificar.
+- **Scope**: autenticacao, sessao, painel-admin e lgpd.
+- **Date**: 2026-09-27
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `atualizacao-de-dependencias` concluída (SEG-04), nos dois repositórios
-- **Phase / Task**: Execute concluído e verificado: `validation.md` com PASS, 8 de 8 ACs, sensor leve com 7 de 7 mutações mortas
-- **Completed**: backend no Django 5.2.17 LTS, DRF 3.18.1, SimpleJWT 5.5.1, PyJWT 2.15.0, gunicorn 26.2.0 e demais pacotes corrigidos, com `pip-audit` zerado e no CI; handler de 404 em `core/exceptions.py` mantém o "Not found." de antes. Frontend no Next 16.3.6 e axios 1.20.0, com `npm audit --omit=dev` zerado; CI do frontend passa a rodar em `main` e `development`, com auditoria e TypeScript
+- **Feature**: `autenticacao`
+- **Phase / Task**: Design e Tasks aprovados em 2026-09-28; Execute de T1 a T28 em andamento
+- **Completed**: `isolamento-entre-usuarios` e `atualizacao-de-dependencias` mergeadas na `development`
 - **In-progress** (file:line): nenhum
-- **Notas**: o lint do frontend roda sem bloquear no CI (168 erros antigos, MAN-04); o Django 6 fica para quando o backend for para o Python 3.12
-- **Next step**: o usuário faz o push das duas branches `chore/atualiza-dependencias` e abre um PR em cada repositório para a `development`. Depois do merge, a próxima feature é `autenticacao` (CON-01, SEG-02, SEG-03), numa branch nova a partir da `development` atualizada, com o verificador leve
+- **Next step**: com a aprovação, executar T1 a T28 nas branches `fix/autenticacao` do backend e do frontend, com o verificador leve no fim
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: chore/atualiza-dependencias (backend e frontend)
+- **Branch**: fix/autenticacao (backend e frontend)

@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/autenticacao/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada; design e tasks aprovados em 2026-09-28; execução em andamento
 
 ---
 
