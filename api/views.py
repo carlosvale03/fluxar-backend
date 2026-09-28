@@ -49,6 +49,8 @@ class RegisterView(generics.CreateAPIView):
     """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (CadastroIPThrottle,)
     serializer_class = UserRegisterSerializer
 
@@ -84,6 +86,8 @@ class CustomLoginView(TokenObtainPairView):
     Login customizado que retorna JWT com dados extras do usuário no payload.
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (LoginIPThrottle, LoginFalhasEmailThrottle)
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -92,6 +96,8 @@ class VerifyEmailView(APIView):
     Verifica o e-mail do usuário através do token recebido.
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (LinkIPThrottle,)
 
     @staticmethod
@@ -166,6 +172,8 @@ class ResendVerificationView(APIView):
     A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (ReenvioIPThrottle, ReenvioEmailThrottle)
 
     def post(self, request):
@@ -199,6 +207,8 @@ class ForgotPasswordView(APIView):
     exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (EsqueciSenhaIPThrottle, EsqueciSenhaEmailThrottle)
 
     def post(self, request):
@@ -234,6 +244,8 @@ class ResetPasswordView(APIView):
     Redefine a senha com um link de redefinição válido (AUTH-20 a AUTH-22).
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
     throttle_classes = (LinkIPThrottle,)
 
     LINK_INVALIDO = {"detail": "Link inválido ou expirado.", "code": "invalid_link"}

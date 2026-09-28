@@ -647,13 +647,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_rotas_publicas.py` chama as seis rotas com um token vencido e com um token malformado e confere que nenhuma responde 401
-- [ ] `/api/auth/me/` com o token vencido continua 401
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 7 testes
+- [x] `tests/autenticacao/test_rotas_publicas.py` chama as seis rotas com um token vencido e com um token malformado e confere que nenhuma responde 401
+- [x] `/api/auth/me/` com o token vencido continua 401
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 7 testes (real: +7 testes, suíte de 288 para 295)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): ignora token inválido nas rotas públicas de autenticação`
 
