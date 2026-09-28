@@ -248,13 +248,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_email_minusculo.py` cria "Ana@X.com" e confere "ana@x.com" gravado e o login com "ANA@X.COM"
-- [ ] Uma conta antiga "Caio@x.com" gravada à força continua entrando com o e-mail exato
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/autenticacao/test_email_minusculo.py` cria "Ana@X.com" e confere "ana@x.com" gravado e o login com "ANA@X.COM"
+- [x] Uma conta antiga "Caio@x.com" gravada à força continua entrando com o e-mail exato
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: +4 testes, suíte de 199 para 203)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): trata o e-mail sem diferença de maiúsculas`
 
