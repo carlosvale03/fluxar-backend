@@ -161,7 +161,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 3. **AUTH-33** WHEN um mesmo IP passa de 5 cadastros em 1 hora THEN o sistema SHALL responder HTTP 429 aos cadastros seguintes desse IP até completar a hora.
 4. **AUTH-34** WHEN "esqueci a senha" ou o reenvio de verificação passa de 3 pedidos em 1 hora para o mesmo e-mail, ou de 10 pedidos em 1 hora para o mesmo IP, THEN o sistema SHALL responder HTTP 429 aos pedidos seguintes até completar a hora.
 5. **AUTH-35** WHEN um mesmo IP passa de 20 tentativas em 1 hora de verificação de e-mail ou de redefinição por link THEN o sistema SHALL responder HTTP 429 às tentativas seguintes até completar a hora.
-6. **AUTH-36** WHEN o sistema responde HTTP 429 THEN o sistema SHALL incluir o cabeçalho `Retry-After` e a mensagem "Muitas tentativas. Tente novamente em N minutos.", e a interface SHALL exibir essa mensagem.
+6. **AUTH-36** WHEN o sistema responde HTTP 429 THEN o sistema SHALL incluir o cabeçalho `Retry-After` e a mensagem "Muitas tentativas. Tente novamente em N minutos." (ou "1 minuto", no singular), e a interface SHALL exibir essa mensagem.
 
 **Independent Test**: seis logins seguidos do mesmo IP em um minuto recebem 429 na sexta tentativa, com `Retry-After`; dez senhas erradas para o mesmo e-mail, vindas de IPs diferentes, bloqueiam também a senha certa até a hora fechar; o quarto "esqueci a senha" para o mesmo e-mail em uma hora recebe 429.
 

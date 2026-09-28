@@ -22,5 +22,6 @@ def exception_handler(exc, context):
     response = drf_exception_handler(exc, context)
     if isinstance(exc, exceptions.Throttled) and response is not None:
         minutos = max(1, math.ceil((exc.wait or 0) / 60))
-        response.data = {"detail": f"Muitas tentativas. Tente novamente em {minutos} minutos."}
+        unidade = "minuto" if minutos == 1 else "minutos"
+        response.data = {"detail": f"Muitas tentativas. Tente novamente em {minutos} {unidade}."}
     return response

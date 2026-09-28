@@ -176,7 +176,7 @@ graph TD
 
 ### Dados existentes
 
-- **Migração `api/migrations/0009_email_minusculo_e_pendentes`** (AUTH-43):
+- **Migração `api/migrations/0010_email_minusculo_e_pendentes`** (AUTH-43):
   - passa para minúsculas o e-mail das contas cujo e-mail em minúsculas não coincide com o de outra conta;
   - marca `is_active=True` nas contas com `email_verified=False` e `is_active=False`, que eram as pendentes no modelo antigo.
 - **Comando `check_email_case`** (AUTH-44): lista os grupos de contas cujos e-mails só diferem na caixa, com ID e e-mail mascarado, sem alterar nada.
@@ -199,7 +199,7 @@ graph TD
 
 ## Data Models (if applicable)
 
-Nenhuma mudança de esquema no `User` nem nos tokens. A migração 0009 só altera dados. A tabela de cache `fluxar_cache` é criada pelo `createcachetable`.
+Nenhuma mudança de esquema no `User` nem nos tokens. A migração 0010 só altera dados. A tabela de cache `fluxar_cache` é criada pelo `createcachetable`.
 
 Muda o significado dos campos de estado da conta:
 

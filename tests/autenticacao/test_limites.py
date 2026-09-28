@@ -290,8 +290,9 @@ class RespostaDoLimiteTests(APITestCase):
     def assertMensagem(self, resposta, retry_after, minutos):
         self.assertEqual(resposta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
         self.assertEqual(resposta.headers['Retry-After'], retry_after)
+        unidade = 'minuto' if minutos == 1 else 'minutos'
         self.assertEqual(
-            resposta.data, {'detail': f'Muitas tentativas. Tente novamente em {minutos} minutos.'},
+            resposta.data, {'detail': f'Muitas tentativas. Tente novamente em {minutos} {unidade}.'},
         )
 
     # AUTH-36 -----------------------------------------------------------

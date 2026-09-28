@@ -664,8 +664,8 @@ T28
 
 #### T19: Migração dos e-mails e das contas pendentes
 
-**What**: `api/migrations/0009_email_minusculo_e_pendentes.py`: e-mails em minúsculas quando não colidem, e contas pendentes do modelo antigo marcadas como ativas.
-**Where**: `api/migrations/0009_email_minusculo_e_pendentes.py`
+**What**: `api/migrations/0010_email_minusculo_e_pendentes.py`: e-mails em minúsculas quando não colidem, e contas pendentes do modelo antigo marcadas como ativas.
+**Where**: `api/migrations/0010_email_minusculo_e_pendentes.py`
 **Depends on**: None
 **Reuses**: ver a seção Code Reuse Analysis do design
 **Requirement**: AUTH-43
