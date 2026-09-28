@@ -184,13 +184,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_checagem_chave.py` confere erro para uma chave da lista (usando um hash de teste injetado), para `django-insecure-...` e nenhum erro para uma chave nova, com `DEBUG` desligado
-- [ ] Nenhuma chave aparece no código, nos testes nem na saída de comandos
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/autenticacao/test_checagem_chave.py` confere erro para uma chave da lista (usando um hash de teste injetado), para `django-insecure-...` e nenhum erro para uma chave nova, com `DEBUG` desligado
+- [x] Nenhuma chave aparece no código, nos testes nem na saída de comandos
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: +7 testes, suíte de 182 para 189)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): recusa a SECRET_KEY do histórico em produção`
 

@@ -3,6 +3,9 @@
 # Falhar o script se algum comando der erro
 set -e
 
+echo "📍 Conferindo a configuração de produção..."
+python manage.py check --deploy
+
 echo "📍 Rodando Migrations..."
 python manage.py migrate --noinput
 
