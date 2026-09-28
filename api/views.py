@@ -147,6 +147,38 @@ class VerifyEmailView(APIView):
             "refresh": str(refresh)
         }, status=status.HTTP_200_OK)
 
+class ResendVerificationView(APIView):
+    """
+    Envia um novo link de verificação para uma conta pendente.
+    A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
+    """
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = User.objects.get_by_natural_key(serializer.validated_data['email'])
+        except User.DoesNotExist:
+            user = None
+
+        # Pendente é e-mail não verificado numa conta ativa (AD-035)
+        if user is not None and user.is_active and not user.email_verified:
+            with transaction.atomic():
+                EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+                token = EmailVerificationToken.objects.create(
+                    user=user,
+                    expires_at=timezone.now() + timedelta(hours=24)
+                )
+            # A falha no envio fica no log do serviço de e-mail; a resposta não muda
+            send_verification_email(user, token)
+
+        return Response(
+            {"message": "Se houver uma conta aguardando verificação com este e-mail, enviamos um novo link."},
+            status=status.HTTP_200_OK,
+        )
+
 class ForgotPasswordView(APIView):
     """
     Solicita redefinição de senha (envia link por e-mail).

@@ -7,6 +7,7 @@ from .views import (
     MeView,
     ChangePasswordView,
     VerifyEmailView,
+    ResendVerificationView,
     ForgotPasswordView,
     ResetPasswordView,
     health_check,
@@ -29,6 +30,7 @@ urlpatterns = [
     path('auth/login/', CustomLoginView.as_view(), name='auth_login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth_refresh'),
     path('auth/verify-email/', VerifyEmailView.as_view(), name='auth_verify_email'),
+    path('auth/resend-verification/', ResendVerificationView.as_view(), name='auth_resend_verification'),
     path('auth/forgot-password/', ForgotPasswordView.as_view(), name='auth_forgot_password'),
     path('auth/reset-password/', ResetPasswordView.as_view(), name='auth_reset_password'),
 

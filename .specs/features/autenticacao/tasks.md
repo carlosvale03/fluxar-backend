@@ -361,13 +361,14 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_reenvio.py` confere o link novo válido e o antigo recusado para conta pendente
-- [ ] E-mail inexistente e conta já verificada recebem a mesma resposta, sem envio
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/autenticacao/test_reenvio.py` confere o link novo válido e o antigo recusado para conta pendente
+- [x] E-mail inexistente e conta já verificada recebem a mesma resposta, sem envio
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: +5 testes, suíte de 229 para 234)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): adiciona o reenvio do e-mail de verificação`
 
