@@ -85,3 +85,20 @@ class LoginTests(APITestCase):
         User.objects.filter(pk=self.pendente.pk).update(is_active=False)
 
         self.assertRecusado(self.entrar('pendente@fluxar.teste', SENHA), CONTA_DESATIVADA)
+
+
+class RotaAntigaDeLoginTests(APITestCase):
+
+    # AUTH-17 -----------------------------------------------------------
+
+    def test_rota_antiga_responde_404_mesmo_com_credenciais_certas(self):
+        User.objects.create_user(
+            email='verificada@fluxar.teste', password=SENHA, name='Verificada', email_verified=True,
+        )
+
+        resposta = self.client.post(
+            '/api/token/', {'email': 'verificada@fluxar.teste', 'password': SENHA}, format='json',
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertNotIn(b'access', resposta.content)

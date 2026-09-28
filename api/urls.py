@@ -1,6 +1,5 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
-from .serializers_auth import CustomTokenObtainPairView
 from .views import (
     RegisterView,
     CustomLoginView,
@@ -57,7 +56,4 @@ urlpatterns = [
     path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
     path('admin/settings/', AdminSystemSettingsView.as_view(), name='admin_settings'),
     path('admin/logs/', AdminGlobalLogsView.as_view(), name='admin-logs'),
-
-    # JWT (Standard + Custom Claims)
-    path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
 ]

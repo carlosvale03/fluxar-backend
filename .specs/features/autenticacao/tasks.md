@@ -475,12 +475,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/test_login.py` confere 404 em `POST /api/token/`
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 1 teste
+- [x] `tests/autenticacao/test_login.py` confere 404 em `POST /api/token/`
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 1 teste (real: +1 teste, suíte de 247 para 248)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): remove a rota antiga de login`
 
