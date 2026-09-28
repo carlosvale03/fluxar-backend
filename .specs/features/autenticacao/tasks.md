@@ -763,12 +763,13 @@ T28
 
 **Done when**:
 
-- [ ] `tests/autenticacao/resend-verification.test.tsx` confere a chamada com o e-mail, a mensagem neutra no sucesso e a mensagem do 429
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/autenticacao/resend-verification.test.tsx` confere a chamada com o e-mail, a mensagem neutra no sucesso e a mensagem do 429
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: +3 testes, frontend de 12 para 15)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): adiciona o reenvio do e-mail de verificação`
 
