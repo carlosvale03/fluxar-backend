@@ -4,10 +4,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
+import uuid
 from .serializers import (
+    EMAIL_JA_CADASTRADO,
     UserRegisterSerializer,
     UserProfileSerializer,
     UserAvatarSerializer,
@@ -21,7 +24,17 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
-from .utils.email_service import send_verification_email, send_password_reset_email
+from core.throttles import (
+    CadastroIPThrottle,
+    EsqueciSenhaEmailThrottle,
+    EsqueciSenhaIPThrottle,
+    LinkIPThrottle,
+    LoginFalhasEmailThrottle,
+    LoginIPThrottle,
+    ReenvioEmailThrottle,
+    ReenvioIPThrottle,
+)
+from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 import logging
 
 User = get_user_model()
@@ -36,38 +49,46 @@ class RegisterView(generics.CreateAPIView):
     """
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (CadastroIPThrottle,)
     serializer_class = UserRegisterSerializer
 
-    def perform_create(self, serializer):
-        user = serializer.save()
-        # Define como inativo até confirmar e-mail
-        user.is_active = False
-        user.save()
-        
-        # Cria token de verificação e envia e-mail
-        token = EmailVerificationToken.objects.create(
-            user=user,
-            expires_at=timezone.now() + timedelta(hours=24)
-        )
-        
-        # Envio assíncrono para evitar timeout no Render
-        import threading
-        email_thread = threading.Thread(
-            target=send_verification_email,
-            args=(user, token)
-        )
-        email_thread.start()
-        logger.warning(
-            "Thread de email de verificacao iniciada para %s (token=%s)",
-            user.email,
-            str(token.token)[:8],
-        )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # A conta nasce pendente: email_verified=False e is_active=True (AD-035)
+        try:
+            with transaction.atomic():
+                user = serializer.save()
+                token = EmailVerificationToken.objects.create(
+                    user=user,
+                    expires_at=timezone.now() + timedelta(hours=24)
+                )
+        except IntegrityError:
+            # Outro cadastro gravou o mesmo e-mail depois da validação (AUTH-06)
+            return Response({"email": [EMAIL_JA_CADASTRADO]}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Envio na própria requisição; a falha não desfaz o cadastro (AD-011)
+        email_sent = send_verification_email(user, token)
+        if email_sent:
+            message = "Conta criada. Enviamos um link de verificação para o seu e-mail."
+        else:
+            message = (
+                'Conta criada, mas não conseguimos enviar o e-mail de verificação. '
+                'Use "Reenviar e-mail".'
+            )
+        return Response({"message": message, "email_sent": email_sent}, status=status.HTTP_201_CREATED)
 
 class CustomLoginView(TokenObtainPairView):
     """
     Login customizado que retorna JWT com dados extras do usuário no payload.
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (LoginIPThrottle, LoginFalhasEmailThrottle)
     serializer_class = CustomTokenObtainPairSerializer
 
 class VerifyEmailView(APIView):
@@ -75,28 +96,52 @@ class VerifyEmailView(APIView):
     Verifica o e-mail do usuário através do token recebido.
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (LinkIPThrottle,)
+
+    @staticmethod
+    def _token_valido(token_str):
+        """
+        Devolve o token só se ele existir, não tiver sido usado, não tiver
+        vencido e for o mais recente do usuário (AUTH-09).
+        """
+        if not token_str:
+            return None
+        try:
+            uuid.UUID(str(token_str))
+        except ValueError:
+            return None
+        token = EmailVerificationToken.objects.filter(token=token_str).select_related('user').first()
+        if token is None or not token.is_valid():
+            return None
+        mais_recente = (
+            EmailVerificationToken.objects.filter(user=token.user).order_by('-created_at', '-pk').first()
+        )
+        if mais_recente.pk != token.pk:
+            return None
+        return token
 
     def get(self, request):
-        token_str = request.query_params.get('token')
-        if not token_str:
-            return Response({"error": "Token não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
+        token = self._token_valido(request.query_params.get('token'))
+        if token is None:
+            return Response(
+                {"detail": "Link inválido ou expirado.", "code": "invalid_link"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        try:
-            token = EmailVerificationToken.objects.get(token=token_str)
-        except EmailVerificationToken.DoesNotExist:
-             return Response({"error": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
+        # Confirma o e-mail sem mexer em is_active: uma conta desativada pelo
+        # administrador continua desativada (AD-035)
+        # O link vale uma vez só, mesmo com duas aberturas simultâneas
+        if not EmailVerificationToken.objects.filter(pk=token.pk, used=False).update(used=True):
+            return Response(
+                {"detail": "Link inválido ou expirado.", "code": "invalid_link"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if not token.is_valid():
-            return Response({"error": "Token expirado ou já utilizado."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Atualiza usuário e token
         user = token.user
         user.email_verified = True
-        user.is_active = True # Ativa a conta
-        user.save()
-
-        token.used = True
-        token.save()
+        user.save(update_fields=['email_verified'])
 
         # Registra a ação no log
         SystemLog.objects.create(
@@ -105,6 +150,15 @@ class VerifyEmailView(APIView):
             description=f"E-mail verificado com sucesso via token.",
             admin_name="Sistema"
         )
+
+        if not user.is_active:
+            # SPEC_DEVIATION: a spec não define a verificação de uma conta desativada.
+            # Reason: devolver tokens daria sessão a uma conta que o administrador
+            # desativou; a resposta usa a mesma mensagem do login (AUTH-16).
+            return Response(
+                {"detail": "Esta conta está desativada.", "code": "account_disabled"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Gera tokens para login automático
         from rest_framework_simplejwt.tokens import RefreshToken
@@ -116,81 +170,122 @@ class VerifyEmailView(APIView):
             "refresh": str(refresh)
         }, status=status.HTTP_200_OK)
 
-class ForgotPasswordView(APIView):
+class ResendVerificationView(APIView):
     """
-    Solicita redefinição de senha (envia link por e-mail).
+    Envia um novo link de verificação para uma conta pendente.
+    A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (ReenvioIPThrottle, ReenvioEmailThrottle)
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            try:
-                user = User.objects.get(email=email)
-                # Invalida tokens anteriores não usados (opcional, mas boa prática)
-                PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+        serializer.is_valid(raise_exception=True)
 
+        try:
+            user = User.objects.get_by_natural_key(serializer.validated_data['email'])
+        except User.DoesNotExist:
+            user = None
+
+        # Pendente é e-mail não verificado numa conta ativa (AD-035)
+        if user is not None and user.is_active and not user.email_verified:
+            with transaction.atomic():
+                EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+                token = EmailVerificationToken.objects.create(
+                    user=user,
+                    expires_at=timezone.now() + timedelta(hours=24)
+                )
+            # A falha no envio fica no log do serviço de e-mail; a resposta não muda
+            send_verification_email(user, token)
+
+        return Response(
+            {"message": "Se houver uma conta aguardando verificação com este e-mail, enviamos um novo link."},
+            status=status.HTTP_200_OK,
+        )
+
+class ForgotPasswordView(APIView):
+    """
+    Envia um link de redefinição de senha. A resposta é sempre a mesma,
+    exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (EsqueciSenhaIPThrottle, EsqueciSenhaEmailThrottle)
+
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = User.objects.get_by_natural_key(serializer.validated_data['email'])
+        except User.DoesNotExist:
+            user = None
+
+        # Vale também para a conta desativada; a redefinição não a reativa (AUTH-20)
+        if user is not None:
+            with transaction.atomic():
+                PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
                 token = PasswordResetToken.objects.create(
                     user=user,
                     expires_at=timezone.now() + timedelta(hours=1)
                 )
-                
-                # Envio assíncrono para evitar timeout no Render
-                import threading
-                email_thread = threading.Thread(
-                    target=send_password_reset_email,
-                    args=(user, token)
-                )
-                email_thread.start()
+            # Envio na própria requisição (AD-011)
+            if not send_password_reset_email(user, token):
                 logger.warning(
-                    "Thread de email de reset iniciada para %s (token=%s)",
-                    user.email,
-                    str(token.token)[:8],
+                    "Redefinição de senha não enviada destinatario=%s", _mask_email(user.email),
                 )
-            except User.DoesNotExist:
-                # Para não revelar emails cadastrados, fingimos sucesso
-                logger.warning(
-                    "Solicitacao de reset recebida para email nao cadastrado: %s",
-                    email,
-                )
-            
-            return Response({"message": "Se o e-mail existir, um link de recuperação foi enviado."}, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"message": "Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha."},
+            status=status.HTTP_200_OK,
+        )
 
 class ResetPasswordView(APIView):
     """
-    Redefine a senha usando o token recebido.
+    Redefine a senha com um link de redefinição válido (AUTH-20 a AUTH-22).
     """
     permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+    throttle_classes = (LinkIPThrottle,)
+
+    LINK_INVALIDO = {"detail": "Link inválido ou expirado.", "code": "invalid_link"}
+
+    @staticmethod
+    def _token_valido(token_str):
+        """Devolve o token só se ele existir, não tiver sido usado e não tiver vencido."""
+        try:
+            valor = uuid.UUID(str(token_str))
+        except ValueError:
+            return None
+        token = PasswordResetToken.objects.filter(token=valor).select_related('user').first()
+        if token is None or not token.is_valid():
+            return None
+        return token
 
     def post(self, request):
-        serializer = ResetPasswordSerializer(data=request.data)
-        if serializer.is_valid():
-            token_str = serializer.validated_data['token']
-            new_password = serializer.validated_data['new_password']
+        token = self._token_valido(request.data.get('token'))
+        if token is None:
+            return Response(self.LINK_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
 
-            try:
-                token = PasswordResetToken.objects.get(token=token_str)
-            except PasswordResetToken.DoesNotExist:
-                return Response({"token": ["Token inválido."]}, status=status.HTTP_400_BAD_REQUEST)
+        user = token.user
+        serializer = ResetPasswordSerializer(data=request.data, context={'user': user})
+        serializer.is_valid(raise_exception=True)
 
-            if not token.is_valid():
-                return Response({"token": ["Token expirado ou já utilizado."]}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            # Marca o uso só se ninguém o marcou antes, para o link valer uma vez
+            if not PasswordResetToken.objects.filter(pk=token.pk, used=False).update(used=True):
+                return Response(self.LINK_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(serializer.validated_data['new_password'])
+            # Confirma o e-mail sem mexer em is_active: a conta desativada
+            # continua desativada (AUTH-20, AD-035)
+            user.email_verified = True
+            user.save(update_fields=['password', 'email_verified'])
 
-            # Redefine senha
-            user = token.user
-            user.set_password(new_password)
-            user.save()
-
-            # Invalida token
-            token.used = True
-            token.save()
-
-            return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
 class MeView(APIView):
     """

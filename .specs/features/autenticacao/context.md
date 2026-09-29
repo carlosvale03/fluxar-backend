@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/autenticacao/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada; implementada e verificada em 2026-09-28 (validation.md: PASS)
 
 ---
 

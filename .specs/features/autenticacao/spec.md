@@ -161,7 +161,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 3. **AUTH-33** WHEN um mesmo IP passa de 5 cadastros em 1 hora THEN o sistema SHALL responder HTTP 429 aos cadastros seguintes desse IP até completar a hora.
 4. **AUTH-34** WHEN "esqueci a senha" ou o reenvio de verificação passa de 3 pedidos em 1 hora para o mesmo e-mail, ou de 10 pedidos em 1 hora para o mesmo IP, THEN o sistema SHALL responder HTTP 429 aos pedidos seguintes até completar a hora.
 5. **AUTH-35** WHEN um mesmo IP passa de 20 tentativas em 1 hora de verificação de e-mail ou de redefinição por link THEN o sistema SHALL responder HTTP 429 às tentativas seguintes até completar a hora.
-6. **AUTH-36** WHEN o sistema responde HTTP 429 THEN o sistema SHALL incluir o cabeçalho `Retry-After` e a mensagem "Muitas tentativas. Tente novamente em N minutos.", e a interface SHALL exibir essa mensagem.
+6. **AUTH-36** WHEN o sistema responde HTTP 429 THEN o sistema SHALL incluir o cabeçalho `Retry-After` e a mensagem "Muitas tentativas. Tente novamente em N minutos." (ou "1 minuto", no singular), e a interface SHALL exibir essa mensagem.
 
 **Independent Test**: seis logins seguidos do mesmo IP em um minuto recebem 429 na sexta tentativa, com `Retry-After`; dez senhas erradas para o mesmo e-mail, vindas de IPs diferentes, bloqueiam também a senha certa até a hora fechar; o quarto "esqueci a senha" para o mesmo e-mail em uma hora recebe 429.
 
@@ -245,52 +245,52 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AUTH-01 | P1: Cadastro | - | Pending |
-| AUTH-02 | P1: Cadastro | - | Pending |
-| AUTH-03 | P1: Cadastro | - | Pending |
-| AUTH-04 | P1: Cadastro | - | Pending |
-| AUTH-05 | P1: Cadastro | - | Pending |
-| AUTH-06 | P1: Cadastro | - | Pending |
-| AUTH-07 | P1: Cadastro | - | Pending |
-| AUTH-08 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-09 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-10 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-11 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-12 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-13 | P1: Verificação de e-mail e conta não verificada | - | Pending |
-| AUTH-14 | P1: Login | - | Pending |
-| AUTH-15 | P1: Login | - | Pending |
-| AUTH-16 | P1: Login | - | Pending |
-| AUTH-17 | P1: Login | - | Pending |
-| AUTH-18 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-19 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-20 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-21 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-22 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-23 | P1: Esqueci a senha e redefinição | - | Pending |
-| AUTH-24 | P1: E-mails transacionais | - | Pending |
-| AUTH-25 | P1: E-mails transacionais | - | Pending |
-| AUTH-26 | P1: E-mails transacionais | - | Pending |
-| AUTH-27 | P1: E-mails transacionais | - | Pending |
-| AUTH-28 | P1: E-mails transacionais | - | Pending |
-| AUTH-29 | P1: E-mails transacionais | - | Pending |
-| AUTH-30 | P1: E-mails transacionais | - | Pending |
-| AUTH-31 | P1: Limites de tentativas | - | Pending |
-| AUTH-32 | P1: Limites de tentativas | - | Pending |
-| AUTH-33 | P1: Limites de tentativas | - | Pending |
-| AUTH-34 | P1: Limites de tentativas | - | Pending |
-| AUTH-35 | P1: Limites de tentativas | - | Pending |
-| AUTH-36 | P1: Limites de tentativas | - | Pending |
-| AUTH-37 | P1: Configuração dos tokens | - | Pending |
-| AUTH-38 | P1: Configuração dos tokens | - | Pending |
-| AUTH-39 | P1: Configuração dos tokens | - | Pending |
-| AUTH-40 | P1: Rotas públicas sem sessão | - | Pending |
-| AUTH-41 | P1: Rotas públicas sem sessão | - | Pending |
-| AUTH-42 | P2: Implantação e dados existentes | - | Pending |
-| AUTH-43 | P2: Implantação e dados existentes | - | Pending |
-| AUTH-44 | P2: Implantação e dados existentes | - | Pending |
+| AUTH-01 | P1: Cadastro | T7 | Verified |
+| AUTH-02 | P1: Cadastro | T5 | Verified |
+| AUTH-03 | P1: Cadastro | T6, T7 | Verified |
+| AUTH-04 | P1: Cadastro | T6, T29 | Verified |
+| AUTH-05 | P1: Cadastro | T6 | Verified |
+| AUTH-06 | P1: Cadastro | T7 | Verified |
+| AUTH-07 | P1: Cadastro | T23, T29 | Verified |
+| AUTH-08 | P1: Verificação de e-mail e conta não verificada | T8 | Verified |
+| AUTH-09 | P1: Verificação de e-mail e conta não verificada | T8, T25 | Verified |
+| AUTH-10 | P1: Verificação de e-mail e conta não verificada | T9, T22 | Verified |
+| AUTH-11 | P1: Verificação de e-mail e conta não verificada | T9, T22 | Verified |
+| AUTH-12 | P1: Verificação de e-mail e conta não verificada | T10 | Verified |
+| AUTH-13 | P1: Verificação de e-mail e conta não verificada | T11, T24 | Verified |
+| AUTH-14 | P1: Login | T11 | Verified |
+| AUTH-15 | P1: Login | T11 | Verified |
+| AUTH-16 | P1: Login | T11 | Verified |
+| AUTH-17 | P1: Login | T12 | Verified |
+| AUTH-18 | P1: Esqueci a senha e redefinição | T13, T27 | Verified |
+| AUTH-19 | P1: Esqueci a senha e redefinição | T13 | Verified |
+| AUTH-20 | P1: Esqueci a senha e redefinição | T14 | Verified |
+| AUTH-21 | P1: Esqueci a senha e redefinição | T14, T26 | Verified |
+| AUTH-22 | P1: Esqueci a senha e redefinição | T14, T26 | Verified |
+| AUTH-23 | P1: Esqueci a senha e redefinição | T26 | Verified |
+| AUTH-24 | P1: E-mails transacionais | T4 | Verified |
+| AUTH-25 | P1: E-mails transacionais | T4 | Verified |
+| AUTH-26 | P1: E-mails transacionais | T7, T23 | Verified |
+| AUTH-27 | P1: E-mails transacionais | T13 | Verified |
+| AUTH-28 | P1: E-mails transacionais | T4 | Verified |
+| AUTH-29 | P1: E-mails transacionais | T4 | Verified |
+| AUTH-30 | P1: E-mails transacionais | T4 | Verified |
+| AUTH-31 | P1: Limites de tentativas | T15 | Verified |
+| AUTH-32 | P1: Limites de tentativas | T16 | Verified |
+| AUTH-33 | P1: Limites de tentativas | T15 | Verified |
+| AUTH-34 | P1: Limites de tentativas | T15, T16 | Verified |
+| AUTH-35 | P1: Limites de tentativas | T15 | Verified |
+| AUTH-36 | P1: Limites de tentativas | T17, T21, T24, T27 | Verified |
+| AUTH-37 | P1: Configuração dos tokens | T2 | Verified |
+| AUTH-38 | P1: Configuração dos tokens | T2 | Verified |
+| AUTH-39 | P1: Configuração dos tokens | T2 | Verified |
+| AUTH-40 | P1: Rotas públicas sem sessão | T18 | Verified |
+| AUTH-41 | P1: Rotas públicas sem sessão | T21 | Verified |
+| AUTH-42 | P2: Implantação e dados existentes | T3 | Verified |
+| AUTH-43 | P2: Implantação e dados existentes | T19 | Verified |
+| AUTH-44 | P2: Implantação e dados existentes | T20 | Verified |
 
-**Coverage:** 44 total, 0 mapped to tasks, 44 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 44 total, 44 mapped to tasks, 0 unmapped
 
 ---
 

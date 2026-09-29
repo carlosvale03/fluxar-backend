@@ -5,6 +5,19 @@ from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
 class UserManager(BaseUserManager):
+    @classmethod
+    def normalize_email(cls, email):
+        # O e-mail é o mesmo em qualquer caixa e fica guardado em minúsculas (AUTH-02)
+        return super().normalize_email(email).lower()
+
+    def get_by_natural_key(self, email):
+        # Busca primeiro em minúsculas; o exato cobre as contas antigas que só
+        # diferem na caixa e aguardam resolução manual (AUTH-44)
+        try:
+            return self.get(email=email.lower())
+        except self.model.DoesNotExist:
+            return self.get(email=email)
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('O endereço de e-mail é obrigatório')
@@ -35,8 +48,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    # Os nomes aparecem nas mensagens do validador de senha parecida (AUTH-04)
+    name = models.CharField('nome', max_length=255)
+    email = models.EmailField('e-mail', unique=True)
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='COMMON')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER')
     email_verified = models.BooleanField(default=False)

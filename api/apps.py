@@ -6,3 +6,4 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         import api.signals
+        import core.checks  # noqa: F401  registra a checagem da SECRET_KEY

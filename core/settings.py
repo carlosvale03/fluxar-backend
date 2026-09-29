@@ -3,6 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv()
 
@@ -13,11 +14,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', '0') == '1'
+
+
+def obrigatoria_em_producao(nome, valor_de_desenvolvimento):
+    """
+    Lê uma variável que a produção precisa ter (AD-012). Vazia ou só com
+    espaços conta como ausente. Com DEBUG ligado, a falta usa o valor de
+    desenvolvimento; com DEBUG desligado, interrompe a inicialização.
+    """
+    valor = os.getenv(nome, '').strip()
+    if valor:
+        return valor
+    if DEBUG:
+        return valor_de_desenvolvimento
+    raise ImproperlyConfigured(
+        f'A variável de ambiente {nome} é obrigatória com DEBUG desligado.'
+    )
+
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = obrigatoria_em_producao('SECRET_KEY', 'django-insecure-fallback-key')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
@@ -109,7 +127,10 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'api.validators.SenhaParecidaValidator',
+        # O padrão procura username, first_name e last_name, que o User do
+        # Fluxar não tem; sem isto a senha parecida com o nome passaria (AUTH-04)
+        'OPTIONS': {'user_attributes': ('name', 'email')},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
@@ -126,7 +147,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'UTC'
 
@@ -178,18 +199,51 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'EXCEPTION_HANDLER': 'core.exceptions.exception_handler',
+    # Quantos proxies ficam na frente do app; o IP do cliente usado nos
+    # limites de tentativas vem do X-Forwarded-For com base nesse número.
+    'NUM_PROXIES': int(os.getenv('NUM_PROXIES', '1')),
 }
 
-CORS_ALLOWED_ORIGINS_ENV = os.getenv('CORS_ALLOWED_ORIGINS')
-
-if CORS_ALLOWED_ORIGINS_ENV:
-    CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS_ENV.split(',')
-    CORS_ALLOW_ALL_ORIGINS = False
-else:
-    CORS_ALLOW_ALL_ORIGINS = True
+# Sem a lista, nenhuma origem é liberada (AD-012)
+CORS_ALLOWED_ORIGINS = [
+    origem.strip()
+    for origem in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origem.strip()
+]
+CORS_ALLOW_ALL_ORIGINS = False
 
 # Frontend URL used in transactional email links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+FRONTEND_URL = obrigatoria_em_producao('FRONTEND_URL', 'http://localhost:3000')
+
+# Contadores dos limites de tentativas, compartilhados entre os workers.
+# A tabela é criada pelo `createcachetable` no entrypoint.sh.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'fluxar_cache',
+    }
+}
+
+# Logs no console, para os registros de e-mail aparecerem no Render
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'api': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}
 
 
 SIMPLE_JWT = {

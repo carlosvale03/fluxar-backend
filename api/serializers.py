@@ -1,25 +1,75 @@
-from rest_framework import serializers
+from rest_framework import exceptions, serializers, status
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth import password_validation
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
+
+from core.throttles import LoginFalhasEmailThrottle
 
 User = get_user_model()
 
+EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
+TERMOS_OBRIGATORIOS = 'É preciso aceitar os termos de uso.'
+NOME_OBRIGATORIO = 'Informe o nome.'
+
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    name = serializers.CharField(
+        max_length=255,
+        error_messages={
+            'required': NOME_OBRIGATORIO,
+            'blank': NOME_OBRIGATORIO,
+            'null': NOME_OBRIGATORIO,
+            'max_length': 'O nome pode ter no máximo 255 caracteres.',
+        },
+    )
+    # Declarado aqui para trocar o UniqueValidator do modelo, que compara com
+    # a caixa exata, pela conferência sem caixa de validate_email (AUTH-02, AUTH-03)
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(write_only=True, required=True)
     password_confirm = serializers.CharField(write_only=True, required=True)
+    terms_accepted = serializers.BooleanField(
+        required=True,
+        error_messages={'required': TERMOS_OBRIGATORIOS, 'null': TERMOS_OBRIGATORIOS},
+    )
 
     class Meta:
         model = User
         fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted')
-        extra_kwargs = {
-            'terms_accepted': {'required': True}
-        }
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError({"password": "As senhas não coincidem."})
-        return attrs
+    def validate_email(self, value):
+        email = User.objects.normalize_email(value)
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError(EMAIL_JA_CADASTRADO)
+        return email
+
+    def validate_terms_accepted(self, value):
+        if value is not True:
+            raise serializers.ValidationError(TERMOS_OBRIGATORIOS)
+        return value
+
+    def validate_password(self, value):
+        # Validada no próprio campo, para o erro da senha aparecer mesmo quando
+        # outro campo também falha (AUTH-04, AUTH-07)
+        confirmacao = self.initial_data.get('password_confirm')
+        if confirmacao is not None and confirmacao != value:
+            raise serializers.ValidationError("As senhas não coincidem.")
+        # Um usuário temporário, sem gravar, para o validador comparar a senha
+        # com o nome e o e-mail como vieram no pedido
+        nome = self.initial_data.get('name')
+        email = self.initial_data.get('email')
+        candidato = User(
+            name=nome if isinstance(nome, str) else '',
+            email=email if isinstance(email, str) else '',
+        )
+        try:
+            password_validation.validate_password(value, user=candidato)
+        except DjangoValidationError as erro:
+            raise serializers.ValidationError(list(erro.messages))
+        return value
 
     def create(self, validated_data):
         # Remove o campo de confirmação antes de criar
@@ -124,30 +174,55 @@ class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
+class LoginRecusado(exceptions.APIException):
+    """
+    HTTP 400 com `detail` e `code` no corpo (AD-024). Um ValidationError do
+    serializer poria cada valor numa lista.
+    """
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, detail, code):
+        super().__init__({"detail": detail, "code": code})
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Customiza o payload do JWT para incluir dados extras do usuário no token
-    e fornece mensagens de erro claras para contas inativas.
+    Login por e-mail e senha, com dados extras do usuário no token.
+
+    A senha é conferida antes do estado da conta: o aviso de conta desativada
+    ou pendente só aparece com a senha correta (AUTH-13 a AUTH-16).
     """
     def validate(self, attrs):
+        email = attrs[self.username_field]
+        senha = attrs['password']
+
         try:
-            # Tenta autenticar normalmente via SimpleJWT
-            data = super().validate(attrs)
-            return data
-        except Exception as e:
-            # Se a autenticação falhou, vamos investigar se o usuário existe mas está inativo
-            email = attrs.get("email") or attrs.get("username")
-            user = User.objects.filter(email=email).first()
-            
-            if user and not user.is_active:
-                raise serializers.ValidationError({
-                    "detail": "Sua conta ainda não foi ativada. Por favor, verifique seu e-mail para confirmar seu cadastro."
-                })
-            
-            # Se não for caso de conta inativa, relança o erro original (ou genérico)
-            raise serializers.ValidationError({
-                "detail": "E-mail ou senha incorretos. Verifique suas credenciais."
-            })
+            user = User.objects.get_by_natural_key(email)
+        except User.DoesNotExist:
+            user = None
+
+        if user is None:
+            # Gera um hash à toa, para o tempo de resposta não revelar se a conta existe
+            make_password(senha)
+            senha_certa = False
+        else:
+            senha_certa = user.check_password(senha)
+
+        if not senha_certa:
+            # Só a falha conta para o limite por e-mail (AUTH-32)
+            LoginFalhasEmailThrottle().registrar_falha(email)
+            raise LoginRecusado("E-mail ou senha incorretos.", "invalid_credentials")
+
+        if not user.is_active:
+            raise LoginRecusado("Esta conta está desativada.", "account_disabled")
+        if not user.email_verified:
+            raise LoginRecusado("Confirme seu e-mail para entrar.", "email_not_verified")
+
+        self.user = user
+        refresh = self.get_token(user)
+        if jwt_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, user)
+        return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
     @classmethod
     def get_token(cls, user):
@@ -165,14 +240,22 @@ class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 class ResetPasswordSerializer(serializers.Serializer):
-    token = serializers.UUIDField(required=True)
-    new_password = serializers.CharField(required=True, validators=[validate_password])
+    """
+    Senha nova da redefinição por link. O link é conferido na view, que passa
+    o dono dele em context['user'] para o validador de senha parecida (AUTH-22).
+    """
+    new_password = serializers.CharField(required=True)
     new_password_confirm = serializers.CharField(required=True)
 
-    def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password_confirm']:
-            raise serializers.ValidationError({"new_password": "As senhas não coincidem."})
-        return attrs
+    def validate_new_password(self, value):
+        confirmacao = self.initial_data.get('new_password_confirm')
+        if confirmacao is not None and confirmacao != value:
+            raise serializers.ValidationError("As senhas não coincidem.")
+        try:
+            password_validation.validate_password(value, user=self.context['user'])
+        except DjangoValidationError as erro:
+            raise serializers.ValidationError(list(erro.messages))
+        return value
 
 class SystemLogSerializer(serializers.ModelSerializer):
     class Meta:

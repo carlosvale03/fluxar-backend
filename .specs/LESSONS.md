@@ -74,6 +74,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: N03 accounts/services.py:135 (test_pagamento_fatura.py:27) (tests) (+1 more)
 - last seen: 2026-09-27T20:27:25Z
 
+### L-011 - When code adds a SPEC_DEVIATION, pin its full documented response (status, code and side effects) in the test, not only the absence of the forbidden outcome
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: autenticacao
+- evidence: SPEC_DEVIATION api/views.py:151; tests/autenticacao/test_verificacao.py:61 (tests)
+- last seen: 2026-09-28T21:22:00Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
