@@ -160,33 +160,33 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SESSAO-01 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-02 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-03 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-04 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-05 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-06 | P1: Onde os tokens ficam | - | Pending |
-| SESSAO-07 | P1: Duração e renovação | - | Pending |
-| SESSAO-08 | P1: Duração e renovação | - | Pending |
-| SESSAO-09 | P1: Duração e renovação | - | Pending |
-| SESSAO-10 | P1: Duração e renovação | - | Pending |
-| SESSAO-11 | P1: Duração e renovação | - | Pending |
-| SESSAO-12 | P1: Duração e renovação | - | Pending |
-| SESSAO-13 | P1: Fim da sessão | - | Pending |
-| SESSAO-14 | P1: Fim da sessão | - | Pending |
-| SESSAO-15 | P1: Fim da sessão | - | Pending |
-| SESSAO-16 | P1: Fim da sessão | - | Pending |
-| SESSAO-17 | P1: Fim da sessão | - | Pending |
-| SESSAO-18 | P1: Fim da sessão | - | Pending |
-| SESSAO-19 | P1: Modo manutenção | - | Pending |
-| SESSAO-20 | P1: Modo manutenção | - | Pending |
-| SESSAO-21 | P1: Modo manutenção | - | Pending |
-| SESSAO-22 | P1: Modo manutenção | - | Pending |
-| SESSAO-23 | P1: Modo manutenção | - | Pending |
-| SESSAO-24 | P1: Modo manutenção | - | Pending |
-| SESSAO-25 | P1: Modo manutenção | - | Pending |
+| SESSAO-01 | P1: Onde os tokens ficam | T3, T4, T19 | Pending |
+| SESSAO-02 | P1: Onde os tokens ficam | T14, T19 | Pending |
+| SESSAO-03 | P1: Onde os tokens ficam | T17 | Pending |
+| SESSAO-04 | P1: Onde os tokens ficam | T3, T5, T6 | Pending |
+| SESSAO-05 | P1: Onde os tokens ficam | T13 | Pending |
+| SESSAO-06 | P1: Onde os tokens ficam | T14 | Pending |
+| SESSAO-07 | P1: Duração e renovação | T1 | Pending |
+| SESSAO-08 | P1: Duração e renovação | T1, T5 | Pending |
+| SESSAO-09 | P1: Duração e renovação | T1, T5 | Pending |
+| SESSAO-10 | P1: Duração e renovação | T15 | Pending |
+| SESSAO-11 | P1: Duração e renovação | T15 | Pending |
+| SESSAO-12 | P1: Duração e renovação | T16, T17 | Pending |
+| SESSAO-13 | P1: Fim da sessão | T6, T18 | Pending |
+| SESSAO-14 | P1: Fim da sessão | T18 | Pending |
+| SESSAO-15 | P1: Fim da sessão | T7 | Pending |
+| SESSAO-16 | P1: Fim da sessão | T8 | Pending |
+| SESSAO-17 | P1: Fim da sessão | T2, T9 | Pending |
+| SESSAO-18 | P1: Fim da sessão | T2 | Pending |
+| SESSAO-19 | P1: Modo manutenção | T11 | Pending |
+| SESSAO-20 | P1: Modo manutenção | T11 | Pending |
+| SESSAO-21 | P1: Modo manutenção | T20 | Pending |
+| SESSAO-22 | P1: Modo manutenção | T20 | Pending |
+| SESSAO-23 | P1: Modo manutenção | T12 | Pending |
+| SESSAO-24 | P1: Modo manutenção | T10 | Pending |
+| SESSAO-25 | P1: Modo manutenção | T10 | Pending |
 
-**Coverage:** 25 total, 0 mapped to tasks, 25 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 25 total, 25 mapped to tasks, 0 unmapped
 
 ---
 

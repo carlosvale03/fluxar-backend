@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/sessao/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada; design e tasks aprovados em 2026-09-30; execução em andamento
 
 ---
 

@@ -282,14 +282,29 @@
 - **Date**: 2026-09-27
 - **Status**: active
 
+### AD-036
+- **Decision**: O frontend chama a API por `/api` na própria origem, e o Next.js faz o rewrite para o Render (`BACKEND_URL` na Vercel). Toda chamada nova usa o `apiClient`.
+- **Reason**: decisão do usuário. Com a página e a API na mesma origem, o cookie de renovação é de primeira parte em qualquer navegador, sem domínio próprio (AD-013).
+- **Trade-off**: um salto a mais em cada requisição, e o proxy da Vercel tem tempo máximo; com o Render dormindo, a primeira requisição pode receber 504 da Vercel.
+- **Scope**: frontend inteiro, sessao e a infraestrutura de deploy.
+- **Date**: 2026-09-30
+- **Status**: active
+
+### AD-037
+- **Decision**: Toda sessão tem uma linha em `Sessao`, e os tokens levam o `sid` dela; a autenticação confere a cada requisição se a sessão está aberta e a conta ativa. Todo fluxo que troca credenciais, desativa ou exclui a conta encerra as sessões pelo `api/sessoes.py`.
+- **Reason**: permite encerrar uma sessão, as outras ou todas na hora (AD-014), com a renovação rotativa e a recusa do token reapresentado.
+- **Trade-off**: uma consulta pela chave primária a mais por requisição autenticada.
+- **Scope**: sessao, autenticacao, painel-admin, lgpd (exclusão da conta) e qualquer fluxo futuro de credenciais.
+- **Date**: 2026-09-30
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `autenticacao` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T29) e verificado: `validation.md` com PASS, 44 de 44 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: cadastro, verificação, reenvio, login, "esqueci a senha" e redefinição funcionando de ponta a ponta; limites de tentativas; e-mail síncrono com prazo de 10 s; configuração de produção que falha fechada; migração dos e-mails; testes do frontend com Vitest (31) e backend com 306 testes
+- **Feature**: `sessao`
+- **Phase / Task**: Design e Tasks aprovados em 2026-09-30; Execute de T1 a T21 em andamento
+- **Completed**: `isolamento-entre-usuarios`, `atualizacao-de-dependencias` e `autenticacao` mergeadas na `development`
 - **In-progress** (file:line): nenhum
-- **Deploy** (manual, no Render): SECRET_KEY nova, FRONTEND_URL, CORS_ALLOWED_ORIGINS, NUM_PROXIES e o Pre-Deploy Command `check --deploy && migrate --noinput && createcachetable`, descritos no `DEPLOY.md`; depois, rodar `check_isolation` e `check_email_case`
-- **Next step**: o usuário faz o push das duas branches `fix/autenticacao` e abre os PRs para a `development`. Depois do merge, a próxima feature é `sessao` (FE-01, SEG-05, OPS-04), com o verificador leve
+- **Next step**: com a aprovação, executar T1 a T21 nas branches `fix/sessao` do backend e do frontend, com o verificador leve no fim
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/autenticacao (backend e frontend)
+- **Branch**: fix/sessao (backend e frontend)
