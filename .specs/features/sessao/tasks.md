@@ -164,13 +164,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_cookies.py` confere o cookie `fluxar_refresh` com httpOnly, SameSite=Lax, path `/api/auth/`, Secure fora do DEBUG e validade de 7 dias
-- [ ] `origem_permitida` aceita o `FRONTEND_URL` e as origens do CORS pelo `Origin` ou pelo `Referer`, e recusa outra origem e a ausência dos dois
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/sessao/test_cookies.py` confere o cookie `fluxar_refresh` com httpOnly, SameSite=Lax, path `/api/auth/`, Secure fora do DEBUG e validade de 7 dias
+- [x] `origem_permitida` aceita o `FRONTEND_URL` e as origens do CORS pelo `Origin` ou pelo `Referer`, e recusa outra origem e a ausência dos dois
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: 10 testes novos; suíte 328 → 338)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): grava o token de renovação em cookie httpOnly`
 
