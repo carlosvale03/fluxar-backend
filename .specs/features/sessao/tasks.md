@@ -136,13 +136,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_autenticacao.py` confere 401 com token de acesso de sessão encerrada ainda dentro da validade, de conta desativada e sem `sid`, e 200 com a sessão aberta
-- [ ] As suítes existentes continuam passando; as que usam `force_authenticate` não passam pela autenticação e não precisam mudar
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/sessao/test_autenticacao.py` confere 401 com token de acesso de sessão encerrada ainda dentro da validade, de conta desativada e sem `sid`, e 200 com a sessão aberta
+- [x] As suítes existentes continuam passando; as que usam `force_authenticate` não passam pela autenticação e não precisam mudar
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: 5 testes novos; suíte 323 → 328; nenhum teste existente precisou de ajuste)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): confere a sessão do token a cada requisição`
 
