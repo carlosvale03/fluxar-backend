@@ -10,6 +10,8 @@ from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
 from core.throttles import LoginFalhasEmailThrottle
 
+from .sessoes import adicionar_claims
+
 User = get_user_model()
 
 EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
@@ -226,15 +228,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     @classmethod
     def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Adiciona claims customizadas ao token (para o front não precisar consultar /me logo de cara)
-        token['name'] = user.name
-        token['email'] = user.email
-        token['plan'] = user.plan
-        token['role'] = user.role
-
-        return token
+        return adicionar_claims(super().get_token(user), user)
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

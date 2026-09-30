@@ -107,14 +107,15 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_servico.py` confere o `sid` e o `jti` nos tokens, o acesso com 15 minutos e a renovação com 7 dias a partir do uso
-- [ ] `renovar` recusa o token já usado, o de sessão encerrada, o vencido, o de conta desativada e o sem `sid`
-- [ ] `encerrar_outras` mantém a sessão atual e fecha as demais; `encerrar_todas` fecha todas
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 10 testes
+- [x] `tests/sessao/test_servico.py` confere o `sid` e o `jti` nos tokens, o acesso com 15 minutos e a renovação com 7 dias a partir do uso
+- [x] `renovar` recusa o token já usado, o de sessão encerrada, o vencido, o de conta desativada e o sem `sid`
+- [x] `encerrar_outras` mantém a sessão atual e fecha as demais; `encerrar_todas` fecha todas
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 10 testes (real: 17 testes novos; suíte 306 → 323)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): adiciona sessões com renovação rotativa`
 

@@ -137,6 +137,22 @@ class SystemLog(models.Model):
         user_email = self.user.email if self.user else "System"
         return f"{self.action} - {user_email} - {self.timestamp}"
 
+class Sessao(models.Model):
+    """
+    Uma sessão de login (AD-037). Os tokens levam o `id` dela no claim `sid`;
+    `refresh_jti` é o jti do único token de renovação que ainda vale.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessoes')
+    refresh_jti = models.CharField(max_length=64)
+    criada_em = models.DateTimeField(auto_now_add=True)
+    ultimo_uso = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    encerrada_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['user', 'encerrada_em'])]
+
 class GlobalSetting(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     key = models.CharField(max_length=100, unique=True)
