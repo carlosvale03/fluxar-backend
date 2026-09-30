@@ -192,13 +192,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_login_sessao.py` confere, no login e na verificação, o `access` no corpo, a ausência de `refresh` no corpo e o cookie gravado
-- [ ] As mensagens e códigos da `autenticacao` continuam iguais
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/sessao/test_login_sessao.py` confere, no login e na verificação, o `access` no corpo, a ausência de `refresh` no corpo e o cookie gravado
+- [x] As mensagens e códigos da `autenticacao` continuam iguais
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: 5 testes novos; suíte 338 → 343; 4 testes da autenticacao passam a ler o refresh do cookie)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): abre a sessão com cookie no login e na verificação`
 

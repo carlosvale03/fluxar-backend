@@ -50,7 +50,10 @@ class LinkDeVerificacaoTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertEqual(AccessToken(resposta.data['access'])['user_id'], str(self.usuario.pk))
-        self.assertEqual(RefreshToken(resposta.data['refresh'])['user_id'], str(self.usuario.pk))
+        # O token de renovação vai só no cookie httpOnly (SESSAO-01)
+        self.assertEqual(
+            RefreshToken(resposta.cookies['fluxar_refresh'].value)['user_id'], str(self.usuario.pk),
+        )
         self.usuario.refresh_from_db()
         self.assertTrue(self.usuario.email_verified)
         self.assertTrue(self.usuario.is_active)

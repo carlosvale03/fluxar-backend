@@ -24,6 +24,8 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
+from .cookies import gravar_cookie_de_renovacao
+from .sessoes import criar_sessao
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -90,6 +92,12 @@ class CustomLoginView(TokenObtainPairView):
     authentication_classes = ()
     throttle_classes = (LoginIPThrottle, LoginFalhasEmailThrottle)
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        # O acesso fica no corpo e a renovação só no cookie httpOnly (SESSAO-01)
+        response = super().post(request, *args, **kwargs)
+        gravar_cookie_de_renovacao(response, response.data.pop('refresh'))
+        return response
 
 class VerifyEmailView(APIView):
     """
@@ -160,15 +168,15 @@ class VerifyEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Gera tokens para login automático
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
+        # Abre a sessão para o login automático: o acesso no corpo e a
+        # renovação só no cookie httpOnly (SESSAO-01)
+        access, refresh = criar_sessao(user)
+        response = Response({
             "message": "E-mail verificado com sucesso! Sua conta está ativa.",
-            "access": str(refresh.access_token),
-            "refresh": str(refresh)
+            "access": access,
         }, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
+        return response
 
 class ResendVerificationView(APIView):
     """

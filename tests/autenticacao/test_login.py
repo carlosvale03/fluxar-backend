@@ -54,7 +54,10 @@ class LoginTests(APITestCase):
         self.assertEqual(acesso['name'], 'Verificada')
         self.assertEqual(acesso['plan'], 'COMMON')
         self.assertEqual(acesso['role'], 'USER')
-        self.assertEqual(RefreshToken(resposta.data['refresh'])['user_id'], str(self.verificada.pk))
+        # O token de renovação vai só no cookie httpOnly (SESSAO-01)
+        self.assertEqual(
+            RefreshToken(resposta.cookies['fluxar_refresh'].value)['user_id'], str(self.verificada.pk),
+        )
 
     # AUTH-15 -----------------------------------------------------------
 

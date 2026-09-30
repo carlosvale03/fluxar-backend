@@ -38,7 +38,8 @@ class EmailSemDiferencaDeCaixaTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertIn('access', resposta.data)
-        self.assertIn('refresh', resposta.data)
+        # O token de renovação vai só no cookie httpOnly (SESSAO-01)
+        self.assertTrue(resposta.cookies['fluxar_refresh'].value)
         self.assertEqual(User.objects.get_by_natural_key('ANA@X.COM').pk, usuario.pk)
 
     def test_conta_antiga_com_maiusculas_entra_com_o_email_exato(self):
