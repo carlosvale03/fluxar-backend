@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from .models import Account, CreditCard, CreditCardInvoice
 
 FATURA_JA_PAGA = 'Fatura já está paga.'
+FATURA_NAO_PAGA = 'Esta fatura não está paga.'
 
 class AccountService:
     @staticmethod
@@ -220,20 +221,36 @@ class CreditCardService:
     @transaction.atomic
     def unpay_invoice(user, invoice: CreditCardInvoice):
         """
-        Reverte o pagamento de uma fatura.
-        - Transações COMPLETED voltam para PENDING.
+        Reverte o pagamento de uma fatura (SALDO-24, SALDO-25, SALDO-27).
+        - Só a fatura paga pode ser estornada; a releitura sob trava recusa
+          o estorno que chega depois de outro.
+        - As compras pagas voltam ao estado de antes do pagamento: pendentes,
+          na conta do cartão (como `create_credit_card_expense` as cria) e
+          sem data de pagamento. O recálculo devolve à conta de pagamento
+          exatamente o valor pago (AD-038).
+        - Num pagamento parcial, a parte "(Parcial)" volta a pendente e a
+          "(Restante)" continua na fatura seguinte; juntar as duas fica com a
+          feature `faturas`.
         - Invoice volta para OPEN.
         """
+        from .saldo import recalcular
+
+        invoice = CreditCardInvoice.objects.select_for_update().select_related('card').get(pk=invoice.pk)
+        if invoice.status != 'PAID':
+            raise ValidationError({'detail': FATURA_NAO_PAGA})
+
         # 1. Buscar transações pagas
         paid_txs = invoice.transactions.filter(
             type='CREDIT_CARD',
             status='COMPLETED',
             user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         )
-        
-        # 2. Reverter Status
-        paid_txs.update(status='PENDING')
-        
+        contas_pagadoras = set(paid_txs.values_list('account_id', flat=True))
+
+        # 2. Reverter Status, conta e data de pagamento
+        paid_txs.update(status='PENDING', account=invoice.card.account_id, payment_date=None)
+        recalcular(*contas_pagadoras, invoice.card.account_id)
+
         # 3. Reabrir Fatura
         invoice.status = 'OPEN'
         invoice.save()

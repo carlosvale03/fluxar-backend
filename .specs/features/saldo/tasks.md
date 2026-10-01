@@ -581,14 +581,15 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_fatura.py` paga, estorna (volta a R$ 3.000,00) e paga de novo (R$ 2.000,00)
-- [ ] O estorno de um pagamento parcial devolve só o valor pago
-- [ ] Estornar fatura não paga recebe 400 sem mudar saldo
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/saldo/test_fatura.py` paga, estorna (volta a R$ 3.000,00) e paga de novo (R$ 2.000,00)
+- [x] O estorno de um pagamento parcial devolve só o valor pago
+- [x] Estornar fatura não paga recebe 400 sem mudar saldo
+- [x] Build gate passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 489 → 494)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): devolve o valor pago no estorno da fatura`
 

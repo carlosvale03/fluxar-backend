@@ -113,10 +113,11 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):
         invoice = self.get_object()
-        # Validação extra? Se já open? Não tem problema desfazer open (noop)
-        
+        # Fatura não paga recebe 400 do service, sob trava (SALDO-27)
         try:
             CreditCardService.unpay_invoice(request.user, invoice)
             return Response({'status': 'Pagamento estornado. Fatura reaberta.'})
+        except ValidationError:
+            raise
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

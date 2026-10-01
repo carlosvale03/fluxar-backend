@@ -90,3 +90,95 @@ class PagamentoDeFaturaTests(FaturaTestCase):
         self.assertEqual(erro.exception.detail, {'detail': FATURA_JA_PAGA})
         self.assertEqual(self.saldo(self.pagadora), Decimal('2000.00'))
         self.assertEqual(Transaction.objects.get(description='Outra loja').status, 'PENDING')
+
+
+FATURA_NAO_PAGA = 'Esta fatura não está paga.'
+
+
+class EstornoDeFaturaTests(FaturaTestCase):
+
+    def estornar(self):
+        return self.cliente.post(f'{self.url}unpay/', format='json')
+
+    def estado_da_compra(self, compra):
+        compra.refresh_from_db()
+        return compra.status, compra.account_id, compra.payment_date, compra.amount
+
+    def test_pagar_estornar_e_pagar_de_novo(self):
+        self.pagar()
+        self.assertEqual(self.saldo(self.pagadora), Decimal('2000.00'))
+
+        resp = self.estornar()
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
+        self.assertEqual(self.status_da_fatura(), 'OPEN')
+
+        resp = self.pagar()
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        # Um único débito de R$ 1.000,00 (SALDO-25)
+        self.assertEqual(self.saldo(self.pagadora), Decimal('2000.00'))
+        self.assertEqual(self.status_da_fatura(), 'PAID')
+
+    def test_estorno_volta_a_compra_ao_estado_de_antes_do_pagamento(self):
+        antes = self.estado_da_compra(self.compra)
+        self.pagar()
+        self.assertEqual(
+            self.estado_da_compra(self.compra),
+            ('COMPLETED', self.pagadora.id, date(2026, 9, 20), Decimal('1000.00')),
+        )
+
+        self.estornar()
+
+        self.assertEqual(antes, ('PENDING', self.a.conta.id, None, Decimal('1000.00')))
+        self.assertEqual(self.estado_da_compra(self.compra), antes)
+        self.assertEqual(self.saldo(self.a.conta), Decimal('1000.00'))
+
+    def test_estorno_de_pagamento_parcial_devolve_so_o_valor_pago(self):
+        self.pagar('300.00')
+        self.assertEqual(self.saldo(self.pagadora), Decimal('2700.00'))
+        restante = Transaction.objects.get(description='Loja (Restante)')
+
+        resp = self.estornar()
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
+        self.assertEqual(
+            self.estado_da_compra(self.compra),
+            ('PENDING', self.a.conta.id, None, Decimal('300.00')),
+        )
+        # O restante continua pendente na fatura seguinte
+        self.assertEqual(
+            self.estado_da_compra(restante), ('PENDING', self.a.conta.id, None, Decimal('700.00')),
+        )
+        self.assertEqual(restante.invoice.month, 10)
+
+    def test_estornar_fatura_nao_paga_recebe_400_sem_mudar_saldo(self):
+        resp = self.estornar()
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data, {'detail': FATURA_NAO_PAGA})
+        self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
+        self.assertEqual(self.saldo(self.a.conta), Decimal('1000.00'))
+        self.assertEqual(self.status_da_fatura(), 'OPEN')
+
+    def test_segundo_estorno_com_fatura_lida_antes_recebe_400_sem_mudar_saldo(self):
+        """
+        Duas requisições de estorno leem a fatura paga. O service relê a
+        fatura sob trava e recusa a que chega depois do primeiro estorno.
+        """
+        self.pagar()
+        lida_antes = CreditCardInvoice.objects.get(pk=self.a.fatura.pk)
+        CreditCardService.unpay_invoice(
+            self.a.usuario, CreditCardInvoice.objects.get(pk=self.a.fatura.pk),
+        )
+        # Fatura fechada e não paga: o estorno atrasado não pode reabri-la
+        CreditCardInvoice.objects.filter(pk=self.a.fatura.pk).update(status='CLOSED')
+
+        with self.assertRaises(ValidationError) as erro:
+            CreditCardService.unpay_invoice(self.a.usuario, lida_antes)
+
+        self.assertEqual(erro.exception.detail, {'detail': FATURA_NAO_PAGA})
+        self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
+        self.assertEqual(self.status_da_fatura(), 'CLOSED')
