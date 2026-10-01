@@ -383,13 +383,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_transferencia.py` confere a saída na origem, a entrada no destino e a soma das contas igual antes e depois
-- [ ] Origem igual ao destino recebe 400 com a mensagem do design
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/saldo/test_transferencia.py` confere a saída na origem, a entrada no destino e a soma das contas igual antes e depois
+- [x] Origem igual ao destino recebe 400 com a mensagem do design
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 457 → 462)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): valida e cria as duas pernas da transferência juntas`
 

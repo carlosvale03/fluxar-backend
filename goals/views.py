@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status, decorators
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Goal
 from .serializers import GoalSerializer, GoalDepositSerializer
@@ -60,6 +61,9 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             # Retornar a meta atualizada
             serializer = self.get_serializer(goal)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValidationError:
+            # Recusa da transferência (SALDO-17) segue como 400 do DRF
+            raise
         except Exception as e:
             print(f"DEBUG: Deposit error: {str(e)}")
             import traceback
@@ -96,6 +100,9 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             
             serializer = self.get_serializer(goal)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValidationError:
+            # Recusa da transferência (SALDO-17) segue como 400 do DRF
+            raise
         except Exception as e:
             print(f"DEBUG: Withdraw error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

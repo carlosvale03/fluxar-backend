@@ -9,6 +9,8 @@ from .models import Transaction, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from accounts.services import CreditCardService
 
+MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
+
 class TransactionService:
     @staticmethod
     def create_income(user, account, amount, date, description, category, tags=None):
@@ -50,25 +52,21 @@ class TransactionService:
     @transaction.atomic
     def create_transfer(user, account_from, account_to, amount, date, description="Transferência"):
         """
-        Cria transferencia entre contas (Atomic).
-        Gera 2 transações ligadas pelo mesmo transfer_id.
+        Cria a transferência: a saída na origem e a entrada no destino, no
+        mesmo `atomic`, com o mesmo status e a descrição enviada (SALDO-11,
+        SALDO-12). Origem igual ao destino recebe 400 (SALDO-17).
+        Devolve o `transfer_id` que liga as duas pernas.
         """
+        if account_from.pk == account_to.pk:
+            raise ValidationError({'detail': MESMA_CONTA})
+
         transfer_uid = uuid.uuid4()
-        
-        # Saída
-        t_out = Transaction.objects.create(
-            user=user, type='TRANSFER_OUT', account=account_from,
-            amount=amount, date=date, description=f"TR - Para: {account_to.name}",
-            transfer_id=transfer_uid
-        )
-        
-        # Entrada
-        t_in = Transaction.objects.create(
-            user=user, type='TRANSFER_IN', account=account_to,
-            amount=amount, date=date, description=f"TR - De: {account_from.name}",
-            transfer_id=transfer_uid
-        )
-        # Retorna o ID de agrupamento
+        for tipo, conta in (('TRANSFER_OUT', account_from), ('TRANSFER_IN', account_to)):
+            Transaction.objects.create(
+                user=user, type=tipo, status='COMPLETED', account=conta,
+                amount=amount, date=date, description=description,
+                transfer_id=transfer_uid,
+            )
         return transfer_uid
 
     @staticmethod
