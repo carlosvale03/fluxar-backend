@@ -305,12 +305,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_redefinicao_sessoes.py` confere que, depois da redefinição por link e da feita pelo administrador, todas as sessões do usuário recebem 401
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/sessao/test_redefinicao_sessoes.py` confere que, depois da redefinição por link e da feita pelo administrador, todas as sessões do usuário recebem 401
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (real: 2 testes novos; suíte 357 → 359)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): encerra todas as sessões ao redefinir a senha`
 

@@ -30,7 +30,7 @@ from .cookies import (
     gravar_cookie_de_renovacao,
     origem_permitida,
 )
-from .sessoes import SessaoInvalida, criar_sessao, encerrar, encerrar_outras, renovar, sid_do_token
+from .sessoes import SessaoInvalida, criar_sessao, encerrar, encerrar_outras, encerrar_todas, renovar, sid_do_token
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -341,6 +341,8 @@ class ResetPasswordView(APIView):
             # continua desativada (AUTH-20, AD-035)
             user.email_verified = True
             user.save(update_fields=['password', 'email_verified'])
+            # A senha nova derruba todas as sessões abertas (SESSAO-16)
+            encerrar_todas(user)
 
         return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
@@ -756,6 +758,8 @@ class AdminResetPasswordView(APIView):
             
             user.set_password(new_password)
             user.save()
+            # A senha nova derruba todas as sessões do usuário (SESSAO-16)
+            encerrar_todas(user)
             
             SystemLog.objects.create(
                 user=user,
