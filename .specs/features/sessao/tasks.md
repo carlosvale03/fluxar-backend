@@ -502,14 +502,15 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/renovacao.test.ts` confere que três 401 simultâneos geram uma chamada a `/auth/refresh/` e três novas tentativas com o token novo
-- [ ] Com o token vindo de outra aba pelo canal, a aba não chama `/auth/refresh/`
-- [ ] Renovação recusada com 401 dispara o fim da sessão; requisição refeita que recebe 401 de novo não entra em laço
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/sessao/renovacao.test.ts` confere que três 401 simultâneos geram uma chamada a `/auth/refresh/` e três novas tentativas com o token novo
+- [x] Com o token vindo de outra aba pelo canal, a aba não chama `/auth/refresh/`
+- [x] Renovação recusada com 401 dispara o fim da sessão; requisição refeita que recebe 401 de novo não entra em laço
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 4 testes (real: 7 testes em tests/sessao/renovacao.test.ts)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): renova a sessão uma vez só entre requisições e abas`
 
