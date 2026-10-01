@@ -867,12 +867,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/edicao-de-transferencia.test.tsx` confere o corpo da edição com os cinco campos
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 1 teste
+- [x] `tests/saldo/edicao-de-transferencia.test.tsx` confere o corpo da edição com os cinco campos
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 1 teste (real: 2 testes; frontend 80 → 82)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): envia a conta certa na edição da transferência`
 
