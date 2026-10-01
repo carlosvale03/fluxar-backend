@@ -30,7 +30,7 @@ from .cookies import (
     gravar_cookie_de_renovacao,
     origem_permitida,
 )
-from .sessoes import SessaoInvalida, criar_sessao, renovar
+from .sessoes import SessaoInvalida, criar_sessao, encerrar, renovar, sid_do_token
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -127,6 +127,25 @@ class RenovarSessaoView(APIView):
             return response
         response = Response({"access": access}, status=status.HTTP_200_OK)
         gravar_cookie_de_renovacao(response, refresh)
+        return response
+
+class LogoutView(APIView):
+    """
+    Encerra a sessão do cookie e apaga o cookie (SESSAO-04 e SESSAO-13).
+    Responde 204 também sem cookie, para o logout ser idempotente.
+    """
+    permission_classes = (permissions.AllowAny,)
+    # O token de acesso pode estar vencido; quem vale aqui é o cookie
+    authentication_classes = ()
+
+    def post(self, request):
+        if not origem_permitida(request):
+            return Response(ORIGEM_RECUSADA, status=status.HTTP_403_FORBIDDEN)
+        sid = sid_do_token(request.COOKIES.get(NOME_DO_COOKIE))
+        if sid:
+            encerrar(sid)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        apagar_cookie_de_renovacao(response)
         return response
 
 class VerifyEmailView(APIView):

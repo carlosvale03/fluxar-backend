@@ -249,13 +249,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_logout.py` confere o 204, o cookie apagado e o 401 ao reapresentar o token de renovação depois
-- [ ] Sem cookie: 204; de outra origem: 403 e sessão aberta
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 4 testes
+- [x] `tests/sessao/test_logout.py` confere o 204, o cookie apagado e o 401 ao reapresentar o token de renovação depois
+- [x] Sem cookie: 204; de outra origem: 403 e sessão aberta
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 4 testes (real: 5 testes novos; suíte 349 → 354)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): adiciona o logout que encerra a sessão`
 

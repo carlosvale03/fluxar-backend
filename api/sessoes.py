@@ -7,6 +7,7 @@ renovação que ainda vale, e um token já usado é recusado (SESSAO-08, SESSAO-
 """
 import uuid
 
+import jwt
 from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.exceptions import TokenError
@@ -102,6 +103,24 @@ def encerrar(sid):
     sid = _uuid(sid)
     if sid is not None:
         _abertas().filter(pk=sid).update(encerrada_em=timezone.now())
+
+
+def sid_do_token(refresh_str):
+    """
+    O `sid` de um token com a nossa assinatura, mesmo vencido, para o logout
+    encerrar a sessão de um token que já passou da validade. None se a
+    assinatura não confere.
+    """
+    try:
+        payload = jwt.decode(
+            refresh_str,
+            jwt_settings.SIGNING_KEY,
+            algorithms=[jwt_settings.ALGORITHM],
+            options={'verify_exp': False},
+        )
+    except jwt.InvalidTokenError:
+        return None
+    return payload.get('sid')
 
 
 def encerrar_outras(user, sid_atual):
