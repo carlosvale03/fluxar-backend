@@ -220,7 +220,7 @@ class HealthCheckTests(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': False})
 
-    def test_falha_ao_ler_o_banco_responde_200_sem_manutencao_e_registra_o_erro_sem_detalhes(self):
+    def test_falha_ao_ler_o_banco_responde_200_com_estado_desconhecido_e_registra_o_erro_sem_detalhes(self):
         erro = DatabaseError('could not connect to server at db-senha-secreta')
 
         with mock.patch('api.views.manutencao_ligada', side_effect=erro), \
@@ -228,7 +228,8 @@ class HealthCheckTests(APITestCase):
             resposta = self.client.get('/api/health/')
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': False})
+        # Sem o banco, o estado é desconhecido: a página de manutenção não volta
+        self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': None})
         self.assertEqual(len(logs.output), 1)
         self.assertIn('DatabaseError', logs.output[0])
         self.assertNotIn('db-senha-secreta', logs.output[0])

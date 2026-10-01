@@ -861,5 +861,6 @@ def health_check(request):
     except DatabaseError as erro:
         # Só o tipo do erro: a mensagem do banco pode trazer o endereço dele
         logger.error("Health check sem acesso ao banco (%s).", type(erro).__name__)
-        em_manutencao = False
+        # Estado desconhecido: a página de manutenção só volta com false
+        em_manutencao = None
     return JsonResponse({"status": "ok", "maintenance": em_manutencao})
