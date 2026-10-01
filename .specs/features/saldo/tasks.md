@@ -129,12 +129,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_datas.py` confere, com o relógio simulado em 2026-10-01 02:00 UTC, que `hoje()` devolve 2026-09-30
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_datas.py` confere, com o relógio simulado em 2026-10-01 02:00 UTC, que `hoje()` devolve 2026-09-30
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 384 → 386)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(core): adiciona a data de hoje no fuso de Brasília`
 
