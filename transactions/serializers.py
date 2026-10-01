@@ -65,9 +65,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     category_detail = CategorySerializer(source='category', read_only=True)
     tags_detail = TagSerializer(source='tags', many=True, read_only=True)
 
-    # Relações graváveis: só objetos do usuário da requisição (AD-032)
+    # Relações graváveis: só objetos do usuário da requisição (AD-032), e
+    # conta excluída não recebe movimentação nova (SALDO-35)
     account = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
         required=False, allow_null=True,
     )
     credit_card = OwnedPrimaryKeyRelatedField(
@@ -340,11 +341,12 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 # Serializers Específicos para Ações
 class TransferSerializer(serializers.Serializer):
+    # Só contas ativas do usuário da requisição (AD-032, SALDO-35)
     account_from = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
     )
     account_to = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
     )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()

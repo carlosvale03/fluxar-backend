@@ -47,10 +47,10 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
             
-        # Erro no campo que a requisição usou (AD-010)
+        # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
         account_field = 'account_id' if request.data.get('account_id') else 'account_from'
         account = get_owned_or_400(
-            Account.objects.all(), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
+            Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
         )
         
         try:
@@ -83,10 +83,10 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
             
-        # Erro no campo que a requisição usou (AD-010)
+        # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
         account_field = 'account_to' if request.data.get('account_to') else 'account_id'
         account_to = get_owned_or_400(
-            Account.objects.all(), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
+            Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
         )
         
         try:

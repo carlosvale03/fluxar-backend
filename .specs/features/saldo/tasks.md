@@ -298,12 +298,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_conta_excluida.py` confere 400 ao criar transação, transferência (origem e destino), pagamento de fatura e aporte com conta excluída
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 ao criar transação, transferência (origem e destino), pagamento de fatura e aporte com conta excluída
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 7 testes novos; suíte 437 → 444)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa operações novas em conta excluída`
 
