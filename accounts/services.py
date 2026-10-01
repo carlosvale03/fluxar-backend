@@ -3,7 +3,10 @@ from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from .models import Account, CreditCard, CreditCardInvoice
+
+FATURA_JA_PAGA = 'Fatura já está paga.'
 
 class AccountService:
     @staticmethod
@@ -107,7 +110,13 @@ class CreditCardService:
         - Despesas não pagas (parcial) são movidas para a próxima fatura (Rollover).
         """
         from transactions.services import TransactionService
-        
+
+        # Relê a fatura sob trava: de duas tentativas simultâneas, a segunda
+        # espera a primeira e encontra a fatura já paga (SALDO-26)
+        invoice = CreditCardInvoice.objects.select_for_update().get(pk=invoice.pk)
+        if invoice.status == 'PAID':
+            raise ValidationError({'detail': FATURA_JA_PAGA})
+
         # 1. Buscar transações pendentes desta fatura
         # Apenas despesas de cartão, ignorando eventuais ajustes manuais por enquanto
         pending_txs = invoice.transactions.filter(

@@ -1,12 +1,13 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Account, CreditCard, CreditCardInvoice
 from .serializers import (
     AccountSerializer, CreditCardSerializer, 
     CreditCardInvoiceSerializer, InvoicePaymentSerializer
 )
-from .services import AccountService, CreditCardService
+from .services import FATURA_JA_PAGA, AccountService, CreditCardService
 from core.mixins import UserQuerySetMixin
 
 # Exclusão de conta (SALDO-32, SALDO-33, AD-003)
@@ -88,7 +89,7 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     def pay(self, request, pk=None):
         invoice = self.get_object()
         if invoice.status == 'PAID':
-            return Response({'error': 'Fatura já está paga.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': FATURA_JA_PAGA}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = InvoicePaymentSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -103,6 +104,9 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 date=data['date']
             )
             return Response({'status': 'Pagamento processado com sucesso.'})
+        except ValidationError:
+            # Fatura paga por outra requisição enquanto esta esperava a trava
+            raise
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

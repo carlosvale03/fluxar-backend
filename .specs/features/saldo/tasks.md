@@ -553,13 +553,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_fatura.py` paga uma fatura de R$ 1.000,00 de uma conta com R$ 3.000,00 e confere R$ 2.000,00
-- [ ] Pagar de novo recebe 400 com a mensagem exata, sem segundo débito
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/saldo/test_fatura.py` paga uma fatura de R$ 1.000,00 de uma conta com R$ 3.000,00 e confere R$ 2.000,00
+- [x] Pagar de novo recebe 400 com a mensagem exata, sem segundo débito
+- [x] Quick gate passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 486 → 489)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): paga a fatura uma vez só e debita o valor exato`
 
