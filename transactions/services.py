@@ -72,6 +72,7 @@ class TransactionService:
         return transfer_uid
 
     @staticmethod
+    @transaction.atomic
     def create_credit_card_expense(user, card, amount, date, description, category, tags=None, installments=1):
         """
         Cria despesa de Cartão de Crédito.

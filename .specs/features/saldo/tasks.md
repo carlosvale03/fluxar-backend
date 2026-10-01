@@ -240,12 +240,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_atomicidade.py` força uma falha depois da primeira perna de uma transferência e no meio de um pagamento de fatura e confere que nenhuma transação nem saldo mudou
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/saldo/test_atomicidade.py` força uma falha depois da primeira perna de uma transferência e no meio de um pagamento de fatura e confere que nenhuma transação nem saldo mudou
+- [x] Full gate passa
+- [x] Test count: pelo menos 3 testes (real: 8 testes novos; suíte 416 → 424; as rotas com limite de tentativas e o health ficam fora do ATOMIC_REQUESTS)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(core): desfaz a operação inteira quando uma etapa falha`
 

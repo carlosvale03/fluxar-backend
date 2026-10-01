@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from datetime import timedelta
 import uuid
@@ -48,9 +49,28 @@ import logging
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+
+class SemTransacaoPorRequisicao:
+    """
+    Deixa a rota fora do ATOMIC_REQUESTS (SALDO-10). Serve às rotas com limite
+    de tentativas: os contadores moram no cache do banco, e o rollback de uma
+    tentativa recusada apagaria a contagem (AUTH-31 a AUTH-35).
+    """
+
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def handle_exception(self, exc):
+        # Ao tratar o erro, o DRF marca para rollback o bloco atomic mais
+        # interno; este bloco vazio recebe a marca, e nada do que a rota já
+        # gravou, como os contadores, é desfeito
+        with transaction.atomic():
+            return super().handle_exception(exc)
+
 # --- Auth Views ---
 
-class RegisterView(generics.CreateAPIView):
+class RegisterView(SemTransacaoPorRequisicao, generics.CreateAPIView):
     """
     Endpoint para cadastro de novos usuários.
     Cria usuário e envia e-mail de verificação.
@@ -89,7 +109,7 @@ class RegisterView(generics.CreateAPIView):
             )
         return Response({"message": message, "email_sent": email_sent}, status=status.HTTP_201_CREATED)
 
-class CustomLoginView(TokenObtainPairView):
+class CustomLoginView(SemTransacaoPorRequisicao, TokenObtainPairView):
     """
     Login customizado que retorna JWT com dados extras do usuário no payload.
     """
@@ -149,7 +169,7 @@ class LogoutView(APIView):
         apagar_cookie_de_renovacao(response)
         return response
 
-class VerifyEmailView(APIView):
+class VerifyEmailView(SemTransacaoPorRequisicao, APIView):
     """
     Verifica o e-mail do usuário através do token recebido.
     """
@@ -228,7 +248,7 @@ class VerifyEmailView(APIView):
         gravar_cookie_de_renovacao(response, refresh)
         return response
 
-class ResendVerificationView(APIView):
+class ResendVerificationView(SemTransacaoPorRequisicao, APIView):
     """
     Envia um novo link de verificação para uma conta pendente.
     A resposta é sempre a mesma, exista ou não a conta (AUTH-11).
@@ -263,7 +283,7 @@ class ResendVerificationView(APIView):
             status=status.HTTP_200_OK,
         )
 
-class ForgotPasswordView(APIView):
+class ForgotPasswordView(SemTransacaoPorRequisicao, APIView):
     """
     Envia um link de redefinição de senha. A resposta é sempre a mesma,
     exista ou não a conta, e mesmo quando o envio falha (AUTH-18, AUTH-27).
@@ -301,7 +321,7 @@ class ForgotPasswordView(APIView):
             status=status.HTTP_200_OK,
         )
 
-class ResetPasswordView(APIView):
+class ResetPasswordView(SemTransacaoPorRequisicao, APIView):
     """
     Redefine a senha com um link de redefinição válido (AUTH-20 a AUTH-22).
     """
@@ -849,6 +869,9 @@ class AdminHardDeleteView(APIView):
 
 # --- System Views ---
 
+# Sem transação de banco por requisição: o health responde mesmo sem acesso
+# ao banco (SESSAO-23), e o ATOMIC_REQUESTS abriria a conexão antes da view
+@transaction.non_atomic_requests
 def health_check(request):
     """
     Endpoint simples para monitoramento de uptime (Render/Kubernetes).

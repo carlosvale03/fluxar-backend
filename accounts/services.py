@@ -1,6 +1,7 @@
 from decimal import Decimal
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from django.db import transaction
 from django.utils import timezone
 from .models import Account, CreditCard, CreditCardInvoice
 
@@ -96,6 +97,7 @@ class CreditCardService:
         return due_date
 
     @staticmethod
+    @transaction.atomic
     def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date):
         """
         Processa pagamento de fatura atualizando as transações originais.
@@ -206,6 +208,7 @@ class CreditCardService:
         invoice.save()
 
     @staticmethod
+    @transaction.atomic
     def unpay_invoice(user, invoice: CreditCardInvoice):
         """
         Reverte o pagamento de uma fatura.
