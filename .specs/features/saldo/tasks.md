@@ -325,12 +325,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_conta_excluida.py` confere 400 em PATCH, PUT e DELETE de uma transação e de uma transferência ligadas a conta excluída, sem mudar nada
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 em PATCH, PUT e DELETE de uma transação e de uma transferência ligadas a conta excluída, sem mudar nada
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 8 testes novos; suíte 444 → 452)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): mantém o histórico da conta excluída só para leitura`
 

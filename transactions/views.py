@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -59,6 +60,24 @@ class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
 
 from core.pagination import StandardResultsSetPagination
 
+# Histórico da conta excluída: só leitura (SALDO-36, AD-003)
+DE_CONTA_EXCLUIDA = {'detail': 'Esta transação é de uma conta excluída e não pode ser alterada.'}
+
+
+def _envolve_conta_excluida(transacoes):
+    """
+    Se alguma das transações, ou alguma perna de transferência delas (do mesmo
+    usuário), está numa conta excluída.
+    """
+    filtro = Q()
+    for t in transacoes:
+        filtro |= Q(pk=t.pk, user_id=t.user_id)
+        if t.transfer_id:
+            filtro |= Q(transfer_id=t.transfer_id, user_id=t.user_id)
+    if not filtro:
+        return False
+    return Transaction.objects.filter(filtro, account__is_active=False).exists()
+
 class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -116,6 +135,17 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             
         return queryset.order_by('-date', '-created_at')
 
+    def update(self, request, *args, **kwargs):
+        # Vale para PUT e PATCH, antes de validar o corpo
+        if _envolve_conta_excluida([self.get_object()]):
+            return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if _envolve_conta_excluida([self.get_object()]):
+            return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'])
     def transfer(self, request):
         serializer = TransferSerializer(data=request.data, context={'request': request})
@@ -171,10 +201,13 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             return Response({'status': f'{deleted_count} transações removidas.'})
             
         if transfer_id:
-            deleted_count, _ = Transaction.objects.filter(
+            pernas = Transaction.objects.filter(
                 user=request.user, 
                 transfer_id=transfer_id
-            ).delete()
+            )
+            if _envolve_conta_excluida(pernas):
+                return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+            deleted_count, _ = pernas.delete()
             return Response({'status': f'{deleted_count} transações removidas.'})
             
         return Response({'error': 'Informe recurring_source ou transfer_id'}, status=status.HTTP_400_BAD_REQUEST)

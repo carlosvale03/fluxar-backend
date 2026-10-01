@@ -5,6 +5,7 @@ Uma conta excluída não recebe movimentação nova: transação, transferência
 pagamento de fatura, aporte e resgate que a indiquem recebem HTTP 400 com o
 erro no campo da conta, a mesma resposta de uma conta inexistente.
 """
+import uuid
 from decimal import Decimal
 
 from accounts.models import Account, CreditCardInvoice
@@ -90,3 +91,85 @@ class OperacaoNovaEmContaExcluidaTests(ContaExcluidaTestCase):
         self.assertEqual(resp.status_code, 400, resp.data)
         self.assertEqual(resp.data['account'], [CONTA_NAO_ENCONTRADA])
         self.assertEqual(self.estado(), antes)
+
+
+MENSAGEM_HISTORICO = 'Esta transação é de uma conta excluída e não pode ser alterada.'
+
+
+class HistoricoDaContaExcluidaTests(ContaExcluidaTestCase):
+    """
+    O histórico da conta excluída fica só para leitura (SALDO-36): editar ou
+    excluir uma transação dela, ou uma transferência com uma perna nela,
+    recebe 400 sem mudar nada.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.antiga = self.lancar(self.excluida, 'INCOME', '100.00', description='Antiga')
+        self.transferencia = uuid.uuid4()
+        self.saida = self.lancar(
+            self.a.conta, 'TRANSFER_OUT', '50.00', transfer_id=self.transferencia, description='Para a antiga',
+        )
+        self.entrada = self.lancar(
+            self.excluida, 'TRANSFER_IN', '50.00', transfer_id=self.transferencia, description='Da corrente',
+        )
+
+    def url(self, t):
+        return f'{URL_TRANSACOES}{t.id}/'
+
+    def corpo_put(self, t, **extra):
+        dados = {
+            'type': t.type, 'status': 'COMPLETED', 'description': 'Editada',
+            'amount': '999.00', 'date': '2026-09-20',
+        }
+        dados.update(extra)
+        return dados
+
+    def assert_recusa(self, chamada):
+        antes = self.estado()
+        resp = chamada()
+        self.assertEqual(resp.status_code, 400, getattr(resp, 'data', None))
+        self.assertEqual(resp.data, {'detail': MENSAGEM_HISTORICO})
+        self.assertEqual(self.estado(), antes)
+
+    def test_patch_de_transacao_da_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.patch(self.url(self.antiga), {'amount': '999.00'}, format='json'))
+
+    def test_put_de_transacao_da_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.put(
+            self.url(self.antiga), self.corpo_put(self.antiga, account=str(self.a.conta.id)), format='json',
+        ))
+
+    def test_delete_de_transacao_da_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.delete(self.url(self.antiga)))
+
+    def test_patch_da_perna_ativa_de_transferencia_com_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.patch(self.url(self.saida), {'amount': '999.00'}, format='json'))
+
+    def test_put_da_perna_ativa_de_transferencia_com_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.put(self.url(self.saida), self.corpo_put(self.saida), format='json'))
+
+    def test_delete_das_pernas_de_transferencia_com_conta_excluida_recusado(self):
+        self.assert_recusa(lambda: self.cliente.delete(self.url(self.saida)))
+        self.assert_recusa(lambda: self.cliente.delete(self.url(self.entrada)))
+
+    def test_exclusao_em_lote_de_transferencia_com_conta_excluida_recusada(self):
+        self.assert_recusa(lambda: self.cliente.delete(
+            f'{URL_TRANSACOES}bulk-delete/?transfer_id={self.transferencia}',
+        ))
+
+    def test_perna_de_outro_usuario_em_conta_excluida_nao_bloqueia_a_transferencia(self):
+        # Transferência de A entre contas ativas; B tem, gravada à força, uma
+        # perna com o mesmo transfer_id numa conta excluída de B
+        transferencia = uuid.uuid4()
+        saida = self.lancar(self.a.conta, 'TRANSFER_OUT', '30.00', transfer_id=transferencia)
+        self.lancar(self.a.poupanca, 'TRANSFER_IN', '30.00', transfer_id=transferencia)
+        excluida_b = Account.objects.create(user=self.b.usuario, name='Antiga B', initial_balance=Decimal('0.00'))
+        self.lancar(excluida_b, 'TRANSFER_IN', '30.00', transfer_id=transferencia)
+        Account.objects.filter(pk=excluida_b.pk).update(is_active=False)
+
+        resp = self.cliente.patch(self.url(saida), {'description': 'Para a poupança'}, format='json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        resp = self.cliente.delete(f'{URL_TRANSACOES}bulk-delete/?transfer_id={transferencia}')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertFalse(Transaction.objects.filter(transfer_id=transferencia, user=self.a.usuario).exists())
