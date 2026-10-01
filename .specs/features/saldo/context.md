@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-25
 **Spec:** `.specs/features/saldo/spec.md`
-**Status:** Spec aprovada; design e tasks aprovados em 2026-10-01; execução em andamento
+**Status:** Spec aprovada; implementada e verificada em 2026-10-01 (validation.md: PASS)
 
 ---
 

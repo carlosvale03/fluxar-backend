@@ -110,6 +110,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SPEC_DEVIATION api/middleware.py:59 (middleware)
 - last seen: 2026-10-01T01:30:09Z
 
+### L-017 - When an input rule applies to create and edit alike, say so in the AC so the tests cover the edit path too
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: saldo
+- evidence: SALDO-09 transactions/serializers.py:127 (spec)
+- last seen: 2026-10-01T09:31:29Z
+
+### L-018 - For each total that must exclude an entity, put an excluded entity of that exact category in the fixture so the filter is exercised
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: saldo
+- evidence: SALDO-31 tests/saldo/test_totais.py:57 (tests)
+- last seen: 2026-10-01T09:31:29Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

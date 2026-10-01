@@ -240,53 +240,53 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SALDO-01 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-02 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-03 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-04 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-05 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-06 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-07 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-08 | P1: Saldo em transações avulsas | T2 | Pending |
-| SALDO-09 | P1: Saldo em transações avulsas | T4 | Pending |
-| SALDO-10 | P1: Saldo em transações avulsas | T5 | Pending |
-| SALDO-11 | P1: Transferências | T10 | Pending |
-| SALDO-12 | P1: Transferências | T10, T11 | Pending |
-| SALDO-13 | P1: Transferências | T11, T25 | Pending |
-| SALDO-14 | P1: Transferências | T11, T25 | Pending |
-| SALDO-15 | P1: Transferências | T11 | Pending |
-| SALDO-16 | P1: Transferências | T12 | Pending |
-| SALDO-17 | P1: Transferências | T10 | Pending |
-| SALDO-18 | P1: Transferências | T6, T24 | Pending |
-| SALDO-19 | P1: Transferências | T6 | Pending |
-| SALDO-20 | P1: Séries recorrentes | T13 | Pending |
-| SALDO-21 | P1: Séries recorrentes | T14 | Pending |
-| SALDO-22 | P1: Séries recorrentes | T15 | Pending |
-| SALDO-23 | P1: Pagamento e estorno de fatura | T16 | Pending |
-| SALDO-24 | P1: Pagamento e estorno de fatura | T17 | Pending |
-| SALDO-25 | P1: Pagamento e estorno de fatura | T17 | Pending |
-| SALDO-26 | P1: Pagamento e estorno de fatura | T16, T28 | Pending |
-| SALDO-27 | P1: Pagamento e estorno de fatura | T17 | Pending |
-| SALDO-46 | P1: Pagamento e estorno de fatura | T6 | Pending |
-| SALDO-28 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
-| SALDO-29 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
-| SALDO-30 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
-| SALDO-31 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
-| SALDO-32 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
-| SALDO-33 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
-| SALDO-34 | P1: Totais do dashboard e contas excluídas | T9 | Pending |
-| SALDO-35 | P1: Totais do dashboard e contas excluídas | T7, T29, T30 | Pending |
-| SALDO-36 | P1: Totais do dashboard e contas excluídas | T8 | Pending |
-| SALDO-47 | P1: Totais do dashboard e contas excluídas | T20 | Pending |
-| SALDO-37 | P1: Correção dos saldos existentes | T21 | Pending |
-| SALDO-38 | P1: Correção dos saldos existentes | T21 | Pending |
-| SALDO-39 | P1: Correção dos saldos existentes | T22 | Pending |
-| SALDO-40 | P2: Ajuste de saldo | T19, T23 | Pending |
-| SALDO-41 | P2: Ajuste de saldo | T19, T23 | Pending |
-| SALDO-42 | P2: Ajuste de saldo | T19 | Pending |
-| SALDO-43 | P2: Ajuste de saldo | T3 | Pending |
-| SALDO-44 | P2: Operações simultâneas | T28 | Pending |
-| SALDO-45 | P2: Operações simultâneas | T28 | Pending |
+| SALDO-01 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-02 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-03 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-04 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-05 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-06 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-07 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-08 | P1: Saldo em transações avulsas | T2 | Verified |
+| SALDO-09 | P1: Saldo em transações avulsas | T4 | Verified |
+| SALDO-10 | P1: Saldo em transações avulsas | T5 | Verified |
+| SALDO-11 | P1: Transferências | T10 | Verified |
+| SALDO-12 | P1: Transferências | T10, T11 | Verified |
+| SALDO-13 | P1: Transferências | T11, T25 | Verified |
+| SALDO-14 | P1: Transferências | T11, T25 | Verified |
+| SALDO-15 | P1: Transferências | T11 | Verified |
+| SALDO-16 | P1: Transferências | T12 | Verified |
+| SALDO-17 | P1: Transferências | T10 | Verified |
+| SALDO-18 | P1: Transferências | T6, T24 | Verified |
+| SALDO-19 | P1: Transferências | T6 | Verified |
+| SALDO-20 | P1: Séries recorrentes | T13 | Verified |
+| SALDO-21 | P1: Séries recorrentes | T14 | Verified |
+| SALDO-22 | P1: Séries recorrentes | T15 | Verified |
+| SALDO-23 | P1: Pagamento e estorno de fatura | T16 | Verified |
+| SALDO-24 | P1: Pagamento e estorno de fatura | T17 | Verified |
+| SALDO-25 | P1: Pagamento e estorno de fatura | T17 | Verified |
+| SALDO-26 | P1: Pagamento e estorno de fatura | T16, T28 | Verified |
+| SALDO-27 | P1: Pagamento e estorno de fatura | T17 | Verified |
+| SALDO-46 | P1: Pagamento e estorno de fatura | T6 | Verified |
+| SALDO-28 | P1: Totais do dashboard e contas excluídas | T18 | Verified |
+| SALDO-29 | P1: Totais do dashboard e contas excluídas | T18 | Verified |
+| SALDO-30 | P1: Totais do dashboard e contas excluídas | T18 | Verified |
+| SALDO-31 | P1: Totais do dashboard e contas excluídas | T18 | Verified |
+| SALDO-32 | P1: Totais do dashboard e contas excluídas | T9, T26 | Verified |
+| SALDO-33 | P1: Totais do dashboard e contas excluídas | T9, T26 | Verified |
+| SALDO-34 | P1: Totais do dashboard e contas excluídas | T9 | Verified |
+| SALDO-35 | P1: Totais do dashboard e contas excluídas | T7, T29, T30 | Verified |
+| SALDO-36 | P1: Totais do dashboard e contas excluídas | T8 | Verified |
+| SALDO-47 | P1: Totais do dashboard e contas excluídas | T20 | Verified |
+| SALDO-37 | P1: Correção dos saldos existentes | T21 | Verified |
+| SALDO-38 | P1: Correção dos saldos existentes | T21 | Verified |
+| SALDO-39 | P1: Correção dos saldos existentes | T22 | Verified |
+| SALDO-40 | P2: Ajuste de saldo | T19, T23 | Verified |
+| SALDO-41 | P2: Ajuste de saldo | T19, T23 | Verified |
+| SALDO-42 | P2: Ajuste de saldo | T19 | Verified |
+| SALDO-43 | P2: Ajuste de saldo | T3 | Verified |
+| SALDO-44 | P2: Operações simultâneas | T28 | Verified |
+| SALDO-45 | P2: Operações simultâneas | T28 | Verified |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 

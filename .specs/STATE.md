@@ -308,11 +308,13 @@
 
 ## Handoff
 
-- **Feature**: `saldo`
-- **Phase / Task**: Design e Tasks aprovados em 2026-10-01; Execute de T1 a T28 em andamento
-- **Completed**: `isolamento-entre-usuarios`, `atualizacao-de-dependencias`, `autenticacao` e `sessao` mergeadas na `development`
+- **Feature**: `saldo` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T30) e verificado: `validation.md` com PASS, 47 de 47 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: saldo recalculado do razão sob trava (AD-038), atomicidade, tipos do endpoint genérico, contas excluídas, transferências, séries, pagamento e estorno de fatura, totais com contas ativas, ajuste de saldo, `cleanup_db` seguro, migração 0008 e comando `check_saldos`; backend com 529 testes e frontend com 84
 - **In-progress** (file:line): nenhum
-- **Next step**: com a aprovação, executar T1 a T28 nas branches `fix/saldo` do backend e do frontend, com o verificador leve no fim
+- **Deploy**: a migração `transactions/0008` roda no `migrate`; depois, `check_saldos` deve listar 0 contas
+- **Pendências anotadas para `faturas`**: `total_amount` desatualizado depois de pagamento parcial em `pay_invoice`; estorno de pagamento parcial não junta as partes; compra no cartão aceita sem conta de pagamento ou com cartão excluído; diálogo de pagamento perde a conta pré-preenchida (visto só no jsdom)
+- **Next step**: o usuário faz o push das duas branches `fix/saldo` e abre os PRs para a `development`. Depois do merge, a próxima é `faturas`, com o verificador leve
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: fix/saldo (backend e frontend)

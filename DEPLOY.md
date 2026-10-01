@@ -43,6 +43,7 @@ O frontend chama a API por `/api` na própria origem, e o Next.js repassa para o
 
 ### Depois do deploy
 - `python manage.py check_isolation`: deve listar 0 ligações entre usuários.
+- `python manage.py check_saldos`: deve terminar com "Contas com saldo divergente: 0" (a migração `transactions/0008` recalcula os saldos no `migrate`).
 - `python manage.py check_email_case`: lista as contas cujos e-mails só diferem na caixa, para resolução manual.
 
 ## 🩺 Health Check
