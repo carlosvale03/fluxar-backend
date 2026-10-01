@@ -612,13 +612,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_totais.py` com uma corrente de R$ 1.000,00, uma de investimento de R$ 500,00 e uma excluída com R$ 300,00 confere "Saldo em Contas" 1.000,00, saldo total 1.500,00, investimentos 500,00 e o total do admin 1.500,00
-- [ ] Cada total usa o mesmo valor da lista de contas
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/saldo/test_totais.py` com uma corrente de R$ 1.000,00, uma de investimento de R$ 500,00 e uma excluída com R$ 300,00 confere "Saldo em Contas" 1.000,00, saldo total 1.500,00, investimentos 500,00 e o total do admin 1.500,00
+- [x] Cada total usa o mesmo valor da lista de contas
+- [x] Full gate passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 494 → 499)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(reports): soma nos totais só o saldo das contas ativas`
 
