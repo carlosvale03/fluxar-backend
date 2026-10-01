@@ -417,12 +417,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_manutencao.py` confere 200 com `maintenance: true` e com `maintenance: false`
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 2 testes
+- [x] `tests/sessao/test_manutencao.py` confere 200 com `maintenance: true` e com `maintenance: false`
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 2 testes (real: 3 testes novos; suíte 380 → 383)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): mantém o health check no ar durante a manutenção`
 

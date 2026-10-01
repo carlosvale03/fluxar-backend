@@ -1,5 +1,5 @@
 """
-Modo manutenção (SESSAO-19 e SESSAO-20).
+Modo manutenção (SESSAO-19, SESSAO-20 e SESSAO-23).
 
 Com a manutenção ligada, quem não é administrador recebe 503 com o código
 `maintenance_mode`, menos no login, na renovação, em `/auth/me/`, no logout e
@@ -12,6 +12,7 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core.cache import cache
+from django.db import DatabaseError
 from django.test import override_settings
 from django.utils import timezone
 from rest_framework import status
@@ -194,3 +195,40 @@ class ModoManutencaoTests(APITestCase):
         resposta = self.client.get('/admin/login/')
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+
+class HealthCheckTests(APITestCase):
+    """SESSAO-23: `/api/health/` responde 200 com ou sem manutenção."""
+
+    def setUp(self):
+        manutencao.invalidar()
+        self.addCleanup(manutencao.invalidar)
+
+    def test_responde_200_com_a_manutencao_ligada(self):
+        GlobalSetting.objects.create(key='maintenance_mode', value='true')
+
+        resposta = self.client.get('/api/health/')
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': True})
+
+    def test_responde_200_com_a_manutencao_desligada(self):
+        GlobalSetting.objects.create(key='maintenance_mode', value='false')
+
+        resposta = self.client.get('/api/health/')
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': False})
+
+    def test_falha_ao_ler_o_banco_responde_200_sem_manutencao_e_registra_o_erro_sem_detalhes(self):
+        erro = DatabaseError('could not connect to server at db-senha-secreta')
+
+        with mock.patch('api.views.manutencao_ligada', side_effect=erro), \
+                self.assertLogs('api.views', level='ERROR') as logs:
+            resposta = self.client.get('/api/health/')
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.json(), {'status': 'ok', 'maintenance': False})
+        self.assertEqual(len(logs.output), 1)
+        self.assertIn('DatabaseError', logs.output[0])
+        self.assertNotIn('db-senha-secreta', logs.output[0])

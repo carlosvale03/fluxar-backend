@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
@@ -42,7 +42,7 @@ from core.throttles import (
     ReenvioIPThrottle,
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
-from core.manutencao import invalidar as invalidar_manutencao
+from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 import logging
 
 User = get_user_model()
@@ -852,5 +852,14 @@ class AdminHardDeleteView(APIView):
 def health_check(request):
     """
     Endpoint simples para monitoramento de uptime (Render/Kubernetes).
+
+    Responde 200 enquanto a aplicação estiver no ar, com ou sem manutenção
+    (SESSAO-23). A página de manutenção lê o `maintenance` para voltar sozinha.
     """
-    return JsonResponse({"status": "ok"})
+    try:
+        em_manutencao = manutencao_ligada()
+    except DatabaseError as erro:
+        # Só o tipo do erro: a mensagem do banco pode trazer o endereço dele
+        logger.error("Health check sem acesso ao banco (%s).", type(erro).__name__)
+        em_manutencao = False
+    return JsonResponse({"status": "ok", "maintenance": em_manutencao})
