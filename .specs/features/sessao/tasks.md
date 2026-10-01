@@ -617,13 +617,14 @@ T21
 
 **Done when**:
 
-- [ ] Os testes de `tests/autenticacao/login.test.tsx` e `verify-email.test.tsx` são atualizados para a nova assinatura e continuam passando
-- [ ] `tests/sessao/login-sem-refresh.test.tsx` confere que nenhuma das duas telas grava token no navegador
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes novos
+- [x] Os testes de `tests/autenticacao/login.test.tsx` e `verify-email.test.tsx` são atualizados para a nova assinatura e continuam passando
+- [x] `tests/sessao/login-sem-refresh.test.tsx` confere que nenhuma das duas telas grava token no navegador
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes novos (real: 2 testes em tests/sessao/login-sem-refresh.test.tsx; frontend 68 → 70; verify-email.test.tsx com a nova assinatura)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): entra sem guardar o token de renovação no navegador`
 
