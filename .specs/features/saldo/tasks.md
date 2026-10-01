@@ -439,12 +439,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_transferencia.py` exclui a perna de saída e depois, noutra transferência, a de entrada, conferindo as duas pernas apagadas e os saldos por SALDO-01
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_transferencia.py` exclui a perna de saída e depois, noutra transferência, a de entrada, conferindo as duas pernas apagadas e os saldos por SALDO-01
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 469 → 471)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(saldo): cobre a exclusão de transferência`
 
@@ -523,12 +524,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_series.py` confere que as efetivadas continuam, as pendentes somem, `is_active` da série fica falso e o saldo não muda
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_series.py` confere que as efetivadas continuam, as pendentes somem, `is_active` da série fica falso e o saldo não muda
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 484 → 486)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): exclui só as ocorrências pendentes da série`
 
