@@ -24,8 +24,13 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
-from .cookies import gravar_cookie_de_renovacao
-from .sessoes import criar_sessao
+from .cookies import (
+    NOME_DO_COOKIE,
+    apagar_cookie_de_renovacao,
+    gravar_cookie_de_renovacao,
+    origem_permitida,
+)
+from .sessoes import SessaoInvalida, criar_sessao, renovar
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -97,6 +102,31 @@ class CustomLoginView(TokenObtainPairView):
         # O acesso fica no corpo e a renovação só no cookie httpOnly (SESSAO-01)
         response = super().post(request, *args, **kwargs)
         gravar_cookie_de_renovacao(response, response.data.pop('refresh'))
+        return response
+
+ORIGEM_RECUSADA = {"detail": "Origem não permitida.", "code": "origin_not_allowed"}
+SESSAO_EXPIRADA = {"detail": "Sessão expirada. Entre de novo.", "code": "session_expired"}
+
+class RenovarSessaoView(APIView):
+    """
+    Renova a sessão pelo cookie, com rotação do token de renovação
+    (SESSAO-04, SESSAO-08 e SESSAO-09).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # O token de acesso pode estar vencido; quem vale aqui é o cookie
+    authentication_classes = ()
+
+    def post(self, request):
+        if not origem_permitida(request):
+            return Response(ORIGEM_RECUSADA, status=status.HTTP_403_FORBIDDEN)
+        try:
+            access, refresh = renovar(request.COOKIES.get(NOME_DO_COOKIE))
+        except SessaoInvalida:
+            response = Response(SESSAO_EXPIRADA, status=status.HTTP_401_UNAUTHORIZED)
+            apagar_cookie_de_renovacao(response)
+            return response
+        response = Response({"access": access}, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
         return response
 
 class VerifyEmailView(APIView):

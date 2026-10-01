@@ -220,14 +220,15 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_renovacao.py` confere o `access` novo e o cookie novo, e 401 ao reapresentar o cookie antigo
-- [ ] Sem cookie, com cookie vencido e com sessão encerrada: 401 e cookie apagado
-- [ ] De outra origem: 403, sem renovar
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/sessao/test_renovacao.py` confere o `access` novo e o cookie novo, e 401 ao reapresentar o cookie antigo
+- [x] Sem cookie, com cookie vencido e com sessão encerrada: 401 e cookie apagado
+- [x] De outra origem: 403, sem renovar
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: 6 testes novos; suíte 343 → 349)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(api): renova a sessão pelo cookie com rotação`
 
