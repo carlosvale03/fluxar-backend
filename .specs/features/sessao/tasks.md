@@ -645,12 +645,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/manutencao.test.tsx` confere o redirecionamento com a página guardada e sem fim da sessão, e a volta depois de uma consulta com `maintenance: false` (timers simulados)
-- [ ] Build gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/sessao/manutencao.test.tsx` confere o redirecionamento com a página guardada e sem fim da sessão, e a volta depois de uma consulta com `maintenance: false` (timers simulados)
+- [x] Build gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: 4 testes em tests/sessao/manutencao.test.tsx; frontend 74 testes)
 
 **Tests**: unit (frontend)
 **Gate**: build (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): volta sozinho da página de manutenção`
 
