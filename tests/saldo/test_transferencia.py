@@ -242,3 +242,44 @@ class EdicaoDeTransferenciaTests(TransferenciaTestCase):
                 self.assertEqual(resp.status_code, 400, resp.data)
                 self.assertEqual(resp.data[campo], [CONTA_NAO_ENCONTRADA])
                 self.assertEqual(self.estado(), antes)
+
+
+class ExclusaoDeTransferenciaTests(TransferenciaTestCase):
+    """Excluir uma perna exclui as duas e desfaz o efeito nas duas contas (SALDO-16)."""
+
+    def transferir(self, valor):
+        resp = self.cliente.post(URL_TRANSFERENCIA, {
+            'account_from': str(self.a.conta.id), 'account_to': str(self.a.poupanca.id),
+            'amount': valor, 'date': '2026-09-15', 'description': 'Reserva',
+        }, format='json')
+        self.assertEqual(resp.status_code, 201, resp.data)
+        pernas = Transaction.objects.filter(user=self.a.usuario, transfer_id__isnull=False).order_by('-created_at')
+        transfer_id = pernas.first().transfer_id
+        return (
+            Transaction.objects.get(transfer_id=transfer_id, type='TRANSFER_OUT'),
+            Transaction.objects.get(transfer_id=transfer_id, type='TRANSFER_IN'),
+        )
+
+    def assert_exclui(self, perna, outra):
+        soma = self.soma()
+        resp = self.cliente.delete(f'{URL_TRANSACOES}{perna.id}/')
+        self.assertEqual(resp.status_code, 204)
+        self.assertFalse(Transaction.objects.filter(pk__in=[perna.pk, outra.pk]).exists())
+        self.assertEqual(self.soma(), soma)
+
+    def test_excluir_a_perna_de_saida_exclui_as_duas(self):
+        saida, entrada = self.transferir('100.00')
+        self.assertEqual((self.saldo(self.a.conta), self.saldo(self.a.poupanca)), (Decimal('900.00'), Decimal('100.00')))
+
+        self.assert_exclui(saida, entrada)
+        self.assertEqual((self.saldo(self.a.conta), self.saldo(self.a.poupanca)), (Decimal('1000.00'), Decimal('0.00')))
+
+    def test_excluir_a_perna_de_entrada_exclui_as_duas(self):
+        # Outra transferência continua e só a excluída sai do saldo
+        self.transferir('30.00')
+        saida, entrada = self.transferir('100.00')
+        self.assertEqual((self.saldo(self.a.conta), self.saldo(self.a.poupanca)), (Decimal('870.00'), Decimal('130.00')))
+
+        self.assert_exclui(entrada, saida)
+        self.assertEqual((self.saldo(self.a.conta), self.saldo(self.a.poupanca)), (Decimal('970.00'), Decimal('30.00')))
+        self.assertEqual(Transaction.objects.filter(user=self.a.usuario, transfer_id__isnull=False).count(), 2)
