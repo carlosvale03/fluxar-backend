@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
@@ -24,6 +24,13 @@ from .serializers import (
     GlobalSettingSerializer
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
+from .cookies import (
+    NOME_DO_COOKIE,
+    apagar_cookie_de_renovacao,
+    gravar_cookie_de_renovacao,
+    origem_permitida,
+)
+from .sessoes import SessaoInvalida, criar_sessao, encerrar, encerrar_outras, encerrar_todas, renovar, sid_do_token
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -35,6 +42,7 @@ from core.throttles import (
     ReenvioIPThrottle,
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
+from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 import logging
 
 User = get_user_model()
@@ -90,6 +98,56 @@ class CustomLoginView(TokenObtainPairView):
     authentication_classes = ()
     throttle_classes = (LoginIPThrottle, LoginFalhasEmailThrottle)
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        # O acesso fica no corpo e a renovação só no cookie httpOnly (SESSAO-01)
+        response = super().post(request, *args, **kwargs)
+        gravar_cookie_de_renovacao(response, response.data.pop('refresh'))
+        return response
+
+ORIGEM_RECUSADA = {"detail": "Origem não permitida.", "code": "origin_not_allowed"}
+SESSAO_EXPIRADA = {"detail": "Sessão expirada. Entre de novo.", "code": "session_expired"}
+
+class RenovarSessaoView(APIView):
+    """
+    Renova a sessão pelo cookie, com rotação do token de renovação
+    (SESSAO-04, SESSAO-08 e SESSAO-09).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # O token de acesso pode estar vencido; quem vale aqui é o cookie
+    authentication_classes = ()
+
+    def post(self, request):
+        if not origem_permitida(request):
+            return Response(ORIGEM_RECUSADA, status=status.HTTP_403_FORBIDDEN)
+        try:
+            access, refresh = renovar(request.COOKIES.get(NOME_DO_COOKIE))
+        except SessaoInvalida:
+            response = Response(SESSAO_EXPIRADA, status=status.HTTP_401_UNAUTHORIZED)
+            apagar_cookie_de_renovacao(response)
+            return response
+        response = Response({"access": access}, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
+        return response
+
+class LogoutView(APIView):
+    """
+    Encerra a sessão do cookie e apaga o cookie (SESSAO-04 e SESSAO-13).
+    Responde 204 também sem cookie, para o logout ser idempotente.
+    """
+    permission_classes = (permissions.AllowAny,)
+    # O token de acesso pode estar vencido; quem vale aqui é o cookie
+    authentication_classes = ()
+
+    def post(self, request):
+        if not origem_permitida(request):
+            return Response(ORIGEM_RECUSADA, status=status.HTTP_403_FORBIDDEN)
+        sid = sid_do_token(request.COOKIES.get(NOME_DO_COOKIE))
+        if sid:
+            encerrar(sid)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        apagar_cookie_de_renovacao(response)
+        return response
 
 class VerifyEmailView(APIView):
     """
@@ -160,15 +218,15 @@ class VerifyEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Gera tokens para login automático
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
+        # Abre a sessão para o login automático: o acesso no corpo e a
+        # renovação só no cookie httpOnly (SESSAO-01)
+        access, refresh = criar_sessao(user)
+        response = Response({
             "message": "E-mail verificado com sucesso! Sua conta está ativa.",
-            "access": str(refresh.access_token),
-            "refresh": str(refresh)
+            "access": access,
         }, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
+        return response
 
 class ResendVerificationView(APIView):
     """
@@ -284,6 +342,8 @@ class ResetPasswordView(APIView):
             # continua desativada (AUTH-20, AD-035)
             user.email_verified = True
             user.save(update_fields=['password', 'email_verified'])
+            # A senha nova derruba todas as sessões abertas (SESSAO-16)
+            encerrar_todas(user)
 
         return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
@@ -362,6 +422,8 @@ class ChangePasswordView(APIView):
             # Define a nova senha e salva
             user.set_password(serializer.data.get("new_password"))
             user.save()
+            # Derruba as outras sessões e mantém a atual (SESSAO-15)
+            encerrar_outras(user, request.auth.get('sid'))
             return Response({"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -424,6 +486,9 @@ class AdminUserListView(generics.ListAPIView):
             return Response({"detail": "Ação bloqueada: O sistema deve ter pelo menos um administrador."}, status=status.HTTP_400_BAD_REQUEST)
 
         users_to_delete.update(is_active=False)
+        # A conta arquivada perde as sessões abertas (SESSAO-17)
+        for user in users_to_delete:
+            encerrar_todas(user)
         return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -455,6 +520,9 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
         
         if response.status_code == 200:
             new_user = self.get_object()
+            # A conta desativada perde as sessões abertas (SESSAO-17)
+            if not new_user.is_active:
+                encerrar_todas(new_user)
             changes = []
             if old_user.plan != new_user.plan:
                 changes.append(f"Plano alterado de {old_user.plan} para {new_user.plan}")
@@ -526,6 +594,9 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             instance.is_active = False
             instance.save()
+            # A conta arquivada perde as sessões abertas; na exclusão, elas
+            # são apagadas em cascata com a conta (SESSAO-17)
+            encerrar_todas(instance)
             
             SystemLog.objects.create(
                 user=instance,
@@ -642,7 +713,8 @@ class AdminSystemSettingsView(APIView):
                 description=f"Configuração '{key}' atualizada para '{value}'.",
                 admin_name=request.user.name
             )
-            
+
+        invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
 
 class AdminGlobalLogsView(generics.ListAPIView):
@@ -697,6 +769,8 @@ class AdminResetPasswordView(APIView):
             
             user.set_password(new_password)
             user.save()
+            # A senha nova derruba todas as sessões do usuário (SESSAO-16)
+            encerrar_todas(user)
             
             SystemLog.objects.create(
                 user=user,
@@ -778,5 +852,15 @@ class AdminHardDeleteView(APIView):
 def health_check(request):
     """
     Endpoint simples para monitoramento de uptime (Render/Kubernetes).
+
+    Responde 200 enquanto a aplicação estiver no ar, com ou sem manutenção
+    (SESSAO-23). A página de manutenção lê o `maintenance` para voltar sozinha.
     """
-    return JsonResponse({"status": "ok"})
+    try:
+        em_manutencao = manutencao_ligada()
+    except DatabaseError as erro:
+        # Só o tipo do erro: a mensagem do banco pode trazer o endereço dele
+        logger.error("Health check sem acesso ao banco (%s).", type(erro).__name__)
+        # Estado desconhecido: a página de manutenção só volta com false
+        em_manutencao = None
+    return JsonResponse({"status": "ok", "maintenance": em_manutencao})

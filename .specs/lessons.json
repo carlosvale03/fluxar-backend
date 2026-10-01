@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 17,
   "lessons": [
     {
       "id": "L-001",
@@ -211,6 +211,97 @@
       ],
       "created": "2026-09-28T21:22:00Z",
       "last_seen": "2026-09-28T21:22:00Z"
+    },
+    {
+      "id": "L-012",
+      "key": "ac_gap::when an ac lists several triggers for one outcome give each trigger its own test of the full outcome including cross tab side effects",
+      "text": "When an AC lists several triggers for one outcome, give each trigger its own test of the full outcome, including cross-tab side effects",
+      "signal": "ac_gap",
+      "scope": "frontend-session",
+      "status": "candidate",
+      "features": [
+        "sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SESSAO-14 fluxar-frontend src/contexts/auth-context.tsx:104 (frontend-session)",
+        "SESSAO-14 resolvida em bfa0144 (rodada 2): fluxar-frontend tests/sessao/auth-context.test.tsx:207 (frontend-session)"
+      ],
+      "created": "2026-10-01T01:30:08Z",
+      "last_seen": "2026-10-01T01:41:57Z"
+    },
+    {
+      "id": "L-013",
+      "key": "spec_precision_gap::state which ui layer shows a required error message when the failure can happen both at startup and in the middle of use",
+      "text": "State which UI layer shows a required error message when the failure can happen both at startup and in the middle of use",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SESSAO-12 fluxar-frontend tests/sessao/auth-context.test.tsx:146 (spec)"
+      ],
+      "created": "2026-10-01T01:30:08Z",
+      "last_seen": "2026-10-01T01:30:08Z"
+    },
+    {
+      "id": "L-014",
+      "key": "spec_precision_gap::when two time limits chain across client polling and server caching state whether the user facing limit is end to end",
+      "text": "When two time limits chain across client polling and server caching, state whether the user-facing limit is end to end",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SESSAO-22 with SESSAO-24 core/manutencao.py:13 (spec)"
+      ],
+      "created": "2026-10-01T01:30:09Z",
+      "last_seen": "2026-10-01T01:30:09Z"
+    },
+    {
+      "id": "L-015",
+      "key": "spec_precision_gap::state whether detecting a reused rotating credential revokes only that token or the whole session family",
+      "text": "State whether detecting a reused rotating credential revokes only that token or the whole session family",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SESSAO-09 api/sessoes.py:80 (spec)"
+      ],
+      "created": "2026-10-01T01:30:09Z",
+      "last_seen": "2026-10-01T01:30:09Z"
+    },
+    {
+      "id": "L-016",
+      "key": "spec_deviation::when a gate rejects requests by role decide in the spec what status an expired or revoked token gets so clients can still renew",
+      "text": "When a gate rejects requests by role, decide in the spec what status an expired or revoked token gets so clients can still renew",
+      "signal": "spec_deviation",
+      "scope": "middleware",
+      "status": "candidate",
+      "features": [
+        "sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION api/middleware.py:59 (middleware)"
+      ],
+      "created": "2026-10-01T01:30:09Z",
+      "last_seen": "2026-10-01T01:30:09Z"
     }
   ]
 }

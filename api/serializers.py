@@ -10,6 +10,8 @@ from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
 from core.throttles import LoginFalhasEmailThrottle
 
+from .sessoes import criar_sessao
+
 User = get_user_model()
 
 EMAIL_JA_CADASTRADO = 'Este e-mail já está cadastrado. Se a conta é sua, use "Esqueci a senha".'
@@ -219,22 +221,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise LoginRecusado("Confirme seu e-mail para entrar.", "email_not_verified")
 
         self.user = user
-        refresh = self.get_token(user)
+        # Cada login abre uma sessão; a view tira o refresh do corpo e o grava no cookie (SESSAO-01)
+        access, refresh = criar_sessao(user)
         if jwt_settings.UPDATE_LAST_LOGIN:
             update_last_login(None, user)
-        return {"refresh": str(refresh), "access": str(refresh.access_token)}
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Adiciona claims customizadas ao token (para o front não precisar consultar /me logo de cara)
-        token['name'] = user.name
-        token['email'] = user.email
-        token['plan'] = user.plan
-        token['role'] = user.role
-
-        return token
+        return {"refresh": refresh, "access": access}
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

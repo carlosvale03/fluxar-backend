@@ -282,14 +282,31 @@
 - **Date**: 2026-09-27
 - **Status**: active
 
+### AD-036
+- **Decision**: O frontend chama a API por `/api` na própria origem, e o Next.js faz o rewrite para o Render (`BACKEND_URL` na Vercel). Toda chamada nova usa o `apiClient`.
+- **Reason**: decisão do usuário. Com a página e a API na mesma origem, o cookie de renovação é de primeira parte em qualquer navegador, sem domínio próprio (AD-013).
+- **Trade-off**: um salto a mais em cada requisição, e o proxy da Vercel tem tempo máximo; com o Render dormindo, a primeira requisição pode receber 504 da Vercel.
+- **Scope**: frontend inteiro, sessao e a infraestrutura de deploy.
+- **Date**: 2026-09-30
+- **Status**: active
+
+### AD-037
+- **Decision**: Toda sessão tem uma linha em `Sessao`, e os tokens levam o `sid` dela; a autenticação confere a cada requisição se a sessão está aberta e a conta ativa. Todo fluxo que troca credenciais, desativa ou exclui a conta encerra as sessões pelo `api/sessoes.py`.
+- **Reason**: permite encerrar uma sessão, as outras ou todas na hora (AD-014), com a renovação rotativa e a recusa do token reapresentado.
+- **Trade-off**: uma consulta pela chave primária a mais por requisição autenticada.
+- **Scope**: sessao, autenticacao, painel-admin, lgpd (exclusão da conta) e qualquer fluxo futuro de credenciais.
+- **Date**: 2026-09-30
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `autenticacao` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T29) e verificado: `validation.md` com PASS, 44 de 44 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: cadastro, verificação, reenvio, login, "esqueci a senha" e redefinição funcionando de ponta a ponta; limites de tentativas; e-mail síncrono com prazo de 10 s; configuração de produção que falha fechada; migração dos e-mails; testes do frontend com Vitest (31) e backend com 306 testes
+- **Feature**: `sessao` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T21) e verificado: `validation.md` com PASS na 2ª rodada, 25 de 25 ACs, sensor com 11 de 11 mutações mortas
+- **Completed**: sessões no banco com renovação rotativa por cookie httpOnly, logout, encerramento de sessões na troca e redefinição de senha e na desativação, proxy `/api` do Next.js, token de acesso só em memória, renovação única entre abas, erros de rede sem deslogar e manutenção com cache de 30 s; backend com 384 testes e frontend com 75
 - **In-progress** (file:line): nenhum
-- **Deploy** (manual, no Render): SECRET_KEY nova, FRONTEND_URL, CORS_ALLOWED_ORIGINS, NUM_PROXIES e o Pre-Deploy Command `check --deploy && migrate --noinput && createcachetable`, descritos no `DEPLOY.md`; depois, rodar `check_isolation` e `check_email_case`
-- **Next step**: o usuário faz o push das duas branches `fix/autenticacao` e abre os PRs para a `development`. Depois do merge, a próxima feature é `sessao` (FE-01, SEG-05, OPS-04), com o verificador leve
+- **Deploy**: `BACKEND_URL` na Vercel antes do build; domínio da Vercel em `FRONTEND_URL`/`CORS_ALLOWED_ORIGINS`; conferir `NUM_PROXIES`, `Origin` e cookie pelo proxy; todos entram de novo uma vez (ver `DEPLOY.md`)
+- **Pendências anotadas**: proxy em dev com o frontend no Docker (`host.docker.internal`), `NEXT_PUBLIC_API_URL` ainda citado em README, `.env.example` e `src/lib/utils.ts`, e o painel de manutenção ainda autoriza por `is_staff` (fica com `permissoes-e-planos`)
+- **Next step**: o usuário faz o push das duas branches `fix/sessao` e abre os PRs para a `development`. Depois do merge, a próxima é `saldo` (FIN-01 a FIN-04, FIN-09, FIN-10, FIN-29), com o verificador leve
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/autenticacao (backend e frontend)
+- **Branch**: fix/sessao (backend e frontend)

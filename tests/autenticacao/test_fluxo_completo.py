@@ -91,7 +91,8 @@ class FluxoCompletoDeEntradaTests(APITestCase):
         resposta = self.client.get('/api/auth/verify-email/', {'token': link_novo})
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertTrue(resposta.data['access'])
-        self.assertTrue(resposta.data['refresh'])
+        # O token de renovação vai só no cookie httpOnly (SESSAO-01)
+        self.assertTrue(resposta.cookies['fluxar_refresh'].value)
 
         # 5. Login com a conta verificada (AUTH-14)
         resposta = self.entrar(SENHA_ANTIGA)

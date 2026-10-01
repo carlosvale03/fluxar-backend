@@ -34,6 +34,13 @@ Configure estas chaves no painel do Render:
 - `NUM_PROXIES`: quantos proxies ficam na frente da aplicação, para ler o IP do cliente nos limites de tentativas (padrão `1`).
 - E-mail: `RESEND_API_KEY`, `DEFAULT_FROM_EMAIL` e, para o fallback SMTP, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER` e `EMAIL_HOST_PASSWORD`.
 
+### Frontend na Vercel (proxy da API)
+O frontend chama a API por `/api` na própria origem, e o Next.js repassa para o Render (AD-036). Na Vercel:
+- `BACKEND_URL`: URL do Render, sem `/api` no fim (ex.: `https://fluxar-api.onrender.com`). Lida no build: depois de criar ou mudar, faça um novo deploy.
+- No Render, inclua o domínio da Vercel em `FRONTEND_URL`/`CORS_ALLOWED_ORIGINS`; a renovação e o logout recusam outra origem (403).
+- Depois do primeiro deploy com o proxy, confira num log do Render o `X-Forwarded-For` e ajuste `NUM_PROXIES`; confira também que a renovação responde 200 (sinal de que `Origin` e o cookie passam pelo proxy).
+- Todos os usuários entram de novo uma vez: as sessões antigas não têm o `sid`.
+
 ### Depois do deploy
 - `python manage.py check_isolation`: deve listar 0 ligações entre usuários.
 - `python manage.py check_email_case`: lista as contas cujos e-mails só diferem na caixa, para resolução manual.
