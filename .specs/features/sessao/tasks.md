@@ -674,12 +674,13 @@ T21
 
 **Done when**:
 
-- [ ] O teste percorre o fluxo sem passo manual e confere cada resposta pelo status e código da spec
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 1 teste
+- [x] O teste percorre o fluxo sem passo manual e confere cada resposta pelo status e código da spec
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 1 teste (real: 1 teste novo; suíte 383 → 384)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(sessao): cobre o fluxo completo de sessão pela API`
 
