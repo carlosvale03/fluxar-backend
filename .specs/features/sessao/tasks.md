@@ -446,13 +446,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/proxy.test.ts` confere o rewrite com `BACKEND_URL` definido e com o padrão `http://localhost:8000`
-- [ ] O `apiClient` usa `/api` como base
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/sessao/proxy.test.ts` confere o rewrite com `BACKEND_URL` definido e com o padrão `http://localhost:8000`
+- [x] O `apiClient` usa `/api` como base
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes em tests/sessao/proxy.test.ts)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): chama a API pelo proxy do Next.js`
 
