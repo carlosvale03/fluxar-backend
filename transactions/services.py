@@ -8,6 +8,9 @@ from rest_framework.exceptions import ValidationError
 from .models import Transaction, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from accounts.services import CreditCardService
+from core.fields import CONTA_NAO_ENCONTRADA
+
+MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
 
 class TransactionService:
     @staticmethod
@@ -50,28 +53,75 @@ class TransactionService:
     @transaction.atomic
     def create_transfer(user, account_from, account_to, amount, date, description="Transferência"):
         """
-        Cria transferencia entre contas (Atomic).
-        Gera 2 transações ligadas pelo mesmo transfer_id.
+        Cria a transferência: a saída na origem e a entrada no destino, no
+        mesmo `atomic`, com o mesmo status e a descrição enviada (SALDO-11,
+        SALDO-12). Origem igual ao destino recebe 400 (SALDO-17), e conta
+        excluída de qualquer lado também (SALDO-35): o aporte e o resgate de
+        meta passam por aqui com o cofrinho, que não vem da requisição.
+        Devolve o `transfer_id` que liga as duas pernas.
         """
+        if account_from.pk == account_to.pk:
+            raise ValidationError({'detail': MESMA_CONTA})
+        if Account.objects.filter(pk__in=[account_from.pk, account_to.pk], is_active=False).exists():
+            raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
+
         transfer_uid = uuid.uuid4()
-        
-        # Saída
-        t_out = Transaction.objects.create(
-            user=user, type='TRANSFER_OUT', account=account_from,
-            amount=amount, date=date, description=f"TR - Para: {account_to.name}",
-            transfer_id=transfer_uid
-        )
-        
-        # Entrada
-        t_in = Transaction.objects.create(
-            user=user, type='TRANSFER_IN', account=account_to,
-            amount=amount, date=date, description=f"TR - De: {account_from.name}",
-            transfer_id=transfer_uid
-        )
-        # Retorna o ID de agrupamento
+        for tipo, conta in (('TRANSFER_OUT', account_from), ('TRANSFER_IN', account_to)):
+            Transaction.objects.create(
+                user=user, type=tipo, status='COMPLETED', account=conta,
+                amount=amount, date=date, description=description,
+                transfer_id=transfer_uid,
+            )
         return transfer_uid
 
     @staticmethod
+    @transaction.atomic
+    def editar_transferencia(perna, dados, user):
+        """
+        Edita uma perna de transferência e mantém a outra igual (SALDO-13 a
+        SALDO-15). Valor, data e status valem para as duas pernas; a
+        descrição é de cada uma. `account` é a conta da perna editada e
+        `target_account_id`, a da outra perna. O tipo não muda. As contas
+        antigas e as novas são recalculadas (AD-038).
+        """
+        from accounts.saldo import recalcular
+        from .serializers import TIPO_NAO_ALTERAVEL
+
+        dados = dict(dados)
+        tipo = dados.pop('type', perna.type)
+        if tipo != perna.type:
+            raise ValidationError({'type': [TIPO_NAO_ALTERAVEL]})
+
+        parceira = Transaction.objects.select_for_update().filter(
+            transfer_id=perna.transfer_id, user_id=user.pk,
+        ).exclude(pk=perna.pk).first()
+        contas_antigas = [perna.account_id, parceira.account_id if parceira else None]
+
+        conta_da_outra = dados.pop('target_account_id', None)
+        conta = dados.get('account', perna.account)
+        if conta is None:
+            raise ValidationError({'account': [CONTA_NAO_ENCONTRADA]})
+        if parceira is not None:
+            conta_da_outra = conta_da_outra or parceira.account
+            if conta_da_outra is not None and conta_da_outra.pk == conta.pk:
+                raise ValidationError({'detail': MESMA_CONTA})
+
+        for campo, valor in dados.items():
+            setattr(perna, campo, valor)
+        perna.save()
+
+        if parceira is not None:
+            for campo in ('amount', 'date', 'status'):
+                if campo in dados:
+                    setattr(parceira, campo, dados[campo])
+            parceira.account = conta_da_outra
+            parceira.save()
+
+        recalcular(*contas_antigas, perna.account_id, parceira.account_id if parceira else None)
+        return perna
+
+    @staticmethod
+    @transaction.atomic
     def create_credit_card_expense(user, card, amount, date, description, category, tags=None, installments=1):
         """
         Cria despesa de Cartão de Crédito.
@@ -79,6 +129,12 @@ class TransactionService:
         """
         if installments < 1:
             raise ValidationError("Número de parcelas deve ser pelo menos 1.")
+        # A compra fica na conta de pagamento do cartão; conta excluída não
+        # recebe movimentação nova (SALDO-35, AD-003)
+        if card.account_id is not None and not Account.objects.filter(
+            pk=card.account_id, is_active=True,
+        ).exists():
+            raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
 
         transactions = []
         installment_amount = amount / Decimal(installments)

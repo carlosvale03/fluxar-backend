@@ -8,6 +8,15 @@ from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
 )
+from core.valores import validar_valor_positivo
+
+# Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
+# Transferência, compra no cartão e pagamento de fatura nascem só das
+# operações próprias (AD-005).
+TIPOS_DO_ENDPOINT = ('INCOME', 'EXPENSE')
+TIPO_NAO_CRIAVEL = 'Por aqui só é possível criar receitas e despesas.'
+TIPO_NAO_ALTERAVEL = 'O tipo só pode ser trocado entre receita e despesa.'
+COMPRA_SO_PELA_FATURA = 'Compras no cartão são efetivadas pelo pagamento da fatura.'
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
@@ -56,9 +65,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     category_detail = CategorySerializer(source='category', read_only=True)
     tags_detail = TagSerializer(source='tags', many=True, read_only=True)
 
-    # Relações graváveis: só objetos do usuário da requisição (AD-032)
+    # Relações graváveis: só objetos do usuário da requisição (AD-032), e
+    # conta excluída não recebe movimentação nova (SALDO-35)
     account = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
         required=False, allow_null=True,
     )
     credit_card = OwnedPrimaryKeyRelatedField(
@@ -113,6 +123,8 @@ class TransactionSerializer(serializers.ModelSerializer):
             'transfer_id', 'related_transaction', 'signed_amount', 'recurring_source',
             'created_at', 'updated_at'
         ]
+        # Valor maior que zero, com até duas casas (SALDO-09)
+        extra_kwargs = {'amount': {'validators': [validar_valor_positivo]}}
 
     def to_representation(self, instance):
         """
@@ -194,7 +206,21 @@ class TransactionSerializer(serializers.ModelSerializer):
                 erros['tags'] = [TAG_NAO_ENCONTRADA]
             if erros:
                 raise serializers.ValidationError(erros)
+        self._validar_tipo_e_status(attrs)
         return attrs
+
+    def _validar_tipo_e_status(self, attrs):
+        tipo = attrs.get('type')
+        if self.instance is None:
+            if tipo not in TIPOS_DO_ENDPOINT:
+                raise serializers.ValidationError({'type': [TIPO_NAO_CRIAVEL]})
+            return
+        atual = self.instance.type
+        if tipo is not None and tipo != atual and not (tipo in TIPOS_DO_ENDPOINT and atual in TIPOS_DO_ENDPOINT):
+            raise serializers.ValidationError({'type': [TIPO_NAO_ALTERAVEL]})
+        # Compra no cartão só é efetivada pelo pagamento da fatura (SALDO-46)
+        if atual == 'CREDIT_CARD' and attrs.get('status') == 'COMPLETED' and self.instance.status != 'COMPLETED':
+            raise serializers.ValidationError({'status': [COMPRA_SO_PELA_FATURA]})
 
     @transaction.atomic
     def create(self, validated_data):
@@ -259,7 +285,8 @@ class TransactionSerializer(serializers.ModelSerializer):
                     credit_card=transaction.credit_card,
                     category=transaction.category,
                     date=current_date,
-                    status='PENDING' if transaction.type in ['EXPENSE', 'CREDIT_CARD'] else 'COMPLETED',
+                    # Geradas nascem pendentes, inclusive as receitas (SALDO-20, AD-002)
+                    status='PENDING',
                     recurring_source=recur
                 )
                 if tags:
@@ -269,19 +296,20 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
-        target_account = validated_data.pop('target_account_id', None)
         scope = validated_data.pop('update_scope', 'SINGLE')
-        
-        # 1. Update Partner Account if requested
-        if target_account and instance.transfer_id:
-            partner = Transaction.objects.filter(
-                transfer_id=instance.transfer_id, user=instance.user
-            ).exclude(id=instance.id).first()
-            
-            if partner:
-                partner.account = target_account
-                partner.save() # Dispara signal, mas sync_transfer_update ignora account change.
-        
+        for campo in ('is_recurring', 'frequency'):
+            validated_data.pop(campo, None)
+
+        # 1. Perna de transferência: as duas pernas mudam juntas (SALDO-13 a SALDO-15)
+        if instance.transfer_id:
+            t = TransactionService.editar_transferencia(
+                instance, validated_data, self.context['request'].user,
+            )
+            if tags is not None:
+                t.tags.set(tags)
+            return t
+        validated_data.pop('target_account_id', None)
+
         # 2. Batch Installment Update (ALL_FUTURE)
         if scope == 'ALL_FUTURE' and instance.is_installment:
             from django.db.models import Q
@@ -315,13 +343,14 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 # Serializers Específicos para Ações
 class TransferSerializer(serializers.Serializer):
+    # Só contas ativas do usuário da requisição (AD-032, SALDO-35)
     account_from = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
     )
     account_to = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
     )
-    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
 
@@ -330,7 +359,7 @@ class CreditCardExpenseSerializer(serializers.Serializer):
     credit_card = OwnedPrimaryKeyRelatedField(
         queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
     )
-    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()
     description = serializers.CharField(max_length=255)
     category = OwnedPrimaryKeyRelatedField(

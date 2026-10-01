@@ -1,13 +1,24 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from .models import Account, CreditCard, CreditCardInvoice
 from .serializers import (
     AccountSerializer, CreditCardSerializer, 
     CreditCardInvoiceSerializer, InvoicePaymentSerializer
 )
-from .services import AccountService, CreditCardService
+from .services import FATURA_JA_PAGA, AccountService, CreditCardService
+from core.datas import hoje
+from core.fields import CONTA_NAO_ENCONTRADA
 from core.mixins import UserQuerySetMixin
+from core.valores import ler_saldo
+from transactions.models import Transaction
+
+# Exclusão de conta (SALDO-32, SALDO-33, AD-003)
+SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o valor restante.'
+COM_PENDENTES = 'Resolva as transações pendentes antes de excluir a conta: efetive, mova ou exclua cada uma.'
+SALDO_JA_NESSE_VALOR = 'O saldo já está nesse valor.'
 
 class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     """
@@ -23,10 +34,47 @@ class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         qs = super().get_queryset().filter(is_active=True)
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        """Só exclui a conta com saldo zero e sem transações pendentes."""
+        conta = self.get_object()
+        if conta.balance != 0:
+            return Response({'detail': SALDO_NAO_ZERADO}, status=status.HTTP_400_BAD_REQUEST)
+        if conta.transactions.filter(status='PENDING').exists():
+            return Response({'detail': COM_PENDENTES}, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
+
     def perform_destroy(self, instance):
-        # Soft delete
+        # Soft delete: as transações efetivadas continuam no histórico (SALDO-34)
         instance.is_active = False
         instance.save()
+
+    @action(detail=True, methods=['post'], url_path='adjust-balance')
+    def adjust_balance(self, request, pk=None):
+        """
+        Ajuste de saldo (SALDO-40 a SALDO-42): o usuário informa o novo saldo
+        e a diferença, em decimal, vira uma transação efetivada com a data de
+        hoje. A conta excluída do próprio usuário recebe 400 (SALDO-35); a de
+        outro usuário, 404, como um ID inexistente (AD-010).
+        """
+        novo_saldo = ler_saldo(request.data.get('new_balance'))
+        conta = get_object_or_404(
+            Account.objects.select_for_update(), pk=pk, user=request.user,
+        )
+        if not conta.is_active:
+            return Response({'detail': CONTA_NAO_ENCONTRADA}, status=status.HTTP_400_BAD_REQUEST)
+
+        diferenca = novo_saldo - conta.balance
+        if diferenca == 0:
+            return Response({'message': SALDO_JA_NESSE_VALOR})
+
+        Transaction.objects.create(
+            user=request.user, account=conta,
+            type='INCOME' if diferenca > 0 else 'EXPENSE',
+            amount=abs(diferenca), status='COMPLETED', date=hoje(),
+            description='Ajuste de saldo',
+        )
+        conta.refresh_from_db()
+        return Response(self.get_serializer(conta).data, status=status.HTTP_201_CREATED)
 
 
 class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
@@ -75,7 +123,7 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     def pay(self, request, pk=None):
         invoice = self.get_object()
         if invoice.status == 'PAID':
-            return Response({'error': 'Fatura já está paga.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': FATURA_JA_PAGA}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = InvoicePaymentSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -90,16 +138,20 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 date=data['date']
             )
             return Response({'status': 'Pagamento processado com sucesso.'})
+        except ValidationError:
+            # Fatura paga por outra requisição enquanto esta esperava a trava
+            raise
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):
         invoice = self.get_object()
-        # Validação extra? Se já open? Não tem problema desfazer open (noop)
-        
+        # Fatura não paga recebe 400 do service, sob trava (SALDO-27)
         try:
             CreditCardService.unpay_invoice(request.user, invoice)
             return Response({'status': 'Pagamento estornado. Fatura reaberta.'})
+        except ValidationError:
+            raise
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

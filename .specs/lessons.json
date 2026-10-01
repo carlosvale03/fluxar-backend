@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 17,
+  "next_id": 19,
   "lessons": [
     {
       "id": "L-001",
@@ -302,6 +302,42 @@
       ],
       "created": "2026-10-01T01:30:09Z",
       "last_seen": "2026-10-01T01:30:09Z"
+    },
+    {
+      "id": "L-017",
+      "key": "spec_precision_gap::when an input rule applies to create and edit alike say so in the ac so the tests cover the edit path too",
+      "text": "When an input rule applies to create and edit alike, say so in the AC so the tests cover the edit path too",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "saldo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SALDO-09 transactions/serializers.py:127 (spec)"
+      ],
+      "created": "2026-10-01T09:31:29Z",
+      "last_seen": "2026-10-01T09:31:29Z"
+    },
+    {
+      "id": "L-018",
+      "key": "ac_gap::for each total that must exclude an entity put an excluded entity of that exact category in the fixture so the filter is exercised",
+      "text": "For each total that must exclude an entity, put an excluded entity of that exact category in the fixture so the filter is exercised",
+      "signal": "ac_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "saldo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SALDO-31 tests/saldo/test_totais.py:57 (tests)"
+      ],
+      "created": "2026-10-01T09:31:29Z",
+      "last_seen": "2026-10-01T09:31:29Z"
     }
   ]
 }

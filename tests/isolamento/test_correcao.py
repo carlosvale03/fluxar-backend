@@ -37,6 +37,9 @@ class CorrecaoDeLigacoesCruzadasTests(DoisUsuariosTestCase):
             user=self.b.usuario, type='INCOME', status='PENDING', description='A receber',
             amount=Decimal('50.00'), date=DIA, account=self.b.conta,
         )
+        # Saldo guardado como o signal antigo deixava (1000 + 500 de A - 100);
+        # com o recálculo do razão (AD-038), os signals não chegam mais a ele
+        Account.objects.filter(pk=self.b.conta.pk).update(balance=Decimal('1400.00'))
         # Compra própria de B na fatura que recebeu a compra de A, e o total
         # guardado como o signal antigo deixava (120 de B + 70 de A)
         Transaction.objects.create(

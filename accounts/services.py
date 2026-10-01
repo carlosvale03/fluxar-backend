@@ -1,39 +1,23 @@
 from decimal import Decimal
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from .models import Account, CreditCard, CreditCardInvoice
+
+FATURA_JA_PAGA = 'Fatura já está paga.'
+FATURA_NAO_PAGA = 'Esta fatura não está paga.'
 
 class AccountService:
     @staticmethod
     def get_balance(account: Account) -> Decimal:
         """
-        Calcula o saldo atual da conta.
-        Por enquanto considera apenas o saldo inicial.
-        Futuramente irá somar receitas e subtrair despesas/transferências.
+        Saldo da conta pela regra SALDO-01 (accounts/saldo.py).
         """
-        from django.db.models import Sum
-        from transactions.models import Transaction
+        from .saldo import calcular
 
-        balance = account.initial_balance
-
-        # Só transações do dono da conta (ISOL-14)
-        transacoes_do_dono = Transaction.objects.filter(account=account, user_id=account.user_id)
-
-        # Receitas e Transferências Recebidas (Entradas)
-        incomes = transacoes_do_dono.filter(
-            status='COMPLETED', # Apenas efetivadas
-            type__in=['INCOME', 'TRANSFER_IN']
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        # Despesas, Transferências Enviadas e Pagamento de Fatura (Saídas)
-        # Nota: CREDIT_CARD "PAGO" (COMPLETED) impacta o saldo da conta vinculada.
-        expenses = transacoes_do_dono.filter(
-            status='COMPLETED', # Apenas efetivadas
-            type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        return balance + incomes - expenses
+        return calcular(account)
 
 class CreditCardService:
     @staticmethod
@@ -117,6 +101,7 @@ class CreditCardService:
         return due_date
 
     @staticmethod
+    @transaction.atomic
     def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date):
         """
         Processa pagamento de fatura atualizando as transações originais.
@@ -126,7 +111,13 @@ class CreditCardService:
         - Despesas não pagas (parcial) são movidas para a próxima fatura (Rollover).
         """
         from transactions.services import TransactionService
-        
+
+        # Relê a fatura sob trava: de duas tentativas simultâneas, a segunda
+        # espera a primeira e encontra a fatura já paga (SALDO-26)
+        invoice = CreditCardInvoice.objects.select_for_update().get(pk=invoice.pk)
+        if invoice.status == 'PAID':
+            raise ValidationError({'detail': FATURA_JA_PAGA})
+
         # 1. Buscar transações pendentes desta fatura
         # Apenas despesas de cartão, ignorando eventuais ajustes manuais por enquanto
         pending_txs = invoice.transactions.filter(
@@ -227,22 +218,39 @@ class CreditCardService:
         invoice.save()
 
     @staticmethod
+    @transaction.atomic
     def unpay_invoice(user, invoice: CreditCardInvoice):
         """
-        Reverte o pagamento de uma fatura.
-        - Transações COMPLETED voltam para PENDING.
+        Reverte o pagamento de uma fatura (SALDO-24, SALDO-25, SALDO-27).
+        - Só a fatura paga pode ser estornada; a releitura sob trava recusa
+          o estorno que chega depois de outro.
+        - As compras pagas voltam ao estado de antes do pagamento: pendentes,
+          na conta do cartão (como `create_credit_card_expense` as cria) e
+          sem data de pagamento. O recálculo devolve à conta de pagamento
+          exatamente o valor pago (AD-038).
+        - Num pagamento parcial, a parte "(Parcial)" volta a pendente e a
+          "(Restante)" continua na fatura seguinte; juntar as duas fica com a
+          feature `faturas`.
         - Invoice volta para OPEN.
         """
+        from .saldo import recalcular
+
+        invoice = CreditCardInvoice.objects.select_for_update().select_related('card').get(pk=invoice.pk)
+        if invoice.status != 'PAID':
+            raise ValidationError({'detail': FATURA_NAO_PAGA})
+
         # 1. Buscar transações pagas
         paid_txs = invoice.transactions.filter(
             type='CREDIT_CARD',
             status='COMPLETED',
             user_id=invoice.card.user_id, # Só compras do dono do cartão (ISOL-14)
         )
-        
-        # 2. Reverter Status
-        paid_txs.update(status='PENDING')
-        
+        contas_pagadoras = set(paid_txs.values_list('account_id', flat=True))
+
+        # 2. Reverter Status, conta e data de pagamento
+        paid_txs.update(status='PENDING', account=invoice.card.account_id, payment_date=None)
+        recalcular(*contas_pagadoras, invoice.card.account_id)
+
         # 3. Reabrir Fatura
         invoice.status = 'OPEN'
         invoice.save()

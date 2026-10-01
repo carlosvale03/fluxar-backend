@@ -83,9 +83,9 @@ class ReportService:
         today = date.today()
         
         # 1. Total Balance (Status atual, não depende do período para o card de saldo)
-        accounts = Account.objects.filter(user=user)
-        from accounts.services import AccountService
-        total_balance = sum(AccountService.get_balance(acc) for acc in accounts)
+        # Soma o saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-30, SALDO-31)
+        accounts = Account.objects.filter(user=user, is_active=True)
+        total_balance = sum((acc.balance for acc in accounts), Decimal('0.00'))
 
         # Fluxo do Período/Mês Selecionado
         # Se for range de dias, usamos apenas a data da transação para simplificar (sem competência de cartão por enquanto no range livre)
@@ -248,14 +248,14 @@ class ReportService:
                     end_date = date(target_year, target_month + 1, 1) - timedelta(days=1)
 
         # 1. Separação de Balanços (Líquido vs Investimento)
+        # Saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-29, SALDO-31)
         accounts = Account.objects.filter(user=user, is_active=True)
-        from accounts.services import AccountService
         
         liquid_accounts = accounts.filter(type__in=['CHECKING', 'SAVINGS', 'WALLET'])
         investment_accounts = accounts.filter(type='INVESTMENT')
         
-        total_liquid_balance = Decimal(str(sum(AccountService.get_balance(acc) for acc in liquid_accounts)))
-        total_investment_balance = Decimal(str(sum(AccountService.get_balance(acc) for acc in investment_accounts)))
+        total_liquid_balance = sum((acc.balance for acc in liquid_accounts), Decimal('0.00'))
+        total_investment_balance = sum((acc.balance for acc in investment_accounts), Decimal('0.00'))
 
         # 2. Poder de Aporte (Savings Rate) - DINHEIRO NOVO (Capital Injection)
         # Consideramos apenas TRANSFER_IN para contas de investimento.
@@ -527,8 +527,7 @@ class ReportService:
 
         if has_investments:
             # 1. Patrimônio em Investimentos
-            from accounts.services import AccountService
-            total_invested = sum(AccountService.get_balance(acc) for acc in investment_accounts)
+            total_invested = sum((acc.balance for acc in investment_accounts), Decimal('0.00'))
             
             # 2. Histórico Mensal (Últimos 6 meses)
             monthly_history = []
@@ -568,7 +567,7 @@ class ReportService:
             asset_allocation = []
             colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
             for i, acc in enumerate(investment_accounts):
-                balance = AccountService.get_balance(acc)
+                balance = acc.balance
                 if balance > 0:
                     asset_allocation.append({
                         'name': acc.name,
@@ -1106,10 +1105,10 @@ class ReportService:
         start_date = today - timedelta(days=30)
         
         # 1. Total Balance (Status atual de todas as contas)
+        # Saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-31)
         from accounts.models import Account
-        from accounts.services import AccountService
-        accounts = Account.objects.filter(user=user)
-        total_balance = sum(AccountService.get_balance(acc) for acc in accounts)
+        accounts = Account.objects.filter(user=user, is_active=True)
+        total_balance = sum((acc.balance for acc in accounts), Decimal('0.00'))
 
         # 2. Daily Averages (Baseado nos últimos 30 dias)
         # Receitas

@@ -1,14 +1,20 @@
+from django.db.models import Q
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Transaction, Category, Tag
+from .models import Transaction, Category, Tag, RecurringTransaction
 from .serializers import (
     TransactionSerializer, CategorySerializer, TagSerializer,
-    TransferSerializer, CreditCardExpenseSerializer
+    TransferSerializer, CreditCardExpenseSerializer,
+    TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
 from .services import TransactionService
 from core.mixins import UserQuerySetMixin
-from core.fields import get_owned_or_400, CATEGORIA_NAO_ENCONTRADA
+from rest_framework.exceptions import ValidationError
+from accounts.models import Account
+from accounts.saldo import recalcular
+from core.fields import get_owned_or_400, CATEGORIA_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA
+from core.valores import ler_valor
 
 class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_active=True)
@@ -58,6 +64,29 @@ class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 from core.pagination import StandardResultsSetPagination
+
+# Histórico da conta excluída: só leitura (SALDO-36, AD-003)
+DE_CONTA_EXCLUIDA = {'detail': 'Esta transação é de uma conta excluída e não pode ser alterada.'}
+
+
+# Séries recorrentes (SALDO-21, SALDO-22)
+SERIE_NAO_ENCONTRADA = 'Série não encontrada.'
+SERIE_ENCERRADA = {'detail': 'Esta série foi encerrada e não pode ser alterada.'}
+
+
+def _envolve_conta_excluida(transacoes):
+    """
+    Se alguma das transações, ou alguma perna de transferência delas (do mesmo
+    usuário), está numa conta excluída.
+    """
+    filtro = Q()
+    for t in transacoes:
+        filtro |= Q(pk=t.pk, user_id=t.user_id)
+        if t.transfer_id:
+            filtro |= Q(transfer_id=t.transfer_id, user_id=t.user_id)
+    if not filtro:
+        return False
+    return Transaction.objects.filter(filtro, account__is_active=False).exists()
 
 class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
@@ -116,6 +145,17 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             
         return queryset.order_by('-date', '-created_at')
 
+    def update(self, request, *args, **kwargs):
+        # Vale para PUT e PATCH, antes de validar o corpo
+        if _envolve_conta_excluida([self.get_object()]):
+            return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if _envolve_conta_excluida([self.get_object()]):
+            return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'])
     def transfer(self, request):
         serializer = TransferSerializer(data=request.data, context={'request': request})
@@ -158,23 +198,33 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
         """
-        Deleta todas as transações vinculadas a um grupo de recorrência ou transferência.
+        Exclui uma série (as ocorrências pendentes) ou as pernas de uma transferência.
         """
         recurring_id = request.query_params.get('recurring_source')
         transfer_id = request.query_params.get('transfer_id')
         
         if recurring_id:
+            # Só as pendentes saem; as efetivadas ficam no histórico e a série
+            # é encerrada (SALDO-22)
+            serie = get_owned_or_400(
+                RecurringTransaction.objects.all(), request.user, recurring_id,
+                'recurring_source', SERIE_NAO_ENCONTRADA,
+            )
             deleted_count, _ = Transaction.objects.filter(
-                user=request.user, 
-                recurring_source_id=recurring_id
+                user=request.user, recurring_source=serie, status='PENDING',
             ).delete()
+            serie.is_active = False
+            serie.save(update_fields=['is_active', 'updated_at'])
             return Response({'status': f'{deleted_count} transações removidas.'})
             
         if transfer_id:
-            deleted_count, _ = Transaction.objects.filter(
+            pernas = Transaction.objects.filter(
                 user=request.user, 
                 transfer_id=transfer_id
-            ).delete()
+            )
+            if _envolve_conta_excluida(pernas):
+                return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+            deleted_count, _ = pernas.delete()
             return Response({'status': f'{deleted_count} transações removidas.'})
             
         return Response({'error': 'Informe recurring_source ou transfer_id'}, status=status.HTTP_400_BAD_REQUEST)
@@ -182,26 +232,54 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['patch'], url_path='bulk-update')
     def bulk_update(self, request):
         """
-        Atualiza campos (description, amount, category) de um grupo.
+        Altera todas as ocorrências de uma série (SALDO-21): descrição, valor,
+        categoria, conta e tipo valem só para as pendentes e para o modelo da
+        série; as efetivadas ficam como estão.
         """
         recurring_id = request.data.get('recurring_source')
         if not recurring_id:
             return Response({'error': 'Informe recurring_source'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # Filtra apenas transações futuras/pendentes do grupo se solicitado? 
-        # Por enquanto faz em todas do grupo.
-        update_data = {k: v for k, v in request.data.items() if k in ['description', 'amount', 'category']}
+        serie = get_owned_or_400(
+            RecurringTransaction.objects.all(), request.user, recurring_id,
+            'recurring_source', SERIE_NAO_ENCONTRADA,
+        )
+        if not serie.is_active:
+            return Response(SERIE_ENCERRADA, status=status.HTTP_400_BAD_REQUEST)
 
-        # A categoria precisa ser do usuário, antes de alterar qualquer ocorrência
+        update_data = {
+            k: v for k, v in request.data.items()
+            if k in ['description', 'amount', 'category', 'account', 'type']
+        }
+
+        # Tudo é validado antes de alterar qualquer ocorrência
+        if 'amount' in update_data:
+            update_data['amount'] = ler_valor(update_data['amount'])
         if update_data.get('category') is not None:
             update_data['category'] = get_owned_or_400(
                 Category.objects.all(), request.user, update_data['category'],
                 'category', CATEGORIA_NAO_ENCONTRADA,
             )
-        
-        updated_count = Transaction.objects.filter(
-            user=request.user,
-            recurring_source_id=recurring_id
-        ).update(**update_data)
-        
+        if 'account' in update_data:
+            update_data['account'] = get_owned_or_400(
+                Account.objects.filter(is_active=True), request.user, update_data['account'],
+                'account', CONTA_NAO_ENCONTRADA,
+            )
+        if 'type' in update_data and (
+            update_data['type'] not in TIPOS_DO_ENDPOINT or serie.type not in TIPOS_DO_ENDPOINT
+        ):
+            raise ValidationError({'type': [TIPO_NAO_ALTERAVEL]})
+
+        pendentes = Transaction.objects.filter(
+            user=request.user, recurring_source=serie, status='PENDING',
+        )
+        contas = set(pendentes.values_list('account_id', flat=True))
+        updated_count = pendentes.update(**update_data)
+
+        for campo, valor in update_data.items():
+            setattr(serie, campo, valor)
+        serie.save()
+
+        # Pendentes não mudam o saldo, mas quem usa update() recalcula (AD-038)
+        recalcular(*contas, serie.account_id)
+
         return Response({'status': f'{updated_count} transações atualizadas.'})
