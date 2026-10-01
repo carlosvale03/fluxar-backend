@@ -950,13 +950,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] O saldo final bate com SALDO-01 nos dois cenários, e a efetivação dupla conta uma vez
-- [ ] Dois pagamentos simultâneos da mesma fatura debitam uma vez (SALDO-26)
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O saldo final bate com SALDO-01 nos dois cenários, e a efetivação dupla conta uma vez
+- [x] Dois pagamentos simultâneos da mesma fatura debitam uma vez (SALDO-26)
+- [x] Build gate passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 526 → 529)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(saldo): cobre operações simultâneas na mesma conta`
 
