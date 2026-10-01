@@ -560,14 +560,15 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/auth-context.test.tsx` confere que, com o cookie válido (renovação simulada), o usuário carrega sem ir ao login
-- [ ] Com 502 no `/auth/me/`, o aviso aparece, o usuário não é deslogado e "Tentar de novo" recarrega
-- [ ] Com renovação 401, a sessão termina
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/sessao/auth-context.test.tsx` confere que, com o cookie válido (renovação simulada), o usuário carrega sem ir ao login
+- [x] Com 502 no `/auth/me/`, o aviso aparece, o usuário não é deslogado e "Tentar de novo" recarrega
+- [x] Com renovação 401, a sessão termina
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: 9 testes em tests/sessao/auth-context.test.tsx; frontend 56 → 65)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): inicia a sessão pela renovação e não desloga por erro de conexão`
 
