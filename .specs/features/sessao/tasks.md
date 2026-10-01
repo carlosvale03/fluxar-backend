@@ -277,13 +277,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_troca_de_senha.py` com duas sessões: depois da troca na primeira, a primeira continua com 200 e a segunda recebe 401 na próxima requisição e na renovação
-- [ ] Senha atual errada não encerra nada
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/sessao/test_troca_de_senha.py` com duas sessões: depois da troca na primeira, a primeira continua com 200 e a segunda recebe 401 na próxima requisição e na renovação
+- [x] Senha atual errada não encerra nada
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: 3 testes novos; suíte 354 → 357)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): encerra as outras sessões ao trocar a senha`
 

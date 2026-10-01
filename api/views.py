@@ -30,7 +30,7 @@ from .cookies import (
     gravar_cookie_de_renovacao,
     origem_permitida,
 )
-from .sessoes import SessaoInvalida, criar_sessao, encerrar, renovar, sid_do_token
+from .sessoes import SessaoInvalida, criar_sessao, encerrar, encerrar_outras, renovar, sid_do_token
 from core.throttles import (
     CadastroIPThrottle,
     EsqueciSenhaEmailThrottle,
@@ -419,6 +419,8 @@ class ChangePasswordView(APIView):
             # Define a nova senha e salva
             user.set_password(serializer.data.get("new_password"))
             user.save()
+            # Derruba as outras sessões e mantém a atual (SESSAO-15)
+            encerrar_outras(user, request.auth.get('sid'))
             return Response({"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
