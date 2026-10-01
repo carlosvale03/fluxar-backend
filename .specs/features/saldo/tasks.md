@@ -92,6 +92,8 @@ T18
 T19 → T20
 T20 → T21
 T21 → T22
+T29
+T30
 ```
 
 ### Phase 8: Frontend
@@ -738,6 +740,60 @@ T27 → T28
 
 ---
 
+#### T29: Compra no cartão com a conta do cartão excluída
+
+**What**: A compra no cartão é recusada com 400 e `{"detail": "Conta não encontrada."}` quando a conta de pagamento do cartão (`card.account`) está excluída. Hoje ela cria uma compra pendente numa conta excluída. A guarda fica em `create_credit_card_expense`, que a rota `credit-card-expense` chama depois do `CreditCardExpenseSerializer`.
+**Where**: `transactions/services.py`
+**Depends on**: None
+**Reuses**: `CONTA_NAO_ENCONTRADA` de `core/fields.py`
+**Requirement**: SALDO-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/saldo/test_conta_excluida.py` cria uma compra pela rota com a conta do cartão excluída e recebe 400 com "Conta não encontrada.", sem nenhuma transação nova e sem mudar saldo
+- [ ] O service recusa a mesma compra chamado direto
+- [ ] Quick gate passa
+- [ ] Test count: pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: quick
+
+**Commit**: `fix(transactions): recusa compra no cartão com a conta do cartão excluída`
+
+---
+
+#### T30: Transferência recusa conta excluída no service
+
+**What**: `TransactionService.create_transfer` recusa conta excluída na origem ou no destino com 400 e `{"detail": "Conta não encontrada."}`, como guarda do service. Aporte e resgate de meta chamam esse service, então uma meta cujo cofrinho foi excluído não recebe nem devolve dinheiro; as views de meta já repassam o `ValidationError` do DRF como 400.
+**Where**: `transactions/services.py`
+**Depends on**: None
+**Reuses**: `CONTA_NAO_ENCONTRADA` de `core/fields.py`
+**Requirement**: SALDO-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/saldo/test_conta_excluida.py` chama `create_transfer` com origem excluída e com destino excluído e confere o 400 sem nenhuma perna gravada
+- [ ] Aporte e resgate de uma meta com o cofrinho excluído recebem 400 com "Conta não encontrada.", sem mudar saldo nem a meta
+- [ ] Build gate passa
+- [ ] Test count: pelo menos 4 testes
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `fix(transactions): recusa transferência com conta excluída no service`
+
+---
+
 ### Phase 8: Frontend
 
 #### T23: Ajuste de saldo pelo valor final
@@ -933,6 +989,8 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T20: cleanup_db sem apagar histórico | 1 arquivo | ✅ Granular |
 | T21: Migração de correção dos saldos | 1 arquivo | ✅ Granular |
 | T22: Comando check_saldos | 1 arquivo | ✅ Granular |
+| T29: Compra no cartão com a conta do cartão excluída | 1 arquivo | ✅ Granular |
+| T30: Transferência recusa conta excluída no service | 1 arquivo | ✅ Granular |
 | T23: Ajuste de saldo pelo valor final | 1 arquivo | ✅ Granular |
 | T24: Pagamento de fatura exige a fatura | 1 arquivo | ✅ Granular |
 | T25: Edição de transferência | 1 arquivo | ✅ Granular |
@@ -966,6 +1024,8 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T20 | T19 | T19 → T20 | ✅ Match |
 | T21 | T20 | T20 → T21 | ✅ Match |
 | T22 | T21 | T21 → T22 | ✅ Match |
+| T29 | None | sem seta dentro da fase | ✅ Match |
+| T30 | None | sem seta dentro da fase | ✅ Match |
 | T23 | None | sem seta dentro da fase | ✅ Match |
 | T24 | T23 | T23 → T24 | ✅ Match |
 | T25 | T24 | T24 → T25 | ✅ Match |
@@ -999,6 +1059,8 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T20: cleanup_db sem apagar histórico | Backend | integration | integration | ✅ OK |
 | T21: Migração de correção dos saldos | Backend | integration | integration | ✅ OK |
 | T22: Comando check_saldos | Backend | integration | integration | ✅ OK |
+| T29: Compra no cartão com a conta do cartão excluída | Backend | integration | integration | ✅ OK |
+| T30: Transferência recusa conta excluída no service | Backend | integration | integration | ✅ OK |
 | T23: Ajuste de saldo pelo valor final | Frontend | unit (frontend) | unit (frontend) | ✅ OK |
 | T24: Pagamento de fatura exige a fatura | Frontend | unit (frontend) | unit (frontend) | ✅ OK |
 | T25: Edição de transferência | Frontend | unit (frontend) | unit (frontend) | ✅ OK |

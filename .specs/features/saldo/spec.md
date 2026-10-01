@@ -275,7 +275,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALDO-32 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
 | SALDO-33 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
 | SALDO-34 | P1: Totais do dashboard e contas excluídas | T9 | Pending |
-| SALDO-35 | P1: Totais do dashboard e contas excluídas | T7 | Pending |
+| SALDO-35 | P1: Totais do dashboard e contas excluídas | T7, T29, T30 | Pending |
 | SALDO-36 | P1: Totais do dashboard e contas excluídas | T8 | Pending |
 | SALDO-47 | P1: Totais do dashboard e contas excluídas | T20 | Pending |
 | SALDO-37 | P1: Correção dos saldos existentes | T21 | Pending |
