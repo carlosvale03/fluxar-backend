@@ -813,12 +813,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/ajuste-de-saldo.test.tsx` confere a chamada com `{ new_balance: "999.90" }` para um saldo de 1.000,10 ajustado para 999,90, sem criar transação pelo endpoint genérico
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/ajuste-de-saldo.test.tsx` confere a chamada com `{ new_balance: "999.90" }` para um saldo de 1.000,10 ajustado para 999,90, sem criar transação pelo endpoint genérico
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes; frontend 75 → 78)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): ajusta o saldo pelo valor final, sem conta em ponto flutuante`
 
