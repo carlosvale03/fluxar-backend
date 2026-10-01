@@ -156,13 +156,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_saldo.py` com uma base de conta de R$ 1.000,00 confere o saldo igual a SALDO-01 depois de criar efetivada, criar pendente, efetivar, voltar a pendente, mudar valor, mudar tipo, mudar de conta e excluir
-- [ ] Uma transação de outro usuário gravada à força na conta não entra no saldo
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 10 testes
+- [x] `tests/saldo/test_saldo.py` com uma base de conta de R$ 1.000,00 confere o saldo igual a SALDO-01 depois de criar efetivada, criar pendente, efetivar, voltar a pendente, mudar valor, mudar tipo, mudar de conta e excluir
+- [x] Uma transação de outro usuário gravada à força na conta não entra no saldo
+- [x] Full gate passa
+- [x] Test count: pelo menos 10 testes (real: 15 testes novos; suíte 386 → 401; o setUp de tests/isolamento/test_correcao.py passa a gravar à força o saldo antigo da conta de B)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): recalcula o saldo a partir das transações efetivadas`
 

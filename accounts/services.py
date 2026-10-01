@@ -8,32 +8,11 @@ class AccountService:
     @staticmethod
     def get_balance(account: Account) -> Decimal:
         """
-        Calcula o saldo atual da conta.
-        Por enquanto considera apenas o saldo inicial.
-        Futuramente irá somar receitas e subtrair despesas/transferências.
+        Saldo da conta pela regra SALDO-01 (accounts/saldo.py).
         """
-        from django.db.models import Sum
-        from transactions.models import Transaction
+        from .saldo import calcular
 
-        balance = account.initial_balance
-
-        # Só transações do dono da conta (ISOL-14)
-        transacoes_do_dono = Transaction.objects.filter(account=account, user_id=account.user_id)
-
-        # Receitas e Transferências Recebidas (Entradas)
-        incomes = transacoes_do_dono.filter(
-            status='COMPLETED', # Apenas efetivadas
-            type__in=['INCOME', 'TRANSFER_IN']
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        # Despesas, Transferências Enviadas e Pagamento de Fatura (Saídas)
-        # Nota: CREDIT_CARD "PAGO" (COMPLETED) impacta o saldo da conta vinculada.
-        expenses = transacoes_do_dono.filter(
-            status='COMPLETED', # Apenas efetivadas
-            type__in=['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        return balance + incomes - expenses
+        return calcular(account)
 
 class CreditCardService:
     @staticmethod
