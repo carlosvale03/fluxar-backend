@@ -840,12 +840,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/pagamento-de-fatura.test.tsx` confere que, sem fatura, o envio fica bloqueado e nada chama `/transactions/`, e que com fatura chama `/invoices/{id}/pay/`
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/pagamento-de-fatura.test.tsx` confere que, sem fatura, o envio fica bloqueado e nada chama `/transactions/`, e que com fatura chama `/invoices/{id}/pay/`
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes; frontend 78 → 80)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): paga fatura só com a fatura escolhida`
 
