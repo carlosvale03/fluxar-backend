@@ -531,12 +531,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/erros-de-rede.test.ts` confere que 502, 503 sem `maintenance_mode`, tempo esgotado e erro de rede na renovação não disparam o fim da sessão
-- [ ] Build gate do frontend passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/sessao/erros-de-rede.test.ts` confere que 502, 503 sem `maintenance_mode`, tempo esgotado e erro de rede na renovação não disparam o fim da sessão
+- [x] Build gate do frontend passa
+- [x] Test count: pelo menos 4 testes (real: 9 testes em tests/sessao/erros-de-rede.test.ts; frontend 56 testes)
 
 **Tests**: unit (frontend)
 **Gate**: build (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): não encerra a sessão por falha de rede ou do servidor`
 
