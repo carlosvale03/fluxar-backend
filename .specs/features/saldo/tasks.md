@@ -894,12 +894,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/exclusao-de-conta.test.tsx` confere o aviso com a mensagem de SALDO-32 vinda do backend
-- [ ] Build gate do frontend passa
-- [ ] Test count: pelo menos 1 teste
+- [x] `tests/saldo/exclusao-de-conta.test.tsx` confere o aviso com a mensagem de SALDO-32 vinda do backend
+- [x] Build gate do frontend passa
+- [x] Test count: pelo menos 1 teste (real: 2 testes; frontend 82 → 84)
 
 **Tests**: unit (frontend)
 **Gate**: build (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra por que a conta não pode ser excluída`
 
