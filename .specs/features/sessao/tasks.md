@@ -589,13 +589,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/logout.test.tsx` confere a chamada a `/auth/logout/`, a limpeza do token e do layout e a mensagem no canal
-- [ ] A mensagem de outra aba encerra a sessão e leva ao login
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/sessao/logout.test.tsx` confere a chamada a `/auth/logout/`, a limpeza do token e do layout e a mensagem no canal
+- [x] A mensagem de outra aba encerra a sessão e leva ao login
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes em tests/sessao/logout.test.tsx; frontend 65 → 68)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): encerra a sessão em todas as abas no logout`
 
