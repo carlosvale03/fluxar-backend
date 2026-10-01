@@ -726,12 +726,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_check_saldos.py` grava à força um saldo errado e confere a linha com o id e os dois valores, sem nomes, e o total; sem divergência, o total é zero
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_check_saldos.py` grava à força um saldo errado e confere a linha com o id e os dois valores, sem nomes, e o total; sem divergência, o total é zero
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 517 → 519)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(accounts): adiciona o comando que confere os saldos`
 
