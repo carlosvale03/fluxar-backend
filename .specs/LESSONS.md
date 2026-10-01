@@ -80,6 +80,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SPEC_DEVIATION api/views.py:151; tests/autenticacao/test_verificacao.py:61 (tests)
 - last seen: 2026-09-28T21:22:00Z
 
+### L-012 - When an AC lists several triggers for one outcome, give each trigger its own test of the full outcome, including cross-tab side effects
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-session` · harmful: 0
+- features: sessao
+- evidence: SESSAO-14 fluxar-frontend src/contexts/auth-context.tsx:104 (frontend-session) (+1 more)
+- last seen: 2026-10-01T01:41:57Z
+
+### L-013 - State which UI layer shows a required error message when the failure can happen both at startup and in the middle of use
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: sessao
+- evidence: SESSAO-12 fluxar-frontend tests/sessao/auth-context.test.tsx:146 (spec)
+- last seen: 2026-10-01T01:30:08Z
+
+### L-014 - When two time limits chain across client polling and server caching, state whether the user-facing limit is end to end
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: sessao
+- evidence: SESSAO-22 with SESSAO-24 core/manutencao.py:13 (spec)
+- last seen: 2026-10-01T01:30:09Z
+
+### L-015 - State whether detecting a reused rotating credential revokes only that token or the whole session family
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: sessao
+- evidence: SESSAO-09 api/sessoes.py:80 (spec)
+- last seen: 2026-10-01T01:30:09Z
+
+### L-016 - When a gate rejects requests by role, decide in the spec what status an expired or revoked token gets so clients can still renew
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `middleware` · harmful: 0
+- features: sessao
+- evidence: SPEC_DEVIATION api/middleware.py:59 (middleware)
+- last seen: 2026-10-01T01:30:09Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -300,11 +300,13 @@
 
 ## Handoff
 
-- **Feature**: `sessao`
-- **Phase / Task**: Design e Tasks aprovados em 2026-09-30; Execute de T1 a T21 em andamento
-- **Completed**: `isolamento-entre-usuarios`, `atualizacao-de-dependencias` e `autenticacao` mergeadas na `development`
+- **Feature**: `sessao` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T21) e verificado: `validation.md` com PASS na 2ª rodada, 25 de 25 ACs, sensor com 11 de 11 mutações mortas
+- **Completed**: sessões no banco com renovação rotativa por cookie httpOnly, logout, encerramento de sessões na troca e redefinição de senha e na desativação, proxy `/api` do Next.js, token de acesso só em memória, renovação única entre abas, erros de rede sem deslogar e manutenção com cache de 30 s; backend com 384 testes e frontend com 75
 - **In-progress** (file:line): nenhum
-- **Next step**: com a aprovação, executar T1 a T21 nas branches `fix/sessao` do backend e do frontend, com o verificador leve no fim
+- **Deploy**: `BACKEND_URL` na Vercel antes do build; domínio da Vercel em `FRONTEND_URL`/`CORS_ALLOWED_ORIGINS`; conferir `NUM_PROXIES`, `Origin` e cookie pelo proxy; todos entram de novo uma vez (ver `DEPLOY.md`)
+- **Pendências anotadas**: proxy em dev com o frontend no Docker (`host.docker.internal`), `NEXT_PUBLIC_API_URL` ainda citado em README, `.env.example` e `src/lib/utils.ts`, e o painel de manutenção ainda autoriza por `is_staff` (fica com `permissoes-e-planos`)
+- **Next step**: o usuário faz o push das duas branches `fix/sessao` e abre os PRs para a `development`. Depois do merge, a próxima é `saldo` (FIN-01 a FIN-04, FIN-09, FIN-10, FIN-29), com o verificador leve
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
 - **Branch**: fix/sessao (backend e frontend)
