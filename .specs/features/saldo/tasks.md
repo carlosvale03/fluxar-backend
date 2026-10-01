@@ -698,13 +698,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_migracao.py` chama a função da migração sobre uma série com a primeira e duas futuras efetivadas e saldos gravados errados, e confere as futuras pendentes, a primeira intacta e os saldos iguais a SALDO-01
-- [ ] `makemigrations --check` sem mudanças
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/saldo/test_migracao.py` chama a função da migração sobre uma série com a primeira e duas futuras efetivadas e saldos gravados errados, e confere as futuras pendentes, a primeira intacta e os saldos iguais a SALDO-01
+- [x] `makemigrations --check` sem mudanças
+- [x] Full gate passa
+- [x] Test count: pelo menos 3 testes (real: 5 testes novos; suíte 512 → 517)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): corrige ocorrências futuras efetivadas e recalcula os saldos`
 
