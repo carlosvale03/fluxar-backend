@@ -388,14 +388,15 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_manutencao.py` confere o 503 com o código para usuário comum numa rota de dados, o 200 nas cinco rotas liberadas e o 200 para o administrador
-- [ ] Cadastro, verificação e redefinição recebem 503
-- [ ] O token de renovação do usuário comum continua válido durante a manutenção
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 6 testes
+- [x] `tests/sessao/test_manutencao.py` confere o 503 com o código para usuário comum numa rota de dados, o 200 nas cinco rotas liberadas e o 200 para o administrador
+- [x] Cadastro, verificação e redefinição recebem 503
+- [x] O token de renovação do usuário comum continua válido durante a manutenção
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 6 testes (real: 12 testes novos; suíte 368 → 380)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): deixa os administradores usarem o app na manutenção`
 
