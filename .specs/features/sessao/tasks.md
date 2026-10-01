@@ -474,13 +474,14 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/token-em-memoria.test.ts` confere o `Authorization` com o token em memória e que nada é gravado em `localStorage`, `sessionStorage` ou `document.cookie`
-- [ ] A limpeza remove as duas chaves antigas do `localStorage`
-- [ ] Quick gate do frontend passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/sessao/token-em-memoria.test.ts` confere o `Authorization` com o token em memória e que nada é gravado em `localStorage`, `sessionStorage` ou `document.cookie`
+- [x] A limpeza remove as duas chaves antigas do `localStorage`
+- [x] Quick gate do frontend passa
+- [x] Test count: pelo menos 3 testes (real: 6 testes em tests/sessao/token-em-memoria.test.ts)
 
 **Tests**: unit (frontend)
 **Gate**: quick (frontend)
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): guarda o token de acesso só na memória da aba`
 
