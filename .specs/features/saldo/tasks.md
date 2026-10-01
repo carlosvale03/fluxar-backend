@@ -671,12 +671,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_cleanup.py` roda o comando e confere o histórico da conta excluída e o saldo das contas ativas iguais aos de antes
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_cleanup.py` roda o comando e confere o histórico da conta excluída e o saldo das contas ativas iguais aos de antes
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 4 testes novos; suíte 508 → 512)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): impede o cleanup_db de apagar histórico e mudar saldos`
 
