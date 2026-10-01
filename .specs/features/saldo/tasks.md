@@ -212,13 +212,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_valor.py` confere 400 no campo `amount` para 0, -10 e 100.123 em cada uma das operações, e que 100.1 é aceito
-- [ ] Nenhum saldo muda nas recusas
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] `tests/saldo/test_valor.py` confere 400 no campo `amount` para 0, -10 e 100.123 em cada uma das operações, e que 100.1 é aceito
+- [x] Nenhum saldo muda nas recusas
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 12 testes novos; suíte 404 → 416)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(core): recusa valores zerados, negativos ou com mais de duas casas`
 

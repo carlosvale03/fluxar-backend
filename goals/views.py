@@ -7,8 +7,8 @@ from core.permissions import IsPremiumPlus
 from accounts.models import Account
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
+from core.valores import ler_valor
 
-from decimal import Decimal
 
 class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Goal.objects.all()
@@ -39,11 +39,13 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         account_id = request.data.get('account_id') or request.data.get('account_from')
         date_deposit = request.data.get('date') or request.data.get('datetime') # Opcional
         
-        if not amount or not account_id:
+        if amount in (None, '') or not account_id:
             return Response(
                 {'error': 'Campos amount e account_id são obrigatórios.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
+        amount = ler_valor(amount)
             
         # Erro no campo que a requisição usou (AD-010)
         account_field = 'account_id' if request.data.get('account_id') else 'account_from'
@@ -54,7 +56,7 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         try:
             description = request.data.get('description')
             print(f"DEBUG: Deposit start. Goal={goal.id}, Account={account_id}, Amount={amount}")
-            GoalService.deposit(goal, account, Decimal(amount), date_deposit, description)
+            GoalService.deposit(goal, account, amount, date_deposit, description)
             # Retornar a meta atualizada
             serializer = self.get_serializer(goal)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -73,11 +75,13 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         account_id = request.data.get('account_to') or request.data.get('account_id')
         date_withdrawal = request.data.get('date') or request.data.get('datetime')
         
-        if not amount or not account_id:
+        if amount in (None, '') or not account_id:
             return Response(
                 {'error': 'Campos amount e account_to são obrigatórios.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
+        amount = ler_valor(amount)
             
         # Erro no campo que a requisição usou (AD-010)
         account_field = 'account_to' if request.data.get('account_to') else 'account_id'
@@ -88,7 +92,7 @@ class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         try:
             description = request.data.get('description')
             print(f"DEBUG: Withdraw start. Goal={goal.id}, AccountTo={account_id}, Amount={amount}")
-            GoalService.withdraw(goal, account_to, Decimal(amount), date_withdrawal, description)
+            GoalService.withdraw(goal, account_to, amount, date_withdrawal, description)
             
             serializer = self.get_serializer(goal)
             return Response(serializer.data, status=status.HTTP_200_OK)

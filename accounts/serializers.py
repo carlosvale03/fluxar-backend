@@ -3,6 +3,7 @@ from .models import Account, CreditCard, CreditCardInvoice
 from .services import AccountService, CreditCardService
 from core.services.plan_limits import PlanLimitsService
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
+from core.valores import validar_valor_positivo
 
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +36,7 @@ class CreditCardInvoiceSerializer(serializers.ModelSerializer):
 
 class InvoicePaymentSerializer(serializers.Serializer):
 
-    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     # Só contas ativas do usuário da requisição (AD-032)
     account_id = OwnedPrimaryKeyRelatedField(
         queryset=Account.objects.filter(is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,

@@ -8,6 +8,7 @@ from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
 )
+from core.valores import validar_valor_positivo
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
@@ -113,6 +114,8 @@ class TransactionSerializer(serializers.ModelSerializer):
             'transfer_id', 'related_transaction', 'signed_amount', 'recurring_source',
             'created_at', 'updated_at'
         ]
+        # Valor maior que zero, com até duas casas (SALDO-09)
+        extra_kwargs = {'amount': {'validators': [validar_valor_positivo]}}
 
     def to_representation(self, instance):
         """
@@ -321,7 +324,7 @@ class TransferSerializer(serializers.Serializer):
     account_to = OwnedPrimaryKeyRelatedField(
         queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
     )
-    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
 
@@ -330,7 +333,7 @@ class CreditCardExpenseSerializer(serializers.Serializer):
     credit_card = OwnedPrimaryKeyRelatedField(
         queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
     )
-    amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()
     description = serializers.CharField(max_length=255)
     category = OwnedPrimaryKeyRelatedField(
