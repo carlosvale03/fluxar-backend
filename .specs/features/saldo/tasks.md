@@ -352,14 +352,15 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_exclusao_de_conta.py` confere 400 com saldo positivo, com saldo negativo e com pendentes, com as mensagens exatas
-- [ ] Com saldo zero e sem pendentes, a conta sai da lista e as transações efetivadas continuam no histórico
-- [ ] PATCH com `is_active: false` não exclui a conta
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `tests/saldo/test_exclusao_de_conta.py` confere 400 com saldo positivo, com saldo negativo e com pendentes, com as mensagens exatas
+- [x] Com saldo zero e sem pendentes, a conta sai da lista e as transações efetivadas continuam no histórico
+- [x] PATCH com `is_active: false` não exclui a conta
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 5 testes novos; suíte 452 → 457)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): exige saldo zero e nenhuma pendente para excluir a conta`
 

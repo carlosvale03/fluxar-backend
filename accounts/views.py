@@ -9,6 +9,10 @@ from .serializers import (
 from .services import AccountService, CreditCardService
 from core.mixins import UserQuerySetMixin
 
+# Exclusão de conta (SALDO-32, SALDO-33, AD-003)
+SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o valor restante.'
+COM_PENDENTES = 'Resolva as transações pendentes antes de excluir a conta: efetive, mova ou exclua cada uma.'
+
 class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     """
     CRUD de Contas (Checking, Savings, Wallet, Investment).
@@ -23,8 +27,17 @@ class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         qs = super().get_queryset().filter(is_active=True)
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        """Só exclui a conta com saldo zero e sem transações pendentes."""
+        conta = self.get_object()
+        if conta.balance != 0:
+            return Response({'detail': SALDO_NAO_ZERADO}, status=status.HTTP_400_BAD_REQUEST)
+        if conta.transactions.filter(status='PENDING').exists():
+            return Response({'detail': COM_PENDENTES}, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
+
     def perform_destroy(self, instance):
-        # Soft delete
+        # Soft delete: as transações efetivadas continuam no histórico (SALDO-34)
         instance.is_active = False
         instance.save()
 

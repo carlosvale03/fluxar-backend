@@ -13,7 +13,8 @@ class AccountSerializer(serializers.ModelSerializer):
             'institution', 'color', 'is_manual', 
             'is_active', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'is_manual', 'balance']
+        # is_active só muda pela exclusão, que confere saldo e pendentes (SALDO-34)
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_manual', 'balance', 'is_active']
 
     def validate(self, data):
         # Validar limite APENAS na criação
