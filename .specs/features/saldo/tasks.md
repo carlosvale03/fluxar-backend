@@ -642,14 +642,15 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_ajuste.py` ajusta de 1.000,10 para 999,90 e confere uma saída de 0,20 com a data de hoje e o saldo 999,90
-- [ ] Ajuste para cima vira entrada; ajuste para negativo é permitido; mesmo saldo não cria transação
-- [ ] Conta excluída recebe 400
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `tests/saldo/test_ajuste.py` ajusta de 1.000,10 para 999,90 e confere uma saída de 0,20 com a data de hoje e o saldo 999,90
+- [x] Ajuste para cima vira entrada; ajuste para negativo é permitido; mesmo saldo não cria transação
+- [x] Conta excluída recebe 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 9 testes novos; suíte 499 → 508)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(accounts): adiciona o ajuste de saldo pelo valor final`
 

@@ -27,3 +27,15 @@ def ler_valor(valor, campo='amount'):
         return field.run_validation(valor)
     except serializers.ValidationError as erro:
         raise serializers.ValidationError({campo: erro.detail})
+
+
+def ler_saldo(valor, campo='new_balance'):
+    """
+    Como `ler_valor`, mas aceita zero e negativos: um saldo de destino pode
+    ser qualquer valor com até duas casas (ajuste de saldo, SALDO-40).
+    """
+    field = serializers.DecimalField(max_digits=15, decimal_places=2)
+    try:
+        return field.run_validation(valor)
+    except serializers.ValidationError as erro:
+        raise serializers.ValidationError({campo: erro.detail})
