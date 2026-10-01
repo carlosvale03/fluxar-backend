@@ -852,13 +852,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_series.py` efetiva a segunda ocorrência, altera todas para R$ 5.500,00 e outra conta, e confere que só as pendentes mudaram e que os saldos batem com SALDO-01
-- [ ] Conta excluída, categoria de outro usuário e tipo especial recebem 400
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `tests/saldo/test_series.py` efetiva a segunda ocorrência, altera todas para R$ 5.500,00 e outra conta, e confere que só as pendentes mudaram e que os saldos batem com SALDO-01
+- [x] Conta excluída, categoria de outro usuário e tipo especial recebem 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 10 testes novos; suíte 474 → 484)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): altera só as ocorrências pendentes da série`
 
