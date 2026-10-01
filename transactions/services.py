@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from .models import Transaction, Category
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from accounts.services import CreditCardService
+from core.fields import CONTA_NAO_ENCONTRADA
 
 MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
 
@@ -68,6 +69,52 @@ class TransactionService:
                 transfer_id=transfer_uid,
             )
         return transfer_uid
+
+    @staticmethod
+    @transaction.atomic
+    def editar_transferencia(perna, dados, user):
+        """
+        Edita uma perna de transferência e mantém a outra igual (SALDO-13 a
+        SALDO-15). Valor, data e status valem para as duas pernas; a
+        descrição é de cada uma. `account` é a conta da perna editada e
+        `target_account_id`, a da outra perna. O tipo não muda. As contas
+        antigas e as novas são recalculadas (AD-038).
+        """
+        from accounts.saldo import recalcular
+        from .serializers import TIPO_NAO_ALTERAVEL
+
+        dados = dict(dados)
+        tipo = dados.pop('type', perna.type)
+        if tipo != perna.type:
+            raise ValidationError({'type': [TIPO_NAO_ALTERAVEL]})
+
+        parceira = Transaction.objects.select_for_update().filter(
+            transfer_id=perna.transfer_id, user_id=user.pk,
+        ).exclude(pk=perna.pk).first()
+        contas_antigas = [perna.account_id, parceira.account_id if parceira else None]
+
+        conta_da_outra = dados.pop('target_account_id', None)
+        conta = dados.get('account', perna.account)
+        if conta is None:
+            raise ValidationError({'account': [CONTA_NAO_ENCONTRADA]})
+        if parceira is not None:
+            conta_da_outra = conta_da_outra or parceira.account
+            if conta_da_outra is not None and conta_da_outra.pk == conta.pk:
+                raise ValidationError({'detail': MESMA_CONTA})
+
+        for campo, valor in dados.items():
+            setattr(perna, campo, valor)
+        perna.save()
+
+        if parceira is not None:
+            for campo in ('amount', 'date', 'status'):
+                if campo in dados:
+                    setattr(parceira, campo, dados[campo])
+            parceira.account = conta_da_outra
+            parceira.save()
+
+        recalcular(*contas_antigas, perna.account_id, parceira.account_id if parceira else None)
+        return perna
 
     @staticmethod
     @transaction.atomic

@@ -8,10 +8,12 @@ transferência nunca muda a soma dos saldos das contas do usuário.
 from decimal import Decimal
 
 from django.db.models import Sum
+from rest_framework.exceptions import ValidationError
 
 from accounts.models import Account
 from goals.models import Goal, GoalDeposit
 from transactions.models import Transaction
+from transactions.services import TransactionService
 from tests.saldo.base import SaldoTestCase, URL_TRANSACOES
 
 URL_TRANSFERENCIA = f'{URL_TRANSACOES}transfer/'
@@ -103,3 +105,140 @@ class AporteEResgateNoProprioCofrinhoTests(TransferenciaTestCase):
         self.assert_recusa(f'/api/goals/{self.a.meta.id}/withdraw/', {
             'account_to': str(self.a.cofrinho.id), 'amount': '100.00', 'date': '2026-09-15',
         })
+
+
+CONTA_NAO_ENCONTRADA = 'Conta não encontrada.'
+TIPO_NAO_ALTERAVEL = 'O tipo só pode ser trocado entre receita e despesa.'
+
+
+class EdicaoDeTransferenciaTests(TransferenciaTestCase):
+    """
+    Editar uma perna aplica valor, data e status às duas (SALDO-13, SALDO-15)
+    e move o efeito da perna cuja conta mudou (SALDO-14). A descrição é de
+    cada perna.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.c = Account.objects.create(
+            user=self.a.usuario, name='Conta C', type='CHECKING', initial_balance=Decimal('0.00'),
+        )
+        resp = self.cliente.post(URL_TRANSFERENCIA, {
+            'account_from': str(self.a.conta.id), 'account_to': str(self.a.poupanca.id),
+            'amount': '100.00', 'date': '2026-09-15', 'description': 'Reserva',
+        }, format='json')
+        self.assertEqual(resp.status_code, 201, resp.data)
+        self.saida = Transaction.objects.get(user=self.a.usuario, type='TRANSFER_OUT')
+        self.entrada = Transaction.objects.get(user=self.a.usuario, type='TRANSFER_IN')
+        self.soma_inicial = self.soma()
+
+    def editar(self, perna, corpo, metodo='patch'):
+        resp = getattr(self.cliente, metodo)(f'{URL_TRANSACOES}{perna.id}/', corpo, format='json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.saida.refresh_from_db()
+        self.entrada.refresh_from_db()
+        return resp
+
+    def assert_saldos(self, a, b, c):
+        self.assertEqual(
+            (self.saldo(self.a.conta), self.saldo(self.a.poupanca), self.saldo(self.c)),
+            (Decimal(a), Decimal(b), Decimal(c)),
+        )
+        self.assertEqual(self.soma(), self.soma_inicial)
+
+    def test_valor_destino_origem_e_status_em_sequencia(self):
+        self.assert_saldos('900.00', '100.00', '0.00')
+
+        # Valor de R$ 100,00 para R$ 150,00 nas duas pernas
+        self.editar(self.saida, {'amount': '150.00'})
+        self.assertEqual((self.saida.amount, self.entrada.amount), (Decimal('150.00'), Decimal('150.00')))
+        self.assert_saldos('850.00', '150.00', '0.00')
+
+        # Destino de B para C
+        self.editar(self.saida, {'target_account_id': str(self.c.id)})
+        self.assertEqual(self.entrada.account_id, self.c.id)
+        self.assertEqual(self.saida.account_id, self.a.conta.id)
+        self.assert_saldos('850.00', '0.00', '150.00')
+
+        # Origem de A para B
+        self.editar(self.saida, {'account': str(self.a.poupanca.id)})
+        self.assertEqual((self.saida.account_id, self.entrada.account_id), (self.a.poupanca.id, self.c.id))
+        self.assert_saldos('1000.00', '-150.00', '150.00')
+
+        # Status pela perna de entrada: as duas ficam pendentes
+        self.editar(self.entrada, {'status': 'PENDING'})
+        self.assertEqual((self.saida.status, self.entrada.status), ('PENDING', 'PENDING'))
+        self.assert_saldos('1000.00', '0.00', '0.00')
+
+        # E voltam a efetivadas pela perna de saída
+        self.editar(self.saida, {'status': 'COMPLETED'})
+        self.assertEqual((self.saida.status, self.entrada.status), ('COMPLETED', 'COMPLETED'))
+        self.assert_saldos('1000.00', '-150.00', '150.00')
+
+    def test_put_pela_perna_de_entrada_como_a_tela_envia(self):
+        # A tela edita a perna de entrada com a conta dela em `account` e a
+        # da outra perna em `target_account_id`
+        self.editar(self.entrada, {
+            'type': 'TRANSFER_IN', 'status': 'COMPLETED', 'description': 'Reserva para C',
+            'amount': '120.00', 'date': '2026-09-20',
+            'account': str(self.c.id), 'target_account_id': str(self.a.poupanca.id),
+        }, metodo='put')
+
+        self.assertEqual((self.entrada.account_id, self.saida.account_id), (self.c.id, self.a.poupanca.id))
+        self.assertEqual((self.saida.amount, self.entrada.amount), (Decimal('120.00'), Decimal('120.00')))
+        self.assertEqual((self.saida.date.isoformat(), self.entrada.date.isoformat()), ('2026-09-20', '2026-09-20'))
+        # A descrição é de cada perna
+        self.assertEqual((self.entrada.description, self.saida.description), ('Reserva para C', 'Reserva'))
+        self.assert_saldos('1000.00', '-120.00', '120.00')
+
+    def test_mudar_a_data_muda_as_duas_pernas(self):
+        self.editar(self.saida, {'date': '2026-09-30'})
+        self.assertEqual(
+            (self.saida.date.isoformat(), self.entrada.date.isoformat()), ('2026-09-30', '2026-09-30'),
+        )
+
+    def test_mudar_o_tipo_de_uma_perna_recusado(self):
+        antes = self.estado()
+        for perna, tipo in ((self.saida, 'TRANSFER_IN'), (self.entrada, 'TRANSFER_OUT'), (self.saida, 'EXPENSE')):
+            with self.subTest(perna=perna.type, tipo=tipo):
+                resp = self.cliente.patch(f'{URL_TRANSACOES}{perna.id}/', {'type': tipo}, format='json')
+                self.assertEqual(resp.status_code, 400, resp.data)
+                self.assertEqual(resp.data['type'], [TIPO_NAO_ALTERAVEL])
+                self.assertEqual(self.estado(), antes)
+
+    def test_servico_recusa_mudar_o_tipo_mesmo_fora_do_serializer(self):
+        antes = self.estado()
+        with self.assertRaises(ValidationError) as erro:
+            TransactionService.editar_transferencia(self.saida, {'type': 'EXPENSE'}, self.a.usuario)
+        self.assertEqual(erro.exception.detail, {'type': [TIPO_NAO_ALTERAVEL]})
+        self.assertEqual(self.estado(), antes)
+
+    def test_as_duas_pernas_na_mesma_conta_recusado(self):
+        antes = self.estado()
+        for perna, corpo in (
+            (self.saida, {'target_account_id': str(self.a.conta.id)}),
+            (self.saida, {'account': str(self.a.poupanca.id)}),
+            (self.entrada, {'account': str(self.a.conta.id)}),
+            (self.saida, {'account': str(self.c.id), 'target_account_id': str(self.c.id)}),
+        ):
+            with self.subTest(perna=perna.type, corpo=corpo):
+                resp = self.cliente.patch(f'{URL_TRANSACOES}{perna.id}/', corpo, format='json')
+                self.assertEqual(resp.status_code, 400, resp.data)
+                self.assertEqual(resp.data, {'detail': MESMA_CONTA})
+                self.assertEqual(self.estado(), antes)
+
+    def test_conta_excluida_ou_de_outro_usuario_recusada(self):
+        excluida = Account.objects.create(
+            user=self.a.usuario, name='Antiga A', type='CHECKING', initial_balance=Decimal('0.00'),
+        )
+        Account.objects.filter(pk=excluida.pk).update(is_active=False)
+        antes = self.estado()
+        for campo, conta in (
+            ('account', excluida), ('target_account_id', excluida),
+            ('account', self.b.conta), ('target_account_id', self.b.conta),
+        ):
+            with self.subTest(campo=campo, conta=conta.name):
+                resp = self.cliente.patch(f'{URL_TRANSACOES}{self.saida.id}/', {campo: str(conta.id)}, format='json')
+                self.assertEqual(resp.status_code, 400, resp.data)
+                self.assertEqual(resp.data[campo], [CONTA_NAO_ENCONTRADA])
+                self.assertEqual(self.estado(), antes)

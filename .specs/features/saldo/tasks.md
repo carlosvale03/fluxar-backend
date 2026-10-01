@@ -411,13 +411,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_transferencia.py` transfere R$ 100,00 de A para B, muda o valor para R$ 150,00, troca o destino para C, troca a origem e muda o status, conferindo A, B e C por SALDO-01 e a soma total em cada passo
-- [ ] Mudar o tipo de uma perna recebe 400
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] `tests/saldo/test_transferencia.py` transfere R$ 100,00 de A para B, muda o valor para R$ 150,00, troca o destino para C, troca a origem e muda o status, conferindo A, B e C por SALDO-01 e a soma total em cada passo
+- [x] Mudar o tipo de uma perna recebe 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 7 testes novos; suíte 462 → 469)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): mantém as duas pernas da transferência iguais na edição`
 

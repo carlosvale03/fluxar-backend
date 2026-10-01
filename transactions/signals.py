@@ -97,26 +97,6 @@ def update_invoice_total(sender, instance, **kwargs):
         instance.invoice.total_amount = total
         instance.invoice.save(update_fields=['total_amount'])
 
-@receiver(post_save, sender=Transaction)
-def sync_transfer_update(sender, instance, created, **kwargs):
-    """
-    Sincroniza atualizações entre transações de transferência parcerias.
-    """
-    if not created and instance.transfer_id:
-        # Atualiza a transação parceira com dados comuns.
-        # NÃO atualiza account aqui (isso é especifico de cada perna).
-        # Usa update() para não disparar signals recursivamente.
-        # Só a parceira do dono da transação (ISOL-14).
-        Transaction.objects.filter(
-            transfer_id=instance.transfer_id, user_id=instance.user_id
-        ).exclude(
-            id=instance.id
-        ).update(
-            date=instance.date,
-            amount=instance.amount,
-            # description removido para permitir personalização independente
-        )
-
 @receiver(post_delete, sender=Transaction)
 def sync_transfer_delete(sender, instance, **kwargs):
     """

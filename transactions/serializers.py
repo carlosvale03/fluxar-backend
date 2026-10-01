@@ -295,19 +295,20 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
-        target_account = validated_data.pop('target_account_id', None)
         scope = validated_data.pop('update_scope', 'SINGLE')
-        
-        # 1. Update Partner Account if requested
-        if target_account and instance.transfer_id:
-            partner = Transaction.objects.filter(
-                transfer_id=instance.transfer_id, user=instance.user
-            ).exclude(id=instance.id).first()
-            
-            if partner:
-                partner.account = target_account
-                partner.save() # Dispara signal, mas sync_transfer_update ignora account change.
-        
+        for campo in ('is_recurring', 'frequency'):
+            validated_data.pop(campo, None)
+
+        # 1. Perna de transferência: as duas pernas mudam juntas (SALDO-13 a SALDO-15)
+        if instance.transfer_id:
+            t = TransactionService.editar_transferencia(
+                instance, validated_data, self.context['request'].user,
+            )
+            if tags is not None:
+                t.tags.set(tags)
+            return t
+        validated_data.pop('target_account_id', None)
+
         # 2. Batch Installment Update (ALL_FUTURE)
         if scope == 'ALL_FUTURE' and instance.is_installment:
             from django.db.models import Q
