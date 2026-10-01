@@ -184,3 +184,46 @@ class AlterarTodasTests(SerieTestCase):
         RecurringTransaction.objects.filter(pk=self.serie.pk).update(type='CREDIT_CARD')
         Transaction.objects.filter(recurring_source=self.serie, status='PENDING').update(type='CREDIT_CARD')
         self.assert_recusa({'type': 'EXPENSE'}, 'type', TIPO_NAO_ALTERAVEL)
+
+
+class ExcluirSerieTests(SerieTestCase):
+    """Excluir a série apaga só as pendentes e encerra a série (SALDO-22)."""
+
+    def setUp(self):
+        super().setUp()
+        self.serie, self.primeira = self.criar_serie()
+        self.segunda = self.ocorrencias(self.serie)[1]
+        resp = self.cliente.patch(f'{URL_TRANSACOES}{self.segunda.id}/', {'status': 'COMPLETED'}, format='json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+
+    def excluir(self, serie_id):
+        return self.cliente.delete(f'{URL_TRANSACOES}bulk-delete/?recurring_source={serie_id}')
+
+    def test_apaga_as_pendentes_mantem_as_efetivadas_e_encerra_a_serie(self):
+        self.assertEqual(self.saldo(self.a.conta), Decimal('11000.00'))
+
+        resp = self.excluir(self.serie.id)
+        self.assertEqual(resp.status_code, 200, resp.data)
+
+        restantes = self.ocorrencias(self.serie)
+        self.assertEqual([t.pk for t in restantes], [self.primeira.pk, self.segunda.pk])
+        self.assertEqual([t.status for t in restantes], ['COMPLETED', 'COMPLETED'])
+        self.assertFalse(Transaction.objects.filter(user=self.a.usuario, status='PENDING').exists())
+        self.assertFalse(RecurringTransaction.objects.get(pk=self.serie.pk).is_active)
+        self.assertEqual(self.saldo(self.a.conta), Decimal('11000.00'))
+
+    def test_serie_de_outro_usuario_recusada(self):
+        serie_b, _ = self.criar_serie_de_b()
+        antes = sorted(Transaction.objects.values_list('id', 'status'))
+        resp = self.excluir(serie_b.id)
+        self.assertEqual(resp.status_code, 400, resp.data)
+        self.assertEqual(resp.data['recurring_source'], [SERIE_NAO_ENCONTRADA])
+        self.assertEqual(sorted(Transaction.objects.values_list('id', 'status')), antes)
+        self.assertTrue(RecurringTransaction.objects.get(pk=serie_b.pk).is_active)
+
+    def criar_serie_de_b(self):
+        self.como(self.b.usuario)
+        try:
+            return self.criar_serie(account=str(self.b.conta.id), category=str(self.b.receita.id))
+        finally:
+            self.como(self.a.usuario)

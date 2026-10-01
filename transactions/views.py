@@ -198,16 +198,23 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
         """
-        Deleta todas as transações vinculadas a um grupo de recorrência ou transferência.
+        Exclui uma série (as ocorrências pendentes) ou as pernas de uma transferência.
         """
         recurring_id = request.query_params.get('recurring_source')
         transfer_id = request.query_params.get('transfer_id')
         
         if recurring_id:
+            # Só as pendentes saem; as efetivadas ficam no histórico e a série
+            # é encerrada (SALDO-22)
+            serie = get_owned_or_400(
+                RecurringTransaction.objects.all(), request.user, recurring_id,
+                'recurring_source', SERIE_NAO_ENCONTRADA,
+            )
             deleted_count, _ = Transaction.objects.filter(
-                user=request.user, 
-                recurring_source_id=recurring_id
+                user=request.user, recurring_source=serie, status='PENDING',
             ).delete()
+            serie.is_active = False
+            serie.save(update_fields=['is_active', 'updated_at'])
             return Response({'status': f'{deleted_count} transações removidas.'})
             
         if transfer_id:

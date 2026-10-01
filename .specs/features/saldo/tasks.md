@@ -865,6 +865,797 @@ T27 → T28
 
 ---
 
+### Phase 5: Fatura
+
+```
+T16 → T17
+```
+
+### Phase 6: Totais
+
+```
+T18
+```
+
+### Phase 7: Ajuste de saldo e dados existentes
+
+```
+T19 → T20
+T20 → T21
+T21 → T22
+```
+
+### Phase 8: Frontend
+
+```
+T23 → T24
+T24 → T25
+T25 → T26
+```
+
+### Phase 9: Fluxo completo e concorrência
+
+```
+T27 → T28
+```
+
+---
+
+## Task Breakdown
+
+### Phase 1: Núcleo do saldo
+
+#### T1: Data de hoje no fuso de Brasília
+
+**What**: `core/datas.py` com `hoje()`, a data corrente em `America/Sao_Paulo`.
+**Where**: `core/datas.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: AD-008 (usada por SALDO-37 e SALDO-40)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_datas.py` confere, com o relógio simulado em 2026-10-01 02:00 UTC, que `hoje()` devolve 2026-09-30
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 384 → 386)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `feat(core): adiciona a data de hoje no fuso de Brasília`
+
+---
+
+#### T2: Saldo recalculado do razão
+
+**What**: `accounts/saldo.py` com `calcular` e `recalcular` (trava por id), e os signals de saldo de `transactions/signals.py` chamando `recalcular` para a conta antiga e a nova; `AccountService.get_balance` delega para `calcular`.
+**Where**: `accounts/saldo.py`
+**Depends on**: T1
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-01 a SALDO-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_saldo.py` com uma base de conta de R$ 1.000,00 confere o saldo igual a SALDO-01 depois de criar efetivada, criar pendente, efetivar, voltar a pendente, mudar valor, mudar tipo, mudar de conta e excluir
+- [x] Uma transação de outro usuário gravada à força na conta não entra no saldo
+- [x] Full gate passa
+- [x] Test count: pelo menos 10 testes (real: 15 testes novos; suíte 386 → 401; o setUp de tests/isolamento/test_correcao.py passa a gravar à força o saldo antigo da conta de B)
+
+**Tests**: integration
+**Gate**: full
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): recalcula o saldo a partir das transações efetivadas`
+
+---
+
+#### T3: Saldo inicial e criação da conta
+
+**What**: `accounts/signals.py`: a criação da conta e a mudança do saldo inicial chamam `recalcular`, e a resposta da criação traz o saldo certo.
+**Where**: `accounts/signals.py`
+**Depends on**: T2
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-43
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_saldo_inicial.py` confere que mudar o saldo inicial de 1.000,00 para 1.200,00 sobe o saldo em 200,00, com transações já lançadas
+- [x] A resposta do `POST /api/accounts/` traz `balance` igual ao saldo inicial
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes novos; suíte 401 → 404)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): recalcula o saldo ao mudar o saldo inicial`
+
+---
+
+#### T4: Valor positivo com até duas casas
+
+**What**: `core/valores.py` com `validar_valor_positivo`, usado no `amount` dos serializers de transação, transferência, compra no cartão e pagamento de fatura, e no aporte e resgate de meta.
+**Where**: `core/valores.py`
+**Depends on**: T2
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_valor.py` confere 400 no campo `amount` para 0, -10 e 100.123 em cada uma das operações, e que 100.1 é aceito
+- [x] Nenhum saldo muda nas recusas
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 12 testes novos; suíte 404 → 416)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(core): recusa valores zerados, negativos ou com mais de duas casas`
+
+---
+
+#### T5: Operações atômicas
+
+**What**: `ATOMIC_REQUESTS` nas settings e `atomic` nos services que movem dinheiro (transferência, compra no cartão, pagamento e estorno, aporte e resgate).
+**Where**: `core/settings.py`
+**Depends on**: T4
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_atomicidade.py` força uma falha depois da primeira perna de uma transferência e no meio de um pagamento de fatura e confere que nenhuma transação nem saldo mudou
+- [x] Full gate passa
+- [x] Test count: pelo menos 3 testes (real: 8 testes novos; suíte 416 → 424; as rotas com limite de tentativas e o health ficam fora do ATOMIC_REQUESTS)
+
+**Tests**: integration
+**Gate**: full
+**Status**: ✅ Complete
+
+**Commit**: `fix(core): desfaz a operação inteira quando uma etapa falha`
+
+---
+
+### Phase 2: Endpoint genérico e contas excluídas
+
+#### T6: Tipos do endpoint genérico
+
+**What**: `TransactionSerializer`: criação só de `INCOME` e `EXPENSE`; edição de tipo só entre esses dois; `CREDIT_CARD` não vai para `COMPLETED` fora do pagamento da fatura.
+**Where**: `transactions/serializers.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-18, SALDO-19, SALDO-46
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_tipos.py` confere 400 em `type` na criação de cada um dos quatro tipos especiais e na troca de tipo de/para eles
+- [x] Efetivar uma compra no cartão pela lista recebe 400, e o saldo não muda
+- [x] Criar e editar receita e despesa continua funcionando
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 13 testes novos; suíte 424 → 437)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): restringe os tipos do endpoint genérico`
+
+---
+
+#### T7: Conta excluída fora das operações novas
+
+**What**: Os campos de conta da transação, da transferência, do pagamento de fatura e do aporte e resgate só aceitam contas ativas.
+**Where**: `transactions/serializers.py`
+**Depends on**: T6
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 ao criar transação, transferência (origem e destino), pagamento de fatura e aporte com conta excluída
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 7 testes novos; suíte 437 → 444)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): recusa operações novas em conta excluída`
+
+---
+
+#### T8: Histórico da conta excluída só para leitura
+
+**What**: Editar ou excluir uma transação de conta excluída, ou uma transferência com uma perna em conta excluída, recebe 400 com a mensagem do design.
+**Where**: `transactions/views.py`
+**Depends on**: T7
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-36
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 em PATCH, PUT e DELETE de uma transação e de uma transferência ligadas a conta excluída, sem mudar nada
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 8 testes novos; suíte 444 → 452)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): mantém o histórico da conta excluída só para leitura`
+
+---
+
+#### T9: Exclusão de conta
+
+**What**: `AccountViewSet.destroy` recusa saldo diferente de zero e transações pendentes com as mensagens da spec; `is_active` vira somente leitura no serializer.
+**Where**: `accounts/views.py`
+**Depends on**: T8
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-32, SALDO-33, SALDO-34
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_exclusao_de_conta.py` confere 400 com saldo positivo, com saldo negativo e com pendentes, com as mensagens exatas
+- [x] Com saldo zero e sem pendentes, a conta sai da lista e as transações efetivadas continuam no histórico
+- [x] PATCH com `is_active: false` não exclui a conta
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 5 testes novos; suíte 452 → 457)
+
+**Tests**: integration
+**Gate**: build
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): exige saldo zero e nenhuma pendente para excluir a conta`
+
+---
+
+### Phase 3: Transferências
+
+#### T10: Criação de transferência
+
+**What**: `create_transfer`: origem diferente do destino, as duas pernas no mesmo `atomic` e com o mesmo status, e a descrição enviada.
+**Where**: `transactions/services.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-11, SALDO-12, SALDO-17
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_transferencia.py` confere a saída na origem, a entrada no destino e a soma das contas igual antes e depois
+- [x] Origem igual ao destino recebe 400 com a mensagem do design
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 457 → 462)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): valida e cria as duas pernas da transferência juntas`
+
+---
+
+#### T11: Edição de transferência
+
+**What**: Serviço `editar_transferencia` usado pelo `TransactionSerializer.update`: valor, data e status nas duas pernas, troca da conta da perna editada e da outra, tipo imutável; o signal `sync_transfer_update` sai.
+**Where**: `transactions/serializers.py`
+**Depends on**: T10
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-13, SALDO-14, SALDO-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_transferencia.py` transfere R$ 100,00 de A para B, muda o valor para R$ 150,00, troca o destino para C, troca a origem e muda o status, conferindo A, B e C por SALDO-01 e a soma total em cada passo
+- [x] Mudar o tipo de uma perna recebe 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 7 testes novos; suíte 462 → 469)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): mantém as duas pernas da transferência iguais na edição`
+
+---
+
+### Phase 4: Séries recorrentes
+
+```
+T13 → T14
+T14 → T15
+```
+
+### Phase 5: Fatura
+
+```
+T16 → T17
+```
+
+### Phase 6: Totais
+
+```
+T18
+```
+
+### Phase 7: Ajuste de saldo e dados existentes
+
+```
+T19 → T20
+T20 → T21
+T21 → T22
+```
+
+### Phase 8: Frontend
+
+```
+T23 → T24
+T24 → T25
+T25 → T26
+```
+
+### Phase 9: Fluxo completo e concorrência
+
+```
+T27 → T28
+```
+
+---
+
+## Task Breakdown
+
+### Phase 1: Núcleo do saldo
+
+#### T1: Data de hoje no fuso de Brasília
+
+**What**: `core/datas.py` com `hoje()`, a data corrente em `America/Sao_Paulo`.
+**Where**: `core/datas.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: AD-008 (usada por SALDO-37 e SALDO-40)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_datas.py` confere, com o relógio simulado em 2026-10-01 02:00 UTC, que `hoje()` devolve 2026-09-30
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 384 → 386)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `feat(core): adiciona a data de hoje no fuso de Brasília`
+
+---
+
+#### T2: Saldo recalculado do razão
+
+**What**: `accounts/saldo.py` com `calcular` e `recalcular` (trava por id), e os signals de saldo de `transactions/signals.py` chamando `recalcular` para a conta antiga e a nova; `AccountService.get_balance` delega para `calcular`.
+**Where**: `accounts/saldo.py`
+**Depends on**: T1
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-01 a SALDO-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_saldo.py` com uma base de conta de R$ 1.000,00 confere o saldo igual a SALDO-01 depois de criar efetivada, criar pendente, efetivar, voltar a pendente, mudar valor, mudar tipo, mudar de conta e excluir
+- [x] Uma transação de outro usuário gravada à força na conta não entra no saldo
+- [x] Full gate passa
+- [x] Test count: pelo menos 10 testes (real: 15 testes novos; suíte 386 → 401; o setUp de tests/isolamento/test_correcao.py passa a gravar à força o saldo antigo da conta de B)
+
+**Tests**: integration
+**Gate**: full
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): recalcula o saldo a partir das transações efetivadas`
+
+---
+
+#### T3: Saldo inicial e criação da conta
+
+**What**: `accounts/signals.py`: a criação da conta e a mudança do saldo inicial chamam `recalcular`, e a resposta da criação traz o saldo certo.
+**Where**: `accounts/signals.py`
+**Depends on**: T2
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-43
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_saldo_inicial.py` confere que mudar o saldo inicial de 1.000,00 para 1.200,00 sobe o saldo em 200,00, com transações já lançadas
+- [x] A resposta do `POST /api/accounts/` traz `balance` igual ao saldo inicial
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes novos; suíte 401 → 404)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): recalcula o saldo ao mudar o saldo inicial`
+
+---
+
+#### T4: Valor positivo com até duas casas
+
+**What**: `core/valores.py` com `validar_valor_positivo`, usado no `amount` dos serializers de transação, transferência, compra no cartão e pagamento de fatura, e no aporte e resgate de meta.
+**Where**: `core/valores.py`
+**Depends on**: T2
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_valor.py` confere 400 no campo `amount` para 0, -10 e 100.123 em cada uma das operações, e que 100.1 é aceito
+- [x] Nenhum saldo muda nas recusas
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 12 testes novos; suíte 404 → 416)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(core): recusa valores zerados, negativos ou com mais de duas casas`
+
+---
+
+#### T5: Operações atômicas
+
+**What**: `ATOMIC_REQUESTS` nas settings e `atomic` nos services que movem dinheiro (transferência, compra no cartão, pagamento e estorno, aporte e resgate).
+**Where**: `core/settings.py`
+**Depends on**: T4
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-10
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_atomicidade.py` força uma falha depois da primeira perna de uma transferência e no meio de um pagamento de fatura e confere que nenhuma transação nem saldo mudou
+- [x] Full gate passa
+- [x] Test count: pelo menos 3 testes (real: 8 testes novos; suíte 416 → 424; as rotas com limite de tentativas e o health ficam fora do ATOMIC_REQUESTS)
+
+**Tests**: integration
+**Gate**: full
+**Status**: ✅ Complete
+
+**Commit**: `fix(core): desfaz a operação inteira quando uma etapa falha`
+
+---
+
+### Phase 2: Endpoint genérico e contas excluídas
+
+#### T6: Tipos do endpoint genérico
+
+**What**: `TransactionSerializer`: criação só de `INCOME` e `EXPENSE`; edição de tipo só entre esses dois; `CREDIT_CARD` não vai para `COMPLETED` fora do pagamento da fatura.
+**Where**: `transactions/serializers.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-18, SALDO-19, SALDO-46
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_tipos.py` confere 400 em `type` na criação de cada um dos quatro tipos especiais e na troca de tipo de/para eles
+- [x] Efetivar uma compra no cartão pela lista recebe 400, e o saldo não muda
+- [x] Criar e editar receita e despesa continua funcionando
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 13 testes novos; suíte 424 → 437)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): restringe os tipos do endpoint genérico`
+
+---
+
+#### T7: Conta excluída fora das operações novas
+
+**What**: Os campos de conta da transação, da transferência, do pagamento de fatura e do aporte e resgate só aceitam contas ativas.
+**Where**: `transactions/serializers.py`
+**Depends on**: T6
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 ao criar transação, transferência (origem e destino), pagamento de fatura e aporte com conta excluída
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 7 testes novos; suíte 437 → 444)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): recusa operações novas em conta excluída`
+
+---
+
+#### T8: Histórico da conta excluída só para leitura
+
+**What**: Editar ou excluir uma transação de conta excluída, ou uma transferência com uma perna em conta excluída, recebe 400 com a mensagem do design.
+**Where**: `transactions/views.py`
+**Depends on**: T7
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-36
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_conta_excluida.py` confere 400 em PATCH, PUT e DELETE de uma transação e de uma transferência ligadas a conta excluída, sem mudar nada
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 8 testes novos; suíte 444 → 452)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): mantém o histórico da conta excluída só para leitura`
+
+---
+
+#### T9: Exclusão de conta
+
+**What**: `AccountViewSet.destroy` recusa saldo diferente de zero e transações pendentes com as mensagens da spec; `is_active` vira somente leitura no serializer.
+**Where**: `accounts/views.py`
+**Depends on**: T8
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-32, SALDO-33, SALDO-34
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_exclusao_de_conta.py` confere 400 com saldo positivo, com saldo negativo e com pendentes, com as mensagens exatas
+- [x] Com saldo zero e sem pendentes, a conta sai da lista e as transações efetivadas continuam no histórico
+- [x] PATCH com `is_active: false` não exclui a conta
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 5 testes novos; suíte 452 → 457)
+
+**Tests**: integration
+**Gate**: build
+**Status**: ✅ Complete
+
+**Commit**: `fix(accounts): exige saldo zero e nenhuma pendente para excluir a conta`
+
+---
+
+### Phase 3: Transferências
+
+#### T10: Criação de transferência
+
+**What**: `create_transfer`: origem diferente do destino, as duas pernas no mesmo `atomic` e com o mesmo status, e a descrição enviada.
+**Where**: `transactions/services.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-11, SALDO-12, SALDO-17
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_transferencia.py` confere a saída na origem, a entrada no destino e a soma das contas igual antes e depois
+- [x] Origem igual ao destino recebe 400 com a mensagem do design
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 457 → 462)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): valida e cria as duas pernas da transferência juntas`
+
+---
+
+#### T11: Edição de transferência
+
+**What**: Serviço `editar_transferencia` usado pelo `TransactionSerializer.update`: valor, data e status nas duas pernas, troca da conta da perna editada e da outra, tipo imutável; o signal `sync_transfer_update` sai.
+**Where**: `transactions/serializers.py`
+**Depends on**: T10
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-13, SALDO-14, SALDO-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_transferencia.py` transfere R$ 100,00 de A para B, muda o valor para R$ 150,00, troca o destino para C, troca a origem e muda o status, conferindo A, B e C por SALDO-01 e a soma total em cada passo
+- [x] Mudar o tipo de uma perna recebe 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 7 testes novos; suíte 462 → 469)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): mantém as duas pernas da transferência iguais na edição`
+
+---
+
+#### T12: Exclusão de transferência
+
+**What**: A exclusão de uma perna apaga as duas e desfaz o efeito nas duas contas.
+**Where**: `transactions/signals.py`
+**Depends on**: T11
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `tests/saldo/test_transferencia.py` exclui a perna de saída e depois, noutra transferência, a de entrada, conferindo as duas pernas apagadas e os saldos por SALDO-01
+- [ ] Build gate passa
+- [ ] Test count: pelo menos 2 testes
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(saldo): cobre a exclusão de transferência`
+
+---
+
+### Phase 4: Séries recorrentes
+
+#### T13: Ocorrências geradas pendentes
+
+**What**: Na criação de uma série, a primeira ocorrência segue o status enviado e as geradas nascem `PENDING`, inclusive as receitas.
+**Where**: `transactions/serializers.py`
+**Depends on**: None
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_series.py` cria um salário de R$ 5.000,00 com a primeira efetivada: o saldo sobe exatamente R$ 5.000,00 e as 11 seguintes estão pendentes
+- [x] Com a primeira pendente, o saldo não muda
+- [x] Quick gate passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 471 → 474)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): gera as ocorrências da série como pendentes`
+
+---
+
+#### T14: Alterar todas as ocorrências
+
+**What**: `bulk_update` aplica descrição, valor, categoria, conta e tipo só às pendentes da série e ao modelo dela, com validação de conta ativa, categoria do usuário e tipo, e recalcula as contas.
+**Where**: `transactions/views.py`
+**Depends on**: T13
+**Reuses**: ver a seção Code Reuse Analysis do design
+**Requirement**: SALDO-21
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `tests/saldo/test_series.py` efetiva a segunda ocorrência, altera todas para R$ 5.500,00 e outra conta, e confere que só as pendentes mudaram e que os saldos batem com SALDO-01
+- [x] Conta excluída, categoria de outro usuário e tipo especial recebem 400
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 10 testes novos; suíte 474 → 484)
+
+**Tests**: integration
+**Gate**: quick
+**Status**: ✅ Complete
+
+**Commit**: `fix(transactions): altera só as ocorrências pendentes da série`
+
+---
+
 #### T15: Excluir a série
 
 **What**: `bulk_delete` por série apaga só as pendentes e marca a série como inativa.
