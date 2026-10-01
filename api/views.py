@@ -485,6 +485,9 @@ class AdminUserListView(generics.ListAPIView):
             return Response({"detail": "Ação bloqueada: O sistema deve ter pelo menos um administrador."}, status=status.HTTP_400_BAD_REQUEST)
 
         users_to_delete.update(is_active=False)
+        # A conta arquivada perde as sessões abertas (SESSAO-17)
+        for user in users_to_delete:
+            encerrar_todas(user)
         return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -516,6 +519,9 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
         
         if response.status_code == 200:
             new_user = self.get_object()
+            # A conta desativada perde as sessões abertas (SESSAO-17)
+            if not new_user.is_active:
+                encerrar_todas(new_user)
             changes = []
             if old_user.plan != new_user.plan:
                 changes.append(f"Plano alterado de {old_user.plan} para {new_user.plan}")
@@ -587,6 +593,9 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             instance.is_active = False
             instance.save()
+            # A conta arquivada perde as sessões abertas; na exclusão, elas
+            # são apagadas em cascata com a conta (SESSAO-17)
+            encerrar_todas(instance)
             
             SystemLog.objects.create(
                 user=instance,

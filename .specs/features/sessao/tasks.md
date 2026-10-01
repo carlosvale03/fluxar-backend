@@ -332,12 +332,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_desativacao.py` confere 401 na próxima requisição e na renovação depois de desativar, arquivar e excluir a conta pelo painel
-- [ ] Build gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/sessao/test_desativacao.py` confere 401 na próxima requisição e na renovação depois de desativar, arquivar e excluir a conta pelo painel
+- [x] Build gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: 4 testes novos; suíte 359 → 363)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): encerra as sessões da conta desativada ou excluída`
 
