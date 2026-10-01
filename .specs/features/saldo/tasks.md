@@ -269,14 +269,15 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_tipos.py` confere 400 em `type` na criação de cada um dos quatro tipos especiais e na troca de tipo de/para eles
-- [ ] Efetivar uma compra no cartão pela lista recebe 400, e o saldo não muda
-- [ ] Criar e editar receita e despesa continua funcionando
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] `tests/saldo/test_tipos.py` confere 400 em `type` na criação de cada um dos quatro tipos especiais e na troca de tipo de/para eles
+- [x] Efetivar uma compra no cartão pela lista recebe 400, e o saldo não muda
+- [x] Criar e editar receita e despesa continua funcionando
+- [x] Quick gate passa
+- [x] Test count: pelo menos 8 testes (real: 13 testes novos; suíte 424 → 437)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): restringe os tipos do endpoint genérico`
 

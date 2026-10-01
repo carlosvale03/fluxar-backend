@@ -10,6 +10,14 @@ from core.fields import (
 )
 from core.valores import validar_valor_positivo
 
+# Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
+# Transferência, compra no cartão e pagamento de fatura nascem só das
+# operações próprias (AD-005).
+TIPOS_DO_ENDPOINT = ('INCOME', 'EXPENSE')
+TIPO_NAO_CRIAVEL = 'Por aqui só é possível criar receitas e despesas.'
+TIPO_NAO_ALTERAVEL = 'O tipo só pode ser trocado entre receita e despesa.'
+COMPRA_SO_PELA_FATURA = 'Compras no cartão são efetivadas pelo pagamento da fatura.'
+
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
     parent_name = serializers.ReadOnlyField(source='parent.name')
@@ -197,7 +205,21 @@ class TransactionSerializer(serializers.ModelSerializer):
                 erros['tags'] = [TAG_NAO_ENCONTRADA]
             if erros:
                 raise serializers.ValidationError(erros)
+        self._validar_tipo_e_status(attrs)
         return attrs
+
+    def _validar_tipo_e_status(self, attrs):
+        tipo = attrs.get('type')
+        if self.instance is None:
+            if tipo not in TIPOS_DO_ENDPOINT:
+                raise serializers.ValidationError({'type': [TIPO_NAO_CRIAVEL]})
+            return
+        atual = self.instance.type
+        if tipo is not None and tipo != atual and not (tipo in TIPOS_DO_ENDPOINT and atual in TIPOS_DO_ENDPOINT):
+            raise serializers.ValidationError({'type': [TIPO_NAO_ALTERAVEL]})
+        # Compra no cartão só é efetivada pelo pagamento da fatura (SALDO-46)
+        if atual == 'CREDIT_CARD' and attrs.get('status') == 'COMPLETED' and self.instance.status != 'COMPLETED':
+            raise serializers.ValidationError({'status': [COMPRA_SO_PELA_FATURA]})
 
     @transaction.atomic
     def create(self, validated_data):
