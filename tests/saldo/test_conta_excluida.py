@@ -6,11 +6,15 @@ pagamento de fatura, aporte e resgate que a indiquem recebem HTTP 400 com o
 erro no campo da conta, a mesma resposta de uma conta inexistente.
 """
 import uuid
+from datetime import date
 from decimal import Decimal
 
-from accounts.models import Account, CreditCardInvoice
+from rest_framework.exceptions import ValidationError
+
+from accounts.models import Account, CreditCard, CreditCardInvoice
 from goals.models import Goal, GoalDeposit
 from transactions.models import Transaction
+from transactions.services import TransactionService
 from tests.saldo.base import SaldoTestCase, URL_TRANSACOES
 
 CONTA_NAO_ENCONTRADA = 'Conta não encontrada.'
@@ -173,3 +177,39 @@ class HistoricoDaContaExcluidaTests(ContaExcluidaTestCase):
         resp = self.cliente.delete(f'{URL_TRANSACOES}bulk-delete/?transfer_id={transferencia}')
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertFalse(Transaction.objects.filter(transfer_id=transferencia, user=self.a.usuario).exists())
+
+
+class CompraNoCartaoComContaExcluidaTests(ContaExcluidaTestCase):
+    """O cartão cuja conta de pagamento foi excluída não aceita compra nova (SALDO-35)."""
+
+    def setUp(self):
+        super().setUp()
+        self.cartao = CreditCard.objects.create(
+            user=self.a.usuario, name='Cartão da antiga', limit=Decimal('1000.00'),
+            closing_day=10, due_day=20, account=self.excluida,
+        )
+
+    def test_compra_pela_rota_recusada(self):
+        antes = self.estado()
+
+        resp = self.cliente.post(f'{URL_TRANSACOES}credit-card-expense/', {
+            'credit_card': str(self.cartao.id), 'amount': '100.00', 'date': '2026-09-05',
+            'description': 'Loja', 'category': str(self.a.despesa.id), 'installments': 2,
+        }, format='json')
+
+        self.assertEqual(resp.status_code, 400, resp.data)
+        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(self.estado(), antes)
+
+    def test_compra_pelo_service_recusada(self):
+        antes = self.estado()
+
+        with self.assertRaises(ValidationError) as erro:
+            TransactionService.create_credit_card_expense(
+                user=self.a.usuario, card=self.cartao, amount=Decimal('100.00'),
+                date=date(2026, 9, 5), description='Loja', category=self.a.despesa,
+            )
+
+        self.assertEqual(erro.exception.detail, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(self.estado(), antes)
+

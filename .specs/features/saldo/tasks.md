@@ -755,13 +755,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_conta_excluida.py` cria uma compra pela rota com a conta do cartão excluída e recebe 400 com "Conta não encontrada.", sem nenhuma transação nova e sem mudar saldo
-- [ ] O service recusa a mesma compra chamado direto
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_conta_excluida.py` cria uma compra pela rota com a conta do cartão excluída e recebe 400 com "Conta não encontrada.", sem nenhuma transação nova e sem mudar saldo
+- [x] O service recusa a mesma compra chamado direto
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 519 → 521)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa compra no cartão com a conta do cartão excluída`
 

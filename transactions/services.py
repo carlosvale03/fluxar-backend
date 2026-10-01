@@ -125,6 +125,12 @@ class TransactionService:
         """
         if installments < 1:
             raise ValidationError("Número de parcelas deve ser pelo menos 1.")
+        # A compra fica na conta de pagamento do cartão; conta excluída não
+        # recebe movimentação nova (SALDO-35, AD-003)
+        if card.account_id is not None and not Account.objects.filter(
+            pk=card.account_id, is_active=True,
+        ).exists():
+            raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
 
         transactions = []
         installment_amount = amount / Decimal(installments)
