@@ -184,13 +184,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_saldo_inicial.py` confere que mudar o saldo inicial de 1.000,00 para 1.200,00 sobe o saldo em 200,00, com transações já lançadas
-- [ ] A resposta do `POST /api/accounts/` traz `balance` igual ao saldo inicial
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `tests/saldo/test_saldo_inicial.py` confere que mudar o saldo inicial de 1.000,00 para 1.200,00 sobe o saldo em 200,00, com transações já lançadas
+- [x] A resposta do `POST /api/accounts/` traz `balance` igual ao saldo inicial
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes novos; suíte 401 → 404)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(accounts): recalcula o saldo ao mudar o saldo inicial`
 
