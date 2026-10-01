@@ -361,12 +361,13 @@ T21
 
 **Done when**:
 
-- [ ] `tests/sessao/test_manutencao_cache.py` confere uma única consulta em várias chamadas dentro de 30 segundos (`assertNumQueries`), a leitura nova depois de 30 segundos (tempo simulado) e o efeito imediato de `invalidar()`
-- [ ] Quick gate passa
-- [ ] Test count: suíte cresce em pelo menos 3 testes
+- [x] `tests/sessao/test_manutencao_cache.py` confere uma única consulta em várias chamadas dentro de 30 segundos (`assertNumQueries`), a leitura nova depois de 30 segundos (tempo simulado) e o efeito imediato de `invalidar()`
+- [x] Quick gate passa
+- [x] Test count: suíte cresce em pelo menos 3 testes (real: 5 testes novos; suíte 363 → 368)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `perf(core): lê o modo manutenção de um cache de 30 segundos`
 

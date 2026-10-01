@@ -42,6 +42,7 @@ from core.throttles import (
     ReenvioIPThrottle,
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
+from core.manutencao import invalidar as invalidar_manutencao
 import logging
 
 User = get_user_model()
@@ -712,7 +713,8 @@ class AdminSystemSettingsView(APIView):
                 description=f"Configuração '{key}' atualizada para '{value}'.",
                 admin_name=request.user.name
             )
-            
+
+        invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
 
 class AdminGlobalLogsView(generics.ListAPIView):
