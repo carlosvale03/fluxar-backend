@@ -923,12 +923,13 @@ T27 → T28
 
 **Done when**:
 
-- [ ] O teste percorre todas as operações sem passo manual e confere cada conta e os totais depois de cada passo
-- [ ] Full gate passa
-- [ ] Test count: suíte cresce em pelo menos 1 teste
+- [x] O teste percorre todas as operações sem passo manual e confere cada conta e os totais depois de cada passo
+- [x] Full gate passa
+- [x] Test count: suíte cresce em pelo menos 1 teste (real: 1 teste novo; suíte 525 → 526)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `test(saldo): confere o saldo em toda a sequência de operações`
 
