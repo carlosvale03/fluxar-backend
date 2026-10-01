@@ -285,7 +285,8 @@ class TransactionSerializer(serializers.ModelSerializer):
                     credit_card=transaction.credit_card,
                     category=transaction.category,
                     date=current_date,
-                    status='PENDING' if transaction.type in ['EXPENSE', 'CREDIT_CARD'] else 'COMPLETED',
+                    # Geradas nascem pendentes, inclusive as receitas (SALDO-20, AD-002)
+                    status='PENDING',
                     recurring_source=recur
                 )
                 if tags:

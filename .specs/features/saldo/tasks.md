@@ -824,13 +824,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_series.py` cria um salário de R$ 5.000,00 com a primeira efetivada: o saldo sobe exatamente R$ 5.000,00 e as 11 seguintes estão pendentes
-- [ ] Com a primeira pendente, o saldo não muda
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `tests/saldo/test_series.py` cria um salário de R$ 5.000,00 com a primeira efetivada: o saldo sobe exatamente R$ 5.000,00 e as 11 seguintes estão pendentes
+- [x] Com a primeira pendente, o saldo não muda
+- [x] Quick gate passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 471 → 474)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): gera as ocorrências da série como pendentes`
 
