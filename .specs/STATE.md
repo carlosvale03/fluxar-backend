@@ -298,15 +298,21 @@
 - **Date**: 2026-09-30
 - **Status**: active
 
+### AD-038
+- **Decision**: O `Account.balance` é sempre o resultado de `accounts/saldo.py`, que soma o razão (saldo inicial + entradas efetivadas − saídas efetivadas do dono) sob trava das contas em ordem de id. Nenhum código grava o saldo diretamente; quem muda transações por `QuerySet.update()` chama `recalcular()` para as contas afetadas. As requisições rodam com `ATOMIC_REQUESTS`, e os services que movem dinheiro usam `atomic` próprio.
+- **Reason**: os incrementos dos signals perdiam ou duplicavam valores em quatro caminhos (FIN-01 a FIN-04) e não resistiam a operações simultâneas (FIN-19).
+- **Trade-off**: uma soma por conta afetada a cada gravação.
+- **Scope**: saldo, faturas, importacao, metas, gestao-do-salario e qualquer operação que mova dinheiro.
+- **Date**: 2026-10-01
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `sessao` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T21) e verificado: `validation.md` com PASS na 2ª rodada, 25 de 25 ACs, sensor com 11 de 11 mutações mortas
-- **Completed**: sessões no banco com renovação rotativa por cookie httpOnly, logout, encerramento de sessões na troca e redefinição de senha e na desativação, proxy `/api` do Next.js, token de acesso só em memória, renovação única entre abas, erros de rede sem deslogar e manutenção com cache de 30 s; backend com 384 testes e frontend com 75
+- **Feature**: `saldo`
+- **Phase / Task**: Design e Tasks aprovados em 2026-10-01; Execute de T1 a T28 em andamento
+- **Completed**: `isolamento-entre-usuarios`, `atualizacao-de-dependencias`, `autenticacao` e `sessao` mergeadas na `development`
 - **In-progress** (file:line): nenhum
-- **Deploy**: `BACKEND_URL` na Vercel antes do build; domínio da Vercel em `FRONTEND_URL`/`CORS_ALLOWED_ORIGINS`; conferir `NUM_PROXIES`, `Origin` e cookie pelo proxy; todos entram de novo uma vez (ver `DEPLOY.md`)
-- **Pendências anotadas**: proxy em dev com o frontend no Docker (`host.docker.internal`), `NEXT_PUBLIC_API_URL` ainda citado em README, `.env.example` e `src/lib/utils.ts`, e o painel de manutenção ainda autoriza por `is_staff` (fica com `permissoes-e-planos`)
-- **Next step**: o usuário faz o push das duas branches `fix/sessao` e abre os PRs para a `development`. Depois do merge, a próxima é `saldo` (FIN-01 a FIN-04, FIN-09, FIN-10, FIN-29), com o verificador leve
+- **Next step**: com a aprovação, executar T1 a T28 nas branches `fix/saldo` do backend e do frontend, com o verificador leve no fim
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/sessao (backend e frontend)
+- **Branch**: fix/saldo (backend e frontend)

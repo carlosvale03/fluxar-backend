@@ -240,55 +240,55 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SALDO-01 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-02 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-03 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-04 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-05 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-06 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-07 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-08 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-09 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-10 | P1: Saldo em transações avulsas | - | Pending |
-| SALDO-11 | P1: Transferências | - | Pending |
-| SALDO-12 | P1: Transferências | - | Pending |
-| SALDO-13 | P1: Transferências | - | Pending |
-| SALDO-14 | P1: Transferências | - | Pending |
-| SALDO-15 | P1: Transferências | - | Pending |
-| SALDO-16 | P1: Transferências | - | Pending |
-| SALDO-17 | P1: Transferências | - | Pending |
-| SALDO-18 | P1: Transferências | - | Pending |
-| SALDO-19 | P1: Transferências | - | Pending |
-| SALDO-20 | P1: Séries recorrentes | - | Pending |
-| SALDO-21 | P1: Séries recorrentes | - | Pending |
-| SALDO-22 | P1: Séries recorrentes | - | Pending |
-| SALDO-23 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-24 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-25 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-26 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-27 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-46 | P1: Pagamento e estorno de fatura | - | Pending |
-| SALDO-28 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-29 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-30 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-31 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-32 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-33 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-34 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-35 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-36 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-47 | P1: Totais do dashboard e contas excluídas | - | Pending |
-| SALDO-37 | P1: Correção dos saldos existentes | - | Pending |
-| SALDO-38 | P1: Correção dos saldos existentes | - | Pending |
-| SALDO-39 | P1: Correção dos saldos existentes | - | Pending |
-| SALDO-40 | P2: Ajuste de saldo | - | Pending |
-| SALDO-41 | P2: Ajuste de saldo | - | Pending |
-| SALDO-42 | P2: Ajuste de saldo | - | Pending |
-| SALDO-43 | P2: Ajuste de saldo | - | Pending |
-| SALDO-44 | P2: Operações simultâneas | - | Pending |
-| SALDO-45 | P2: Operações simultâneas | - | Pending |
+| SALDO-01 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-02 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-03 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-04 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-05 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-06 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-07 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-08 | P1: Saldo em transações avulsas | T2 | Pending |
+| SALDO-09 | P1: Saldo em transações avulsas | T4 | Pending |
+| SALDO-10 | P1: Saldo em transações avulsas | T5 | Pending |
+| SALDO-11 | P1: Transferências | T10 | Pending |
+| SALDO-12 | P1: Transferências | T10, T11 | Pending |
+| SALDO-13 | P1: Transferências | T11, T25 | Pending |
+| SALDO-14 | P1: Transferências | T11, T25 | Pending |
+| SALDO-15 | P1: Transferências | T11 | Pending |
+| SALDO-16 | P1: Transferências | T12 | Pending |
+| SALDO-17 | P1: Transferências | T10 | Pending |
+| SALDO-18 | P1: Transferências | T6, T24 | Pending |
+| SALDO-19 | P1: Transferências | T6 | Pending |
+| SALDO-20 | P1: Séries recorrentes | T13 | Pending |
+| SALDO-21 | P1: Séries recorrentes | T14 | Pending |
+| SALDO-22 | P1: Séries recorrentes | T15 | Pending |
+| SALDO-23 | P1: Pagamento e estorno de fatura | T16 | Pending |
+| SALDO-24 | P1: Pagamento e estorno de fatura | T17 | Pending |
+| SALDO-25 | P1: Pagamento e estorno de fatura | T17 | Pending |
+| SALDO-26 | P1: Pagamento e estorno de fatura | T16, T28 | Pending |
+| SALDO-27 | P1: Pagamento e estorno de fatura | T17 | Pending |
+| SALDO-46 | P1: Pagamento e estorno de fatura | T6 | Pending |
+| SALDO-28 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
+| SALDO-29 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
+| SALDO-30 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
+| SALDO-31 | P1: Totais do dashboard e contas excluídas | T18 | Pending |
+| SALDO-32 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
+| SALDO-33 | P1: Totais do dashboard e contas excluídas | T9, T26 | Pending |
+| SALDO-34 | P1: Totais do dashboard e contas excluídas | T9 | Pending |
+| SALDO-35 | P1: Totais do dashboard e contas excluídas | T7 | Pending |
+| SALDO-36 | P1: Totais do dashboard e contas excluídas | T8 | Pending |
+| SALDO-47 | P1: Totais do dashboard e contas excluídas | T20 | Pending |
+| SALDO-37 | P1: Correção dos saldos existentes | T21 | Pending |
+| SALDO-38 | P1: Correção dos saldos existentes | T21 | Pending |
+| SALDO-39 | P1: Correção dos saldos existentes | T22 | Pending |
+| SALDO-40 | P2: Ajuste de saldo | T19, T23 | Pending |
+| SALDO-41 | P2: Ajuste de saldo | T19, T23 | Pending |
+| SALDO-42 | P2: Ajuste de saldo | T19 | Pending |
+| SALDO-43 | P2: Ajuste de saldo | T3 | Pending |
+| SALDO-44 | P2: Operações simultâneas | T28 | Pending |
+| SALDO-45 | P2: Operações simultâneas | T28 | Pending |
 
-**Coverage:** 47 total, 0 mapped to tasks, 47 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 
 ---
 
