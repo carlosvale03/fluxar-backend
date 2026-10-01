@@ -55,11 +55,15 @@ class TransactionService:
         """
         Cria a transferência: a saída na origem e a entrada no destino, no
         mesmo `atomic`, com o mesmo status e a descrição enviada (SALDO-11,
-        SALDO-12). Origem igual ao destino recebe 400 (SALDO-17).
+        SALDO-12). Origem igual ao destino recebe 400 (SALDO-17), e conta
+        excluída de qualquer lado também (SALDO-35): o aporte e o resgate de
+        meta passam por aqui com o cofrinho, que não vem da requisição.
         Devolve o `transfer_id` que liga as duas pernas.
         """
         if account_from.pk == account_to.pk:
             raise ValidationError({'detail': MESMA_CONTA})
+        if Account.objects.filter(pk__in=[account_from.pk, account_to.pk], is_active=False).exists():
+            raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
 
         transfer_uid = uuid.uuid4()
         for tipo, conta in (('TRANSFER_OUT', account_from), ('TRANSFER_IN', account_to)):

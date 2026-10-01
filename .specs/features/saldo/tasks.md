@@ -783,13 +783,14 @@ T27 → T28
 
 **Done when**:
 
-- [ ] `tests/saldo/test_conta_excluida.py` chama `create_transfer` com origem excluída e com destino excluído e confere o 400 sem nenhuma perna gravada
-- [ ] Aporte e resgate de uma meta com o cofrinho excluído recebem 400 com "Conta não encontrada.", sem mudar saldo nem a meta
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `tests/saldo/test_conta_excluida.py` chama `create_transfer` com origem excluída e com destino excluído e confere o 400 sem nenhuma perna gravada
+- [x] Aporte e resgate de uma meta com o cofrinho excluído recebem 400 com "Conta não encontrada.", sem mudar saldo nem a meta
+- [x] Build gate passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte 521 → 525)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): recusa transferência com conta excluída no service`
 

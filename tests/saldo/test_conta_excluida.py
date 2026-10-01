@@ -213,3 +213,49 @@ class CompraNoCartaoComContaExcluidaTests(ContaExcluidaTestCase):
         self.assertEqual(erro.exception.detail, {'detail': CONTA_NAO_ENCONTRADA})
         self.assertEqual(self.estado(), antes)
 
+
+class TransferenciaPeloServiceComContaExcluidaTests(ContaExcluidaTestCase):
+    """
+    O service de transferência recusa conta excluída nos dois lados. Aporte e
+    resgate de meta usam esse service, então a meta com o cofrinho excluído
+    não recebe nem devolve dinheiro (SALDO-35).
+    """
+
+    def transferir(self, origem, destino):
+        antes = self.estado()
+        with self.assertRaises(ValidationError) as erro:
+            TransactionService.create_transfer(
+                user=self.a.usuario, account_from=origem, account_to=destino,
+                amount=Decimal('100.00'), date=date(2026, 9, 15),
+            )
+        self.assertEqual(erro.exception.detail, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(self.estado(), antes)
+
+    def test_origem_excluida_recusada(self):
+        self.transferir(self.excluida, self.a.conta)
+
+    def test_destino_excluido_recusado(self):
+        self.transferir(self.a.conta, self.excluida)
+
+    def excluir_o_cofrinho(self):
+        Account.objects.filter(pk=self.a.cofrinho.pk).update(is_active=False)
+
+    def assert_meta_recusa(self, acao, corpo):
+        self.excluir_o_cofrinho()
+        antes = self.estado()
+
+        resp = self.cliente.post(f'/api/goals/{self.a.meta.id}/{acao}/', corpo, format='json')
+
+        self.assertEqual(resp.status_code, 400, resp.data)
+        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(self.estado(), antes)
+
+    def test_aporte_em_meta_com_cofrinho_excluido_recusado(self):
+        self.assert_meta_recusa('deposit', {
+            'account_id': str(self.a.conta.id), 'amount': '100.00', 'date': '2026-09-15',
+        })
+
+    def test_resgate_de_meta_com_cofrinho_excluido_recusado(self):
+        self.assert_meta_recusa('withdraw', {
+            'account_to': str(self.a.conta.id), 'amount': '100.00', 'date': '2026-09-15',
+        })
