@@ -501,15 +501,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Com 15 tags e 12 orçamentos simulados, a tela de tags, o seletor de tags e a tela de orçamentos mostram todos
-- [ ] A lista de logs do admin mostra total e controles de página
-- [ ] Nenhum arquivo de `src` lê `results ||`
-- [ ] Erro ao carregar tags mostra o aviso com "Tentar de novo"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Com 15 tags e 12 orçamentos simulados, a tela de tags, o seletor de tags e a tela de orçamentos mostram todos
+- [x] A lista de logs do admin mostra total e controles de página
+- [x] Nenhum arquivo de `src` lê `results ||`
+- [x] Erro ao carregar tags mostra o aviso com "Tentar de novo"
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 5 testes (real: 6 testes novos; suíte 146 → 152)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra todos os itens das coleções e pagina as listas do admin`
 
