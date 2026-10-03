@@ -262,7 +262,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-24 | P1: Pagamento total e parcial | T11 | Implemented |
 | FATURA-25 | P1: Pagamento total e parcial | T2, T11 | Implemented |
 | FATURA-26 | P1: Pagamento total e parcial | T11 | Implemented |
-| FATURA-27 | P1: Pagamento total e parcial | T10, T15 | Implemented |
+| FATURA-27 | P1: Pagamento total e parcial | T10, T15, T18 | Implemented |
 | FATURA-28 | P1: Pagamento total e parcial | T11, T14 | Implemented |
 | FATURA-29 | P1: Pagamento repetido | - | Pending |
 | FATURA-30 | P1: Pagamento repetido | T10, T12 | Implemented |
@@ -278,7 +278,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-40 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-41 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-42 | P2: Limite disponível | T4 | Implemented |
-| FATURA-43 | P2: Faturas na interface e na API | - | Pending |
+| FATURA-43 | P2: Faturas na interface e na API | T18 | Implemented |
 | FATURA-44 | P2: Faturas na interface e na API | T15 | Implemented |
 | FATURA-45 | P2: Faturas na interface e na API | T15 | Implemented |
 

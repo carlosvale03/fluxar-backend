@@ -613,14 +613,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Com `TZ=America/Sao_Paulo`, vencimento "2026-10-01" aparece como 01/10/2026 e "outubro"
-- [ ] O nome do mês da fatura está certo mesmo quando o teste roda num dia 31
-- [ ] Fatura paga mostra valor, conta e data do pagamento
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Com `TZ=America/Sao_Paulo`, vencimento "2026-10-01" aparece como 01/10/2026 e "outubro"
+- [x] O nome do mês da fatura está certo mesmo quando o teste roda num dia 31
+- [x] Fatura paga mostra valor, conta e data do pagamento
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte do frontend 84 → 88)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra as datas da fatura sem perder um dia`
 
