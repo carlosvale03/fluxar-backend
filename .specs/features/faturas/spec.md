@@ -236,17 +236,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| FATURA-01 | P1: Datas de fechamento e vencimento | - | Pending |
-| FATURA-02 | P1: Datas de fechamento e vencimento | - | Pending |
-| FATURA-03 | P1: Datas de fechamento e vencimento | - | Pending |
-| FATURA-04 | P1: Datas de fechamento e vencimento | - | Pending |
+| FATURA-01 | P1: Datas de fechamento e vencimento | T1 | Implemented |
+| FATURA-02 | P1: Datas de fechamento e vencimento | T1 | Implemented |
+| FATURA-03 | P1: Datas de fechamento e vencimento | T1 | Implemented |
+| FATURA-04 | P1: Datas de fechamento e vencimento | T1 | Implemented |
 | FATURA-05 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-06 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-07 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-08 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-09 | P1: Datas de fechamento e vencimento | - | Pending |
-| FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
-| FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
+| FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
+| FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
 | FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |

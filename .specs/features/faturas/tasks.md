@@ -105,14 +105,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] `tests/faturas/test_datas.py` percorre todos os pares de fechamento e vencimento de 1 a 31 e todos os meses de 2024 a 2027 sem erro, conferindo cada data por FATURA-01 a FATURA-04 (inclui 29/02/2024 e 28/02/2025)
-- [ ] O dia ajustado não se acumula: fechamento no dia 31 cai em 30/04 e volta a 31/05
-- [ ] Compra em 30/04 com fechamento no dia 31 vai para a fatura seguinte; compra na véspera do fechamento fica na do mês
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] `tests/faturas/test_datas.py` percorre todos os pares de fechamento e vencimento de 1 a 31 e todos os meses de 2024 a 2027 sem erro, conferindo cada data por FATURA-01 a FATURA-04 (inclui 29/02/2024 e 28/02/2025)
+- [x] O dia ajustado não se acumula: fechamento no dia 31 cai em 30/04 e volta a 31/05
+- [x] Compra em 30/04 com fechamento no dia 31 vai para a fatura seguinte; compra na véspera do fechamento fica na do mês
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 9 testes novos; suíte 529 → 538)
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(faturas): calcula fechamento e vencimento em qualquer mês`
 
