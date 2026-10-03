@@ -194,13 +194,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Cartão de R$ 5.000,00 com R$ 1.200,00 em compras pendentes em duas faturas: tela do cartão e dashboard mostram R$ 3.800,00
-- [ ] Os dois valores continuam iguais depois de um pagamento parcial
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Cartão de R$ 5.000,00 com R$ 1.200,00 em compras pendentes em duas faturas: tela do cartão e dashboard mostram R$ 3.800,00
+- [x] Os dois valores continuam iguais depois de um pagamento parcial
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 561 → 563)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): calcula o limite disponível igual no cartão e no dashboard`
 

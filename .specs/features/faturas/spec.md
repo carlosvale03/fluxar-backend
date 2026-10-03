@@ -277,7 +277,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-39 | P1: Correção dos dados existentes | - | Pending |
 | FATURA-40 | P1: Correção dos dados existentes | - | Pending |
 | FATURA-41 | P1: Correção dos dados existentes | - | Pending |
-| FATURA-42 | P2: Limite disponível | - | Pending |
+| FATURA-42 | P2: Limite disponível | T4 | Implemented |
 | FATURA-43 | P2: Faturas na interface e na API | - | Pending |
 | FATURA-44 | P2: Faturas na interface e na API | - | Pending |
 | FATURA-45 | P2: Faturas na interface e na API | - | Pending |

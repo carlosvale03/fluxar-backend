@@ -26,18 +26,10 @@ class CreditCardService:
         - Fatura Atual: A primeira fatura não paga (OPEN ou CLOSED) em ordem cronológica.
         - Limite Utilizado: Soma de TODAS as transações 'CREDIT_CARD' pendentes do cartão.
         """
-        from django.db.models import Sum
-        from transactions.models import Transaction
+        from .faturas import limite_disponivel
 
-        # 1. Limite Utilizado (Total pendente no cartão), só compras do dono do cartão (ISOL-14)
-        total_pending = Transaction.objects.filter(
-            credit_card=card,
-            user_id=card.user_id,
-            type='CREDIT_CARD',
-            status='PENDING'
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        available_limit = card.limit - total_pending
+        # 1. Limite disponível pela fórmula única (FATURA-42)
+        available_limit = limite_disponivel(card)
 
         # 2. Fatura Atual (Próxima fatura a ser paga)
         # Busca a fatura mais antiga que não esteja PAGA

@@ -175,3 +175,19 @@ def proximo_vencimento(cartao):
         mes, ano = mes_seguinte(dia.month, dia.year)
         vencimento = dia_no_mes(ano, mes, cartao.due_day)
     return vencimento
+
+
+def limite_disponivel(cartao):
+    """
+    O limite do cartão menos as compras pendentes dele, de todas as faturas,
+    só as do dono do cartão (FATURA-42, ISOL-14). É a única fórmula, usada
+    na tela do cartão e no dashboard.
+    """
+    from django.db.models import Sum
+
+    from transactions.models import Transaction
+
+    pendente = Transaction.objects.filter(
+        credit_card=cartao, user_id=cartao.user_id, type='CREDIT_CARD', status='PENDING',
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    return cartao.limit - pendente

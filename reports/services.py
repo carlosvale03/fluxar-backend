@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Sum, Q, Count, Avg, F, Case, When
 from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
-from accounts.faturas import fatura_da_compra
+from accounts.faturas import fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
 from .models import FocusedMonitorItem
@@ -151,9 +151,8 @@ class ReportService:
             invoice_now = card.invoices.filter(month=mes_now, year=ano_now).first()
             invoice_amount_now = invoice_now.total_amount if invoice_now else Decimal('0.00')
 
-            # O limite disponível real é o limite total menos a soma de todas as faturas NÃO pagas
-            total_unpaid = card.invoices.filter(status__in=['OPEN', 'CLOSED']).aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0.00')
-            available_limit = card.limit - total_unpaid
+            # O mesmo limite disponível da tela do cartão (FATURA-42)
+            available_limit = limite_disponivel(card)
 
             card_details.append({
                 'id': str(card.id),
