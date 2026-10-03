@@ -700,14 +700,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] A edição envia `purchase_date` com a data escolhida e carrega `purchase_date` ou `date`
-- [ ] A recusa da FATURA-19 aparece no toast com a mensagem do backend
-- [ ] Excluir uma parcela avisa que todas as parcelas da compra serão excluídas
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] A edição envia `purchase_date` com a data escolhida e carrega `purchase_date` ou `date`
+- [x] A recusa da FATURA-19 aparece no toast com a mensagem do backend
+- [x] Excluir uma parcela avisa que todas as parcelas da compra serão excluídas
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 5 testes novos; suíte do frontend 94 → 99)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): edita a data da compra no cartão e avisa a exclusão das parcelas`
 
