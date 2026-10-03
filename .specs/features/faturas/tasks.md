@@ -672,13 +672,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Uma fatura com 35 compras lista as 35
-- [ ] Cada compra mostra `purchase_date`, ou `date` quando ele é nulo
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Uma fatura com 35 compras lista as 35
+- [x] Cada compra mostra `purchase_date`, ou `date` quando ele é nulo
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte do frontend 92 → 94)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): lista todas as compras da fatura com a data da compra`
 
