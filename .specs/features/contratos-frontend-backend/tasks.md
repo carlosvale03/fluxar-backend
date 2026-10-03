@@ -648,14 +648,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Aporte de "1.500" envia `amount: "1500.00"`
-- [ ] Ajuste para "-50,00" envia `new_balance: "-50.00"`
-- [ ] Nenhum formulário envia valor calculado em ponto flutuante (teste do cofrinho com valores que somam 0.1 + 0.2)
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Aporte de "1.500" envia `amount: "1500.00"`
+- [x] Ajuste para "-50,00" envia `new_balance: "-50.00"`
+- [x] Nenhum formulário envia valor calculado em ponto flutuante (teste do cofrinho com valores que somam 0.1 + 0.2)
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 5 testes novos; suíte 166 → 171)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): envia valores em dinheiro calculados sem ponto flutuante`
 
