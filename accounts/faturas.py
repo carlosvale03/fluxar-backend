@@ -273,7 +273,7 @@ def pagar(usuario, fatura, conta, valor, data, chave=None):
     - Grava o `PagamentoDeFatura` com um item por compra (AD-040).
     Devolve o pagamento.
     """
-    from django.db import transaction
+    from django.db import IntegrityError, transaction
     from django.db.models.functions import Coalesce
     from rest_framework.exceptions import ValidationError
 
@@ -300,9 +300,17 @@ def pagar(usuario, fatura, conta, valor, data, chave=None):
             raise ValidationError({'detail': VALOR_MAIOR_QUE_O_TOTAL})
 
         cartao = fatura.card
-        pagamento = PagamentoDeFatura.objects.create(
-            user=usuario, fatura=fatura, conta=conta, valor=valor, data=data, chave=chave,
-        )
+        try:
+            # Savepoint: com ATOMIC_REQUESTS, o erro de restrição sem ele
+            # inutilizaria a transação da requisição
+            with transaction.atomic():
+                pagamento = PagamentoDeFatura.objects.create(
+                    user=usuario, fatura=fatura, conta=conta, valor=valor, data=data, chave=chave,
+                )
+        except IntegrityError:
+            # A mesma chave gravada ao mesmo tempo por um pedido de outra
+            # fatura, que tem outra trava (FATURA-32)
+            raise ValidationError({'detail': CHAVE_COM_OUTROS_DADOS})
         pendentes = Transaction.objects.filter(
             invoice=fatura, type='CREDIT_CARD', status='PENDING',
             user_id=cartao.user_id,  # Só compras do dono do cartão (ISOL-14)

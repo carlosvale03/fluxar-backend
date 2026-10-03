@@ -266,8 +266,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-28 | P1: Pagamento total e parcial | T11 | In Progress |
 | FATURA-29 | P1: Pagamento repetido | - | Pending |
 | FATURA-30 | P1: Pagamento repetido | T10, T12 | Implemented |
-| FATURA-31 | P1: Pagamento repetido | - | Pending |
-| FATURA-32 | P1: Pagamento repetido | T12 | In Progress |
+| FATURA-31 | P1: Pagamento repetido | T13 | Implemented |
+| FATURA-32 | P1: Pagamento repetido | T12, T13 | Implemented |
 | FATURA-33 | P1: Pagamento repetido | T12 | Implemented |
 | FATURA-34 | P1: Estorno do pagamento | - | Pending |
 | FATURA-35 | P1: Estorno do pagamento | - | Pending |

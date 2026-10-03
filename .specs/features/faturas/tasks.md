@@ -461,13 +461,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Dois pedidos simultâneos com a mesma chave: um pagamento, as duas respostas iguais
-- [ ] Mesma chave em duas faturas ao mesmo tempo: uma paga, a outra recebe 400 da FATURA-32
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Dois pedidos simultâneos com a mesma chave: um pagamento, as duas respostas iguais
+- [x] Mesma chave em duas faturas ao mesmo tempo: uma paga, a outra recebe 400 da FATURA-32
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 602 → 604)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `test(faturas): cobre pagamentos simultâneos com a mesma chave`
 
