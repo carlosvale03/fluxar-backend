@@ -219,6 +219,7 @@ def recalcular_totais(*fatura_ids):
 FATURA_JA_PAGA = 'Fatura já está paga.'
 FATURA_NAO_PAGA = 'Esta fatura não está paga.'
 VALOR_MAIOR_QUE_O_TOTAL = 'O valor pago não pode ser maior que o total da fatura.'
+CHAVE_COM_OUTROS_DADOS = 'Este identificador de pagamento já foi usado com outros dados.'
 
 
 def _dividir(compra, pago, conta, data, seguinte):
@@ -254,10 +255,14 @@ def _dividir(compra, pago, conta, data, seguinte):
     return restante
 
 
-def pagar(usuario, fatura, conta, valor, data):
+def pagar(usuario, fatura, conta, valor, data, chave=None):
     """
     Paga a fatura com `valor` saído de `conta` em `data`, tudo num `atomic`:
     qualquer falha desfaz a operação inteira (FATURA-28).
+    - `chave` é o identificador da tentativa (AD-007). Se o usuário já tem
+      um pagamento com ela, devolve esse pagamento sem pagar de novo, mesmo
+      depois de um estorno (FATURA-30); com outra fatura, valor, conta ou
+      data, recusa com 400 (FATURA-32). Sem chave, é uma tentativa nova.
     - Relê a fatura sob trava: fatura paga recebe 400 (FATURA-33, SALDO-26),
       e valor maior que o total, também (FATURA-26).
     - As compras pendentes, em ordem de data da compra, valor e criação
@@ -279,6 +284,14 @@ def pagar(usuario, fatura, conta, valor, data):
 
     with transaction.atomic():
         fatura = CreditCardInvoice.objects.select_for_update().select_related('card').get(pk=fatura.pk)
+        if chave is not None:
+            anterior = PagamentoDeFatura.objects.filter(user=usuario, chave=chave).first()
+            if anterior is not None:
+                if (anterior.fatura_id, anterior.valor, anterior.conta_id, anterior.data) != (
+                    fatura.pk, valor, conta.pk, data,
+                ):
+                    raise ValidationError({'detail': CHAVE_COM_OUTROS_DADOS})
+                return anterior
         if fatura.status == 'PAID':
             raise ValidationError({'detail': FATURA_JA_PAGA})
         recalcular_totais(fatura.pk)
@@ -288,7 +301,7 @@ def pagar(usuario, fatura, conta, valor, data):
 
         cartao = fatura.card
         pagamento = PagamentoDeFatura.objects.create(
-            user=usuario, fatura=fatura, conta=conta, valor=valor, data=data,
+            user=usuario, fatura=fatura, conta=conta, valor=valor, data=data, chave=chave,
         )
         pendentes = Transaction.objects.filter(
             invoice=fatura, type='CREDIT_CARD', status='PENDING',
@@ -330,3 +343,22 @@ def pagar(usuario, fatura, conta, valor, data):
         recalcular_totais(fatura.pk, seguinte.pk if seguinte else None)
         recalcular(conta.pk, cartao.account_id)
     return pagamento
+
+
+def resposta_do_pagamento(pagamento):
+    """
+    O corpo da resposta do pagamento, montado só a partir do registro: a
+    repetição da mesma chave recebe exatamente o mesmo corpo, inclusive
+    depois de um estorno (FATURA-30).
+    """
+    return {
+        'status': 'Pagamento processado com sucesso.',
+        'payment': {
+            'id': str(pagamento.pk),
+            'invoice_id': str(pagamento.fatura_id),
+            'amount': f'{pagamento.valor:.2f}',
+            'account_id': str(pagamento.conta_id),
+            'date': pagamento.data.isoformat(),
+            'idempotency_key': str(pagamento.chave) if pagamento.chave else None,
+        },
+    }

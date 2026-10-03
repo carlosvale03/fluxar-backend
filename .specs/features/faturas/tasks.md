@@ -431,15 +431,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Dez pedidos com a mesma chave recebem respostas iguais e há um único pagamento e um único débito
-- [ ] A mesma chave com outro valor, conta, data ou fatura recebe 400 com a mensagem exata, sem pagar
-- [ ] Chave nova ou sem chave numa fatura paga recebe 400 "Fatura já está paga."
-- [ ] Repetir a chave depois do estorno devolve a resposta original e não paga de novo
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Dez pedidos com a mesma chave recebem respostas iguais e há um único pagamento e um único débito
+- [x] A mesma chave com outro valor, conta, data ou fatura recebe 400 com a mensagem exata, sem pagar
+- [x] Chave nova ou sem chave numa fatura paga recebe 400 "Fatura já está paga."
+- [x] Repetir a chave depois do estorno devolve a resposta original e não paga de novo
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 6 testes novos; suíte 596 → 602)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): aplica uma vez só o pagamento reenviado`
 

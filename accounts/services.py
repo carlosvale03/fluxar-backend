@@ -44,15 +44,16 @@ class CreditCardService:
         }
 
     @staticmethod
-    def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date):
+    def pay_invoice(user, invoice: CreditCardInvoice, account: Account, amount: Decimal, date: date, chave=None):
         """
         Paga a fatura pela regra de `accounts/faturas.py` (`pagar`): atômico,
         sob trava, com a divisão e a rolagem registradas (FATURA-21 a
-        FATURA-28, AD-040). Devolve o `PagamentoDeFatura`.
+        FATURA-28, AD-040) e idempotente pela `chave` (FATURA-30 a FATURA-33).
+        Devolve o `PagamentoDeFatura`.
         """
         from .faturas import pagar
 
-        return pagar(user, invoice, account, amount, date)
+        return pagar(user, invoice, account, amount, date, chave)
 
     @staticmethod
     @transaction.atomic

@@ -51,6 +51,8 @@ class InvoicePaymentSerializer(serializers.Serializer):
         required=True,
     )
     date = serializers.DateField(required=True)
+    # Identificador da tentativa (FATURA-29, FATURA-30); sem ele, é uma tentativa nova
+    idempotency_key = serializers.UUIDField(required=False, allow_null=True)
 
 
 class CreditCardSerializer(serializers.ModelSerializer):

@@ -8,7 +8,8 @@ from .serializers import (
     AccountSerializer, CreditCardSerializer, 
     CreditCardInvoiceSerializer, InvoicePaymentSerializer
 )
-from .services import FATURA_JA_PAGA, AccountService, CreditCardService
+from .faturas import resposta_do_pagamento
+from .services import AccountService, CreditCardService
 from core.datas import hoje
 from core.fields import CONTA_NAO_ENCONTRADA
 from core.mixins import UserQuerySetMixin
@@ -121,24 +122,25 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def pay(self, request, pk=None):
+        # A fatura paga é recusada dentro do service, sob trava, depois de
+        # conferir a chave: a repetição da mesma tentativa recebe a resposta
+        # original (FATURA-30, FATURA-33)
         invoice = self.get_object()
-        if invoice.status == 'PAID':
-            return Response({'detail': FATURA_JA_PAGA}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = InvoicePaymentSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         
         # Recusas viram 400 no service; erro inesperado sobe como 500 e o
         # atomic desfaz tudo (FATURA-28)
-        CreditCardService.pay_invoice(
+        pagamento = CreditCardService.pay_invoice(
             user=request.user,
             invoice=invoice,
             account=data['account_id'],
             amount=data['amount'],
-            date=data['date']
+            date=data['date'],
+            chave=data.get('idempotency_key'),
         )
-        return Response({'status': 'Pagamento processado com sucesso.'})
+        return Response(resposta_do_pagamento(pagamento))
 
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):
