@@ -135,15 +135,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] `/transactions/?limit=50` responde 400 com `{"detail": "Filtro desconhecido: limit."}`
-- [ ] Cada rota aceita os parâmetros da tabela do design sem erro
-- [ ] `/tags/?x=1` (coleção sem filtros) responde 400 com a mensagem exata
-- [ ] `POST` e outros métodos não são afetados
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] `/transactions/?limit=50` responde 400 com `{"detail": "Filtro desconhecido: limit."}`
+- [x] Cada rota aceita os parâmetros da tabela do design sem erro
+- [x] `/tags/?x=1` (coleção sem filtros) responde 400 com a mensagem exata
+- [x] `POST` e outros métodos não são afetados
+- [x] Full gate passa
+- [x] Test count: pelo menos 6 testes (real: 10 testes novos; suíte 643 → 653)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): recusa filtros que a rota não conhece`
 

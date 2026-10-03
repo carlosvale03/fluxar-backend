@@ -2,16 +2,27 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from datetime import date
+from core.filtros import ParametrosConhecidosMixin
 from .services import ReportService
 from .permissions import IsPremium
 from .models import FocusedMonitorItem
 from .serializers import FocusedMonitorItemSerializer
 
-class ReportViewSet(viewsets.ViewSet):
+class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
     """
     ViewSet para relatórios e dashboards. Não possui model associado.
     """
     permission_classes = [permissions.IsAuthenticated]
+    # Parâmetros conhecidos de cada relatório (CONTRATO-14)
+    parametros_por_acao = {
+        'dashboard': frozenset({'month', 'year', 'days'}),
+        'calendar': frozenset({'month', 'year', 'period', 'days'}),
+        'charts_simple': frozenset({'month', 'year', 'period', 'days'}),
+        'tag_distribution': frozenset({'month', 'year', 'period', 'days'}),
+        'charts_advanced': frozenset({'period', 'days'}),
+        'monthly_comparison': frozenset({'months', 'month', 'year'}),
+        'tag_insights': frozenset({'tag_id', 'months'}),
+    }
 
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
@@ -85,7 +96,7 @@ class ReportViewSet(viewsets.ViewSet):
 
 
 
-class FocusedMonitorViewSet(viewsets.ModelViewSet):
+class FocusedMonitorViewSet(ParametrosConhecidosMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
     serializer_class = FocusedMonitorItemSerializer
 

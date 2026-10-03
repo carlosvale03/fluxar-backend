@@ -7,6 +7,7 @@ from accounts.models import Account
 from transactions.models import Transaction
 from .services import ImportService, ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
+from core.filtros import ParametrosConhecidosMixin
 # Tenta importar IsPremium, fallback para IsAuthenticated se não existir (evita crash se BD-007 não tiver ok)
 try:
     from reports.permissions import IsPremium
@@ -108,8 +109,15 @@ class ImportSpreadsheetView(views.APIView):
         
         return Response(summary, status=status.HTTP_200_OK if result['created'] >= 0 else status.HTTP_400_BAD_REQUEST)
 
-class ExportTransactionsPDFView(views.APIView):
+# Parâmetros conhecidos da exportação (CONTRATO-14)
+PARAMETROS_DA_EXPORTACAO = frozenset({
+    'accountId', 'categoryId', 'type', 'startDate', 'endDate', 'tagIds', 'search',
+})
+
+
+class ExportTransactionsPDFView(ParametrosConhecidosMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
+    parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)
@@ -155,8 +163,9 @@ class ExportTransactionsPDFView(views.APIView):
         response['Content-Disposition'] = f'attachment; filename="relatorio_fluxar.pdf"'
         return response
 
-class ExportTransactionsXLSView(views.APIView):
+class ExportTransactionsXLSView(ParametrosConhecidosMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
+    parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
         qs = Transaction.objects.filter(user=request.user)

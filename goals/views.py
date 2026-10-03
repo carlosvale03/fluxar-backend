@@ -6,12 +6,13 @@ from .serializers import GoalSerializer, GoalDepositSerializer
 from .services import GoalService
 from core.permissions import IsPremiumPlus
 from accounts.models import Account
+from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.valores import ler_valor
 
 
-class GoalViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Goal.objects.all()
     serializer_class = GoalSerializer
     # Permissão: IsAuthenticated E IsPremiumPlus

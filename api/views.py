@@ -44,6 +44,7 @@ from core.throttles import (
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.pagination import PaginacaoPadrao
 import logging
 
@@ -170,7 +171,7 @@ class LogoutView(APIView):
         apagar_cookie_de_renovacao(response)
         return response
 
-class VerifyEmailView(SemTransacaoPorRequisicao, APIView):
+class VerifyEmailView(ParametrosConhecidosMixin, SemTransacaoPorRequisicao, APIView):
     """
     Verifica o e-mail do usuário através do token recebido.
     """
@@ -178,6 +179,8 @@ class VerifyEmailView(SemTransacaoPorRequisicao, APIView):
     # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
     authentication_classes = ()
     throttle_classes = (LinkIPThrottle,)
+    # O link de verificação traz o token (CONTRATO-14)
+    parametros_permitidos = frozenset({'token'})
 
     @staticmethod
     def _token_valido(token_str):
@@ -368,7 +371,7 @@ class ResetPasswordView(SemTransacaoPorRequisicao, APIView):
 
         return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
-class MeView(APIView):
+class MeView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia o perfil do usuário logado.
     GET: Retorna dados do usuário.
@@ -451,7 +454,7 @@ class ChangePasswordView(APIView):
 
 # --- Admin Views ---
 
-class AdminUserListView(generics.ListAPIView):
+class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
     Acesso: Apenas administradores (is_staff=True ou role='ADMIN').
@@ -461,6 +464,8 @@ class AdminUserListView(generics.ListAPIView):
     serializer_class = AdminUserSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = PAGINACAO | {'search', 'show_archived', 'role', 'plan'}
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'email']
 
@@ -514,7 +519,7 @@ class AdminUserListView(generics.ListAPIView):
             encerrar_todas(user)
         return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
-class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Gerencia um usuário específico. Permite ao admin alterar planos, 
     roles ou desativar contas manualmente.
@@ -646,7 +651,7 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         serializer.save()
 
-class AdminStatsView(APIView):
+class AdminStatsView(ParametrosConhecidosMixin, APIView):
     """
     Endpoint para fornecer métricas globais da plataforma para o dashboard admin.
     Acesso: Apenas administradores.
@@ -702,7 +707,7 @@ class AdminStatsView(APIView):
             "api_version": "1.2.5"
         })
 
-class AdminSystemSettingsView(APIView):
+class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia configurações globais do sistema (ex: modo manutenção).
     """
@@ -740,7 +745,7 @@ class AdminSystemSettingsView(APIView):
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
 
-class AdminGlobalLogsView(generics.ListAPIView):
+class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna todos os logs do sistema para auditoria global.
     """
@@ -749,8 +754,9 @@ class AdminGlobalLogsView(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
+    parametros_permitidos = PAGINACAO
 
-class AdminUserFinancialStatsView(APIView):
+class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     """
     Endpoint para fornecer métricas financeiras de um usuário específico.
     Acesso: Apenas administradores.
@@ -763,7 +769,7 @@ class AdminUserFinancialStatsView(APIView):
         stats = ReportService.get_user_financial_stats(user)
         return Response(stats)
 
-class AdminUserLogsView(generics.ListAPIView):
+class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna os logs de atividade de um usuário específico.
     """
@@ -771,6 +777,7 @@ class AdminUserLogsView(generics.ListAPIView):
     serializer_class = SystemLogSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
+    parametros_permitidos = PAGINACAO
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')

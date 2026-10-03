@@ -214,7 +214,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-11 | P1: Filtros | - | Pending |
 | CONTRATO-12 | P1: Filtros | - | Pending |
 | CONTRATO-13 | P1: Filtros | - | Pending |
-| CONTRATO-14 | P1: Filtros | - | Pending |
+| CONTRATO-14 | P1: Filtros | T2 | Implemented |
 | CONTRATO-15 | P1: Filtros | - | Pending |
 | CONTRATO-16 | P1: Valores em dinheiro | - | Pending |
 | CONTRATO-17 | P1: Valores em dinheiro | - | Pending |

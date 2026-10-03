@@ -6,12 +6,17 @@ from django.db.models import F
 from .models import Budget
 from .serializers import BudgetSerializer
 from transactions.models import Category
+from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 
-class BudgetViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class BudgetViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
     permission_classes = [permissions.IsAuthenticated]
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = frozenset({
+        'month', 'year', 'category', 'start_month', 'start_year', 'end_month', 'end_year',
+    })
 
     def get_queryset(self):
         # Mixin já filtra por user. 

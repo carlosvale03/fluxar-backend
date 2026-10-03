@@ -9,6 +9,7 @@ from .serializers import (
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account
@@ -16,11 +17,13 @@ from accounts.saldo import recalcular
 from core.fields import get_owned_or_400, CATEGORIA_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA
 from core.valores import ler_valor
 
-class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class CategoryViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None  # Remove paginação para retornar árvore completa
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = frozenset({'type'})
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -53,7 +56,7 @@ class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 print(f"DEBUG ERROR DETAIL: {e.detail}")
             raise e
 
-class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -88,17 +91,22 @@ def _envolve_conta_excluida(transacoes):
         return False
     return Transaction.objects.filter(filtro, account__is_active=False).exists()
 
-class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PaginacaoPadrao
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = PAGINACAO | {
+        'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
+        'type', 'categoryId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset()
         
         # Filtros de Query Params
-        account_id = self.request.query_params.get('accountId') or self.request.query_params.get('account')
+        account_id = self.request.query_params.get('accountId')
         card_id = self.request.query_params.get('credit_card')
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
@@ -107,7 +115,7 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         start_date = self.request.query_params.get('startDate')
         end_date = self.request.query_params.get('endDate')
         transaction_type = self.request.query_params.get('type')
-        category_id = self.request.query_params.get('categoryId') or self.request.query_params.get('category')
+        category_id = self.request.query_params.get('categoryId')
         search = self.request.query_params.get('search')
         
         if account_id and account_id != 'ALL':
