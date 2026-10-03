@@ -729,13 +729,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] O próximo vencimento mostrado é o `next_due_date` da API
-- [ ] O limite disponível mostrado é o `available_limit` da API
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] O próximo vencimento mostrado é o `next_due_date` da API
+- [x] O limite disponível mostrado é o `available_limit` da API
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte do frontend 99 → 101)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra o próximo vencimento e o limite que a API calcula`
 

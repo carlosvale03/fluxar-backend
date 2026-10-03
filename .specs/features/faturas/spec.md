@@ -241,7 +241,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-03 | P1: Datas de fechamento e vencimento | T1 | Implemented |
 | FATURA-04 | P1: Datas de fechamento e vencimento | T1 | Implemented |
 | FATURA-05 | P1: Datas de fechamento e vencimento | T3 | Implemented |
-| FATURA-06 | P1: Datas de fechamento e vencimento | T3 | Implemented |
+| FATURA-06 | P1: Datas de fechamento e vencimento | T3, T22 | Implemented |
 | FATURA-07 | P1: Datas de fechamento e vencimento | T2 | Implemented |
 | FATURA-08 | P1: Datas de fechamento e vencimento | T3 | Implemented |
 | FATURA-09 | P1: Datas de fechamento e vencimento | T3 | Implemented |
@@ -277,7 +277,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-39 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-40 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-41 | P1: Correção dos dados existentes | T16 | Implemented |
-| FATURA-42 | P2: Limite disponível | T4 | Implemented |
+| FATURA-42 | P2: Limite disponível | T4, T22 | Implemented |
 | FATURA-43 | P2: Faturas na interface e na API | T18 | Implemented |
 | FATURA-44 | P2: Faturas na interface e na API | T15, T20 | Implemented |
 | FATURA-45 | P2: Faturas na interface e na API | T15 | Implemented |
