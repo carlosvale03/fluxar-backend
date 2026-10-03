@@ -1,6 +1,5 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from .models import Account, CreditCard, CreditCardInvoice
@@ -145,11 +144,7 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):
         invoice = self.get_object()
-        # Fatura não paga recebe 400 do service, sob trava (SALDO-27)
-        try:
-            CreditCardService.unpay_invoice(request.user, invoice)
-            return Response({'status': 'Pagamento estornado. Fatura reaberta.'})
-        except ValidationError:
-            raise
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # Recusas viram 400 no service, sob trava (SALDO-27, FATURA-38); erro
+        # inesperado sobe como 500 e o atomic desfaz tudo (FATURA-28)
+        CreditCardService.unpay_invoice(request.user, invoice)
+        return Response({'status': 'Pagamento estornado. Fatura reaberta.'})

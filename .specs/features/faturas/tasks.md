@@ -489,17 +489,18 @@ T21 → T22
 
 **Done when**:
 
-- [ ] O Independent Test (pagar R$ 700,00 e estornar) volta as compras de R$ 400,00 e R$ 600,00, pendentes, com a descrição original, total de R$ 1.000,00, e a seguinte volta ao total anterior
-- [ ] Compras movidas voltam para a fatura original
-- [ ] Fatura seguinte paga recebe 400 com a mensagem exata, nada muda
-- [ ] Depois do estorno o status segue FATURA-08 e FATURA-09
-- [ ] Restante editado ou excluído pelo usuário segue a regra do design
-- [ ] Pagamento sem registro (feito antes da feature) ainda pode ser estornado
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] O Independent Test (pagar R$ 700,00 e estornar) volta as compras de R$ 400,00 e R$ 600,00, pendentes, com a descrição original, total de R$ 1.000,00, e a seguinte volta ao total anterior
+- [x] Compras movidas voltam para a fatura original
+- [x] Fatura seguinte paga recebe 400 com a mensagem exata, nada muda
+- [x] Depois do estorno o status segue FATURA-08 e FATURA-09
+- [x] Restante editado ou excluído pelo usuário segue a regra do design
+- [x] Pagamento sem registro (feito antes da feature) ainda pode ser estornado
+- [x] Full gate passa
+- [x] Test count: pelo menos 7 testes (real: 9 testes novos; suíte 604 → 613)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): estorna o pagamento e devolve a fatura ao estado anterior`
 

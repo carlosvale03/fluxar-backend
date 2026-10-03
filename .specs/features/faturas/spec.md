@@ -263,17 +263,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-25 | P1: Pagamento total e parcial | T2, T11 | Implemented |
 | FATURA-26 | P1: Pagamento total e parcial | T11 | Implemented |
 | FATURA-27 | P1: Pagamento total e parcial | T10 | In Progress |
-| FATURA-28 | P1: Pagamento total e parcial | T11 | In Progress |
+| FATURA-28 | P1: Pagamento total e parcial | T11, T14 | Implemented |
 | FATURA-29 | P1: Pagamento repetido | - | Pending |
 | FATURA-30 | P1: Pagamento repetido | T10, T12 | Implemented |
 | FATURA-31 | P1: Pagamento repetido | T13 | Implemented |
 | FATURA-32 | P1: Pagamento repetido | T12, T13 | Implemented |
 | FATURA-33 | P1: Pagamento repetido | T12 | Implemented |
-| FATURA-34 | P1: Estorno do pagamento | - | Pending |
-| FATURA-35 | P1: Estorno do pagamento | - | Pending |
-| FATURA-36 | P1: Estorno do pagamento | - | Pending |
-| FATURA-37 | P1: Estorno do pagamento | - | Pending |
-| FATURA-38 | P1: Estorno do pagamento | - | Pending |
+| FATURA-34 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-35 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-36 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-37 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-38 | P1: Estorno do pagamento | T14 | Implemented |
 | FATURA-39 | P1: Correção dos dados existentes | - | Pending |
 | FATURA-40 | P1: Correção dos dados existentes | - | Pending |
 | FATURA-41 | P1: Correção dos dados existentes | - | Pending |

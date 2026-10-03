@@ -126,9 +126,11 @@ class AtomicidadeTests(SaldoTestCase):
             Account.objects.get(pk=self.a.conta.pk), Decimal('100.00'), date(2026, 9, 20),
         )
         antes = self.estado()
+        self.cliente.raise_request_exception = False
         with mock.patch.object(CreditCardInvoice, 'save', side_effect=FalhaSimulada('falha simulada')):
             resp = self.cliente.post(f'/api/invoices/{self.a.fatura.id}/unpay/')
-        self.assertEqual(resp.status_code, 400)
+        # A falha inesperada sobe como 500 (FATURA-28)
+        self.assertEqual(resp.status_code, 500)
         self.assertEqual(self.estado(), antes)
 
     # Aporte em meta: falha ao registrar o histórico, depois da transferência

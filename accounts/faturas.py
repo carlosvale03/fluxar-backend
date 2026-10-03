@@ -220,6 +220,7 @@ FATURA_JA_PAGA = 'Fatura já está paga.'
 FATURA_NAO_PAGA = 'Esta fatura não está paga.'
 VALOR_MAIOR_QUE_O_TOTAL = 'O valor pago não pode ser maior que o total da fatura.'
 CHAVE_COM_OUTROS_DADOS = 'Este identificador de pagamento já foi usado com outros dados.'
+ESTORNE_A_SEGUINTE = 'Estorne primeiro o pagamento da fatura seguinte.'
 
 
 def _dividir(compra, pago, conta, data, seguinte):
@@ -352,6 +353,98 @@ def pagar(usuario, fatura, conta, valor, data, chave=None):
         recalcular(conta.pk, cartao.account_id)
     return pagamento
 
+
+def _estornar_sem_registro(fatura):
+    """
+    Estorno de um pagamento feito antes desta feature, sem registro: as
+    compras pagas da fatura voltam a pendentes, na conta do cartão e sem
+    data de pagamento (SALDO-24, SALDO-25). As divisões antigas não são
+    juntadas. Devolve as contas a recalcular.
+    """
+    from transactions.models import Transaction
+
+    pagas = Transaction.objects.filter(
+        invoice=fatura, type='CREDIT_CARD', status='COMPLETED',
+        user_id=fatura.card.user_id,  # Só compras do dono do cartão (ISOL-14)
+    )
+    contas = set(pagas.values_list('account_id', flat=True))
+    pagas.update(status='PENDING', account=fatura.card.account_id, payment_date=None)
+    return contas
+
+
+def _voltar_a_pendente(compra, conta_do_cartao):
+    compra.status = 'PENDING'
+    compra.account_id = conta_do_cartao
+    compra.payment_date = None
+
+
+def estornar(usuario, fatura):
+    """
+    Estorna o pagamento ativo da fatura, tudo num `atomic` (FATURA-28).
+    - Relê a fatura sob trava; fatura não paga recebe 400 (SALDO-27).
+    - Sem registro (pagamento anterior a esta feature), segue o caminho
+      antigo.
+    - Se a fatura que recebeu o restante ou as compras movidas já está
+      paga, recusa com 400 (FATURA-38).
+    - PAGA volta a pendente, na conta do cartão e sem data de pagamento
+      (FATURA-34). DIVIDIDA volta a pendente com a descrição original e o
+      valor pago mais o valor atual do restante, que é excluído; restante
+      excluído pelo usuário não volta (FATURA-35). MOVIDA volta para a
+      fatura original se ainda existe, está pendente e está na seguinte
+      (FATURA-36).
+    - A fatura volta a `OPEN`, exibida como aberta ou fechada pela data de
+      hoje (FATURA-37), e o pagamento recebe `estornado_em`; o registro
+      nunca é apagado (FATURA-30).
+    """
+    from django.db import transaction
+    from django.utils import timezone
+    from rest_framework.exceptions import ValidationError
+
+    from .models import CreditCardInvoice, ItemDePagamento
+    from .saldo import recalcular
+
+    with transaction.atomic():
+        fatura = CreditCardInvoice.objects.select_for_update().select_related('card').get(pk=fatura.pk)
+        if fatura.status != 'PAID':
+            raise ValidationError({'detail': FATURA_NAO_PAGA})
+        conta_do_cartao = fatura.card.account_id
+        pagamento = fatura.pagamentos.filter(estornado_em__isnull=True).order_by('-criado_em').first()
+
+        seguinte_id = None
+        if pagamento is None:
+            contas = _estornar_sem_registro(fatura)
+        else:
+            seguinte_id = pagamento.fatura_seguinte_id
+            if seguinte_id and CreditCardInvoice.objects.filter(pk=seguinte_id, status='PAID').exists():
+                raise ValidationError({'detail': ESTORNE_A_SEGUINTE})
+            contas = {pagamento.conta_id}
+            for item in pagamento.itens.select_related('compra', 'restante'):
+                compra = item.compra
+                if compra is None:
+                    continue
+                if item.tipo == ItemDePagamento.PAGA:
+                    contas.add(compra.account_id)
+                    _voltar_a_pendente(compra, conta_do_cartao)
+                    compra.save()
+                elif item.tipo == ItemDePagamento.DIVIDIDA:
+                    contas.add(compra.account_id)
+                    restante = item.restante
+                    if restante is not None:
+                        compra.amount += restante.amount
+                        restante.delete()
+                    compra.description = item.descricao_original
+                    _voltar_a_pendente(compra, conta_do_cartao)
+                    compra.save()
+                elif compra.status == 'PENDING' and compra.invoice_id == seguinte_id:
+                    colocar(compra, fatura)
+
+            pagamento.estornado_em = timezone.now()
+            pagamento.save(update_fields=['estornado_em'])
+
+        fatura.status = 'OPEN'
+        fatura.save()
+        recalcular_totais(fatura.pk, seguinte_id)
+        recalcular(*contas, conta_do_cartao)
 
 def resposta_do_pagamento(pagamento):
     """
