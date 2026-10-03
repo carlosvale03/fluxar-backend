@@ -209,10 +209,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-06 | P1: Listas e paginação | T15 | Implemented |
 | CONTRATO-07 | P1: Listas e paginação | T15 | Implemented |
 | CONTRATO-08 | P1: Listas e paginação | T15 | Implemented |
-| CONTRATO-09 | P1: Listas e paginação | T4 | In Progress |
-| CONTRATO-10 | P1: Filtros | T3 | In Progress |
+| CONTRATO-09 | P1: Listas e paginação | T4, T16 | Implemented |
+| CONTRATO-10 | P1: Filtros | T3, T16 | Implemented |
 | CONTRATO-11 | P1: Filtros | T3 | Implemented |
-| CONTRATO-12 | P1: Filtros | - | Pending |
+| CONTRATO-12 | P1: Filtros | T16 | Implemented |
 | CONTRATO-13 | P1: Filtros | T3 | Implemented |
 | CONTRATO-14 | P1: Filtros | T2 | Implemented |
 | CONTRATO-15 | P1: Filtros | T3 | In Progress |

@@ -561,13 +561,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Escolher duas categorias envia `categoryId=a&categoryId=b`
-- [ ] O total do dia mostrado é o de `day_totals`, não a soma da página
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Escolher duas categorias envia `categoryId=a&categoryId=b`
+- [x] O total do dia mostrado é o de `day_totals`, não a soma da página
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 156 → 159)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): filtra por várias categorias e mostra o total real do dia`
 
