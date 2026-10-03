@@ -440,16 +440,17 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Erro 400 por campo chama `setError` em cada campo do formulário; o que sobra vai para o Sonner
-- [ ] `detail` aparece no Sonner
-- [ ] Erro de rede, 503 e tempo esgotado mostram "Não foi possível falar com o servidor." com "Tentar de novo", que chama a função passada
-- [ ] Importação e exportação usam 120 s; as demais, 30 s
-- [ ] O overlay fecha pelo botão e não volta no mesmo episódio
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Erro 400 por campo chama `setError` em cada campo do formulário; o que sobra vai para o Sonner
+- [x] `detail` aparece no Sonner
+- [x] Erro de rede, 503 e tempo esgotado mostram "Não foi possível falar com o servidor." com "Tentar de novo", que chama a função passada
+- [x] Importação e exportação usam 120 s; as demais, 30 s
+- [x] O overlay fecha pelo botão e não volta no mesmo episódio
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 7 testes (real: 11 testes novos; suíte 132 → 143)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): trata erros de campo, de servidor e de rede num lugar só`
 
