@@ -1,7 +1,7 @@
 # Faturas Design
 
 **Spec**: `.specs/features/faturas/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

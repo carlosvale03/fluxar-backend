@@ -236,53 +236,53 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| FATURA-01 | P1: Datas de fechamento e vencimento | T1 | Implemented |
-| FATURA-02 | P1: Datas de fechamento e vencimento | T1 | Implemented |
-| FATURA-03 | P1: Datas de fechamento e vencimento | T1 | Implemented |
-| FATURA-04 | P1: Datas de fechamento e vencimento | T1 | Implemented |
-| FATURA-05 | P1: Datas de fechamento e vencimento | T3 | Implemented |
-| FATURA-06 | P1: Datas de fechamento e vencimento | T3, T22 | Implemented |
-| FATURA-07 | P1: Datas de fechamento e vencimento | T2 | Implemented |
-| FATURA-08 | P1: Datas de fechamento e vencimento | T3 | Implemented |
-| FATURA-09 | P1: Datas de fechamento e vencimento | T3 | Implemented |
-| FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
-| FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
-| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
-| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
-| FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | T6, T7 | Implemented |
-| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
-| FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | T5, T6, T20, T21 | Implemented |
-| FATURA-17 | P1: Em qual fatura cai cada compra e cada parcela | T8, T21 | Implemented |
-| FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | T7 | Implemented |
-| FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | T8, T9, T21 | Implemented |
-| FATURA-20 | P1: Em qual fatura cai cada compra e cada parcela | T9, T21 | Implemented |
-| FATURA-21 | P1: Pagamento total e parcial | T11, T17 | Implemented |
-| FATURA-22 | P1: Pagamento total e parcial | T11 | Implemented |
-| FATURA-23 | P1: Pagamento total e parcial | T11 | Implemented |
-| FATURA-24 | P1: Pagamento total e parcial | T11 | Implemented |
-| FATURA-25 | P1: Pagamento total e parcial | T2, T11 | Implemented |
-| FATURA-26 | P1: Pagamento total e parcial | T11 | Implemented |
-| FATURA-27 | P1: Pagamento total e parcial | T10, T15, T18 | Implemented |
-| FATURA-28 | P1: Pagamento total e parcial | T11, T14 | Implemented |
-| FATURA-29 | P1: Pagamento repetido | T19 | Implemented |
-| FATURA-30 | P1: Pagamento repetido | T10, T12 | Implemented |
-| FATURA-31 | P1: Pagamento repetido | T13 | Implemented |
-| FATURA-32 | P1: Pagamento repetido | T12, T13 | Implemented |
-| FATURA-33 | P1: Pagamento repetido | T12 | Implemented |
-| FATURA-34 | P1: Estorno do pagamento | T14, T17 | Implemented |
-| FATURA-35 | P1: Estorno do pagamento | T14 | Implemented |
-| FATURA-36 | P1: Estorno do pagamento | T14 | Implemented |
-| FATURA-37 | P1: Estorno do pagamento | T14, T17 | Implemented |
-| FATURA-38 | P1: Estorno do pagamento | T14 | Implemented |
-| FATURA-39 | P1: Correção dos dados existentes | T16 | Implemented |
-| FATURA-40 | P1: Correção dos dados existentes | T16 | Implemented |
-| FATURA-41 | P1: Correção dos dados existentes | T16 | Implemented |
-| FATURA-42 | P2: Limite disponível | T4, T22 | Implemented |
-| FATURA-43 | P2: Faturas na interface e na API | T18 | Implemented |
-| FATURA-44 | P2: Faturas na interface e na API | T15, T20 | Implemented |
-| FATURA-45 | P2: Faturas na interface e na API | T15 | Implemented |
+| FATURA-01 | P1: Datas de fechamento e vencimento | T1 | Verified |
+| FATURA-02 | P1: Datas de fechamento e vencimento | T1 | Verified |
+| FATURA-03 | P1: Datas de fechamento e vencimento | T1 | Verified |
+| FATURA-04 | P1: Datas de fechamento e vencimento | T1 | Verified |
+| FATURA-05 | P1: Datas de fechamento e vencimento | T3 | Verified |
+| FATURA-06 | P1: Datas de fechamento e vencimento | T3, T22 | Verified |
+| FATURA-07 | P1: Datas de fechamento e vencimento | T2 | Verified |
+| FATURA-08 | P1: Datas de fechamento e vencimento | T3 | Verified |
+| FATURA-09 | P1: Datas de fechamento e vencimento | T3 | Verified |
+| FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Verified |
+| FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Verified |
+| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Verified |
+| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Verified |
+| FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | T6, T7 | Verified |
+| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Verified |
+| FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | T5, T6, T20, T21 | Verified |
+| FATURA-17 | P1: Em qual fatura cai cada compra e cada parcela | T8, T21 | Verified |
+| FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | T7 | Verified |
+| FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | T8, T9, T21 | Verified |
+| FATURA-20 | P1: Em qual fatura cai cada compra e cada parcela | T9, T21 | Verified |
+| FATURA-21 | P1: Pagamento total e parcial | T11, T17 | Verified |
+| FATURA-22 | P1: Pagamento total e parcial | T11 | Verified |
+| FATURA-23 | P1: Pagamento total e parcial | T11 | Verified |
+| FATURA-24 | P1: Pagamento total e parcial | T11 | Verified |
+| FATURA-25 | P1: Pagamento total e parcial | T2, T11 | Verified |
+| FATURA-26 | P1: Pagamento total e parcial | T11 | Verified |
+| FATURA-27 | P1: Pagamento total e parcial | T10, T15, T18 | Verified |
+| FATURA-28 | P1: Pagamento total e parcial | T11, T14 | Verified |
+| FATURA-29 | P1: Pagamento repetido | T19 | Verified |
+| FATURA-30 | P1: Pagamento repetido | T10, T12 | Verified |
+| FATURA-31 | P1: Pagamento repetido | T13 | Verified |
+| FATURA-32 | P1: Pagamento repetido | T12, T13 | Verified |
+| FATURA-33 | P1: Pagamento repetido | T12 | Verified |
+| FATURA-34 | P1: Estorno do pagamento | T14, T17 | Verified |
+| FATURA-35 | P1: Estorno do pagamento | T14 | Verified |
+| FATURA-36 | P1: Estorno do pagamento | T14 | Verified |
+| FATURA-37 | P1: Estorno do pagamento | T14, T17 | Verified |
+| FATURA-38 | P1: Estorno do pagamento | T14 | Verified |
+| FATURA-39 | P1: Correção dos dados existentes | T16 | Verified |
+| FATURA-40 | P1: Correção dos dados existentes | T16 | Verified |
+| FATURA-41 | P1: Correção dos dados existentes | T16 | Verified |
+| FATURA-42 | P2: Limite disponível | T4, T22 | Verified |
+| FATURA-43 | P2: Faturas na interface e na API | T18 | Verified |
+| FATURA-44 | P2: Faturas na interface e na API | T15, T20 | Verified |
+| FATURA-45 | P2: Faturas na interface e na API | T15 | Verified |
 
-**Coverage:** 45 total, 0 mapped to tasks, 45 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 45 total, 45 mapped to tasks, 0 unmapped
 
 ---
 
