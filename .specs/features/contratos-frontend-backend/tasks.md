@@ -411,14 +411,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Com o fuso de Brasília e com o de Lisboa, "2026-12-31" aparece como 31/12/2026 nas telas de meta
-- [ ] 29/02/2028 aparece como 29/02
-- [ ] `paraApi(new Date(2026, 11, 31, 23, 30))` dá "2026-12-31" nos dois fusos
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Com o fuso de Brasília e com o de Lisboa, "2026-12-31" aparece como 31/12/2026 nas telas de meta
+- [x] 29/02/2028 aparece como 29/02
+- [x] `paraApi(new Date(2026, 11, 31, 23, 30))` dá "2026-12-31" nos dois fusos
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 10 testes novos; suíte 122 → 132)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra as datas sem hora sem mudar o dia`
 
