@@ -553,15 +553,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Compra sem fatura passa a ter fatura, `purchase_date` com a data antiga e `date` no vencimento
-- [ ] Compra com duas parcelas pendentes na mesma fatura fica com uma parcela por fatura consecutiva; parcelas pagas não se movem
-- [ ] Total de fatura desatualizado volta à soma das compras
-- [ ] Banco vazio: a migração não faz nada
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Compra sem fatura passa a ter fatura, `purchase_date` com a data antiga e `date` no vencimento
+- [x] Compra com duas parcelas pendentes na mesma fatura fica com uma parcela por fatura consecutiva; parcelas pagas não se movem
+- [x] Total de fatura desatualizado volta à soma das compras
+- [x] Banco vazio: a migração não faz nada
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 9 testes novos; suíte 618 → 627)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): corrige compras sem fatura, parcelas repetidas e totais gravados`
 

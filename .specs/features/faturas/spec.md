@@ -274,9 +274,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-36 | P1: Estorno do pagamento | T14 | Implemented |
 | FATURA-37 | P1: Estorno do pagamento | T14 | Implemented |
 | FATURA-38 | P1: Estorno do pagamento | T14 | Implemented |
-| FATURA-39 | P1: Correção dos dados existentes | - | Pending |
-| FATURA-40 | P1: Correção dos dados existentes | - | Pending |
-| FATURA-41 | P1: Correção dos dados existentes | - | Pending |
+| FATURA-39 | P1: Correção dos dados existentes | T16 | Implemented |
+| FATURA-40 | P1: Correção dos dados existentes | T16 | Implemented |
+| FATURA-41 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-42 | P2: Limite disponível | T4 | Implemented |
 | FATURA-43 | P2: Faturas na interface e na API | - | Pending |
 | FATURA-44 | P2: Faturas na interface e na API | T15 | Implemented |
