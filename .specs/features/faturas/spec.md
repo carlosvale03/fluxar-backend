@@ -242,15 +242,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-04 | P1: Datas de fechamento e vencimento | T1 | Implemented |
 | FATURA-05 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-06 | P1: Datas de fechamento e vencimento | - | Pending |
-| FATURA-07 | P1: Datas de fechamento e vencimento | - | Pending |
+| FATURA-07 | P1: Datas de fechamento e vencimento | T2 | Implemented |
 | FATURA-08 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-09 | P1: Datas de fechamento e vencimento | - | Pending |
 | FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
 | FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
-| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
-| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
+| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
+| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
 | FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
-| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
+| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
 | FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-17 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
@@ -260,7 +260,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-22 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-23 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-24 | P1: Pagamento total e parcial | - | Pending |
-| FATURA-25 | P1: Pagamento total e parcial | - | Pending |
+| FATURA-25 | P1: Pagamento total e parcial | T2 | Implemented |
 | FATURA-26 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-27 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-28 | P1: Pagamento total e parcial | - | Pending |

@@ -6,6 +6,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
+from accounts.faturas import obter_fatura
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from accounts.services import CreditCardService
 from core.fields import CONTA_NAO_ENCONTRADA
@@ -194,42 +195,11 @@ class TransactionService:
 
     @staticmethod
     def _get_or_create_invoice(card, month, year):
-        # O 'month' e 'year' aqui referem-se à competência do VENCIMENTO da fatura.
-        
-        # Calcula a data de vencimento real
-        try:
-            d_date = date(year, month, card.due_day)
-        except ValueError:
-            # Fallback para o último dia do mês se o dia não existir (ex: 31 de fevereiro)
-            import calendar
-            last_day = calendar.monthrange(year, month)[1]
-            d_date = date(year, month, last_day)
-
-        # O fechamento ocorre no mês anterior ao vencimento se due_day <= closing_day
-        if card.due_day <= card.closing_day:
-            closing_ref = d_date - relativedelta(months=1)
-        else:
-            closing_ref = d_date
-            
-        try:
-            c_date = date(closing_ref.year, closing_ref.month, card.closing_day)
-        except ValueError:
-            import calendar
-            last_day = calendar.monthrange(closing_ref.year, closing_ref.month)[1]
-            c_date = date(closing_ref.year, closing_ref.month, last_day)
-
-        # Log para depuração (pode ser removido após validação)
-        print(f"[INVOICE] Card: {card.name}, Target: {month}/{year} -> Closes: {c_date}, Due: {d_date}")
-
-        invoice, created = CreditCardInvoice.objects.get_or_create(
-            card=card, month=month, year=year,
-            defaults={
-                'closing_date': c_date,
-                'due_date': d_date,
-                'status': 'OPEN'
-            }
-        )
-        return invoice
+        """
+        A fatura do cartão que vence em `month`/`year`, pela regra única de
+        `accounts/faturas.py` (FATURA-01 a FATURA-04, FATURA-07).
+        """
+        return obter_fatura(card, month, year)
 
 class CategoryService:
     # Definição simples de limites (em futuro mover para tabela de Planos)

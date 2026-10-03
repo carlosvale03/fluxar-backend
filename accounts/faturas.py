@@ -10,6 +10,7 @@ funções, por isso esta camada não importa modelos.
 """
 import calendar
 from datetime import date
+from decimal import Decimal
 
 
 def dia_no_mes(ano, mes, dia):
@@ -60,3 +61,89 @@ def mes_da_fatura(dia_fechamento, dia_vencimento, data_compra):
     if dia_vencimento <= dia_fechamento:
         mes, ano = mes_seguinte(mes, ano)
     return mes, ano
+
+
+# --- Faturas e compras (com banco) ---
+# Os modelos são importados dentro das funções, para que a camada de datas
+# continue importável pela migração sem carregar os apps.
+
+
+def obter_fatura(cartao, mes, ano):
+    """
+    A fatura do cartão que vence em `mes`/`ano`, criada com as datas de
+    `datas_da_fatura` e os dias atuais do cartão quando falta (FATURA-25).
+    Fatura existente mantém as datas gravadas, mesmo que os dias do cartão
+    tenham mudado (FATURA-07).
+    """
+    from .models import CreditCardInvoice
+
+    fechamento, vencimento = datas_da_fatura(cartao.closing_day, cartao.due_day, mes, ano)
+    fatura, _ = CreditCardInvoice.objects.get_or_create(
+        card=cartao, month=mes, year=ano,
+        defaults={'closing_date': fechamento, 'due_date': vencimento, 'status': 'OPEN'},
+    )
+    return fatura
+
+
+def fatura_da_compra(cartao, data_compra):
+    """
+    `(mes, ano)` da fatura em que cai uma compra, sem criar fatura. Se a
+    fatura desse mês já existe e fecha na data da compra ou antes (os dias
+    do cartão mudaram depois que ela foi criada), a compra vai para a
+    seguinte (FATURA-07, FATURA-10, FATURA-11).
+    """
+    from .models import CreditCardInvoice
+
+    mes, ano = mes_da_fatura(cartao.closing_day, cartao.due_day, data_compra)
+    while CreditCardInvoice.objects.filter(
+        card=cartao, month=mes, year=ano, closing_date__lte=data_compra,
+    ).exists():
+        mes, ano = mes_seguinte(mes, ano)
+    return mes, ano
+
+
+def primeira_nao_paga(cartao, mes, ano):
+    """
+    A partir de `mes`/`ano`, a primeira fatura do cartão que não está paga,
+    criada se faltar (FATURA-15, FATURA-25).
+    """
+    fatura = obter_fatura(cartao, mes, ano)
+    while fatura.status == 'PAID':
+        fatura = obter_fatura(cartao, *mes_seguinte(fatura.month, fatura.year))
+    return fatura
+
+
+def alocar_parcelas(cartao, data_compra, quantidade):
+    """
+    As faturas das `quantidade` parcelas de uma compra: a primeira na fatura
+    da data da compra e cada seguinte na fatura do mês seguinte ao da
+    anterior, uma parcela por fatura, pulando as faturas pagas (FATURA-12,
+    FATURA-15).
+    """
+    faturas = [primeira_nao_paga(cartao, *fatura_da_compra(cartao, data_compra))]
+    while len(faturas) < quantidade:
+        anterior = faturas[-1]
+        faturas.append(primeira_nao_paga(cartao, *mes_seguinte(anterior.month, anterior.year)))
+    return faturas
+
+
+def dividir_valor(valor, quantidade):
+    """
+    O valor de cada parcela: arredondado a centavos, com a diferença somada à
+    primeira, para que a soma seja o valor da compra (FATURA-13).
+    """
+    parcela = round(valor / Decimal(quantidade), 2)
+    valores = [parcela] * quantidade
+    valores[0] += valor - parcela * quantidade
+    return valores
+
+
+def colocar(compra, fatura):
+    """
+    Liga a compra à fatura e grava o vencimento dela como `date`, sempre
+    juntos (AD-039). Salva a compra, o que também a cria se for nova.
+    """
+    compra.invoice = fatura
+    compra.date = fatura.due_date
+    compra.save()
+    return compra

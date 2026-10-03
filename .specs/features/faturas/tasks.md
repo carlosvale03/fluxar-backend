@@ -134,15 +134,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Fatura existente mantém as datas depois de mudar os dias do cartão; a criada depois usa os dias novos
-- [ ] Compra que cairia numa fatura paga vai para a primeira não paga seguinte, criada se faltar
-- [ ] Fechamento no dia 30, vencimento no dia 7 e compra em 4x em 30/01/2026: faturas de março, abril, maio e junho de 2026
-- [ ] R$ 100,00 em 3x dá R$ 33,34, R$ 33,33 e R$ 33,33
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Fatura existente mantém as datas depois de mudar os dias do cartão; a criada depois usa os dias novos
+- [x] Compra que cairia numa fatura paga vai para a primeira não paga seguinte, criada se faltar
+- [x] Fechamento no dia 30, vencimento no dia 7 e compra em 4x em 30/01/2026: faturas de março, abril, maio e junho de 2026
+- [x] R$ 100,00 em 3x dá R$ 33,34, R$ 33,33 e R$ 33,33
+- [x] Quick gate passa
+- [x] Test count: pelo menos 7 testes (real: 12 testes novos; suíte 538 → 550)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(faturas): coloca cada parcela numa fatura não paga e consecutiva`
 
