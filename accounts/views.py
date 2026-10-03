@@ -1,3 +1,4 @@
+from django.db.models.functions import Coalesce
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -14,6 +15,7 @@ from core.fields import CONTA_NAO_ENCONTRADA
 from core.mixins import UserQuerySetMixin
 from core.valores import ler_saldo
 from transactions.models import Transaction
+from transactions.serializers import TransactionSerializer
 
 # Exclusão de conta (SALDO-32, SALDO-33, AD-003)
 SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o valor restante.'
@@ -104,16 +106,15 @@ class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         serializer = CreditCardInvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 
-class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Listagem e Ações em Faturas.
-    Nota: A listagem geral pode ser filtrada, ou usamos a sub-rota no CreditCardViewSet.
-    Aqui servirá principalmente para actions como 'pay'.
+    Leitura das faturas e as ações `pay`, `unpay` e `transactions`. A fatura
+    só nasce e muda pelas compras e pelos pagamentos: criar, editar ou
+    excluir pela API recebe 405 (FATURA-45).
     """
     queryset = CreditCardInvoice.objects.all()
     serializer_class = CreditCardInvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'post', 'head', 'options'] # Não permitir delete/put arbitrário por enquanto
 
     def get_queryset(self):
         # Garante que só vê faturas dos seus cartões
@@ -140,6 +141,20 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             chave=data.get('idempotency_key'),
         )
         return Response(resposta_do_pagamento(pagamento))
+
+    @action(detail=True, methods=['get'])
+    def transactions(self, request, pk=None):
+        """
+        Todas as compras da fatura, sem paginação, em ordem de data da compra
+        (FATURA-44); só as do dono do cartão (ISOL-14).
+        """
+        invoice = self.get_object()
+        compras = Transaction.objects.filter(
+            invoice=invoice, type='CREDIT_CARD', user_id=invoice.card.user_id,
+        ).select_related('account', 'category').prefetch_related('tags').order_by(
+            Coalesce('purchase_date', 'date'), 'created_at',
+        )
+        return Response(TransactionSerializer(compras, many=True, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):

@@ -34,13 +34,34 @@ class AccountSerializer(serializers.ModelSerializer):
 class CreditCardInvoiceSerializer(serializers.ModelSerializer):
     # Aberta ou fechada pela data de hoje; paga quando recebe pagamento (FATURA-08, FATURA-09)
     status = serializers.SerializerMethodField()
+    credit_card_id = serializers.UUIDField(source='card_id', read_only=True)
+    # Valor, conta e data do pagamento ativo, ou null (FATURA-27)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = CreditCardInvoice
-        fields = ['id', 'month', 'year', 'status', 'total_amount', 'closing_date', 'due_date']
+        fields = [
+            'id', 'month', 'year', 'status', 'total_amount', 'closing_date', 'due_date',
+            'credit_card_id', 'payment',
+        ]
 
     def get_status(self, obj):
         return status_exibido(obj)
+
+    def get_payment(self, obj):
+        if obj.status != 'PAID':
+            return None
+        pagamento = (
+            obj.pagamentos.filter(estornado_em__isnull=True).select_related('conta').order_by('-criado_em').first()
+        )
+        if pagamento is None:
+            return None
+        return {
+            'amount': f'{pagamento.valor:.2f}',
+            'account_id': str(pagamento.conta_id),
+            'account_name': pagamento.conta.name,
+            'date': pagamento.data.isoformat(),
+        }
 
 class InvoicePaymentSerializer(serializers.Serializer):
 

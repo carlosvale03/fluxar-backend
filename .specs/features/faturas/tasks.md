@@ -521,15 +521,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] `POST`, `PUT`, `PATCH` e `DELETE` nas rotas de fatura recebem 405
-- [ ] Fatura com 35 compras devolve as 35 em `GET /api/invoices/{id}/transactions/`
-- [ ] Fatura paga informa valor, conta e data do pagamento; não paga, `payment` nulo
-- [ ] Fatura de outro usuário continua 404 nas rotas novas (ISOL)
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `POST`, `PUT`, `PATCH` e `DELETE` nas rotas de fatura recebem 405
+- [x] Fatura com 35 compras devolve as 35 em `GET /api/invoices/{id}/transactions/`
+- [x] Fatura paga informa valor, conta e data do pagamento; não paga, `payment` nulo
+- [x] Fatura de outro usuário continua 404 nas rotas novas (ISOL)
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 5 testes novos; suíte 613 → 618)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): expõe as compras e o pagamento da fatura e fecha a escrita direta`
 
