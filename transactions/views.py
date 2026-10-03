@@ -63,7 +63,7 @@ class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-from core.pagination import StandardResultsSetPagination
+from core.pagination import PaginacaoPadrao
 
 # Histórico da conta excluída: só leitura (SALDO-36, AD-003)
 DE_CONTA_EXCLUIDA = {'detail': 'Esta transação é de uma conta excluída e não pode ser alterada.'}
@@ -92,7 +92,7 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
+    pagination_class = PaginacaoPadrao
 
     def get_queryset(self):
         queryset = super().get_queryset()

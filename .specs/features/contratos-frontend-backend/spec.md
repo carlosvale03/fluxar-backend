@@ -201,10 +201,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CONTRATO-01 | P1: Listas e paginação | - | Pending |
-| CONTRATO-02 | P1: Listas e paginação | - | Pending |
-| CONTRATO-03 | P1: Listas e paginação | - | Pending |
-| CONTRATO-04 | P1: Listas e paginação | - | Pending |
+| CONTRATO-01 | P1: Listas e paginação | T1 | In Progress |
+| CONTRATO-02 | P1: Listas e paginação | T1 | In Progress |
+| CONTRATO-03 | P1: Listas e paginação | T1 | Implemented |
+| CONTRATO-04 | P1: Listas e paginação | T1 | Implemented |
 | CONTRATO-05 | P1: Listas e paginação | - | Pending |
 | CONTRATO-06 | P1: Listas e paginação | - | Pending |
 | CONTRATO-07 | P1: Listas e paginação | - | Pending |

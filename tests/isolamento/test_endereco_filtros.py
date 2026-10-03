@@ -149,16 +149,18 @@ class FiltrosComIdDeOutroUsuarioTests(DoisUsuariosTestCase):
     def setUp(self):
         self.cliente = self.como(self.a.usuario)
 
-    def assert_lista_vazia_igual(self, url, parametro, id_b, id_a):
+    def assert_lista_vazia_igual(self, url, parametro, id_b, id_a, colecao=False):
         resp_inexistente = self.cliente.get(url, {parametro: self.ID_INEXISTENTE})
         resp = self.cliente.get(url, {parametro: id_b})
         resp_propria = self.cliente.get(url, {parametro: id_a})
+        # Coleções vêm como array; as transações, paginadas (AD-021)
+        itens = (lambda r: r.data) if colecao else (lambda r: r.data['results'])
 
         self.assertEqual(resp.status_code, 200, parametro)
-        self.assertEqual(resp.data['results'], [], parametro)
+        self.assertEqual(itens(resp), [], parametro)
         self.assertEqual(resp.data, resp_inexistente.data, parametro)
         # O mesmo filtro com o ID de A encontra os dados de A
-        self.assertNotEqual(resp_propria.data['results'], [], parametro)
+        self.assertNotEqual(itens(resp_propria), [], parametro)
 
     def test_filtro_de_conta_nas_transacoes(self):
         for parametro in ('accountId', 'account'):
@@ -178,7 +180,9 @@ class FiltrosComIdDeOutroUsuarioTests(DoisUsuariosTestCase):
         self.assert_lista_vazia_igual('/api/transactions/', 'tagIds', self.b.tag.id, self.a.tag.id)
 
     def test_filtro_de_categoria_nos_orcamentos(self):
-        self.assert_lista_vazia_igual('/api/budgets/', 'category', self.b.categoria.id, self.a.categoria.id)
+        self.assert_lista_vazia_igual(
+            '/api/budgets/', 'category', self.b.categoria.id, self.a.categoria.id, colecao=True,
+        )
 
     def transacoes_exportadas(self, url, metodo, parametros):
         """

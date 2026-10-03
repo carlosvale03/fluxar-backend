@@ -104,16 +104,17 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Com 15 tags, 12 orçamentos, 11 cartões, 11 metas e 11 monitores, cada rota devolve um array com todos
-- [ ] Transações, usuários e logs do admin devolvem `count`, `total_pages`, `current_page`, `next`, `previous` e `results`
-- [ ] `page_size` ausente dá 20; `page_size=150` dá 100; `page_size=5` dá 5
-- [ ] Página 99 de uma lista com 2 páginas responde 200 com `results` vazio, `count` e `total_pages` corretos
-- [ ] Testes antigos que liam `results` em coleções são ajustados ao contrato (AD-021)
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Com 15 tags, 12 orçamentos, 11 cartões, 11 metas e 11 monitores, cada rota devolve um array com todos
+- [x] Transações, usuários e logs do admin devolvem `count`, `total_pages`, `current_page`, `next`, `previous` e `results`
+- [x] `page_size` ausente dá 20; `page_size=150` dá 100; `page_size=5` dá 5
+- [x] Página 99 de uma lista com 2 páginas responde 200 com `results` vazio, `count` e `total_pages` corretos
+- [x] Testes antigos que liam `results` em coleções são ajustados ao contrato (AD-021)
+- [x] Full gate passa
+- [x] Test count: pelo menos 8 testes (real: 14 testes novos; suíte 629 → 643)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): devolve coleções completas e listas paginadas num formato único`
 

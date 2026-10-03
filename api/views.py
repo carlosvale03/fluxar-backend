@@ -44,6 +44,7 @@ from core.throttles import (
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
+from core.pagination import PaginacaoPadrao
 import logging
 
 User = get_user_model()
@@ -458,6 +459,8 @@ class AdminUserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by('-created_at')
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = AdminUserSerializer
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'email']
 
@@ -744,6 +747,8 @@ class AdminGlobalLogsView(generics.ListAPIView):
     queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
     permission_classes = (permissions.IsAdminUser,)
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
 
 class AdminUserFinancialStatsView(APIView):
     """
@@ -764,7 +769,8 @@ class AdminUserLogsView(generics.ListAPIView):
     """
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = SystemLogSerializer
-    pagination_class = None
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
