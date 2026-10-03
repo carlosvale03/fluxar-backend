@@ -322,6 +322,22 @@
 - **Date**: 2026-10-02
 - **Status**: active
 
+### AD-041
+- **Decision**: Todo valor em dinheiro sai da API como texto com duas casas e ponto ("1234.56"), pela função `dinheiro()` de `core/valores.py`, aplicada campo a campo; percentuais e razões continuam números. No frontend, toda conta de dinheiro é feita em centavos inteiros por `src/lib/dinheiro.ts`, que também tem o formatador único em reais e a leitura de AD-009 usada pelo `MoneyInput`.
+- **Reason**: o CRUD enviava texto e os relatórios número de ponto flutuante (FIN-44); o frontend tinha 21 cópias de formatação e fazia conta em ponto flutuante antes de enviar (MAN-02, FE-06).
+- **Trade-off**: cada campo novo de dinheiro precisa passar por `dinheiro()`; um encoder global teria estragado os percentuais.
+- **Scope**: contratos-frontend-backend, relatorios, metas, faturas, saldo e qualquer rota nova com dinheiro.
+- **Date**: 2026-10-03
+- **Status**: active
+
+### AD-042
+- **Decision**: O frontend trata todo erro da API por `src/lib/erros.ts`: erro de campo vai para o campo do formulário, `detail` vai para o Sonner, e falha de rede, 5xx ou tempo esgotado mostram um aviso com "Tentar de novo". O Sonner é o único sistema de avisos, e nenhum `catch` fica só com `console.error`.
+- **Reason**: nove telas perdiam as mensagens no Toaster do Radix que nunca era montado (FE-02), os erros de campo eram descartados (FE-08) e havia cerca de 30 falhas silenciosas.
+- **Trade-off**: toda tela nova chama `tratarErro` no lugar de montar a própria mensagem.
+- **Scope**: contratos-frontend-backend e todo o frontend.
+- **Date**: 2026-10-03
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `faturas` concluída, nos dois repositórios
