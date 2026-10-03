@@ -531,15 +531,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Montar a tela faz um GET de transações
-- [ ] Mudar um filtro estando na página 3 faz um GET só, com `page=1`
-- [ ] Digitar "mercado" faz um GET só, 300 ms depois da última tecla
-- [ ] Uma resposta lenta que chega depois da mais nova não aparece e não mostra erro
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Montar a tela faz um GET de transações
+- [x] Mudar um filtro estando na página 3 faz um GET só, com `page=1`
+- [x] Digitar "mercado" faz um GET só, 300 ms depois da última tecla
+- [x] Uma resposta lenta que chega depois da mais nova não aparece e não mostra erro
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte 152 → 156)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): busca as transações uma vez por mudança, sem respostas atrasadas`
 
