@@ -735,14 +735,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Orçamento duplicado mostra a mensagem do backend embaixo do campo de categoria
-- [ ] Com o backend fora, a tela de tags mostra o aviso com "Tentar de novo", e clicar busca de novo
-- [ ] Nenhum `catch` em `src` fica só com `console.error`
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Orçamento duplicado mostra a mensagem do backend embaixo do campo de categoria
+- [x] Com o backend fora, a tela de tags mostra o aviso com "Tentar de novo", e clicar busca de novo
+- [x] Nenhum `catch` em `src` fica só com `console.error`
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte 184 → 188)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra os erros no campo e não deixa falha silenciosa`
 
