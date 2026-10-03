@@ -583,13 +583,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Pagar, estornar e pagar de novo deixa faturas, compras e totais idênticos aos de um único pagamento (Success Criteria)
-- [ ] O saldo da conta de pagamento acompanha cada passo (SALDO-23 a SALDO-25)
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Pagar, estornar e pagar de novo deixa faturas, compras e totais idênticos aos de um único pagamento (Success Criteria)
+- [x] O saldo da conta de pagamento acompanha cada passo (SALDO-23 a SALDO-25)
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 627 → 629)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test(faturas): cobre pagar, estornar e pagar de novo`
 

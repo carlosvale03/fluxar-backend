@@ -256,7 +256,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | T7 | Implemented |
 | FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | T8, T9 | Implemented |
 | FATURA-20 | P1: Em qual fatura cai cada compra e cada parcela | T9 | Implemented |
-| FATURA-21 | P1: Pagamento total e parcial | T11 | Implemented |
+| FATURA-21 | P1: Pagamento total e parcial | T11, T17 | Implemented |
 | FATURA-22 | P1: Pagamento total e parcial | T11 | Implemented |
 | FATURA-23 | P1: Pagamento total e parcial | T11 | Implemented |
 | FATURA-24 | P1: Pagamento total e parcial | T11 | Implemented |
@@ -269,10 +269,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-31 | P1: Pagamento repetido | T13 | Implemented |
 | FATURA-32 | P1: Pagamento repetido | T12, T13 | Implemented |
 | FATURA-33 | P1: Pagamento repetido | T12 | Implemented |
-| FATURA-34 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-34 | P1: Estorno do pagamento | T14, T17 | Implemented |
 | FATURA-35 | P1: Estorno do pagamento | T14 | Implemented |
 | FATURA-36 | P1: Estorno do pagamento | T14 | Implemented |
-| FATURA-37 | P1: Estorno do pagamento | T14 | Implemented |
+| FATURA-37 | P1: Estorno do pagamento | T14, T17 | Implemented |
 | FATURA-38 | P1: Estorno do pagamento | T14 | Implemented |
 | FATURA-39 | P1: Correção dos dados existentes | T16 | Implemented |
 | FATURA-40 | P1: Correção dos dados existentes | T16 | Implemented |
