@@ -372,12 +372,13 @@ T21 → T22
 
 **Done when**:
 
-- [ ] A mesma chave não se repete para o mesmo usuário; usuários diferentes podem ter a mesma chave; pagamentos sem chave convivem
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A mesma chave não se repete para o mesmo usuário; usuários diferentes podem ter a mesma chave; pagamentos sem chave convivem
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes novos; suíte 585 → 588)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(faturas): registra cada pagamento de fatura e o que ele mudou`
 
