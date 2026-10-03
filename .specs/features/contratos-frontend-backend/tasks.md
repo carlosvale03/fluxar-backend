@@ -471,13 +471,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Nenhum arquivo importa `useToast` nem `@/components/ui/toaster`
-- [ ] Salvar uma tag com erro mostra o aviso do Sonner
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Nenhum arquivo importa `useToast` nem `@/components/ui/toaster`
+- [x] Salvar uma tag com erro mostra o aviso do Sonner
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 143 → 146)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra todos os avisos pelo Sonner`
 

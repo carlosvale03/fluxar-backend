@@ -232,7 +232,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-29 | P1: Erros e avisos | T8 | Implemented |
 | CONTRATO-30 | P1: Erros e avisos | T8, T12 | In Progress |
 | CONTRATO-31 | P1: Erros e avisos | T12 | In Progress |
-| CONTRATO-32 | P1: Erros e avisos | - | Pending |
+| CONTRATO-32 | P1: Erros e avisos | T13 | Implemented |
 | CONTRATO-33 | P1: Erros e avisos | T12 | In Progress |
 | CONTRATO-34 | P1: Erros e avisos | T12 | Implemented |
 | CONTRATO-35 | P1: Erros e avisos | T12 | Implemented |
