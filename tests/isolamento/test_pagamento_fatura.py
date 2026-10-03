@@ -103,8 +103,9 @@ class PagamentoEEstornoSoComComprasDoDonoTests(DoisUsuariosTestCase):
         antes_b = self.estado(compra_b)
         saldo_b = self.saldo(self.b.conta)
 
-        # O valor cobre as duas compras: só a de A pode ser paga
-        self.pagar('150.00')
+        # O total da fatura é só a compra de A (FATURA-26 recusa valor maior); a de B,
+        # menor e da mesma data, viria antes na ordem de pagamento se entrasse
+        self.pagar('100.00')
 
         self.assertEqual(self.estado(compra_b), antes_b)
         self.assertEqual(antes_b[1:3], ('PENDING', self.b.conta.id))

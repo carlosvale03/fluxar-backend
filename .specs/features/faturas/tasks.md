@@ -399,17 +399,18 @@ T21 → T22
 
 **Done when**:
 
-- [ ] O Independent Test (R$ 700,00 de R$ 1.000,00) deixa a fatura paga com R$ 700,00 e R$ 300,00 na seguinte, cujo total sobe R$ 300,00
-- [ ] Pagamento total marca todas as compras pagas e a fatura paga
-- [ ] Compras não pagas vão para a primeira fatura não paga seguinte, criada se faltar
-- [ ] Valor maior que o total recebe 400 com a mensagem exata
-- [ ] Falha simulada no meio do pagamento deixa fatura, compras, fatura seguinte e saldo como estavam
-- [ ] `tests/saldo/test_fatura.py` continua passando
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] O Independent Test (R$ 700,00 de R$ 1.000,00) deixa a fatura paga com R$ 700,00 e R$ 300,00 na seguinte, cujo total sobe R$ 300,00
+- [x] Pagamento total marca todas as compras pagas e a fatura paga
+- [x] Compras não pagas vão para a primeira fatura não paga seguinte, criada se faltar
+- [x] Valor maior que o total recebe 400 com a mensagem exata
+- [x] Falha simulada no meio do pagamento deixa fatura, compras, fatura seguinte e saldo como estavam
+- [x] `tests/saldo/test_fatura.py` continua passando
+- [x] Full gate passa
+- [x] Test count: pelo menos 7 testes (real: 8 testes novos; suíte 588 → 596)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): paga a fatura de forma atômica e registra a divisão e a rolagem`
 

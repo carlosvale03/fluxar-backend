@@ -129,20 +129,16 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         
-        try:
-            CreditCardService.pay_invoice(
-                user=request.user,
-                invoice=invoice,
-                account=data['account_id'],
-                amount=data['amount'],
-                date=data['date']
-            )
-            return Response({'status': 'Pagamento processado com sucesso.'})
-        except ValidationError:
-            # Fatura paga por outra requisição enquanto esta esperava a trava
-            raise
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # Recusas viram 400 no service; erro inesperado sobe como 500 e o
+        # atomic desfaz tudo (FATURA-28)
+        CreditCardService.pay_invoice(
+            user=request.user,
+            invoice=invoice,
+            account=data['account_id'],
+            amount=data['amount'],
+            date=data['date']
+        )
+        return Response({'status': 'Pagamento processado com sucesso.'})
 
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):

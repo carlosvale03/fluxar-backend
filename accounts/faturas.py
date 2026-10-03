@@ -212,3 +212,121 @@ def recalcular_totais(*fatura_ids):
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         if fatura.total_amount != total:
             CreditCardInvoice.objects.filter(pk=fatura.pk).update(total_amount=total)
+
+
+# --- Pagamento e estorno ---
+
+FATURA_JA_PAGA = 'Fatura já está paga.'
+FATURA_NAO_PAGA = 'Esta fatura não está paga.'
+VALOR_MAIOR_QUE_O_TOTAL = 'O valor pago não pode ser maior que o total da fatura.'
+
+
+def _dividir(compra, pago, conta, data, seguinte):
+    """
+    Divide a compra no pagamento parcial (FATURA-23): ela fica com a parte
+    paga e "(Parcial)", e o restante, pendente, vai para a fatura `seguinte`
+    com a data da compra, na conta do cartão e no grupo da compra (a mesma
+    raiz), para que a exclusão e a FATURA-19 o tratem como parte dela.
+    Devolve o restante.
+    """
+    from transactions.models import Transaction
+
+    descricao, tags = compra.description, list(compra.tags.all())
+    restante = Transaction(
+        user_id=compra.user_id, type='CREDIT_CARD', status='PENDING',
+        account_id=compra.credit_card.account_id, credit_card_id=compra.credit_card_id,
+        amount=compra.amount - pago, purchase_date=compra.purchase_date,
+        description=f'{descricao} (Restante)', category_id=compra.category_id,
+        is_installment=compra.is_installment, installment_number=compra.installment_number,
+        installment_total=compra.installment_total,
+        parent_transaction_id=compra.parent_transaction_id or compra.pk,
+    )
+
+    compra.amount = pago
+    compra.status = 'COMPLETED'
+    compra.account = conta
+    compra.payment_date = data
+    compra.description = f'{descricao} (Parcial)'
+    compra.save()
+
+    colocar(restante, seguinte)
+    restante.tags.set(tags)
+    return restante
+
+
+def pagar(usuario, fatura, conta, valor, data):
+    """
+    Paga a fatura com `valor` saído de `conta` em `data`, tudo num `atomic`:
+    qualquer falha desfaz a operação inteira (FATURA-28).
+    - Relê a fatura sob trava: fatura paga recebe 400 (FATURA-33, SALDO-26),
+      e valor maior que o total, também (FATURA-26).
+    - As compras pendentes, em ordem de data da compra, valor e criação
+      (FATURA-22), são pagas inteiras enquanto o valor dá (FATURA-21); a
+      compra em que o valor acaba é dividida (FATURA-23), e as que não
+      cabem vão para a primeira fatura seguinte não paga, criada se faltar
+      (FATURA-24, FATURA-25).
+    - Grava o `PagamentoDeFatura` com um item por compra (AD-040).
+    Devolve o pagamento.
+    """
+    from django.db import transaction
+    from django.db.models.functions import Coalesce
+    from rest_framework.exceptions import ValidationError
+
+    from transactions.models import Transaction
+
+    from .models import CreditCardInvoice, ItemDePagamento, PagamentoDeFatura
+    from .saldo import recalcular
+
+    with transaction.atomic():
+        fatura = CreditCardInvoice.objects.select_for_update().select_related('card').get(pk=fatura.pk)
+        if fatura.status == 'PAID':
+            raise ValidationError({'detail': FATURA_JA_PAGA})
+        recalcular_totais(fatura.pk)
+        fatura.refresh_from_db(fields=['total_amount'])
+        if valor > fatura.total_amount:
+            raise ValidationError({'detail': VALOR_MAIOR_QUE_O_TOTAL})
+
+        cartao = fatura.card
+        pagamento = PagamentoDeFatura.objects.create(
+            user=usuario, fatura=fatura, conta=conta, valor=valor, data=data,
+        )
+        pendentes = Transaction.objects.filter(
+            invoice=fatura, type='CREDIT_CARD', status='PENDING',
+            user_id=cartao.user_id,  # Só compras do dono do cartão (ISOL-14)
+        ).select_related('credit_card').order_by(Coalesce('purchase_date', 'date'), 'amount', 'created_at')
+
+        resta = valor
+        seguinte = None
+        for compra in pendentes:
+            if resta > 0 and compra.amount <= resta:
+                compra.status = 'COMPLETED'
+                compra.account = conta
+                compra.payment_date = data
+                compra.save()
+                resta -= compra.amount
+                ItemDePagamento.objects.create(pagamento=pagamento, tipo=ItemDePagamento.PAGA, compra=compra)
+                continue
+
+            if seguinte is None:
+                seguinte = primeira_nao_paga(cartao, *mes_seguinte(fatura.month, fatura.year))
+            if resta > 0:
+                valor_original, descricao_original = compra.amount, compra.description
+                restante = _dividir(compra, resta, conta, data, seguinte)
+                resta = Decimal('0.00')
+                ItemDePagamento.objects.create(
+                    pagamento=pagamento, tipo=ItemDePagamento.DIVIDIDA, compra=compra,
+                    restante=restante, valor_original=valor_original,
+                    descricao_original=descricao_original,
+                )
+            else:
+                colocar(compra, seguinte)
+                ItemDePagamento.objects.create(pagamento=pagamento, tipo=ItemDePagamento.MOVIDA, compra=compra)
+
+        fatura.status = 'PAID'
+        fatura.save()
+        if seguinte is not None:
+            pagamento.fatura_seguinte = seguinte
+            pagamento.save(update_fields=['fatura_seguinte'])
+        recalcular_totais(fatura.pk, seguinte.pk if seguinte else None)
+        recalcular(conta.pk, cartao.account_id)
+    return pagamento

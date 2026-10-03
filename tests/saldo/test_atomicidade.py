@@ -108,12 +108,13 @@ class AtomicidadeTests(SaldoTestCase):
     def test_pagamento_pela_rota_que_falha_no_meio_nao_grava_nada(self):
         self.compra_pendente()
         antes = self.estado()
+        self.cliente.raise_request_exception = False
         with mock.patch.object(CreditCardInvoice, 'save', side_effect=FalhaSimulada('falha simulada')):
             resp = self.cliente.post(f'/api/invoices/{self.a.fatura.id}/pay/', {
                 'account_id': str(self.a.conta.id), 'amount': '100.00', 'date': '2026-09-20',
             }, format='json')
-        # A view responde 400 à falha; nada do que veio antes dela fica gravado
-        self.assertEqual(resp.status_code, 400)
+        # A falha inesperada sobe como 500 (FATURA-28); nada do que veio antes dela fica gravado
+        self.assertEqual(resp.status_code, 500)
         self.assertEqual(self.estado(), antes)
 
     # Estorno de fatura: falha ao reabrir a fatura, depois de mexer nas compras
