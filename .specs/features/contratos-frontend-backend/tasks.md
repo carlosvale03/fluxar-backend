@@ -351,15 +351,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] "1.500" → "1500.00"; "12,5" → "12.50"; "0.50" → "0.50"; "12.5" → "12.50"; "1.234,56" → "1234.56"
-- [ ] "-50,00" só é aceito com `negativo`
-- [ ] `formatarMoeda("1234.56")` dá "R$ 1.234,56"; aceita número e texto
-- [ ] Somar "0.10" e "0.20" em centavos dá "0.30"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 8 testes
+- [x] "1.500" → "1500.00"; "12,5" → "12.50"; "0.50" → "0.50"; "12.5" → "12.50"; "1.234,56" → "1234.56"
+- [x] "-50,00" só é aceito com `negativo`
+- [x] `formatarMoeda("1234.56")` dá "R$ 1.234,56"; aceita número e texto
+- [x] Somar "0.10" e "0.20" em centavos dá "0.30"
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 8 testes (real: 15 testes novos; suíte 101 → 116)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): centraliza leitura, conta e formatação de dinheiro`
 
