@@ -247,11 +247,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-09 | P1: Datas de fechamento e vencimento | T3 | Implemented |
 | FATURA-10 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
 | FATURA-11 | P1: Em qual fatura cai cada compra e cada parcela | T1 | Implemented |
-| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
-| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
-| FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
-| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | T2 | Implemented |
-| FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | T5 | Implemented |
+| FATURA-12 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
+| FATURA-13 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
+| FATURA-14 | P1: Em qual fatura cai cada compra e cada parcela | T6 | Implemented |
+| FATURA-15 | P1: Em qual fatura cai cada compra e cada parcela | T2, T6 | Implemented |
+| FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | T5, T6 | Implemented |
 | FATURA-17 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
 | FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |

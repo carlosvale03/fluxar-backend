@@ -1,13 +1,11 @@
 import uuid
-from decimal import Decimal
 from datetime import date
-from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
-from accounts.faturas import fatura_da_compra, obter_fatura
-from accounts.models import Account, CreditCard, CreditCardInvoice
+from accounts.faturas import alocar_parcelas, colocar, dividir_valor, obter_fatura
+from accounts.models import Account, CreditCard
 from core.fields import CONTA_NAO_ENCONTRADA
 
 MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
@@ -136,58 +134,41 @@ class TransactionService:
         ).exists():
             raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
 
+        # Uma parcela por fatura não paga, a partir da fatura da data da
+        # compra (FATURA-12, FATURA-15); a diferença do arredondamento fica na
+        # primeira (FATURA-13). Cada parcela guarda a data real da compra, e o
+        # `date` vem da fatura pelo `colocar` (FATURA-16, AD-039).
+        faturas = alocar_parcelas(card, date, installments)
+        valores = dividir_valor(amount, installments)
+        parcelado = installments > 1
+
         transactions = []
-        installment_amount = amount / Decimal(installments)
-        installment_amount = round(installment_amount, 2)
-        diff = amount - (installment_amount * installments)
-        
         parent_txn = None
-        
-        for i in range(installments):
-            # 1. Data de Compra Virtual da Parcela
-            # Simula que a compra foi feita i meses depois, para cair na fatura correta
-            purchase_date_virtual = date + relativedelta(months=i)
-            
-            # 2. Fatura da parcela, pela regra única de accounts/faturas.py
-            invoice = obter_fatura(card, *fatura_da_compra(card, purchase_date_virtual))
-            due_date = invoice.due_date
-            
-            val = installment_amount
-            if i == 0:
-                val += diff
-            
-            # Descrição
-            desc = description
-            if installments > 1:
-                desc = f"{description} ({i+1}/{installments})"
-            
-            t = Transaction.objects.create(
+        for i, (fatura, val) in enumerate(zip(faturas, valores)):
+            desc = f"{description} ({i+1}/{installments})" if parcelado else description
+            t = Transaction(
                 user=user,
                 type='CREDIT_CARD',
-                status='PENDING', # Refatoração: Status PENDING até pagar fatura
-                account=card.account, # Refatoração: Vincula à conta do cartão (Contábil)
+                status='PENDING', # Pendente até o pagamento da fatura
+                account=card.account, # Conta de pagamento do cartão
                 credit_card=card,
-                invoice=invoice,
                 amount=val,
-                date=due_date, # Data efetiva da despesa na fatura
+                purchase_date=date,
                 description=desc,
                 category=category,
-                is_installment=(installments > 1),
-                installment_number=(i + 1) if installments > 1 else None,
-                installment_total=installments if installments > 1 else None,
-                parent_transaction=parent_txn
+                is_installment=parcelado,
+                installment_number=(i + 1) if parcelado else None,
+                installment_total=installments if parcelado else None,
+                parent_transaction=parent_txn,
             )
-            
+            colocar(t, fatura)
+
             if tags:
                 t.tags.set(tags)
-            
-            if i == 0 and installments > 1:
+            if i == 0 and parcelado:
                 parent_txn = t
-                t.parent_transaction = None 
-                t.save()
-                
             transactions.append(t)
-            
+
         return transactions
 
     @staticmethod

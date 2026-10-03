@@ -359,8 +359,9 @@ class TransferSerializer(serializers.Serializer):
 
 
 class CreditCardExpenseSerializer(serializers.Serializer):
+    # Cartão excluído não recebe compra nova
     credit_card = OwnedPrimaryKeyRelatedField(
-        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+        queryset=CreditCard.objects.filter(is_active=True), not_found_message=CARTAO_NAO_ENCONTRADO,
     )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()

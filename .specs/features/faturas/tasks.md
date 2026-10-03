@@ -252,15 +252,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] O cenário do Independent Test (R$ 100,00 em 4x em 30/01/2026) cria uma parcela por fatura, de março a junho, todas com `purchase_date` 30/01/2026 e `date` igual ao vencimento da fatura
-- [ ] Compra em 12x com fechamento nos dias 29, 30 e 31 não repete fatura nem pula mês
-- [ ] Compra com uma fatura do caminho já paga pula para a seguinte
-- [ ] Cartão excluído recebe 400 "Cartão não encontrado."; cartão sem conta de pagamento continua aceito
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] O cenário do Independent Test (R$ 100,00 em 4x em 30/01/2026) cria uma parcela por fatura, de março a junho, todas com `purchase_date` 30/01/2026 e `date` igual ao vencimento da fatura
+- [x] Compra em 12x com fechamento nos dias 29, 30 e 31 não repete fatura nem pula mês
+- [x] Compra com uma fatura do caminho já paga pula para a seguinte
+- [x] Cartão excluído recebe 400 "Cartão não encontrado."; cartão sem conta de pagamento continua aceito
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 6 testes novos; suíte 565 → 571)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): coloca cada parcela na fatura certa e guarda a data da compra`
 
