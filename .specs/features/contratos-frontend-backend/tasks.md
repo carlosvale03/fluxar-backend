@@ -165,17 +165,18 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Filtrar por "Alimentação" (pai de "Restaurante" e "Mercado") e "Transporte" devolve as transações das quatro, cada uma uma vez
-- [ ] Categoria-pai sem subcategorias traz só as dela; pai e filha juntos não repetem transação
-- [ ] `type=EXPENSE` inclui as compras no cartão na lista e na exportação, com o mesmo conjunto de linhas
-- [ ] `is_recurring=true` devolve só transações de série; `transfer_id` devolve as duas pernas
-- [ ] `startDate=2026-09-01T03:00:00Z` responde 400 no campo `startDate`; `2026-09-30` como fim não inclui 1º de outubro
-- [ ] Categoria de outro usuário no filtro não traz nada dele (ISOL)
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 9 testes
+- [x] Filtrar por "Alimentação" (pai de "Restaurante" e "Mercado") e "Transporte" devolve as transações das quatro, cada uma uma vez
+- [x] Categoria-pai sem subcategorias traz só as dela; pai e filha juntos não repetem transação
+- [x] `type=EXPENSE` inclui as compras no cartão na lista e na exportação, com o mesmo conjunto de linhas
+- [x] `is_recurring=true` devolve só transações de série; `transfer_id` devolve as duas pernas
+- [x] `startDate=2026-09-01T03:00:00Z` responde 400 no campo `startDate`; `2026-09-30` como fim não inclui 1º de outubro
+- [x] Categoria de outro usuário no filtro não traz nada dele (ISOL)
+- [x] Full gate passa
+- [x] Test count: pelo menos 9 testes (real: 12 testes novos; suíte 653 → 665)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): aplica o mesmo filtro na lista e na exportação, com várias categorias`
 

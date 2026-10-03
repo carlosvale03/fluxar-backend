@@ -8,6 +8,7 @@ from .serializers import (
     TransferSerializer, CreditCardExpenseSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
+from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
@@ -104,53 +105,9 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
-        # Filtros de Query Params
-        account_id = self.request.query_params.get('accountId')
-        card_id = self.request.query_params.get('credit_card')
-        month = self.request.query_params.get('month')
-        year = self.request.query_params.get('year')
-        invoice_id = self.request.query_params.get('invoice')
-        
-        start_date = self.request.query_params.get('startDate')
-        end_date = self.request.query_params.get('endDate')
-        transaction_type = self.request.query_params.get('type')
-        category_id = self.request.query_params.get('categoryId')
-        search = self.request.query_params.get('search')
-        
-        if account_id and account_id != 'ALL':
-            queryset = queryset.filter(account_id=account_id)
-        if card_id:
-            queryset = queryset.filter(credit_card_id=card_id)
-        if invoice_id:
-            queryset = queryset.filter(invoice_id=invoice_id)
-        if month and year:
-            queryset = queryset.filter(date__month=month, date__year=year)
-            
-        if start_date:
-            queryset = queryset.filter(date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(date__lte=end_date)
-            
-        if transaction_type and transaction_type != 'ALL':
-            if transaction_type == 'EXPENSE':
-                queryset = queryset.filter(type__in=['EXPENSE', 'CREDIT_CARD', 'CREDIT_CARD_EXPENSE', 'INVOICE_PAYMENT'])
-            elif transaction_type == 'TRANSFER':
-                queryset = queryset.filter(type__in=['TRANSFER', 'TRANSFER_OUT', 'TRANSFER_IN'])
-            else:
-                queryset = queryset.filter(type=transaction_type)
-                
-        if category_id and category_id != 'ALL':
-            queryset = queryset.filter(category_id=category_id)
-            
-        if search:
-            queryset = queryset.filter(description__icontains=search)
-            
-        # Filtro por Tags (Etiquetas)
-        tag_ids = self.request.query_params.getlist('tagIds')
-        if tag_ids:
-            queryset = queryset.filter(tags__id__in=tag_ids).distinct()
-            
+        # O mesmo filtro da exportação (CONTRATO-13), só na lista
+        if self.action == 'list':
+            queryset = filtrar_transacoes(queryset, self.request.query_params, self.request.user)
         return queryset.order_by('-date', '-created_at')
 
     def update(self, request, *args, **kwargs):

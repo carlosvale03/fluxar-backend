@@ -8,6 +8,7 @@ from accounts.faturas import fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
 from .models import FocusedMonitorItem
+from transactions.filtros import TIPOS_DE_DESPESA
 from transactions.models import Transaction, Category, Tag
 from budgets.models import Budget
 from budgets.services import BudgetService
@@ -94,7 +95,7 @@ class ReportService:
         
         if period_days:
             # Filtro por range de data direto
-            expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD'], date__gte=start_date, date__lte=end_date)
+            expense_q = Q(type__in=TIPOS_DE_DESPESA, date__gte=start_date, date__lte=end_date)
             income_base_q = Q(type='INCOME', date__gte=start_date, date__lte=end_date)
             # Para range livre, ignoramos a regra de 'mês da fatura' para cartões para ser mais intuitivo
         else:
@@ -348,7 +349,7 @@ class ReportService:
             
             if item['type'] == 'INCOME':
                 raw_days[d_str]['income'] += item['total']
-            elif item['type'] in ['EXPENSE', 'CREDIT_CARD']:
+            elif item['type'] in TIPOS_DE_DESPESA:
                 raw_days[d_str]['expense'] += item['total']
         
         # 2. Transformar em formato esperado pelo Frontend
@@ -391,7 +392,7 @@ class ReportService:
         expense_q = Q(date__gte=start_date, date__lte=end_date)
         expense_q &= ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN'])
         # Inclui Despesas e Cartão de Crédito
-        expense_q &= Q(type__in=['EXPENSE', 'CREDIT_CARD'])
+        expense_q &= Q(type__in=TIPOS_DE_DESPESA)
         
         # 2. Barras (Receita vs Despesa) - SEMPRE DIÁRIO conforme pedido do usuário
         # Agrupamento diário padrão (via get_calendar_data) para manter o Fluxo de Caixa Diário detalhado
@@ -475,7 +476,7 @@ class ReportService:
         daily_diffs = {}
         for t in transactions:
             d = t.date
-            if t.type in ['EXPENSE', 'CREDIT_CARD']:
+            if t.type in TIPOS_DE_DESPESA:
                  daily_diffs[d] = daily_diffs.get(d, 0) + t.amount
             elif t.type == 'INCOME':
                  daily_diffs[d] = daily_diffs.get(d, 0) - t.amount
@@ -494,7 +495,7 @@ class ReportService:
         # Extraímos dia da semana (1=Dom, 2=Seg...) e hora do created_at
         frequency_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD'],
+            type__in=TIPOS_DE_DESPESA,
             date__gt=start_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -677,7 +678,7 @@ class ReportService:
         six_months_ago = end_date - timedelta(days=180)
         # Query de meses com gasto (agrupado por mês)
         month_totals = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=six_months_ago, date__lte=end_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -688,7 +689,7 @@ class ReportService:
         
         # Média por transação (para definir o que é "grande")
         avg_txn = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD']
+            user=user, type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(Avg('amount'))['amount__avg'] or Decimal('0.00')
@@ -716,7 +717,7 @@ class ReportService:
         # C. Detecção de Padrões (Recorrência de 3 meses / Janela 5 dias)
         three_months_ago = end_date - timedelta(days=90)
         history = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=three_months_ago, date__lte=end_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -832,7 +833,7 @@ class ReportService:
 
         fixed_expenses_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).filter(period_filter).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).filter(fixed_q)
@@ -841,7 +842,7 @@ class ReportService:
 
         total_period_exp = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).filter(period_filter).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -853,12 +854,12 @@ class ReportService:
             hist_start = end_date - timedelta(days=lookback_days)
             
             hist_fixed = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gte=hist_start, date__lte=end_date
             ).filter(fixed_q).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             hist_total = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gte=hist_start, date__lte=end_date
             ).exclude(
                 type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -887,7 +888,7 @@ class ReportService:
         # 9. Análise de Risco (Perfil de Volatilidade)
         # Buscamos os gastos dos últimos 6 meses para calcular desvio padrão
         six_months_data = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=end_date - timedelta(days=180)
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -915,7 +916,7 @@ class ReportService:
             
             # Detecção de Sazonalidade (Categoriacom maior desvio)
             cat_variance = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gt=end_date - timedelta(days=180)
             ).exclude(
                 type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -935,7 +936,7 @@ class ReportService:
         # Buscamos a data da primeira transação de gasto para ajustar o período de média se necessário
         first_txn_date = Transaction.objects.filter(
             user=user, 
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(models.Min('date'))['date__min']
@@ -959,7 +960,7 @@ class ReportService:
             user=user,
             date__gte=start_date,
             date__lte=end_date,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).annotate(weekday=ExtractWeekDay('date')).values('weekday').annotate(total=Sum('amount')).order_by('weekday')
@@ -1051,7 +1052,7 @@ class ReportService:
         # 2. Agregação de Despesas
         expense_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD'],
+            type__in=TIPOS_DE_DESPESA,
             date__gte=start_date,
             date__lte=target_end
         ).exclude(
@@ -1125,7 +1126,7 @@ class ReportService:
         # Despesas (Inclui Credit Card)
         expense_txs = Transaction.objects.filter(
             user=user, 
-            type__in=['EXPENSE', 'CREDIT_CARD'], 
+            type__in=TIPOS_DE_DESPESA, 
             date__gte=start_date, 
             date__lte=today
         )
@@ -1223,7 +1224,7 @@ class ReportService:
             # Ganhos e Gastos mensais para o LineChart
             m_data = base_qs.filter(date__year=curr.year, date__month=curr.month).aggregate(
                 income=Sum(Case(When(type='INCOME', then=F('amount')), default=0, output_field=models.DecimalField())),
-                expense=Sum(Case(When(type__in=['EXPENSE', 'CREDIT_CARD'], then=F('amount')), default=0, output_field=models.DecimalField()))
+                expense=Sum(Case(When(type__in=TIPOS_DE_DESPESA, then=F('amount')), default=0, output_field=models.DecimalField()))
             )
             
             history_chart.append({
@@ -1263,7 +1264,7 @@ class ReportService:
         base_transactions = Transaction.objects.filter(user=user, date__gte=start_date, date__lte=end_date)
         
         # 1. Gastos (Despesa + Cartão)
-        expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD']) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
+        expense_q = Q(type__in=TIPOS_DE_DESPESA) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
         expenses = base_transactions.filter(expense_q)
         
         # Sem tags (tag de outro usuário conta como ausente, ISOL-15)

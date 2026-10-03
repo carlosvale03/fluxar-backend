@@ -2,8 +2,8 @@ import json
 from rest_framework import views, status, permissions, parsers
 from rest_framework.response import Response
 from django.http import HttpResponse
-from django.utils.dateparse import parse_datetime
 from accounts.models import Account
+from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
 from .services import ImportService, ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
@@ -120,41 +120,10 @@ class ExportTransactionsPDFView(ParametrosConhecidosMixin, views.APIView):
     parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
-        qs = Transaction.objects.filter(user=request.user)
-        
-        # Extração de parâmetros da query string
-        account_id = request.query_params.get('accountId')
-        category_id = request.query_params.get('categoryId')
-        type_ = request.query_params.get('type')
-        start_date_str = request.query_params.get('startDate')
-        end_date_str = request.query_params.get('endDate')
-        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
-        tags_str = request.query_params.get('tagIds')
-
-        if account_id and account_id != 'ALL': 
-            qs = qs.filter(account_id=account_id)
-        
-        if category_id and category_id != 'ALL':
-            qs = qs.filter(category_id=category_id)
-
-        if type_ and type_ != 'ALL':
-            qs = qs.filter(type=type_)
-
-        if start_date_str:
-            dt = parse_datetime(start_date_str)
-            if dt: qs = qs.filter(date__gte=dt.date())
-
-        if end_date_str:
-            dt = parse_datetime(end_date_str)
-            if dt: qs = qs.filter(date__lte=dt.date())
-
-        if tag_ids:
-            qs = qs.filter(tags__id__in=tag_ids).distinct()
-        elif tags_str:
-            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
-            if ids:
-                qs = qs.filter(tags__id__in=ids).distinct()
-        
+        # O mesmo filtro da lista de transações (CONTRATO-13)
+        qs = filtrar_transacoes(
+            Transaction.objects.filter(user=request.user), request.query_params, request.user,
+        )
         qs = qs.order_by('date')
         
         buffer = ExportService.generate_pdf(qs, request.user)
@@ -168,41 +137,10 @@ class ExportTransactionsXLSView(ParametrosConhecidosMixin, views.APIView):
     parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
-        qs = Transaction.objects.filter(user=request.user)
-        
-        # Extração de parâmetros da query string
-        account_id = request.query_params.get('accountId')
-        category_id = request.query_params.get('categoryId')
-        type_ = request.query_params.get('type')
-        start_date_str = request.query_params.get('startDate')
-        end_date_str = request.query_params.get('endDate')
-        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
-        tags_str = request.query_params.get('tagIds')
-
-        if account_id and account_id != 'ALL': 
-            qs = qs.filter(account_id=account_id)
-        
-        if category_id and category_id != 'ALL':
-            qs = qs.filter(category_id=category_id)
-
-        if type_ and type_ != 'ALL':
-            qs = qs.filter(type=type_)
-
-        if start_date_str:
-            dt = parse_datetime(start_date_str)
-            if dt: qs = qs.filter(date__gte=dt.date())
-
-        if end_date_str:
-            dt = parse_datetime(end_date_str)
-            if dt: qs = qs.filter(date__lte=dt.date())
-
-        if tag_ids:
-            qs = qs.filter(tags__id__in=tag_ids).distinct()
-        elif tags_str:
-            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
-            if ids:
-                qs = qs.filter(tags__id__in=ids).distinct()
-        
+        # O mesmo filtro da lista de transações (CONTRATO-13)
+        qs = filtrar_transacoes(
+            Transaction.objects.filter(user=request.user), request.query_params, request.user,
+        )
         qs = qs.order_by('date')
         
         buffer = ExportService.generate_xls(qs)
