@@ -8,7 +8,7 @@ from .serializers import (
     TransferSerializer, CreditCardExpenseSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
-from .services import TransactionService
+from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
 from core.mixins import UserQuerySetMixin
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account
@@ -152,9 +152,27 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if _envolve_conta_excluida([self.get_object()]):
+        transacao = self.get_object()
+        if transacao.type == 'CREDIT_CARD':
+            return self._excluir_compra(transacao)
+        if _envolve_conta_excluida([transacao]):
             return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
         return super().destroy(request, *args, **kwargs)
+
+    def _excluir_compra(self, parcela):
+        """
+        Excluir uma parcela exclui a compra inteira, com todas as parcelas
+        (FATURA-20). Se alguma parte está numa fatura paga (FATURA-19) ou numa
+        conta excluída (SALDO-36), nada sai. Os totais das faturas seguem os
+        signals (FATURA-18).
+        """
+        grupo = list(grupo_da_compra(parcela))
+        if em_fatura_paga(grupo):
+            return Response({'detail': COMPRA_EM_FATURA_PAGA}, status=status.HTTP_400_BAD_REQUEST)
+        if _envolve_conta_excluida(grupo):
+            return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
+        Transaction.objects.filter(pk__in=[p.pk for p in grupo]).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['post'])
     def transfer(self, request):

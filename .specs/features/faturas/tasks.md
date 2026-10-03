@@ -341,14 +341,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Excluir a parcela 5/12 exclui as 12, e os totais das 12 faturas caem
-- [ ] Excluir a 1/12 também exclui as 12
-- [ ] Compra com parcela em fatura paga recebe 400 com a mensagem da FATURA-19 e nada sai
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Excluir a parcela 5/12 exclui as 12, e os totais das 12 faturas caem
+- [x] Excluir a 1/12 também exclui as 12
+- [x] Compra com parcela em fatura paga recebe 400 com a mensagem da FATURA-19 e nada sai
+- [x] Build gate passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 582 → 585)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): exclui a compra inteira ao excluir uma parcela`
 

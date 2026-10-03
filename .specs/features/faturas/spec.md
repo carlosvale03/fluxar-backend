@@ -254,8 +254,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | FATURA-16 | P1: Em qual fatura cai cada compra e cada parcela | T5, T6 | Implemented |
 | FATURA-17 | P1: Em qual fatura cai cada compra e cada parcela | T8 | Implemented |
 | FATURA-18 | P1: Em qual fatura cai cada compra e cada parcela | T7 | Implemented |
-| FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | T8 | Implemented |
-| FATURA-20 | P1: Em qual fatura cai cada compra e cada parcela | - | Pending |
+| FATURA-19 | P1: Em qual fatura cai cada compra e cada parcela | T8, T9 | Implemented |
+| FATURA-20 | P1: Em qual fatura cai cada compra e cada parcela | T9 | Implemented |
 | FATURA-21 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-22 | P1: Pagamento total e parcial | - | Pending |
 | FATURA-23 | P1: Pagamento total e parcial | - | Pending |
