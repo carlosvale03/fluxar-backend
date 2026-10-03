@@ -306,6 +306,22 @@
 - **Date**: 2026-10-01
 - **Status**: active
 
+### AD-039
+- **Decision**: A compra no cartão guarda a data real em `purchase_date`; o `date` dela é sempre o vencimento da fatura em que está, e toda mudança de fatura passa por `accounts/faturas.py` (`colocar`), que grava os dois campos juntos. Compras antigas ficam com `purchase_date` nulo e a interface mostra o `date`.
+- **Reason**: a compra gravava o vencimento no lugar da data (FIN-15); trocar o significado de `date` mudaria a lista de transações, o filtro por mês e os relatórios.
+- **Trade-off**: dois campos de data na compra no cartão.
+- **Scope**: faturas, transações, relatorios e importacao.
+- **Date**: 2026-10-02
+- **Status**: active
+
+### AD-040
+- **Decision**: Cada pagamento de fatura gera um `PagamentoDeFatura` com os itens que ele mudou (compra paga, dividida ou movida), a chave de idempotência e a fatura seguinte. O estorno desfaz exatamente esses itens, e a repetição da mesma chave responde a partir desse registro, que nunca é apagado.
+- **Reason**: o estorno não conseguia desfazer a divisão nem a rolagem (FIN-02), e AD-007 exige guardar o resultado de cada tentativa.
+- **Trade-off**: duas tabelas novas; pagamentos anteriores à feature não têm registro e são estornados pelo caminho antigo.
+- **Scope**: faturas, saldo e o frontend.
+- **Date**: 2026-10-02
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `saldo` concluída, nos dois repositórios
