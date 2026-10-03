@@ -619,14 +619,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Nenhuma definição local de `formatCurrency` ou `Intl.NumberFormat` de moeda fora de `src/lib/dinheiro.ts`
-- [ ] O eixo de um gráfico com 800 mostra "R$ 800,00"
-- [ ] Nenhuma soma de dois valores da API concatena texto (teste do dashboard com valores em texto)
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Nenhuma definição local de `formatCurrency` ou `Intl.NumberFormat` de moeda fora de `src/lib/dinheiro.ts`
+- [x] O eixo de um gráfico com 800 mostra "R$ 800,00"
+- [x] Nenhuma soma de dois valores da API concatena texto (teste do dashboard com valores em texto)
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 163 → 166)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `refactor(frontend): formata todo valor em reais num formatador único`
 
