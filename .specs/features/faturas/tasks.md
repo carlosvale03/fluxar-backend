@@ -642,15 +642,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Um envio que falha por timeout e é reenviado manda a mesma chave nas duas vezes
-- [ ] Fechar e abrir o diálogo gera chave nova
-- [ ] A conta de pagamento do cartão vem preenchida ao abrir pela fatura
-- [ ] A mensagem 400 do backend aparece no toast
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Um envio que falha por timeout e é reenviado manda a mesma chave nas duas vezes
+- [x] Fechar e abrir o diálogo gera chave nova
+- [x] A conta de pagamento do cartão vem preenchida ao abrir pela fatura
+- [x] A mensagem 400 do backend aparece no toast
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte do frontend 88 → 92)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): reenvia o pagamento da fatura com o mesmo identificador`
 
