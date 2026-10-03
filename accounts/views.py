@@ -1,6 +1,6 @@
+from django.db.models.functions import Coalesce
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from .models import Account, CreditCard, CreditCardInvoice
@@ -8,12 +8,14 @@ from .serializers import (
     AccountSerializer, CreditCardSerializer, 
     CreditCardInvoiceSerializer, InvoicePaymentSerializer
 )
-from .services import FATURA_JA_PAGA, AccountService, CreditCardService
+from .faturas import resposta_do_pagamento
+from .services import AccountService, CreditCardService
 from core.datas import hoje
 from core.fields import CONTA_NAO_ENCONTRADA
 from core.mixins import UserQuerySetMixin
 from core.valores import ler_saldo
 from transactions.models import Transaction
+from transactions.serializers import TransactionSerializer
 
 # Exclusão de conta (SALDO-32, SALDO-33, AD-003)
 SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o valor restante.'
@@ -104,16 +106,15 @@ class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         serializer = CreditCardInvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 
-class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Listagem e Ações em Faturas.
-    Nota: A listagem geral pode ser filtrada, ou usamos a sub-rota no CreditCardViewSet.
-    Aqui servirá principalmente para actions como 'pay'.
+    Leitura das faturas e as ações `pay`, `unpay` e `transactions`. A fatura
+    só nasce e muda pelas compras e pelos pagamentos: criar, editar ou
+    excluir pela API recebe 405 (FATURA-45).
     """
     queryset = CreditCardInvoice.objects.all()
     serializer_class = CreditCardInvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'post', 'head', 'options'] # Não permitir delete/put arbitrário por enquanto
 
     def get_queryset(self):
         # Garante que só vê faturas dos seus cartões
@@ -121,37 +122,44 @@ class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def pay(self, request, pk=None):
+        # A fatura paga é recusada dentro do service, sob trava, depois de
+        # conferir a chave: a repetição da mesma tentativa recebe a resposta
+        # original (FATURA-30, FATURA-33)
         invoice = self.get_object()
-        if invoice.status == 'PAID':
-            return Response({'detail': FATURA_JA_PAGA}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = InvoicePaymentSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         
-        try:
-            CreditCardService.pay_invoice(
-                user=request.user,
-                invoice=invoice,
-                account=data['account_id'],
-                amount=data['amount'],
-                date=data['date']
-            )
-            return Response({'status': 'Pagamento processado com sucesso.'})
-        except ValidationError:
-            # Fatura paga por outra requisição enquanto esta esperava a trava
-            raise
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # Recusas viram 400 no service; erro inesperado sobe como 500 e o
+        # atomic desfaz tudo (FATURA-28)
+        pagamento = CreditCardService.pay_invoice(
+            user=request.user,
+            invoice=invoice,
+            account=data['account_id'],
+            amount=data['amount'],
+            date=data['date'],
+            chave=data.get('idempotency_key'),
+        )
+        return Response(resposta_do_pagamento(pagamento))
+
+    @action(detail=True, methods=['get'])
+    def transactions(self, request, pk=None):
+        """
+        Todas as compras da fatura, sem paginação, em ordem de data da compra
+        (FATURA-44); só as do dono do cartão (ISOL-14).
+        """
+        invoice = self.get_object()
+        compras = Transaction.objects.filter(
+            invoice=invoice, type='CREDIT_CARD', user_id=invoice.card.user_id,
+        ).select_related('account', 'category').prefetch_related('tags').order_by(
+            Coalesce('purchase_date', 'date'), 'created_at',
+        )
+        return Response(TransactionSerializer(compras, many=True, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
     def unpay(self, request, pk=None):
         invoice = self.get_object()
-        # Fatura não paga recebe 400 do service, sob trava (SALDO-27)
-        try:
-            CreditCardService.unpay_invoice(request.user, invoice)
-            return Response({'status': 'Pagamento estornado. Fatura reaberta.'})
-        except ValidationError:
-            raise
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # Recusas viram 400 no service, sob trava (SALDO-27, FATURA-38); erro
+        # inesperado sobe como 500 e o atomic desfaz tudo (FATURA-28)
+        CreditCardService.unpay_invoice(request.user, invoice)
+        return Response({'status': 'Pagamento estornado. Fatura reaberta.'})

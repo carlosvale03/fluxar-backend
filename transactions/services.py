@@ -1,16 +1,33 @@
 import uuid
-from decimal import Decimal
 from datetime import date
-from dateutil.relativedelta import relativedelta
 from django.db import transaction
+from django.db.models import F, Q
 from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
-from accounts.models import Account, CreditCard, CreditCardInvoice
-from accounts.services import CreditCardService
+from accounts.faturas import alocar_parcelas, colocar, dividir_valor, obter_fatura
+from accounts.models import Account, CreditCard
 from core.fields import CONTA_NAO_ENCONTRADA
 
 MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
+COMPRA_EM_FATURA_PAGA = 'Estorne o pagamento da fatura antes de alterar esta compra.'
+
+
+def grupo_da_compra(parcela):
+    """
+    A compra inteira de uma parcela: a parcela raiz (`parent_transaction`
+    nulo) e as que apontam para ela, só do dono da parcela (ISOL-14), em
+    ordem de parcela.
+    """
+    raiz = parcela.parent_transaction_id or parcela.pk
+    return Transaction.objects.filter(
+        Q(pk=raiz) | Q(parent_transaction_id=raiz), user_id=parcela.user_id,
+    ).select_related('invoice').order_by(F('installment_number').asc(nulls_first=True), 'created_at')
+
+
+def em_fatura_paga(parcelas):
+    """Se alguma das parcelas está numa fatura paga."""
+    return any(p.invoice_id and p.invoice.status == 'PAID' for p in parcelas)
 
 class TransactionService:
     @staticmethod
@@ -76,6 +93,67 @@ class TransactionService:
 
     @staticmethod
     @transaction.atomic
+    def editar_compra(parcela, dados, escopo='SINGLE'):
+        """
+        Edita uma parcela de compra no cartão.
+        - Parcela em fatura paga não muda (FATURA-19).
+        - O `date` enviado é ignorado: ele vem da fatura (AD-039).
+        - Data da compra ou cartão diferente vale para a compra inteira: todas
+          as parcelas recebem a data e o cartão novos e são realocadas
+          (FATURA-17); recusado se alguma parte está em fatura paga. A data
+          atual é `purchase_date or date`, para que uma compra antiga salva
+          com a data carregada não mude.
+        - Valor e categoria seguem o escopo (`SINGLE` ou `ALL_FUTURE`); os
+          demais campos valem só para a parcela editada.
+        """
+        dados = dict(dados)
+        dados.pop('date', None)
+        dados.pop('type', None)
+        nova_data = dados.pop('purchase_date', None)
+        novo_cartao = dados.pop('credit_card', None)
+
+        grupo = list(grupo_da_compra(parcela))
+        if em_fatura_paga([p for p in grupo if p.pk == parcela.pk]):
+            raise ValidationError({'detail': COMPRA_EM_FATURA_PAGA})
+
+        data_atual = parcela.purchase_date or parcela.date
+        muda_data = nova_data is not None and nova_data != data_atual
+        muda_cartao = novo_cartao is not None and novo_cartao.pk != parcela.credit_card_id
+        if muda_data or muda_cartao:
+            if em_fatura_paga(grupo):
+                raise ValidationError({'detail': COMPRA_EM_FATURA_PAGA})
+            cartao = novo_cartao if muda_cartao else parcela.credit_card
+            data = nova_data if muda_data else (grupo[0].purchase_date or grupo[0].date)
+            for p, fatura in zip(grupo, alocar_parcelas(cartao, data, len(grupo))):
+                alvo = parcela if p.pk == parcela.pk else p
+                alvo.purchase_date = data
+                if muda_cartao:
+                    alvo.credit_card = cartao
+                    alvo.account = cartao.account
+                colocar(alvo, fatura)
+
+        if escopo == 'ALL_FUTURE' and parcela.is_installment:
+            futuras = [
+                p for p in grupo
+                if p.pk != parcela.pk and p.installment_number is not None
+                and p.installment_number > parcela.installment_number
+            ]
+            if em_fatura_paga(futuras):
+                raise ValidationError({'detail': COMPRA_EM_FATURA_PAGA})
+            for p in futuras:
+                # Descrição não propaga, para manter o n/total
+                for campo in ('amount', 'category'):
+                    if campo in dados:
+                        setattr(p, campo, dados[campo])
+                p.save()
+
+        for campo, valor in dados.items():
+            setattr(parcela, campo, valor)
+        parcela.save()
+        return parcela
+
+    @staticmethod
+    @transaction.atomic
     def editar_transferencia(perna, dados, user):
         """
         Edita uma perna de transferência e mantém a outra igual (SALDO-13 a
@@ -136,100 +214,52 @@ class TransactionService:
         ).exists():
             raise ValidationError({'detail': CONTA_NAO_ENCONTRADA})
 
+        # Uma parcela por fatura não paga, a partir da fatura da data da
+        # compra (FATURA-12, FATURA-15); a diferença do arredondamento fica na
+        # primeira (FATURA-13). Cada parcela guarda a data real da compra, e o
+        # `date` é o vencimento da fatura, gravado junto com ela como no
+        # `colocar` (FATURA-16, AD-039).
+        faturas = alocar_parcelas(card, date, installments)
+        valores = dividir_valor(amount, installments)
+        parcelado = installments > 1
+
         transactions = []
-        installment_amount = amount / Decimal(installments)
-        installment_amount = round(installment_amount, 2)
-        diff = amount - (installment_amount * installments)
-        
         parent_txn = None
-        
-        for i in range(installments):
-            # 1. Data de Compra Virtual da Parcela
-            # Simula que a compra foi feita i meses depois, para cair na fatura correta
-            purchase_date_virtual = date + relativedelta(months=i)
-            
-            # 2. Vencimento da Fatura (Competência)
-            due_date = CreditCardService.calculate_due_date(card, purchase_date_virtual)
-            
-            val = installment_amount
-            if i == 0:
-                val += diff
-            
-            # Buscar ou Criar Fatura
-            invoice = TransactionService._get_or_create_invoice(card, due_date.month, due_date.year)
-            
-            # Descrição
-            desc = description
-            if installments > 1:
-                desc = f"{description} ({i+1}/{installments})"
-            
+        for i, (fatura, val) in enumerate(zip(faturas, valores)):
+            desc = f"{description} ({i+1}/{installments})" if parcelado else description
             t = Transaction.objects.create(
                 user=user,
                 type='CREDIT_CARD',
-                status='PENDING', # Refatoração: Status PENDING até pagar fatura
-                account=card.account, # Refatoração: Vincula à conta do cartão (Contábil)
+                status='PENDING', # Pendente até o pagamento da fatura
+                account=card.account, # Conta de pagamento do cartão
                 credit_card=card,
-                invoice=invoice,
+                invoice=fatura,
+                date=fatura.due_date,
                 amount=val,
-                date=due_date, # Data efetiva da despesa na fatura
+                purchase_date=date,
                 description=desc,
                 category=category,
-                is_installment=(installments > 1),
-                installment_number=(i + 1) if installments > 1 else None,
-                installment_total=installments if installments > 1 else None,
-                parent_transaction=parent_txn
+                is_installment=parcelado,
+                installment_number=(i + 1) if parcelado else None,
+                installment_total=installments if parcelado else None,
+                parent_transaction=parent_txn,
             )
-            
+
             if tags:
                 t.tags.set(tags)
-            
-            if i == 0 and installments > 1:
+            if i == 0 and parcelado:
                 parent_txn = t
-                t.parent_transaction = None 
-                t.save()
-                
             transactions.append(t)
-            
+
         return transactions
 
     @staticmethod
     def _get_or_create_invoice(card, month, year):
-        # O 'month' e 'year' aqui referem-se à competência do VENCIMENTO da fatura.
-        
-        # Calcula a data de vencimento real
-        try:
-            d_date = date(year, month, card.due_day)
-        except ValueError:
-            # Fallback para o último dia do mês se o dia não existir (ex: 31 de fevereiro)
-            import calendar
-            last_day = calendar.monthrange(year, month)[1]
-            d_date = date(year, month, last_day)
-
-        # O fechamento ocorre no mês anterior ao vencimento se due_day <= closing_day
-        if card.due_day <= card.closing_day:
-            closing_ref = d_date - relativedelta(months=1)
-        else:
-            closing_ref = d_date
-            
-        try:
-            c_date = date(closing_ref.year, closing_ref.month, card.closing_day)
-        except ValueError:
-            import calendar
-            last_day = calendar.monthrange(closing_ref.year, closing_ref.month)[1]
-            c_date = date(closing_ref.year, closing_ref.month, last_day)
-
-        # Log para depuração (pode ser removido após validação)
-        print(f"[INVOICE] Card: {card.name}, Target: {month}/{year} -> Closes: {c_date}, Due: {d_date}")
-
-        invoice, created = CreditCardInvoice.objects.get_or_create(
-            card=card, month=month, year=year,
-            defaults={
-                'closing_date': c_date,
-                'due_date': d_date,
-                'status': 'OPEN'
-            }
-        )
-        return invoice
+        """
+        A fatura do cartão que vence em `month`/`year`, pela regra única de
+        `accounts/faturas.py` (FATURA-01 a FATURA-04, FATURA-07).
+        """
+        return obter_fatura(card, month, year)
 
 class CategoryService:
     # Definição simples de limites (em futuro mover para tabela de Planos)

@@ -85,3 +85,61 @@ class CreditCardInvoice(models.Model):
 
     def __str__(self):
         return f"Fatura {self.month}/{self.year} - {self.card.name}"
+
+
+class PagamentoDeFatura(models.Model):
+    """
+    Registro de um pagamento de fatura (AD-040): a chave de idempotência, o
+    que foi pago e a fatura que recebeu o restante ou as compras movidas.
+    O estorno desfaz os itens dele, e a repetição da mesma chave responde a
+    partir dele (FATURA-27, FATURA-30). Nunca é apagado.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pagamentos_de_fatura')
+    fatura = models.ForeignKey(CreditCardInvoice, on_delete=models.CASCADE, related_name='pagamentos')
+    conta = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='+')
+    valor = models.DecimalField(max_digits=15, decimal_places=2)
+    data = models.DateField()
+    # idempotency_key enviado pela interface; sem chave, cada pedido é uma tentativa nova
+    chave = models.UUIDField(null=True, blank=True)
+    fatura_seguinte = models.ForeignKey(
+        CreditCardInvoice, on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    estornado_em = models.DateTimeField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            # A mesma chave não se repete para o mesmo usuário (FATURA-30, FATURA-32)
+            models.UniqueConstraint(
+                fields=['user', 'chave'], condition=models.Q(chave__isnull=False),
+                name='pagamento_chave_unica_por_usuario',
+            ),
+        ]
+
+    def __str__(self):
+        return f"Pagamento de {self.valor} - {self.fatura}"
+
+
+class ItemDePagamento(models.Model):
+    """
+    O que um pagamento fez com cada compra: pagou inteira, dividiu (a parte
+    paga fica em `compra` e o restante em `restante`) ou moveu para a fatura
+    seguinte.
+    """
+    PAGA = 'PAGA'
+    DIVIDIDA = 'DIVIDIDA'
+    MOVIDA = 'MOVIDA'
+    TIPOS = [
+        (PAGA, 'Paga'),
+        (DIVIDIDA, 'Dividida'),
+        (MOVIDA, 'Movida'),
+    ]
+
+    pagamento = models.ForeignKey(PagamentoDeFatura, on_delete=models.CASCADE, related_name='itens')
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    compra = models.ForeignKey('transactions.Transaction', on_delete=models.SET_NULL, null=True, related_name='+')
+    # Só DIVIDIDA
+    restante = models.ForeignKey('transactions.Transaction', on_delete=models.SET_NULL, null=True, related_name='+')
+    valor_original = models.DecimalField(max_digits=15, decimal_places=2, null=True)
+    descricao_original = models.CharField(max_length=255, blank=True)

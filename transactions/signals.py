@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
-from django.db.models import Sum
 from api.models import User
+from accounts.faturas import recalcular_totais
 from accounts.models import Account, CreditCard
 from accounts.saldo import recalcular
 from .models import Transaction, Category
@@ -78,24 +78,11 @@ def initialize_user_data(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Transaction)
 def update_invoice_total(sender, instance, **kwargs):
     """
-    Atualiza o total_amount da Invoice sempre que uma transação vinculada é alterada.
+    Recalcula o total da fatura antiga e da nova sempre que uma compra é
+    criada, editada, movida ou excluída (FATURA-18). A fatura antiga vem do
+    `capture_old_transaction_state`.
     """
-    if instance.invoice:
-        # Recalcula o total somando todas as transações de despesa vinculadas
-        # Nota: Filtrar apenas tipos relevantes de despesa se necessário.
-        # Atualmente: 'CREDIT_CARD' é o tipo de despesa. 'INVOICE_PAYMENT' pode estar vinculado?
-        # Geralmente INVOICE_PAYMENT não tem FK invoice preenchido (é pagamento DA fatura, não item DA fatura).
-        # Mas vamos garantir filtrando por type='CREDIT_CARD' para evitar somar pagamentos se algo mudar.
-        
-        # Só compras do dono do cartão da fatura (ISOL-14)
-        total = instance.invoice.transactions.filter(
-            type='CREDIT_CARD', user_id=instance.invoice.card.user_id
-        ).aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        # Atualiza a invoice sem disparar signals da invoice (loop?) - Invoice não tem signals ainda.
-        # Usar update_fields para ser mais eficiente e evitar efeitos colaterais.
-        instance.invoice.total_amount = total
-        instance.invoice.save(update_fields=['total_amount'])
+    recalcular_totais(getattr(instance, '_old_invoice_id', None), instance.invoice_id)
 
 @receiver(post_delete, sender=Transaction)
 def sync_transfer_delete(sender, instance, **kwargs):
@@ -117,14 +104,18 @@ def sync_transfer_delete(sender, instance, **kwargs):
 @receiver(pre_save, sender=Transaction)
 def capture_old_transaction_state(sender, instance, **kwargs):
     """
-    Captura a conta anterior da transação antes de salvar, para recalcular
-    também a conta de onde ela saiu (SALDO-07).
+    Captura a conta e a fatura anteriores da transação antes de salvar, para
+    recalcular também a conta de onde ela saiu (SALDO-07) e o total da
+    fatura de onde ela saiu (FATURA-18).
     """
     instance._old_account_id = None
+    instance._old_invoice_id = None
     if instance.pk:
-        instance._old_account_id = (
-            Transaction.objects.filter(pk=instance.pk).values_list('account_id', flat=True).first()
+        anterior = (
+            Transaction.objects.filter(pk=instance.pk).values_list('account_id', 'invoice_id').first()
         )
+        if anterior:
+            instance._old_account_id, instance._old_invoice_id = anterior
 
 @receiver(post_save, sender=Transaction)
 def update_account_balance_on_save(sender, instance, created, **kwargs):

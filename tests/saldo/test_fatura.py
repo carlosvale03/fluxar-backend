@@ -144,15 +144,17 @@ class EstornoDeFaturaTests(FaturaTestCase):
 
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
+        # A parte paga e o restante voltam a ser uma compra só, com o valor
+        # original, na fatura original (FATURA-35)
         self.assertEqual(
             self.estado_da_compra(self.compra),
-            ('PENDING', self.a.conta.id, None, Decimal('300.00')),
+            ('PENDING', self.a.conta.id, None, Decimal('1000.00')),
         )
-        # O restante continua pendente na fatura seguinte
         self.assertEqual(
-            self.estado_da_compra(restante), ('PENDING', self.a.conta.id, None, Decimal('700.00')),
+            (self.compra.description, self.compra.invoice_id), ('Loja', self.a.fatura.id),
         )
-        self.assertEqual(restante.invoice.month, 10)
+        self.assertFalse(Transaction.objects.filter(pk=restante.pk).exists())
+        self.assertEqual(self.saldo(self.a.conta), Decimal('1000.00'))
 
     def test_estornar_fatura_nao_paga_recebe_400_sem_mudar_saldo(self):
         resp = self.estornar()

@@ -109,7 +109,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id', 'type', 'status', 'description', 'amount', 'signed_amount', 'date',
+            'id', 'type', 'status', 'description', 'amount', 'signed_amount', 'date', 'purchase_date',
             'account', 'account_detail', 'credit_card', 'invoice', 
             'category', 'category_detail',
             'tags', 'tags_detail',
@@ -207,6 +207,9 @@ class TransactionSerializer(serializers.ModelSerializer):
             if erros:
                 raise serializers.ValidationError(erros)
         self._validar_tipo_e_status(attrs)
+        # A data da compra só existe na compra no cartão (FATURA-16, AD-039)
+        if self.instance is None or self.instance.type != 'CREDIT_CARD':
+            attrs.pop('purchase_date', None)
         return attrs
 
     def _validar_tipo_e_status(self, attrs):
@@ -310,6 +313,13 @@ class TransactionSerializer(serializers.ModelSerializer):
             return t
         validated_data.pop('target_account_id', None)
 
+        # Compra no cartão: fatura paga, realocação e escopos (FATURA-17, FATURA-19)
+        if instance.type == 'CREDIT_CARD':
+            t = TransactionService.editar_compra(instance, validated_data, scope)
+            if tags is not None:
+                t.tags.set(tags)
+            return t
+
         # 2. Batch Installment Update (ALL_FUTURE)
         if scope == 'ALL_FUTURE' and instance.is_installment:
             from django.db.models import Q
@@ -356,8 +366,9 @@ class TransferSerializer(serializers.Serializer):
 
 
 class CreditCardExpenseSerializer(serializers.Serializer):
+    # Cartão excluído não recebe compra nova
     credit_card = OwnedPrimaryKeyRelatedField(
-        queryset=CreditCard.objects.all(), not_found_message=CARTAO_NAO_ENCONTRADO,
+        queryset=CreditCard.objects.filter(is_active=True), not_found_message=CARTAO_NAO_ENCONTRADO,
     )
     amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()

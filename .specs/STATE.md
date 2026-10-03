@@ -306,15 +306,32 @@
 - **Date**: 2026-10-01
 - **Status**: active
 
+### AD-039
+- **Decision**: A compra no cartão guarda a data real em `purchase_date`; o `date` dela é sempre o vencimento da fatura em que está, e toda mudança de fatura passa por `accounts/faturas.py` (`colocar`), que grava os dois campos juntos. Compras antigas ficam com `purchase_date` nulo e a interface mostra o `date`.
+- **Reason**: a compra gravava o vencimento no lugar da data (FIN-15); trocar o significado de `date` mudaria a lista de transações, o filtro por mês e os relatórios.
+- **Trade-off**: dois campos de data na compra no cartão.
+- **Scope**: faturas, transações, relatorios e importacao.
+- **Date**: 2026-10-02
+- **Status**: active
+
+### AD-040
+- **Decision**: Cada pagamento de fatura gera um `PagamentoDeFatura` com os itens que ele mudou (compra paga, dividida ou movida), a chave de idempotência e a fatura seguinte. O estorno desfaz exatamente esses itens, e a repetição da mesma chave responde a partir desse registro, que nunca é apagado.
+- **Reason**: o estorno não conseguia desfazer a divisão nem a rolagem (FIN-02), e AD-007 exige guardar o resultado de cada tentativa.
+- **Trade-off**: duas tabelas novas; pagamentos anteriores à feature não têm registro e são estornados pelo caminho antigo.
+- **Scope**: faturas, saldo e o frontend.
+- **Date**: 2026-10-02
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `saldo` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T30) e verificado: `validation.md` com PASS, 47 de 47 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: saldo recalculado do razão sob trava (AD-038), atomicidade, tipos do endpoint genérico, contas excluídas, transferências, séries, pagamento e estorno de fatura, totais com contas ativas, ajuste de saldo, `cleanup_db` seguro, migração 0008 e comando `check_saldos`; backend com 529 testes e frontend com 84
+- **Feature**: `faturas` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T22) e verificado: `validation.md` com PASS, 45 de 45 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: datas de fechamento e vencimento em qualquer mês (AD-006), módulo `accounts/faturas.py`, data da compra em `purchase_date` (AD-039), parcelas uma por fatura não paga, total sempre igual à soma, edição e exclusão da compra inteira, registro do pagamento com itens (AD-040), pagamento idempotente, estorno exato, API de faturas somente leitura, migração `accounts/0006_corrige_faturas` e telas de fatura; backend com 629 testes e frontend com 101
 - **In-progress** (file:line): nenhum
-- **Deploy**: a migração `transactions/0008` roda no `migrate`; depois, `check_saldos` deve listar 0 contas
-- **Pendências anotadas para `faturas`**: `total_amount` desatualizado depois de pagamento parcial em `pay_invoice`; estorno de pagamento parcial não junta as partes; compra no cartão aceita sem conta de pagamento ou com cartão excluído; diálogo de pagamento perde a conta pré-preenchida (visto só no jsdom)
-- **Next step**: o usuário faz o push das duas branches `fix/saldo` e abre os PRs para a `development`. Depois do merge, a próxima é `faturas`, com o verificador leve
+- **Deploy**: as migrações `transactions/0009`, `accounts/0005` e `accounts/0006` rodam no `migrate` do Pre-Deploy
+- **Observações do verificador**: FATURA-15 sem teste com duas faturas pagas seguidas; restante editado antes do estorno volta com o valor atual (escolha do design)
+- **Fora do escopo, anotado**: `parent_transaction` com CASCADE apaga parcelas de outro usuário gravadas à força na mesma raiz; `crypto.randomUUID()` exige contexto seguro (https ou localhost)
+- **Next step**: o usuário faz o push das duas branches `fix/faturas` e abre os PRs para a `development`. Depois do merge, a próxima é `contratos-frontend-backend`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/saldo (backend e frontend)
+- **Branch**: fix/faturas (backend e frontend)
