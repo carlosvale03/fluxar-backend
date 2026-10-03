@@ -205,7 +205,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-02 | P1: Listas e paginação | T1, T14 | Implemented |
 | CONTRATO-03 | P1: Listas e paginação | T1 | Implemented |
 | CONTRATO-04 | P1: Listas e paginação | T1 | Implemented |
-| CONTRATO-05 | P1: Listas e paginação | T14, T15 | In Progress |
+| CONTRATO-05 | P1: Listas e paginação | T14, T15, T17 | Implemented |
 | CONTRATO-06 | P1: Listas e paginação | T15 | Implemented |
 | CONTRATO-07 | P1: Listas e paginação | T15 | Implemented |
 | CONTRATO-08 | P1: Listas e paginação | T15 | Implemented |
@@ -215,7 +215,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-12 | P1: Filtros | T16 | Implemented |
 | CONTRATO-13 | P1: Filtros | T3 | Implemented |
 | CONTRATO-14 | P1: Filtros | T2 | Implemented |
-| CONTRATO-15 | P1: Filtros | T3 | In Progress |
+| CONTRATO-15 | P1: Filtros | T3, T17 | Implemented |
 | CONTRATO-16 | P1: Valores em dinheiro | T5 | In Progress |
 | CONTRATO-17 | P1: Valores em dinheiro | T9 | In Progress |
 | CONTRATO-18 | P1: Valores em dinheiro | T9 | In Progress |

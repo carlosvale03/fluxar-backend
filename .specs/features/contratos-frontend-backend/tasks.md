@@ -589,13 +589,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Recorrentes pede `is_recurring=true` e mostra total e controles de página
-- [ ] Nenhuma chamada envia `limit`
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Recorrentes pede `is_recurring=true` e mostra total e controles de página
+- [x] Nenhuma chamada envia `limit`
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 4 testes novos; suíte 159 → 163)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): lista as recorrentes e lê as transações pelo contrato`
 
