@@ -9,7 +9,18 @@ from accounts.models import Account
 from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
+from core.datas import hoje, ler_data
 from core.valores import ler_valor
+
+
+def _data_do_movimento(texto):
+    """
+    Data do aporte ou do resgate: `AAAA-MM-DD`, sem hora (CONTRATO-25); sem
+    data, hoje em Brasília. Outro formato recebe 400 no campo `date`.
+    """
+    if texto in (None, ''):
+        return hoje()
+    return ler_data(texto, 'date')
 
 
 class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
@@ -39,7 +50,6 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         # Validar dados de entrada manualmente ou usar serializer simples
         amount = request.data.get('amount')
         account_id = request.data.get('account_id') or request.data.get('account_from')
-        date_deposit = request.data.get('date') or request.data.get('datetime') # Opcional
         
         if amount in (None, '') or not account_id:
             return Response(
@@ -48,6 +58,7 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
             )
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
+        date_deposit = _data_do_movimento(request.data.get('date'))
             
         # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
         account_field = 'account_id' if request.data.get('account_id') else 'account_from'
@@ -78,7 +89,6 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         amount = request.data.get('amount')
         # account_to é para onde o dinheiro sai do cofrinho
         account_id = request.data.get('account_to') or request.data.get('account_id')
-        date_withdrawal = request.data.get('date') or request.data.get('datetime')
         
         if amount in (None, '') or not account_id:
             return Response(
@@ -87,6 +97,7 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
             )
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
+        date_withdrawal = _data_do_movimento(request.data.get('date'))
             
         # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
         account_field = 'account_to' if request.data.get('account_to') else 'account_id'

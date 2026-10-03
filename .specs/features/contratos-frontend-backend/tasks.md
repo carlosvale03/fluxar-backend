@@ -258,15 +258,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Aporte com `date: "2026-12-31"` grava 31/12/2026
-- [ ] Aporte com data ISO com hora, ou inválida, responde 400 no campo `date` sem gravar
-- [ ] Aporte sem data grava `hoje()` de Brasília (com o relógio às 23h de Brasília, que já é o dia seguinte em UTC)
-- [ ] `created_at` sai em ISO 8601 com fuso
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Aporte com `date: "2026-12-31"` grava 31/12/2026
+- [x] Aporte com data ISO com hora, ou inválida, responde 400 no campo `date` sem gravar
+- [x] Aporte sem data grava `hoje()` de Brasília (com o relógio às 23h de Brasília, que já é o dia seguinte em UTC)
+- [x] `created_at` sai em ISO 8601 com fuso
+- [x] Quick gate passa
+- [x] Test count: pelo menos 5 testes (real: 6 testes novos; suíte 682 → 688)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(goals): lê a data do aporte e do resgate sem hora e sem fuso`
 

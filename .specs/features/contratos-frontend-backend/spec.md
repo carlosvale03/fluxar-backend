@@ -222,10 +222,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-19 | P1: Valores em dinheiro | - | Pending |
 | CONTRATO-20 | P1: Valores em dinheiro | - | Pending |
 | CONTRATO-21 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-22 | P1: Datas | T3 | In Progress |
-| CONTRATO-23 | P1: Datas | - | Pending |
+| CONTRATO-22 | P1: Datas | T3, T6 | Implemented |
+| CONTRATO-23 | P1: Datas | T6 | Implemented |
 | CONTRATO-24 | P1: Datas | - | Pending |
-| CONTRATO-25 | P1: Datas | - | Pending |
+| CONTRATO-25 | P1: Datas | T6 | In Progress |
 | CONTRATO-26 | P1: Preferências | - | Pending |
 | CONTRATO-27 | P1: Preferências | - | Pending |
 | CONTRATO-28 | P1: Preferências | - | Pending |
