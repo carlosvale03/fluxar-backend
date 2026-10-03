@@ -706,14 +706,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Salvar o tema escuro e desligar o e-mail envia só `{preferences: {...}}`
-- [ ] Com um usuário que volta com `theme: "dark"`, o tema escuro é aplicado ao carregar
-- [ ] Erro de preferência aparece no campo
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Salvar o tema escuro e desligar o e-mail envia só `{preferences: {...}}`
+- [x] Com um usuário que volta com `theme: "dark"`, o tema escuro é aplicado ao carregar
+- [x] Erro de preferência aparece no campo
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 3 testes novos; suíte 181 → 184)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): salva as preferências e aplica o tema do usuário ao carregar`
 

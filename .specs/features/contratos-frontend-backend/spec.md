@@ -226,8 +226,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-23 | P1: Datas | T6 | Implemented |
 | CONTRATO-24 | P1: Datas | T11, T20 | Implemented |
 | CONTRATO-25 | P1: Datas | T6, T20 | Implemented |
-| CONTRATO-26 | P1: Preferências | T7 | In Progress |
-| CONTRATO-27 | P1: Preferências | - | Pending |
+| CONTRATO-26 | P1: Preferências | T7, T21 | Implemented |
+| CONTRATO-27 | P1: Preferências | T21 | Implemented |
 | CONTRATO-28 | P1: Preferências | T7 | Implemented |
 | CONTRATO-29 | P1: Erros e avisos | T8 | Implemented |
 | CONTRATO-30 | P1: Erros e avisos | T8, T12 | In Progress |
