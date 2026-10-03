@@ -219,9 +219,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CONTRATO-16 | P1: Valores em dinheiro | T5 | In Progress |
 | CONTRATO-17 | P1: Valores em dinheiro | T9 | In Progress |
 | CONTRATO-18 | P1: Valores em dinheiro | T9 | In Progress |
-| CONTRATO-19 | P1: Valores em dinheiro | T9 | In Progress |
-| CONTRATO-20 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-21 | P1: Valores em dinheiro | - | Pending |
+| CONTRATO-19 | P1: Valores em dinheiro | T9, T10 | In Progress |
+| CONTRATO-20 | P1: Valores em dinheiro | T10 | In Progress |
+| CONTRATO-21 | P1: Valores em dinheiro | T10 | Implemented |
 | CONTRATO-22 | P1: Datas | T3, T6 | Implemented |
 | CONTRATO-23 | P1: Datas | T6 | Implemented |
 | CONTRATO-24 | P1: Datas | - | Pending |

@@ -381,15 +381,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Digitar "1.500" e sair do campo entrega "1500.00" e mostra "R$ 1.500,00"
-- [ ] Colar "100" entrega "100.00"
-- [ ] Com `permitirNegativo`, "-50,00" entrega "-50.00"; sem, o sinal é recusado
-- [ ] O valor recebido "1234.56" aparece formatado
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Digitar "1.500" e sair do campo entrega "1500.00" e mostra "R$ 1.500,00"
+- [x] Colar "100" entrega "100.00"
+- [x] Com `permitirNegativo`, "-50,00" entrega "-50.00"; sem, o sinal é recusado
+- [x] O valor recebido "1234.56" aparece formatado
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 5 testes (real: 6 testes novos; suíte 116 → 122)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): aceita valor digitado ou colado no formato brasileiro`
 
