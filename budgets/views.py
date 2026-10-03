@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from django.db import IntegrityError
 from django.db.models import F
@@ -61,20 +62,15 @@ class BudgetViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Model
         month = request.data.get('month')
         year = request.data.get('year')
 
+        # Erros no formato do DRF, em português (CONTRATO-29)
         if not source_ids or not month or not year:
-            return Response(
-                {"error": "Parâmetros source_ids, month e year são obrigatórios."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'detail': 'Parâmetros source_ids, month e year são obrigatórios.'})
 
         try:
             month = int(month)
             year = int(year)
-        except ValueError:
-            return Response(
-                {"error": "Mês e ano devem ser números inteiros."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        except (TypeError, ValueError):
+            raise ValidationError({'detail': 'Mês e ano devem ser números inteiros.'})
 
         # Buscar orçamentos de origem
         source_budgets = Budget.objects.filter(
@@ -83,10 +79,7 @@ class BudgetViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Model
         )
 
         if not source_budgets.exists():
-            return Response(
-                {"error": "Nenhum orçamento de origem encontrado."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            raise NotFound('Nenhum orçamento de origem encontrado.')
 
         # Identificar quais categorias já têm orçamento no mês atual para evitar duplicatas
         existing_categories = Budget.objects.filter(
@@ -131,9 +124,6 @@ class BudgetViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Model
                 status=status.HTTP_201_CREATED
             )
         except IntegrityError:
-            return Response(
-                {"error": "Erro de integridade ao criar orçamentos. Verifique se já existem orçamentos para estas categorias."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'detail': 'Erro de integridade ao criar orçamentos. Verifique se já existem orçamentos para estas categorias.'})
 
 

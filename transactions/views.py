@@ -241,7 +241,8 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             deleted_count, _ = pernas.delete()
             return Response({'status': f'{deleted_count} transações removidas.'})
             
-        return Response({'error': 'Informe recurring_source ou transfer_id'}, status=status.HTTP_400_BAD_REQUEST)
+        # Erro no formato do DRF, em português (CONTRATO-29)
+        raise ValidationError({'detail': 'Informe recurring_source ou transfer_id.'})
 
     @action(detail=False, methods=['patch'], url_path='bulk-update')
     def bulk_update(self, request):
@@ -252,7 +253,7 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         """
         recurring_id = request.data.get('recurring_source')
         if not recurring_id:
-            return Response({'error': 'Informe recurring_source'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'recurring_source': ['Este campo é obrigatório.']})
         serie = get_owned_or_400(
             RecurringTransaction.objects.all(), request.user, recurring_id,
             'recurring_source', SERIE_NAO_ENCONTRADA,

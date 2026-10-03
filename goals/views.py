@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status, decorators
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Goal
@@ -12,6 +13,9 @@ from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.datas import hoje, ler_data
 from core.valores import ler_valor
 
+CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
+META_COM_SALDO = 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.'
+
 
 def _data_do_movimento(texto):
     """
@@ -21,6 +25,24 @@ def _data_do_movimento(texto):
     if texto in (None, ''):
         return hoje()
     return ler_data(texto, 'date')
+
+
+def _exigir(campos):
+    """Erro de campo obrigatório em cada campo vazio (CONTRATO-30)."""
+    erros = {campo: [CAMPO_OBRIGATORIO] for campo, valor in campos.items() if valor in (None, '')}
+    if erros:
+        raise ValidationError(erros)
+
+
+def _mover(operacao, *args):
+    """
+    Recusas do service viram 400 com `detail` em português; erro inesperado
+    sobe e vira 500, sem o texto da exceção (CONTRATO-29).
+    """
+    try:
+        operacao(*args)
+    except DjangoValidationError as erro:
+        raise ValidationError({'detail': erro.messages[0]})
 
 
 class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
@@ -33,10 +55,7 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         """Bloqueia a exclusão se a meta ainda tiver saldo."""
         goal = self.get_object()
         if goal.current_amount != 0:
-            return Response(
-                {'error': 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'detail': META_COM_SALDO})
         return super().destroy(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -51,11 +70,7 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         amount = request.data.get('amount')
         account_id = request.data.get('account_id') or request.data.get('account_from')
         
-        if amount in (None, '') or not account_id:
-            return Response(
-                {'error': 'Campos amount e account_id são obrigatórios.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        _exigir({'amount': amount, 'account_id': account_id})
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
         date_deposit = _data_do_movimento(request.data.get('date'))
@@ -66,21 +81,9 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
             Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
         )
         
-        try:
-            description = request.data.get('description')
-            print(f"DEBUG: Deposit start. Goal={goal.id}, Account={account_id}, Amount={amount}")
-            GoalService.deposit(goal, account, amount, date_deposit, description)
-            # Retornar a meta atualizada
-            serializer = self.get_serializer(goal)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except ValidationError:
-            # Recusa da transferência (SALDO-17) segue como 400 do DRF
-            raise
-        except Exception as e:
-            print(f"DEBUG: Deposit error: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        _mover(GoalService.deposit, goal, account, amount, date_deposit, request.data.get('description'))
+        # Retornar a meta atualizada
+        return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['post'])
     def withdraw(self, request, pk=None):
@@ -90,11 +93,7 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         # account_to é para onde o dinheiro sai do cofrinho
         account_id = request.data.get('account_to') or request.data.get('account_id')
         
-        if amount in (None, '') or not account_id:
-            return Response(
-                {'error': 'Campos amount e account_to são obrigatórios.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        _exigir({'amount': amount, 'account_to': account_id})
         # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
         amount = ler_valor(amount)
         date_withdrawal = _data_do_movimento(request.data.get('date'))
@@ -105,19 +104,8 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
             Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
         )
         
-        try:
-            description = request.data.get('description')
-            print(f"DEBUG: Withdraw start. Goal={goal.id}, AccountTo={account_id}, Amount={amount}")
-            GoalService.withdraw(goal, account_to, amount, date_withdrawal, description)
-            
-            serializer = self.get_serializer(goal)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except ValidationError:
-            # Recusa da transferência (SALDO-17) segue como 400 do DRF
-            raise
-        except Exception as e:
-            print(f"DEBUG: Withdraw error: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        _mover(GoalService.withdraw, goal, account_to, amount, date_withdrawal, request.data.get('description'))
+        return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):

@@ -137,11 +137,13 @@ class AtomicidadeTests(SaldoTestCase):
 
     def test_aporte_que_falha_no_historico_nao_grava_nada(self):
         antes = self.estado()
+        self.cliente.raise_request_exception = False
         with mock.patch.object(GoalDeposit.objects, 'create', side_effect=FalhaSimulada('falha simulada')):
             resp = self.cliente.post(f'/api/goals/{self.a.meta.id}/deposit/', {
                 'account_id': str(self.a.conta.id), 'amount': '100.00', 'date': '2026-09-15',
             }, format='json')
-        self.assertEqual(resp.status_code, 400)
+        # A falha inesperada sobe como 500, sem o texto da exceção (CONTRATO-29)
+        self.assertEqual(resp.status_code, 500)
         self.assertEqual(self.estado(), antes)
 
     # Requisição sem service próprio: a edição falha depois de gravar

@@ -318,16 +318,17 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Nenhuma view devolve a chave `error` (busca no código e testes das rotas alteradas)
-- [ ] Uma rota inexistente devolve `{"detail": "Não encontrado.", "code": "not_found"}`
-- [ ] Orçamento duplicado responde 400 com mensagem em português no campo `category`
-- [ ] Mensagem padrão do DRF de campo obrigatório vem em português
-- [ ] Erro inesperado num service vira 500 sem o texto da exceção
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Nenhuma view devolve a chave `error` (busca no código e testes das rotas alteradas)
+- [x] Uma rota inexistente devolve `{"detail": "Não encontrado.", "code": "not_found"}`
+- [x] Orçamento duplicado responde 400 com mensagem em português no campo `category`
+- [x] Mensagem padrão do DRF de campo obrigatório vem em português
+- [x] Erro inesperado num service vira 500 sem o texto da exceção
+- [x] Build gate passa
+- [x] Test count: pelo menos 7 testes (real: 9 testes novos; suíte 692 → 701)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): devolve todos os erros em português no formato do DRF`
 

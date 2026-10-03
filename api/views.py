@@ -1,4 +1,4 @@
-from rest_framework import generics, status, permissions, filters
+from rest_framework import exceptions, generics, status, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -425,7 +425,8 @@ class UserAvatarView(APIView):
                 avatar_url = request.build_absolute_uri(user.avatar.url)
                 return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
             else:
-                 return Response({"error": "Erro ao salvar arquivo."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # Erro no formato do DRF, em português (CONTRATO-29)
+                raise exceptions.APIException('Não foi possível salvar o arquivo.')
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -834,28 +835,26 @@ class AdminClearUserDataView(APIView):
         if not admin_password or not request.user.check_password(admin_password):
             return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
 
-        try:
-            # Apaga dados relacionados explicitamente
-            user.transactions.all().delete()
-            user.categories.all().delete()
-            user.recurring_transactions.all().delete()
-            user.tags.all().delete()
-            user.focused_monitors.all().delete()
-            user.goals.all().delete()
-            user.budgets.all().delete()
-            user.credit_cards.all().delete()
-            user.accounts.all().delete()
+        # Erro inesperado sobe e vira 500, sem o texto da exceção (CONTRATO-29)
+        # Apaga dados relacionados explicitamente
+        user.transactions.all().delete()
+        user.categories.all().delete()
+        user.recurring_transactions.all().delete()
+        user.tags.all().delete()
+        user.focused_monitors.all().delete()
+        user.goals.all().delete()
+        user.budgets.all().delete()
+        user.credit_cards.all().delete()
+        user.accounts.all().delete()
 
-            SystemLog.objects.create(
-                user=user,
-                action="CLEAR_DATA",
-                description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
-                admin_name=request.user.name
-            )
+        SystemLog.objects.create(
+            user=user,
+            action="CLEAR_DATA",
+            description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
+            admin_name=request.user.name
+        )
 
-            return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminHardDeleteView(APIView):
     """

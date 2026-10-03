@@ -1,5 +1,6 @@
 import json
 from rest_framework import views, status, permissions, parsers
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.http import HttpResponse
 from accounts.models import Account
@@ -14,6 +15,11 @@ try:
 except ImportError:
     IsPremium = permissions.IsAuthenticated
 
+# Erros no formato do DRF, em português e sem o texto da exceção (CONTRATO-29)
+ARQUIVO_NAO_ENVIADO = 'Arquivo não enviado.'
+ARQUIVO_ILEGIVEL = 'Não foi possível ler o arquivo. Confira o formato e as colunas escolhidas.'
+
+
 class ImportOFXView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
@@ -23,7 +29,7 @@ class ImportOFXView(views.APIView):
         account_id = request.data.get('account_id')
         
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
         
         account = get_owned_or_400(
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
@@ -56,13 +62,13 @@ class ImportSpreadsheetPreflightView(views.APIView):
             mapping = {}
 
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
         
         try:
             unique_accounts = ImportService.preflight_spreadsheet(file_obj, mapping, import_type)
             return Response({'accounts': unique_accounts}, status=200)
-        except Exception as e:
-            return Response({'error': str(e)}, status=400)
+        except Exception:
+            raise ValidationError({'file': [ARQUIVO_ILEGIVEL]})
 
 class ImportSpreadsheetView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -88,7 +94,7 @@ class ImportSpreadsheetView(views.APIView):
             account_mapping = None
         
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
             
         account = get_owned_or_400(
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,

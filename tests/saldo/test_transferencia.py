@@ -78,7 +78,7 @@ class CriacaoDeTransferenciaTests(TransferenciaTestCase):
         resp = self.transferir(account_to=str(self.a.conta.id))
 
         self.assertEqual(resp.status_code, 400, resp.data)
-        self.assertEqual(resp.data, {'detail': MESMA_CONTA})
+        self.assertEqual(resp.data, {'detail': MESMA_CONTA, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
 
@@ -93,7 +93,7 @@ class AporteEResgateNoProprioCofrinhoTests(TransferenciaTestCase):
         antes = self.estado()
         resp = self.cliente.post(url, corpo, format='json')
         self.assertEqual(resp.status_code, 400, resp.data)
-        self.assertEqual(resp.data, {'detail': MESMA_CONTA})
+        self.assertEqual(resp.data, {'detail': MESMA_CONTA, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_aporte_a_partir_do_proprio_cofrinho_recusado(self):
@@ -224,7 +224,7 @@ class EdicaoDeTransferenciaTests(TransferenciaTestCase):
             with self.subTest(perna=perna.type, corpo=corpo):
                 resp = self.cliente.patch(f'{URL_TRANSACOES}{perna.id}/', corpo, format='json')
                 self.assertEqual(resp.status_code, 400, resp.data)
-                self.assertEqual(resp.data, {'detail': MESMA_CONTA})
+                self.assertEqual(resp.data, {'detail': MESMA_CONTA, 'code': 'invalid'})
                 self.assertEqual(self.estado(), antes)
 
     def test_conta_excluida_ou_de_outro_usuario_recusada(self):

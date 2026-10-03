@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from datetime import date
 from core.filtros import ParametrosConhecidosMixin
@@ -34,7 +35,8 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
             month = int(month) if month else date.today().month
             year = int(year) if year else date.today().year
         except ValueError:
-            return Response({"error": "Mês/Ano inválidos"}, status=status.HTTP_400_BAD_REQUEST)
+            # Erros no formato do DRF, em português (CONTRATO-29)
+            raise ValidationError({'detail': 'Mês/Ano inválidos.'})
             
         data = ReportService.get_dashboard_summary(request.user, month, year, period_days=days)
         return Response(data)
@@ -77,11 +79,11 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         months = int(request.query_params.get('months', 6))
         
         if not tag_id:
-            return Response({"error": "tag_id é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'tag_id': ['Este campo é obrigatório.']})
             
         data = ReportService.get_tag_insights(request.user, tag_id, months=months)
         if data is None:
-            return Response({"error": "Tag não encontrada"}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFound('Tag não encontrada.')
             
         return Response(data)
 

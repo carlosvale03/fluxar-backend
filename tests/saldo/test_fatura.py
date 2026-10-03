@@ -65,7 +65,7 @@ class PagamentoDeFaturaTests(FaturaTestCase):
         resp = self.pagar('200.00')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA})
+        self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA, 'code': 'invalid'})
         self.assertEqual(self.saldo(self.pagadora), Decimal('2000.00'))
         self.assertEqual(Transaction.objects.get(description='Outra loja').status, 'PENDING')
 
@@ -160,7 +160,7 @@ class EstornoDeFaturaTests(FaturaTestCase):
         resp = self.estornar()
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': FATURA_NAO_PAGA})
+        self.assertEqual(resp.data, {'detail': FATURA_NAO_PAGA, 'code': 'invalid'})
         self.assertEqual(self.saldo(self.pagadora), Decimal('3000.00'))
         self.assertEqual(self.saldo(self.a.conta), Decimal('1000.00'))
         self.assertEqual(self.status_da_fatura(), 'OPEN')

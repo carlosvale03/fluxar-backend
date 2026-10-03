@@ -158,7 +158,7 @@ class RecusaDoEstornoTests(EstornoTestCase):
         resp = self.estornar()
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': ESTORNE_A_SEGUINTE})
+        self.assertEqual(resp.data, {'detail': ESTORNE_A_SEGUINTE, 'code': 'invalid'})
         self.assertEqual(self.tudo(), antes)
 
     def test_falha_no_meio_do_estorno_deixa_tudo_como_estava(self):
