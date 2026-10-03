@@ -31,7 +31,7 @@ class MonitorDeFocoNoRelatorioTests(DoisUsuariosTestCase):
         self.assertEqual(resp.status_code, 200)
         monitor = next(m for m in resp.data['custom_monitoring'] if m['id'] == str(self.a.monitor.id))
         self.assertEqual(monitor['name'], 'Mercado A')
-        self.assertEqual(monitor['current_month'], 40.0)
+        self.assertEqual(monitor['current_month'], '40.00')
 
 
 class RelatorioDeTagTests(DoisUsuariosTestCase):

@@ -4,6 +4,7 @@ from .services import BudgetService
 from transactions.models import Category
 from transactions.serializers import CategorySerializer
 from core.fields import OwnedPrimaryKeyRelatedField, CATEGORIA_NAO_ENCONTRADA
+from core.valores import dinheiro
 
 class BudgetSerializer(serializers.ModelSerializer):
     # Só categorias do usuário da requisição (AD-032)
@@ -38,7 +39,8 @@ class BudgetSerializer(serializers.ModelSerializer):
         return obj._usage_data
 
     def get_total_spent(self, obj):
-        return self.get_usage_data(obj)['total_spent']
+        # Dinheiro como texto (CONTRATO-16)
+        return dinheiro(self.get_usage_data(obj)['total_spent'])
 
     def get_percentage_used(self, obj):
         return self.get_usage_data(obj)['percentage_used']

@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from datetime import timedelta
+from decimal import Decimal
 import uuid
 from .serializers import (
     EMAIL_JA_CADASTRADO,
@@ -46,6 +47,7 @@ from .utils.email_service import _mask_email, send_verification_email, send_pass
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.pagination import PaginacaoPadrao
+from core.valores import dinheiro
 import logging
 
 User = get_user_model()
@@ -664,9 +666,10 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
         
         # Faturamento estimado (simulado com base nos planos)
         # TODO: Integrar com Stripe/Gateway real futuramente
+        # Em Decimal e como texto na resposta (CONTRATO-16)
         estimated_revenue = (
-            User.objects.filter(plan='PREMIUM').count() * 19.90 +
-            User.objects.filter(plan='PREMIUM_PLUS').count() * 39.90
+            User.objects.filter(plan='PREMIUM').count() * Decimal('19.90') +
+            User.objects.filter(plan='PREMIUM_PLUS').count() * Decimal('39.90')
         )
 
         # Taxa de conversão
@@ -698,7 +701,7 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
         return Response({
             "total_users": total_users,
             "premium_users": premium_users,
-            "estimated_revenue": estimated_revenue,
+            "estimated_revenue": dinheiro(estimated_revenue),
             "conversion_rate": round(conversion_rate, 2),
             "recent_users": recent_users,
             "status": "Operacional",

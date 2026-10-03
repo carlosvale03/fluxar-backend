@@ -75,9 +75,9 @@ class GraficoSimplesTests(RelatoriosComRelacoesDeBTestCase):
         dados = self.obter_grafico()
 
         self.assertEqual(dados['expense_by_category'], [
-            {'category_name': 'Sem Categoria', 'amount': 55.0, 'color': '#CBD5E1'},
-            {'category_name': 'Mercado A', 'amount': 37.0, 'color': '#a0a0a0'},
-            {'category_name': 'Pendurada A', 'amount': 15.0, 'color': '#a1a1a1'},
+            {'category_name': 'Sem Categoria', 'amount': '55.00', 'color': '#CBD5E1'},
+            {'category_name': 'Mercado A', 'amount': '37.00', 'color': '#a0a0a0'},
+            {'category_name': 'Pendurada A', 'amount': '15.00', 'color': '#a1a1a1'},
         ])
 
     def test_receita_com_categoria_de_b_entra_em_sem_categoria(self):
@@ -87,8 +87,8 @@ class GraficoSimplesTests(RelatoriosComRelacoesDeBTestCase):
         dados = self.obter_grafico()
 
         self.assertEqual(dados['income_by_category'], [
-            {'category_name': 'Sem Categoria', 'amount': 100.0, 'color': '#CBD5E1'},
-            {'category_name': 'Mercado A', 'amount': 60.0, 'color': '#a0a0a0'},
+            {'category_name': 'Sem Categoria', 'amount': '100.00', 'color': '#CBD5E1'},
+            {'category_name': 'Mercado A', 'amount': '60.00', 'color': '#a0a0a0'},
         ])
 
 
@@ -107,8 +107,8 @@ class DistribuicaoPorTagTests(RelatoriosComRelacoesDeBTestCase):
         dados = self.obter_distribuicao()
 
         self.assertEqual(dados['expense_by_tag'], [
-            {'id': str(self.a.tag.id), 'name': 'Viagem A', 'amount': 40.0, 'color': '#a2a2a2'},
-            {'id': 'others', 'name': 'Outros', 'amount': 27.0, 'color': '#94a3b8'},
+            {'id': str(self.a.tag.id), 'name': 'Viagem A', 'amount': '40.00', 'color': '#a2a2a2'},
+            {'id': 'others', 'name': 'Outros', 'amount': '27.00', 'color': '#94a3b8'},
         ])
 
     def test_receita_com_tag_de_b_fica_so_com_as_tags_de_a(self):
@@ -118,8 +118,8 @@ class DistribuicaoPorTagTests(RelatoriosComRelacoesDeBTestCase):
         dados = self.obter_distribuicao()
 
         self.assertEqual(dados['income_by_tag'], [
-            {'id': str(self.a.tag.id), 'name': 'Viagem A', 'amount': 30.0, 'color': '#a2a2a2'},
-            {'id': 'others', 'name': 'Outros', 'amount': 70.0, 'color': '#94a3b8'},
+            {'id': str(self.a.tag.id), 'name': 'Viagem A', 'amount': '30.00', 'color': '#a2a2a2'},
+            {'id': 'others', 'name': 'Outros', 'amount': '70.00', 'color': '#94a3b8'},
         ])
 
 
@@ -149,7 +149,7 @@ class RelatorioAvancadoTests(RelatoriosComRelacoesDeBTestCase):
         agendado, gasto = self.proximo_gasto_agendado(self.b)
 
         self.assertEqual(gasto, {
-            'description': 'Geral', 'amount': 500.0,
+            'description': 'Geral', 'amount': '500.00',
             'date': agendado.strftime('%Y-%m-%d'), 'category': 'Geral',
         })
 
@@ -157,7 +157,7 @@ class RelatorioAvancadoTests(RelatoriosComRelacoesDeBTestCase):
         agendado, gasto = self.proximo_gasto_agendado(self.a)
 
         self.assertEqual(gasto, {
-            'description': 'Mercado A', 'amount': 500.0,
+            'description': 'Mercado A', 'amount': '500.00',
             'date': agendado.strftime('%Y-%m-%d'), 'category': 'Mercado A',
         })
 
@@ -174,7 +174,7 @@ class RelatorioAvancadoTests(RelatoriosComRelacoesDeBTestCase):
         previsto, gasto = self.gasto_que_se_repete(self.b)
 
         self.assertEqual(gasto, {
-            'description': 'Geral', 'amount': 300.0,
+            'description': 'Geral', 'amount': '300.00',
             'date': previsto.strftime('%Y-%m-%d'), 'category': 'Geral',
         })
 
@@ -182,7 +182,7 @@ class RelatorioAvancadoTests(RelatoriosComRelacoesDeBTestCase):
         previsto, gasto = self.gasto_que_se_repete(self.a)
 
         self.assertEqual(gasto, {
-            'description': 'Mercado A', 'amount': 300.0,
+            'description': 'Mercado A', 'amount': '300.00',
             'date': previsto.strftime('%Y-%m-%d'), 'category': 'Mercado A',
         })
 
@@ -210,4 +210,4 @@ class RelatorioAvancadoTests(RelatoriosComRelacoesDeBTestCase):
 
         self.assertNotIn('Aluguel B', str(dados))
         # Só a categoria própria de A conta como gasto fixo
-        self.assertEqual(dados['fixed_vs_variable'], {'fixed': 30.0, 'variable': 100.0, 'total': 130.0})
+        self.assertEqual(dados['fixed_vs_variable'], {'fixed': '30.00', 'variable': '100.00', 'total': '130.00'})

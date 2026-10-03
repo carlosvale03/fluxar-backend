@@ -228,15 +228,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Cada relatório devolve todo valor de dinheiro como texto `^-?\d+\.\d{2}$`, inclusive zero como "0.00"
-- [ ] Percentuais e razões continuam números
-- [ ] `available_limit`, `current_invoice_total`, `signed_amount`, `total_spent` e os valores das metas saem como texto
-- [ ] `dinheiro(Decimal('1234.565'))` dá "1234.57"
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Cada relatório devolve todo valor de dinheiro como texto `^-?\d+\.\d{2}$`, inclusive zero como "0.00"
+- [x] Percentuais e razões continuam números
+- [x] `available_limit`, `current_invoice_total`, `signed_amount`, `total_spent` e os valores das metas saem como texto
+- [x] `dinheiro(Decimal('1234.565'))` dá "1234.57"
+- [x] Full gate passa
+- [x] Test count: pelo menos 8 testes (real: 13 testes novos; suíte 669 → 682)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): envia todo valor em dinheiro como texto com duas casas`
 

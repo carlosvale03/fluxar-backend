@@ -3,6 +3,7 @@ from .models import Goal, GoalDeposit
 from .services import GoalService
 from accounts.models import Account
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
+from core.valores import dinheiro
 
 class GoalDepositSerializer(serializers.ModelSerializer):
     account_name = serializers.ReadOnlyField(source='account.name')
@@ -75,14 +76,15 @@ class GoalSerializer(serializers.ModelSerializer):
         return self._get_prog(obj)['percentage']
 
     def get_current_amount(self, obj):
-        # Sobrescreve o campo current_amount do model com o valor real do cofrinho
-        return self._get_prog(obj)['current_amount']
+        # Sobrescreve o campo current_amount do model com o valor real do cofrinho,
+        # como texto (CONTRATO-16)
+        return dinheiro(self._get_prog(obj)['current_amount'])
 
     def get_amount_remaining(self, obj):
-        return self._get_prog(obj)['remaining']
+        return dinheiro(self._get_prog(obj)['remaining'])
 
     def get_suggested_monthly_saving(self, obj):
-        return self._get_prog(obj)['monthly_suggestion']
+        return dinheiro(self._get_prog(obj)['monthly_suggestion'])
 
     def get_months_remaining(self, obj):
         return self._get_prog(obj)['months_remaining']

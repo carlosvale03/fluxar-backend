@@ -7,6 +7,7 @@ from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractH
 from accounts.faturas import fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
+from core.valores import dinheiro
 from .models import FocusedMonitorItem
 from transactions.filtros import TIPOS_DE_DESPESA
 from transactions.models import Transaction, Category, Tag
@@ -158,9 +159,9 @@ class ReportService:
             card_details.append({
                 'id': str(card.id),
                 'name': card.name,
-                'limit': card.limit,
-                'current_invoice': invoice_amount_now, # Fatura "ativa" para gastos hoje
-                'available_limit': available_limit, # Real-time consolidado
+                'limit': dinheiro(card.limit),
+                'current_invoice': dinheiro(invoice_amount_now), # Fatura "ativa" para gastos hoje
+                'available_limit': dinheiro(available_limit), # Real-time consolidado
                 'color': card.color or '#CBD5E1',
                 'institution': card.institution,
                 'due_day': card.due_day
@@ -174,14 +175,15 @@ class ReportService:
         )
 
         return {
+            # Dinheiro como texto; percentuais e razões continuam números (CONTRATO-16)
             'summary': {
-                'total_balance': total_balance,
-                'monthly_income': month_income,
-                'monthly_expense': month_expense,
-                'net_result': net_result,
-                'total_credit_limit': total_credit_limit,
-                'total_current_invoices': total_current_invoices,
-                'net_worth': total_balance - total_current_invoices,
+                'total_balance': dinheiro(total_balance),
+                'monthly_income': dinheiro(month_income),
+                'monthly_expense': dinheiro(month_expense),
+                'net_result': dinheiro(net_result),
+                'total_credit_limit': dinheiro(total_credit_limit),
+                'total_current_invoices': dinheiro(total_current_invoices),
+                'net_worth': dinheiro(total_balance - total_current_invoices),
                 'savings_rate': health_metrics['savings_rate'],
                 'total_liquid_balance': health_metrics['total_liquid_balance'],
                 'total_investment_balance': health_metrics['total_investment_balance'],
@@ -321,8 +323,8 @@ class ReportService:
 
         return {
             'savings_rate': float(savings_rate.quantize(Decimal('0.01'))),
-            'total_liquid_balance': float(total_liquid_balance),
-            'total_investment_balance': float(total_investment_balance),
+            'total_liquid_balance': dinheiro(total_liquid_balance),
+            'total_investment_balance': dinheiro(total_investment_balance),
             'liquidity_ratio': float(liquidity_ratio.quantize(Decimal('0.01'))),
             'financial_score': int(score)
         }
@@ -364,9 +366,9 @@ class ReportService:
             
             days_list.append({
                 'date': d_str,
-                'total_incomes': income,
-                'total_expenses': expense,
-                'net_amount': net,
+                'total_incomes': dinheiro(income),
+                'total_expenses': dinheiro(expense),
+                'net_amount': dinheiro(net),
                 'is_positive': net >= 0
             })
             
@@ -377,8 +379,8 @@ class ReportService:
             'start_date': start_date.strftime('%Y-%m-%d'),
             'end_date': end_date.strftime('%Y-%m-%d'),
             'days': days_list,
-                'total_income': total_period_income,
-            'total_expense': total_period_expense
+            'total_income': dinheiro(total_period_income),
+            'total_expense': dinheiro(total_period_expense)
         }
 
     @staticmethod
@@ -402,8 +404,8 @@ class ReportService:
             income_vs_expense.append({
                 'label': datetime.strptime(d['date'], '%Y-%m-%d').strftime('%d'),
                 'full_date': d['date'], # Adicionando a data completa para facilitar o filtro mensal no frontend
-                'income': float(d['total_incomes']),
-                'expense': float(d['total_expenses'])
+                'income': d['total_incomes'],
+                'expense': d['total_expenses']
             })
             
         from django.db.models import F
@@ -420,7 +422,7 @@ class ReportService:
         for item in full_cat_expenses:
             expense_by_category.append({
                 'category_name': item['effective_name'] or 'Sem Categoria',
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['effective_color'] or '#CBD5E1'
             })
 
@@ -438,7 +440,7 @@ class ReportService:
         for item in full_cat_incomes:
             income_by_category.append({
                 'category_name': item['effective_name'] or 'Sem Categoria',
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['effective_color'] or '#CBD5E1'
             })
 
@@ -463,7 +465,7 @@ class ReportService:
         
         # 1. Evolução Patrimonial (Net Worth)
         summary_res = ReportService.get_dashboard_summary(user)
-        current_balance = summary_res['summary']['total_balance']
+        current_balance = Decimal(summary_res['summary']['total_balance'])
         
         transactions = Transaction.objects.filter(
             user=user,
@@ -485,7 +487,7 @@ class ReportService:
         simulated_balance = current_balance
         curr = end_date
         while curr >= start_date:
-            evolution.append({'date': curr.strftime('%Y-%m-%d'), 'balance': float(simulated_balance)})
+            evolution.append({'date': curr.strftime('%Y-%m-%d'), 'balance': dinheiro(simulated_balance)})
             diff = daily_diffs.get(curr, 0)
             simulated_balance += diff
             curr -= timedelta(days=1)
@@ -668,8 +670,8 @@ class ReportService:
                 'type': 'category' if item.category else 'tag',
                 'icon': item.category.icon if item.category else None,
                 'color': item.category.color if item.category else item.tag.color,
-                'current_month': float(current_month_total),
-                'average_month': float(average),
+                'current_month': dinheiro(current_month_total),
+                'average_month': dinheiro(average),
                 'status': status
             })
 
@@ -812,7 +814,7 @@ class ReportService:
             projections.append({
                 'years': years,
                 'label': f"{years} {'Ano' if years == 1 else 'Anos'}",
-                'value': float(fv.quantize(Decimal('0.01')))
+                'value': dinheiro(fv)
             })
 
         # 7. Análise de Gastos Fixos vs Variáveis
@@ -979,8 +981,18 @@ class ReportService:
         for i in range(1, 8):
             spend_by_weekday.append({
                 'label': weekday_map[i],
-                'amount': data_by_weekday[i]
+                'amount': dinheiro(data_by_weekday[i])
             })
+
+        # Dinheiro como texto na saída (CONTRATO-16)
+        investment_data['total_invested'] = dinheiro(investment_data['total_invested'])
+        for mes in investment_data['monthly_history']:
+            mes['contribution'] = dinheiro(mes['contribution'])
+            mes['returns'] = dinheiro(mes['returns'])
+        for ativo in investment_data['asset_allocation']:
+            ativo['value'] = dinheiro(ativo['value'])
+        if next_expense_data:
+            next_expense_data['amount'] = dinheiro(next_expense_data['amount'])
 
         risk_analysis = {
             'level': risk_level,
@@ -997,14 +1009,14 @@ class ReportService:
             'next_big_expense': next_expense_data,
             'financial_freedom_projection': projections,
             'fixed_vs_variable': {
-                'fixed': float(fixed_expenses),
-                'variable': float(variable_expenses),
-                'total': float(total_period_exp)
+                'fixed': dinheiro(fixed_expenses),
+                'variable': dinheiro(variable_expenses),
+                'total': dinheiro(total_period_exp)
             },
             'daily_spending_report': {
-                'safe_daily_spend': float(safe_daily_spend),
+                'safe_daily_spend': dinheiro(safe_daily_spend),
                 'remaining_days': remaining_days,
-                'available_for_month': float(available_for_month)
+                'available_for_month': dinheiro(available_for_month)
             },
             'risk_analysis': risk_analysis,
             'spend_by_weekday': spend_by_weekday,
@@ -1093,6 +1105,9 @@ class ReportService:
         for key in sorted(data_map.keys()):
             val = data_map[key]
             val['balance'] = val['income'] - val['expense']
+            # Dinheiro como texto (CONTRATO-16)
+            for campo in ('income', 'expense', 'balance'):
+                val[campo] = dinheiro(val[campo])
             comparison_list.append(val)
 
         return comparison_list
@@ -1146,9 +1161,9 @@ class ReportService:
         last_transaction_date = last_tx.date.strftime('%Y-%m-%d') if last_tx else None
 
         return {
-            "total_balance": float(total_balance),
-            "avg_income_value": float(avg_income_value),
-            "avg_expense_value": float(avg_expense_value),
+            "total_balance": dinheiro(total_balance),
+            "avg_income_value": dinheiro(avg_income_value),
+            "avg_expense_value": dinheiro(avg_expense_value),
             "income_count_per_day": float(income_count_per_day),
             "expense_count_per_day": float(expense_count_per_day),
             "last_transaction_date": last_transaction_date
@@ -1229,8 +1244,8 @@ class ReportService:
             
             history_chart.append({
                 'month': curr.strftime('%b/%y'),
-                'income': float(m_data['income'] or 0),
-                'expense': float(m_data['expense'] or 0)
+                'income': dinheiro(m_data['income']),
+                'expense': dinheiro(m_data['expense'])
             })
             
             # Próximo mês
@@ -1243,8 +1258,8 @@ class ReportService:
             'tag_name': tag.name,
             'color': tag.color,
             'focus_monitor': {
-                'current_month': float(current_total),
-                'average_month': float(average),
+                'current_month': dinheiro(current_total),
+                'average_month': dinheiro(average),
                 'status': status
             },
             'history_chart': history_chart
@@ -1278,7 +1293,7 @@ class ReportService:
             expense_by_tag.append({
                 'id': str(item['tags__id']),
                 'name': item['tags__name'],
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['tags__color'] or '#CBD5E1'
             })
             
@@ -1286,7 +1301,7 @@ class ReportService:
             expense_by_tag.append({
                 'id': 'others',
                 'name': 'Outros',
-                'amount': float(others_expenses),
+                'amount': dinheiro(others_expenses),
                 'color': '#94a3b8'
             })
 
@@ -1305,7 +1320,7 @@ class ReportService:
             income_by_tag.append({
                 'id': str(item['tags__id']),
                 'name': item['tags__name'],
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['tags__color'] or '#CBD5E1'
             })
             
@@ -1313,7 +1328,7 @@ class ReportService:
             income_by_tag.append({
                 'id': 'others',
                 'name': 'Outros',
-                'amount': float(others_incomes),
+                'amount': dinheiro(others_incomes),
                 'color': '#94a3b8'
             })
             

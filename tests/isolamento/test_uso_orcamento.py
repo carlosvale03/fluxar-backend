@@ -30,11 +30,11 @@ class UsoDoOrcamentoTests(DoisUsuariosTestCase):
         return resp.data['total_spent'], resp.data['percentage_used'], resp.data['status']
 
     def test_gasto_nao_soma_despesa_na_subcategoria_de_b(self):
-        self.assertEqual(self.uso(), (Decimal('0.00'), Decimal('0.00'), 'OK'))
+        self.assertEqual(self.uso(), ('0.00', Decimal('0.00'), 'OK'))
 
     def test_gasto_continua_somando_categoria_e_subcategoria_proprias(self):
         self.despesa(self.a.subcategoria, '40.00')
         self.despesa(self.a.categoria, '20.00')
 
         # 60.00 de 300.00: a despesa de 70.00 na subcategoria de B fica fora
-        self.assertEqual(self.uso(), (Decimal('60.00'), Decimal('20.00'), 'OK'))
+        self.assertEqual(self.uso(), ('60.00', Decimal('20.00'), 'OK'))

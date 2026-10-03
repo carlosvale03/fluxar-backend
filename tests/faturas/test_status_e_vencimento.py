@@ -5,7 +5,6 @@ FATURA-08, FATURA-09) e o dashboard em meses curtos (FIN-05).
 `hoje()` é simulado pelo relógio do Django, ao meio-dia de Brasília.
 """
 from datetime import date, datetime, timezone as dt_timezone
-from decimal import Decimal
 from unittest import mock
 
 from accounts.faturas import obter_fatura
@@ -103,7 +102,7 @@ class DashboardEmMesCurtoTests(FaturasTestCase):
 
         self.assertEqual(resp.status_code, 200)
         [detalhe] = resp.data['credit_cards']
-        self.assertEqual(detalhe['current_invoice'], Decimal('150.00'))
+        self.assertEqual(detalhe['current_invoice'], '150.00')
         # Calcular a fatura de hoje não cria fatura
         self.assertEqual(CreditCardInvoice.objects.count(), faturas_antes)
 
@@ -114,7 +113,7 @@ class DashboardEmMesCurtoTests(FaturasTestCase):
             resp = self.client.get('/api/reports/dashboard/', {'month': 2, 'year': 2027})
 
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data['credit_cards'][0]['current_invoice'], Decimal('0.00'))
+        self.assertEqual(resp.data['credit_cards'][0]['current_invoice'], '0.00')
         self.assertFalse(CreditCardInvoice.objects.exists())
 
 

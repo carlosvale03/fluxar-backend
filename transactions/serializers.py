@@ -8,7 +8,7 @@ from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
 )
-from core.valores import validar_valor_positivo
+from core.valores import dinheiro, validar_valor_positivo
 
 # Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
 # Transferência, compra no cartão e pagamento de fatura nascem só das
@@ -160,9 +160,10 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def get_signed_amount(self, obj):
         # Retorna negativo para saídas e positivo para entradas
+        # Dinheiro como texto (CONTRATO-16)
         if obj.type in ['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']:
-            return -abs(obj.amount)
-        return abs(obj.amount)
+            return dinheiro(-abs(obj.amount))
+        return dinheiro(abs(obj.amount))
 
     def get_account_detail(self, obj):
         if obj.account:
