@@ -4,7 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
-from accounts.faturas import alocar_parcelas, colocar, dividir_valor, obter_fatura
+from accounts.faturas import alocar_parcelas, dividir_valor, obter_fatura
 from accounts.models import Account, CreditCard
 from core.fields import CONTA_NAO_ENCONTRADA
 
@@ -137,7 +137,8 @@ class TransactionService:
         # Uma parcela por fatura não paga, a partir da fatura da data da
         # compra (FATURA-12, FATURA-15); a diferença do arredondamento fica na
         # primeira (FATURA-13). Cada parcela guarda a data real da compra, e o
-        # `date` vem da fatura pelo `colocar` (FATURA-16, AD-039).
+        # `date` é o vencimento da fatura, gravado junto com ela como no
+        # `colocar` (FATURA-16, AD-039).
         faturas = alocar_parcelas(card, date, installments)
         valores = dividir_valor(amount, installments)
         parcelado = installments > 1
@@ -146,12 +147,14 @@ class TransactionService:
         parent_txn = None
         for i, (fatura, val) in enumerate(zip(faturas, valores)):
             desc = f"{description} ({i+1}/{installments})" if parcelado else description
-            t = Transaction(
+            t = Transaction.objects.create(
                 user=user,
                 type='CREDIT_CARD',
                 status='PENDING', # Pendente até o pagamento da fatura
                 account=card.account, # Conta de pagamento do cartão
                 credit_card=card,
+                invoice=fatura,
+                date=fatura.due_date,
                 amount=val,
                 purchase_date=date,
                 description=desc,
@@ -161,7 +164,6 @@ class TransactionService:
                 installment_total=installments if parcelado else None,
                 parent_transaction=parent_txn,
             )
-            colocar(t, fatura)
 
             if tags:
                 t.tags.set(tags)

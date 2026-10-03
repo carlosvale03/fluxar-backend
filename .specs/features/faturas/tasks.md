@@ -282,14 +282,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Mover uma compra de fatura atualiza o total da antiga e da nova
-- [ ] Mudar o valor e excluir uma compra atualizam o total
-- [ ] Compras de outro usuário ligadas à fatura não entram no total (ISOL-14)
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Mover uma compra de fatura atualiza o total da antiga e da nova
+- [x] Mudar o valor e excluir uma compra atualizam o total
+- [x] Compras de outro usuário ligadas à fatura não entram no total (ISOL-14)
+- [x] Full gate passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte 571 → 575)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): mantém o total da fatura antiga e da nova ao mover uma compra`
 

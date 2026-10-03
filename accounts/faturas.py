@@ -191,3 +191,24 @@ def limite_disponivel(cartao):
         credit_card=cartao, user_id=cartao.user_id, type='CREDIT_CARD', status='PENDING',
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     return cartao.limit - pendente
+
+
+def recalcular_totais(*fatura_ids):
+    """
+    Grava em cada fatura o total igual à soma das compras no cartão ligadas a
+    ela, só as do dono do cartão (FATURA-18, ISOL-14). Ignora `None`. Quem
+    muda compras por `QuerySet.update()` chama esta função.
+    """
+    from django.db.models import Sum
+
+    from transactions.models import Transaction
+
+    from .models import CreditCardInvoice
+
+    ids = {fatura_id for fatura_id in fatura_ids if fatura_id is not None}
+    for fatura in CreditCardInvoice.objects.filter(pk__in=ids).select_related('card'):
+        total = Transaction.objects.filter(
+            invoice_id=fatura.pk, type='CREDIT_CARD', user_id=fatura.card.user_id,
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        if fatura.total_amount != total:
+            CreditCardInvoice.objects.filter(pk=fatura.pk).update(total_amount=total)
