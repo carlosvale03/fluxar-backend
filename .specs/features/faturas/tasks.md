@@ -311,15 +311,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Mudar a data da compra do Independent Test para 10/01/2026 move as quatro parcelas para fevereiro a maio, e os totais acompanham
-- [ ] Mudar o cartão realoca as parcelas nas faturas do cartão novo
-- [ ] Salvar uma compra antiga (sem `purchase_date`) com a data carregada não move nada
-- [ ] Editar parcela de fatura paga, ou mudar a data de uma compra com parte paga, recebe 400 com a mensagem exata
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Mudar a data da compra do Independent Test para 10/01/2026 move as quatro parcelas para fevereiro a maio, e os totais acompanham
+- [x] Mudar o cartão realoca as parcelas nas faturas do cartão novo
+- [x] Salvar uma compra antiga (sem `purchase_date`) com a data carregada não move nada
+- [x] Editar parcela de fatura paga, ou mudar a data de uma compra com parte paga, recebe 400 com a mensagem exata
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 7 testes novos; suíte 575 → 582)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(transactions): realoca as parcelas quando a data ou o cartão da compra muda`
 

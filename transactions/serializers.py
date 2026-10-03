@@ -313,6 +313,13 @@ class TransactionSerializer(serializers.ModelSerializer):
             return t
         validated_data.pop('target_account_id', None)
 
+        # Compra no cartão: fatura paga, realocação e escopos (FATURA-17, FATURA-19)
+        if instance.type == 'CREDIT_CARD':
+            t = TransactionService.editar_compra(instance, validated_data, scope)
+            if tags is not None:
+                t.tags.set(tags)
+            return t
+
         # 2. Batch Installment Update (ALL_FUTURE)
         if scope == 'ALL_FUTURE' and instance.is_installment:
             from django.db.models import Q
