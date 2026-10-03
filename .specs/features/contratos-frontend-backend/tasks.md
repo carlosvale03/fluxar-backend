@@ -288,15 +288,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] `PATCH /users/me/` com `{preferences: {theme: "dark", notifications: {email: false}}}` grava e devolve os dois valores
-- [ ] As outras notificações e preferências continuam como estavam
-- [ ] Tema "roxo" responde 400 com o erro em `preferences.theme`
-- [ ] Os campos planos continuam aceitos
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `PATCH /users/me/` com `{preferences: {theme: "dark", notifications: {email: false}}}` grava e devolve os dois valores
+- [x] As outras notificações e preferências continuam como estavam
+- [x] Tema "roxo" responde 400 com o erro em `preferences.theme`
+- [x] Os campos planos continuam aceitos
+- [x] Quick gate passa
+- [x] Test count: pelo menos 4 testes (real: 4 testes novos; suíte 688 → 692)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): salva as preferências enviadas no objeto preferences`
 

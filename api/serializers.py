@@ -104,9 +104,22 @@ class UserAvatarSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Tamanho máximo do arquivo permitida é {limit_mb}MB.")
         return value
 
+class PreferenciasSerializer(serializers.Serializer):
+    """
+    O objeto `preferences` que a tela envia; todos os campos são opcionais
+    (CONTRATO-26, CONTRATO-28).
+    """
+    currency = serializers.ChoiceField(['BRL'], required=False)
+    theme = serializers.ChoiceField(['light', 'dark', 'system'], required=False)
+    language = serializers.ChoiceField(['pt-BR'], required=False)
+    notifications = serializers.DictField(child=serializers.BooleanField(), required=False)
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
+    # Escrita no mesmo formato da leitura (CONTRATO-26)
+    preferences = PreferenciasSerializer(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -114,7 +127,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'name', 'email', 'plan', 'role', 'emailVerified', 
             'cpf', 'phone_number', 'avatar_url', 'date_of_birth',
             'currency', 'theme_preference', 'language', 'monthly_income',
-            'notification_settings', 'is_active', 'last_login', 'created_at'
+            'notification_settings', 'is_active', 'last_login', 'created_at', 'preferences',
         )
         read_only_fields = ('id', 'email', 'plan', 'role', 'is_active', 'last_login', 'created_at')
 
@@ -159,9 +172,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return ret
     
     def update(self, instance, validated_data):
-        # Suporte a update via JSON aninhado 'preferences' se vier do front (opcional, mas robusto)
-        # Por enquanto o serializer espera input 'flat' (ex: { "theme_preference": "dark" })
-        # O to_representation cuida da saída.
+        # O objeto `preferences` grava nos campos do modelo; as notificações
+        # enviadas se juntam às que já estavam salvas (CONTRATO-26). Os campos
+        # planos continuam aceitos. O to_representation cuida da saída.
+        preferencias = validated_data.pop('preferences', {})
+        for chave, campo in (('currency', 'currency'), ('theme', 'theme_preference'), ('language', 'language')):
+            if chave in preferencias:
+                validated_data[campo] = preferencias[chave]
+        if 'notifications' in preferencias:
+            validated_data['notification_settings'] = {
+                **(instance.notification_settings or {}), **preferencias['notifications'],
+            }
         return super().update(instance, validated_data)
 
 class AdminUserSerializer(UserProfileSerializer):
