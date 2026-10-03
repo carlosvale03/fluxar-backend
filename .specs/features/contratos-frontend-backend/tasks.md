@@ -677,14 +677,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Editar só o nome de uma meta com data-alvo 31/12/2026 envia `target_date: "2026-12-31"` nos fusos de Brasília e de Lisboa
-- [ ] Exportar setembro envia `endDate=2026-09-30`
-- [ ] Aporte e resgate não enviam `datetime`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Editar só o nome de uma meta com data-alvo 31/12/2026 envia `target_date: "2026-12-31"` nos fusos de Brasília e de Lisboa
+- [x] Exportar setembro envia `endDate=2026-09-30`
+- [x] Aporte e resgate não enviam `datetime`
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 10 testes novos, 5 casos em cada fuso; suíte 171 → 181)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): envia as datas sem hora no formato AAAA-MM-DD`
 
