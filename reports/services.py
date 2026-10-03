@@ -4,7 +4,9 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Sum, Q, Count, Avg, F, Case, When
 from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
+from accounts.faturas import fatura_da_compra
 from accounts.models import Account, CreditCard
+from core.datas import hoje
 from .models import FocusedMonitorItem
 from transactions.models import Transaction, Category, Tag
 from budgets.models import Budget
@@ -80,7 +82,6 @@ class ReportService:
         Retorna resumo financeiro sincronizado com o período se fornecido.
         """
         start_date, end_date = ReportService._get_date_range(period_days, month, year)
-        today = date.today()
         
         # 1. Total Balance (Status atual, não depende do período para o card de saldo)
         # Soma o saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-30, SALDO-31)
@@ -134,7 +135,7 @@ class ReportService:
         total_current_invoices = Decimal('0.00')
         card_details = []
 
-        from accounts.services import AccountService, CreditCardService
+        from accounts.services import AccountService
 
         for card in credit_cards:
             total_credit_limit += card.limit
@@ -144,9 +145,10 @@ class ReportService:
             total_current_invoices += invoice_period.total_amount if invoice_period else Decimal('0.00')
 
             # 2. Dados para Gestão de Crédito (Sempre Real-time/Hoje)
-            # Encontramos a fatura onde um gasto feito HOJE seria alocado
-            due_date_now = CreditCardService.calculate_due_date(card, today)
-            invoice_now = card.invoices.filter(month=due_date_now.month, year=due_date_now.year).first()
+            # Encontramos a fatura onde um gasto feito HOJE seria alocado, sem
+            # criá-la e sem quebrar em meses curtos (FIN-05, FATURA-01)
+            mes_now, ano_now = fatura_da_compra(card, hoje())
+            invoice_now = card.invoices.filter(month=mes_now, year=ano_now).first()
             invoice_amount_now = invoice_now.total_amount if invoice_now else Decimal('0.00')
 
             # O limite disponível real é o limite total menos a soma de todas as faturas NÃO pagas

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Account, CreditCard, CreditCardInvoice
+from .faturas import proximo_vencimento, status_exibido
 from .services import AccountService, CreditCardService
 from core.services.plan_limits import PlanLimitsService
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
@@ -31,9 +32,15 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class CreditCardInvoiceSerializer(serializers.ModelSerializer):
+    # Aberta ou fechada pela data de hoje; paga quando recebe pagamento (FATURA-08, FATURA-09)
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = CreditCardInvoice
         fields = ['id', 'month', 'year', 'status', 'total_amount', 'closing_date', 'due_date']
+
+    def get_status(self, obj):
+        return status_exibido(obj)
 
 class InvoicePaymentSerializer(serializers.Serializer):
 
@@ -106,7 +113,7 @@ class CreditCardSerializer(serializers.ModelSerializer):
         return data['current_invoice_total']
     
     def get_next_due_date(self, obj):
-        return CreditCardService.get_next_due_date(obj)
+        return proximo_vencimento(obj)
 
     def create(self, validated_data):
         user = self.context['request'].user

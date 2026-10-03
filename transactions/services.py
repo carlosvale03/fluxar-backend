@@ -6,9 +6,8 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from .models import Transaction, Category
-from accounts.faturas import obter_fatura
+from accounts.faturas import fatura_da_compra, obter_fatura
 from accounts.models import Account, CreditCard, CreditCardInvoice
-from accounts.services import CreditCardService
 from core.fields import CONTA_NAO_ENCONTRADA
 
 MESMA_CONTA = 'A conta de origem e a de destino devem ser diferentes.'
@@ -149,15 +148,13 @@ class TransactionService:
             # Simula que a compra foi feita i meses depois, para cair na fatura correta
             purchase_date_virtual = date + relativedelta(months=i)
             
-            # 2. Vencimento da Fatura (Competência)
-            due_date = CreditCardService.calculate_due_date(card, purchase_date_virtual)
+            # 2. Fatura da parcela, pela regra única de accounts/faturas.py
+            invoice = obter_fatura(card, *fatura_da_compra(card, purchase_date_virtual))
+            due_date = invoice.due_date
             
             val = installment_amount
             if i == 0:
                 val += diff
-            
-            # Buscar ou Criar Fatura
-            invoice = TransactionService._get_or_create_invoice(card, due_date.month, due_date.year)
             
             # Descrição
             desc = description

@@ -164,15 +164,16 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Fatura não paga aparece aberta antes do fechamento e fechada no dia do fechamento e depois, com `hoje()` simulado
-- [ ] Próximo vencimento: o deste mês antes dele, o do mês seguinte depois dele, e o último dia do mês quando o dia não existe
-- [ ] Dashboard de um cartão com vencimento no dia 31 responde 200 em fevereiro (FIN-05)
-- [ ] Dia de fechamento ou de vencimento 0 ou 32 recebe 400 no cadastro e na edição
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Fatura não paga aparece aberta antes do fechamento e fechada no dia do fechamento e depois, com `hoje()` simulado
+- [x] Próximo vencimento: o deste mês antes dele, o do mês seguinte depois dele, e o último dia do mês quando o dia não existe
+- [x] Dashboard de um cartão com vencimento no dia 31 responde 200 em fevereiro (FIN-05)
+- [x] Dia de fechamento ou de vencimento 0 ou 32 recebe 400 no cadastro e na edição
+- [x] Full gate passa
+- [x] Test count: pelo menos 7 testes (real: 11 testes novos; suíte 550 → 561)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(faturas): mostra o status e o próximo vencimento pela data de hoje`
 

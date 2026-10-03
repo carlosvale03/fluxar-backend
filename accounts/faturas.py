@@ -147,3 +147,31 @@ def colocar(compra, fatura):
     compra.date = fatura.due_date
     compra.save()
     return compra
+
+
+def status_exibido(fatura):
+    """
+    O status mostrado da fatura: `PAID` se paga; senão `OPEN` enquanto hoje
+    (em Brasília, AD-008) é anterior ao fechamento e `CLOSED` a partir dele
+    (FATURA-08, FATURA-09). O banco grava só `OPEN` e `PAID`.
+    """
+    from core.datas import hoje
+
+    if fatura.status == 'PAID':
+        return 'PAID'
+    return 'OPEN' if hoje() < fatura.closing_date else 'CLOSED'
+
+
+def proximo_vencimento(cartao):
+    """
+    O primeiro vencimento igual ou posterior a hoje, pelos dias atuais do
+    cartão (FATURA-06): o deste mês, se ainda não passou, ou o do seguinte.
+    """
+    from core.datas import hoje
+
+    dia = hoje()
+    vencimento = dia_no_mes(dia.year, dia.month, cartao.due_day)
+    if vencimento < dia:
+        mes, ano = mes_seguinte(dia.month, dia.year)
+        vencimento = dia_no_mes(ano, mes, cartao.due_day)
+    return vencimento
