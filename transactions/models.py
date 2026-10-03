@@ -102,6 +102,9 @@ class Transaction(models.Model):
     # Data de pagamento (efetiva saída/entrada no caixa)
     payment_date = models.DateField(null=True, blank=True)
 
+    # Data real da compra no cartão; o `date` dela é o vencimento da fatura (AD-039, FATURA-16)
+    purchase_date = models.DateField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

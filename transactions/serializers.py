@@ -109,7 +109,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id', 'type', 'status', 'description', 'amount', 'signed_amount', 'date',
+            'id', 'type', 'status', 'description', 'amount', 'signed_amount', 'date', 'purchase_date',
             'account', 'account_detail', 'credit_card', 'invoice', 
             'category', 'category_detail',
             'tags', 'tags_detail',
@@ -207,6 +207,9 @@ class TransactionSerializer(serializers.ModelSerializer):
             if erros:
                 raise serializers.ValidationError(erros)
         self._validar_tipo_e_status(attrs)
+        # A data da compra só existe na compra no cartão (FATURA-16, AD-039)
+        if self.instance is None or self.instance.type != 'CREDIT_CARD':
+            attrs.pop('purchase_date', None)
         return attrs
 
     def _validar_tipo_e_status(self, attrs):

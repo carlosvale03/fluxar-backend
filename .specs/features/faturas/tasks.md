@@ -224,13 +224,14 @@ T21 → T22
 
 **Done when**:
 
-- [ ] A transação devolve `purchase_date`, nulo para os tipos que não são compra no cartão
-- [ ] `purchase_date` enviado numa receita ou despesa é ignorado
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A transação devolve `purchase_date`, nulo para os tipos que não são compra no cartão
+- [x] `purchase_date` enviado numa receita ou despesa é ignorado
+- [x] Full gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 563 → 565)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(transactions): guarda a data real da compra no cartão`
 
