@@ -103,7 +103,8 @@ class TransacoesPaginadasTests(ContratosTestCase):
         resp = self.client.get(URL_TRANSACOES)
 
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(set(resp.data), CHAVES_DA_PAGINA)
+        # As transações acrescentam o total de cada dia (CONTRATO-09)
+        self.assertEqual(set(resp.data), CHAVES_DA_PAGINA | {'day_totals'})
         self.assertEqual(resp.data['count'], 25)
         self.assertEqual(resp.data['total_pages'], 2)
         self.assertEqual(resp.data['current_page'], 1)

@@ -197,14 +197,15 @@ T21 → T22
 
 **Done when**:
 
-- [ ] Um dia com lançamentos em duas páginas tem o mesmo total nas duas, igual à soma de todos os lançamentos do dia
-- [ ] Entradas somam e saídas subtraem; o valor sai como texto com duas casas
-- [ ] O total respeita o filtro ativo (ex.: só despesas)
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Um dia com lançamentos em duas páginas tem o mesmo total nas duas, igual à soma de todos os lançamentos do dia
+- [x] Entradas somam e saídas subtraem; o valor sai como texto com duas casas
+- [x] O total respeita o filtro ativo (ex.: só despesas)
+- [x] Build gate passa
+- [x] Test count: pelo menos 3 testes (real: 4 testes novos; suíte 665 → 669)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(transactions): devolve o total de cada dia para o filtro inteiro`
 

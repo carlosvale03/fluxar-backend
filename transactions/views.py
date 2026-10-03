@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Case, DecimalField, F, Q, Sum, When
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -92,6 +92,30 @@ def _envolve_conta_excluida(transacoes):
         return False
     return Transaction.objects.filter(filtro, account__is_active=False).exists()
 
+# Entradas somam no total do dia; as demais transações subtraem (CONTRATO-09)
+TIPOS_DE_ENTRADA = ('INCOME', 'TRANSFER_IN')
+
+
+def _totais_do_dia(filtradas, datas):
+    """
+    Para cada data de `datas`, a soma com sinal de todas as transações do
+    filtro naquele dia, e não só as da página (CONTRATO-09), como texto com
+    duas casas: `{"AAAA-MM-DD": "-123.45"}`.
+    """
+    if not datas:
+        return {}
+    linhas = (
+        Transaction.objects.filter(pk__in=filtradas.values('pk'), date__in=datas)
+        .order_by().values('date')
+        .annotate(total=Sum(Case(
+            When(type__in=TIPOS_DE_ENTRADA, then=F('amount')),
+            default=-F('amount'),
+            output_field=DecimalField(max_digits=15, decimal_places=2),
+        )))
+    )
+    return {linha['date'].isoformat(): f"{linha['total']:.2f}" for linha in linhas}
+
+
 class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -109,6 +133,13 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         if self.action == 'list':
             queryset = filtrar_transacoes(queryset, self.request.query_params, self.request.user)
         return queryset.order_by('-date', '-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        resposta = self.get_paginated_response(self.get_serializer(page, many=True).data)
+        resposta.data['day_totals'] = _totais_do_dia(queryset, {t.date for t in page})
+        return resposta
 
     def update(self, request, *args, **kwargs):
         # Vale para PUT e PATCH, antes de validar o corpo
