@@ -125,20 +125,21 @@ T12 → T13
 
 **Done when**:
 
-- [ ] `.xls` e `.txt` recebem 400 com "Formato não suportado. Envie um arquivo OFX, CSV ou XLSX."
-- [ ] CSV de 6 MB recebe 400 com "O arquivo passa do limite de 5 MB." sem ler linhas
-- [ ] CSV com 10.001 linhas de dados recebe 400 com "O arquivo passa do limite de 10.000 linhas."
-- [ ] CSV do Excel em português (`;` e Windows-1252, com "Crédito") é lido sem erro
-- [ ] Coluna mapeada ausente recebe 400 citando a coluna; arquivo corrompido recebe "Não foi possível ler o arquivo."
-- [ ] OFX com duas contas recebe 400 com a mensagem exata
-- [ ] Célula numérica 1500 e célula de data do XLSX chegam como número e data
-- [ ] Linhas totalmente vazias somem e as demais mantêm o número do arquivo (cabeçalho = 1)
-- [ ] O preflight recusa `.xls` com a mesma mensagem
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 10 testes
+- [x] `.xls` e `.txt` recebem 400 com "Formato não suportado. Envie um arquivo OFX, CSV ou XLSX."
+- [x] CSV de 6 MB recebe 400 com "O arquivo passa do limite de 5 MB." sem ler linhas
+- [x] CSV com 10.001 linhas de dados recebe 400 com "O arquivo passa do limite de 10.000 linhas."
+- [x] CSV do Excel em português (`;` e Windows-1252, com "Crédito") é lido sem erro
+- [x] Coluna mapeada ausente recebe 400 citando a coluna; arquivo corrompido recebe "Não foi possível ler o arquivo."
+- [x] OFX com duas contas recebe 400 com a mensagem exata
+- [x] Célula numérica 1500 e célula de data do XLSX chegam como número e data
+- [x] Linhas totalmente vazias somem e as demais mantêm o número do arquivo (cabeçalho = 1)
+- [x] O preflight recusa `.xls` com a mesma mensagem
+- [x] Quick gate passa
+- [x] Test count: pelo menos 10 testes (real: 14 testes novos; suíte 708 → 722)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(importacao): lê OFX, CSV e XLSX com formatos e limites`
 

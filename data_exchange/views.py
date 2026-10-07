@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from accounts.models import Account
 from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
+from .importacao.leitura import contas_da_planilha, ler_planilha
 from .services import ImportService, ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
@@ -17,7 +18,6 @@ except ImportError:
 
 # Erros no formato do DRF, em português e sem o texto da exceção (CONTRATO-29)
 ARQUIVO_NAO_ENVIADO = 'Arquivo não enviado.'
-ARQUIVO_ILEGIVEL = 'Não foi possível ler o arquivo. Confira o formato e as colunas escolhidas.'
 
 
 class ImportOFXView(views.APIView):
@@ -63,12 +63,10 @@ class ImportSpreadsheetPreflightView(views.APIView):
 
         if not file_obj:
             raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
-        
-        try:
-            unique_accounts = ImportService.preflight_spreadsheet(file_obj, mapping, import_type)
-            return Response({'accounts': unique_accounts}, status=200)
-        except Exception:
-            raise ValidationError({'file': [ARQUIVO_ILEGIVEL]})
+
+        # Mesmos formatos e limites da importação (IMPORT-02, IMPORT-04 a IMPORT-06)
+        linhas = ler_planilha(file_obj, mapping, import_type)
+        return Response({'accounts': contas_da_planilha(linhas, mapping, import_type)}, status=200)
 
 class ImportSpreadsheetView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]

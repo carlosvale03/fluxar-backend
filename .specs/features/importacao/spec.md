@@ -235,20 +235,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| IMPORT-01 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-02 | P1: Arquivos aceitos e limites | - | Pending |
+| IMPORT-01 | P1: Arquivos aceitos e limites | T2 | Implemented |
+| IMPORT-02 | P1: Arquivos aceitos e limites | T2 | Implemented |
 | IMPORT-03 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-04 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-05 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-06 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-07 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-08 | P1: Arquivos aceitos e limites | - | Pending |
+| IMPORT-04 | P1: Arquivos aceitos e limites | T2 | Implemented |
+| IMPORT-05 | P1: Arquivos aceitos e limites | T2 | Implemented |
+| IMPORT-06 | P1: Arquivos aceitos e limites | T2 | Implemented |
+| IMPORT-07 | P1: Arquivos aceitos e limites | T2 | Implemented |
+| IMPORT-08 | P1: Arquivos aceitos e limites | T2 | Implemented |
 | IMPORT-09 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-10 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-11 | P1: Valores e datas no formato brasileiro | - | Pending |
+| IMPORT-11 | P1: Valores e datas no formato brasileiro | T2 | Implemented |
 | IMPORT-12 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-13 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-14 | P1: Valores e datas no formato brasileiro | - | Pending |
+| IMPORT-14 | P1: Valores e datas no formato brasileiro | T2 | Implemented |
 | IMPORT-15 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-16 | P1: Tipo, status e conta de cada linha | - | Pending |
 | IMPORT-17 | P1: Tipo, status e conta de cada linha | - | Pending |
@@ -266,7 +266,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-29 | P1: Resultado da importação | - | Pending |
 | IMPORT-30 | P1: Resultado da importação | - | Pending |
 | IMPORT-31 | P1: Resultado da importação | - | Pending |
-| IMPORT-32 | P1: Resultado da importação | - | Pending |
+| IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
 | IMPORT-33 | P1: Resultado da importação | - | Pending |
 | IMPORT-34 | P1: Linhas já importadas | - | Pending |
 | IMPORT-35 | P1: Linhas já importadas | - | Pending |
