@@ -162,18 +162,19 @@ T12 → T13
 
 **Done when**:
 
-- [ ] "Crédito", "CREDITO", "Entrada" e "C" viram receita; "Débito", "saída" e "D" viram despesa; "Transferido" é rejeitado com "Tipo desconhecido: Transferido"
-- [ ] Sem coluna de tipo, -45,00 é despesa de 45.00 e 100 é receita
-- [ ] OFX sem memo usa o favorecido; sem os dois, "Sem descrição"
-- [ ] "Pendente" e "pending" importam pendente; "Pago" e vazio, efetivada
-- [ ] Conta não mapeada, conta excluída e sem conta rejeitam com "Conta não mapeada: <nome>", "Conta excluída: <nome>" e "Conta não informada"
-- [ ] Transferência com origem igual ao destino rejeita com "Origem e destino iguais"
-- [ ] Descrição de 300 caracteres rejeita com "Texto longo demais: descrição"; tag nova de 60, com "Texto longo demais: tag"
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 12 testes
+- [x] "Crédito", "CREDITO", "Entrada" e "C" viram receita; "Débito", "saída" e "D" viram despesa; "Transferido" é rejeitado com "Tipo desconhecido: Transferido"
+- [x] Sem coluna de tipo, -45,00 é despesa de 45.00 e 100 é receita
+- [x] OFX sem memo usa o favorecido; sem os dois, "Sem descrição"
+- [x] "Pendente" e "pending" importam pendente; "Pago" e vazio, efetivada
+- [x] Conta não mapeada, conta excluída e sem conta rejeitam com "Conta não mapeada: <nome>", "Conta excluída: <nome>" e "Conta não informada"
+- [x] Transferência com origem igual ao destino rejeita com "Origem e destino iguais"
+- [x] Descrição de 300 caracteres rejeita com "Texto longo demais: descrição"; tag nova de 60, com "Texto longo demais: tag"
+- [x] Quick gate passa
+- [x] Test count: pelo menos 12 testes (real: 19 testes novos; suíte 722 → 741)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(importacao): interpreta tipo, status e conta de cada linha`
 

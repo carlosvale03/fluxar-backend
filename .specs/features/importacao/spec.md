@@ -250,17 +250,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-13 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-14 | P1: Valores e datas no formato brasileiro | T2 | Implemented |
 | IMPORT-15 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-16 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-17 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-18 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-19 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-20 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-21 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-22 | P1: Tipo, status e conta de cada linha | - | Pending |
+| IMPORT-16 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-17 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-18 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-19 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-20 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-21 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
+| IMPORT-22 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
 | IMPORT-23 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-24 | P1: Tipo, status e conta de cada linha | - | Pending |
+| IMPORT-24 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
 | IMPORT-25 | P1: Tipo, status e conta de cada linha | - | Pending |
-| IMPORT-26 | P1: Tipo, status e conta de cada linha | - | Pending |
+| IMPORT-26 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
 | IMPORT-27 | P1: Resultado da importação | - | Pending |
 | IMPORT-28 | P1: Resultado da importação | - | Pending |
 | IMPORT-29 | P1: Resultado da importação | - | Pending |
