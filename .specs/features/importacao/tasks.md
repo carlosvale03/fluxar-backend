@@ -195,13 +195,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Duas transações da mesma conta com o mesmo `fitid` não podem existir; contas diferentes podem
-- [ ] Apagar o usuário apaga as correções dele
-- [ ] Build gate passa (makemigrations --check)
-- [ ] Test count: pelo menos 2 testes
+- [x] Duas transações da mesma conta com o mesmo `fitid` não podem existir; contas diferentes podem
+- [x] Apagar o usuário apaga as correções dele
+- [x] Build gate passa (makemigrations --check)
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 741 → 743)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(transactions): guarda o lote, o FITID e as correções de categoria`
 

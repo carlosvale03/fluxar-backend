@@ -105,11 +105,51 @@ class Transaction(models.Model):
     # Data real da compra no cartão; o `date` dela é o vencimento da fatura (AD-039, FATURA-16)
     purchase_date = models.DateField(null=True, blank=True)
 
+    # Importação: o lote de cada importação, o identificador da transação no
+    # OFX e se a categoria veio das correções do usuário (IMPORT-34, IMPORT-44)
+    import_batch = models.UUIDField(null=True, blank=True, db_index=True)
+    fitid = models.CharField(max_length=255, null=True, blank=True)
+    categoria_sugerida = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            # Segunda barreira contra o mesmo OFX importado duas vezes (IMPORT-34, IMPORT-39)
+            models.UniqueConstraint(
+                fields=['account', 'fitid'], condition=models.Q(fitid__isnull=False),
+                name='fitid_unico_por_conta',
+            ),
+        ]
+
     def __str__(self):
         return f"{self.date} - {self.description} ({self.amount})"
+
+
+class CorrecaoDeCategoria(models.Model):
+    """
+    Categoria definida ou trocada pelo usuário numa transação importada
+    (IMPORT-42). Sugere a categoria nas próximas importações do mesmo usuário
+    (IMPORT-43) e é apagada junto com ele (IMPORT-48).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='correcoes_de_categoria')
+    transacao = models.ForeignKey(Transaction, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    descricao = models.CharField(max_length=255)
+    descricao_normalizada = models.CharField(max_length=255, db_index=True)
+    conta = models.ForeignKey('accounts.Account', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    categoria_antes = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    categoria_depois = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'descricao_normalizada', '-criada_em']),
+        ]
+
+    def __str__(self):
+        return f"{self.descricao} → {self.categoria_depois_id}"
 
 
 class RecurringTransaction(models.Model):

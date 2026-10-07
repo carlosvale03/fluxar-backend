@@ -268,7 +268,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-31 | P1: Resultado da importação | - | Pending |
 | IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
 | IMPORT-33 | P1: Resultado da importação | - | Pending |
-| IMPORT-34 | P1: Linhas já importadas | - | Pending |
+| IMPORT-34 | P1: Linhas já importadas | T4 | In Progress |
 | IMPORT-35 | P1: Linhas já importadas | - | Pending |
 | IMPORT-36 | P1: Linhas já importadas | - | Pending |
 | IMPORT-37 | P1: Linhas já importadas | - | Pending |
@@ -276,13 +276,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-39 | P1: Linhas já importadas | - | Pending |
 | IMPORT-40 | P2: Tempo de processamento | - | Pending |
 | IMPORT-41 | P2: Tempo de processamento | - | Pending |
-| IMPORT-42 | P2: Correções de categoria | - | Pending |
+| IMPORT-42 | P2: Correções de categoria | T4 | In Progress |
 | IMPORT-43 | P2: Correções de categoria | - | Pending |
 | IMPORT-44 | P2: Correções de categoria | - | Pending |
 | IMPORT-45 | P2: Correções de categoria | - | Pending |
 | IMPORT-46 | P2: Correções de categoria | - | Pending |
 | IMPORT-47 | P2: Correções de categoria | - | Pending |
-| IMPORT-48 | P2: Correções de categoria | - | Pending |
+| IMPORT-48 | P2: Correções de categoria | T4 | In Progress |
 | IMPORT-49 | P2: Correções de categoria | - | Pending |
 
 **Coverage:** 49 total, 0 mapped to tasks, 49 unmapped ⚠️ (design e tasks ainda não iniciados)
