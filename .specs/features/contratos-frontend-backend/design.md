@@ -1,7 +1,7 @@
 # Contratos frontend backend Design
 
 **Spec**: `.specs/features/contratos-frontend-backend/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

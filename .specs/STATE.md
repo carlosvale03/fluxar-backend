@@ -340,14 +340,14 @@
 
 ## Handoff
 
-- **Feature**: `faturas` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T22) e verificado: `validation.md` com PASS, 45 de 45 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: datas de fechamento e vencimento em qualquer mês (AD-006), módulo `accounts/faturas.py`, data da compra em `purchase_date` (AD-039), parcelas uma por fatura não paga, total sempre igual à soma, edição e exclusão da compra inteira, registro do pagamento com itens (AD-040), pagamento idempotente, estorno exato, API de faturas somente leitura, migração `accounts/0006_corrige_faturas` e telas de fatura; backend com 629 testes e frontend com 101
+- **Feature**: `contratos-frontend-backend` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T22) e verificado: `validation.md` com PASS, 35 de 35 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: coleções completas e paginação única (AD-021), filtro desconhecido com 400 e filtro de transações compartilhado com a exportação (AD-022), total do dia, dinheiro como texto e em centavos no frontend (AD-041), datas `AAAA-MM-DD`, preferências salvas e tema aplicado ao carregar, erros em português com `code`, tratamento único de erros e só o Sonner (AD-042); backend com 701 testes e frontend com 188
 - **In-progress** (file:line): nenhum
-- **Deploy**: as migrações `transactions/0009`, `accounts/0005` e `accounts/0006` rodam no `migrate` do Pre-Deploy
-- **Observações do verificador**: FATURA-15 sem teste com duas faturas pagas seguidas; restante editado antes do estorno volta com o valor atual (escolha do design)
-- **Fora do escopo, anotado**: `parent_transaction` com CASCADE apaga parcelas de outro usuário gravadas à força na mesma raiz; `crypto.randomUUID()` exige contexto seguro (https ou localhost)
-- **Next step**: o usuário faz o push das duas branches `fix/faturas` e abre os PRs para a `development`. Depois do merge, a próxima é `contratos-frontend-backend`
+- **Deploy**: os dois PRs precisam subir juntos (filtros e datas estritos no backend)
+- **Observações do verificador**: sem teste acima de 100 itens numa coleção; tempo esgotado testado pela configuração e pelo `ECONNABORTED`, sem requisição real expirando; 403 de plano fica com `permissoes-e-planos`
+- **Fora do escopo, anotado**: `print` de depuração em `CategoryViewSet.create`; `months` inválido em relatórios dá 500; importação põe `str(e)` nas mensagens por linha; URL desconhecida devolve o 404 HTML do Django; `@radix-ui/react-toast` sem uso no `package.json`; `GoalSimulator` projeta em ponto flutuante só para exibir
+- **Next step**: o usuário faz o push das duas branches `fix/contratos-frontend-backend` e abre os PRs para a `development`. Depois do merge, a próxima é `importacao`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/faturas (backend e frontend)
+- **Branch**: fix/contratos-frontend-backend (backend e frontend)

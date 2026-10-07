@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/contratos-frontend-backend/spec.md`
-**Status:** Spec aprovada; design e tasks aprovados em 2026-10-03
+**Status:** Spec aprovada; implementada e verificada em 2026-10-07 (validation.md: PASS)
 
 ---
 

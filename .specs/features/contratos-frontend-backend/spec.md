@@ -201,43 +201,43 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CONTRATO-01 | P1: Listas e paginação | T1, T14 | Implemented |
-| CONTRATO-02 | P1: Listas e paginação | T1, T14 | Implemented |
-| CONTRATO-03 | P1: Listas e paginação | T1 | Implemented |
-| CONTRATO-04 | P1: Listas e paginação | T1 | Implemented |
-| CONTRATO-05 | P1: Listas e paginação | T14, T15, T17 | Implemented |
-| CONTRATO-06 | P1: Listas e paginação | T15 | Implemented |
-| CONTRATO-07 | P1: Listas e paginação | T15 | Implemented |
-| CONTRATO-08 | P1: Listas e paginação | T15 | Implemented |
-| CONTRATO-09 | P1: Listas e paginação | T4, T16 | Implemented |
-| CONTRATO-10 | P1: Filtros | T3, T16 | Implemented |
-| CONTRATO-11 | P1: Filtros | T3 | Implemented |
-| CONTRATO-12 | P1: Filtros | T16 | Implemented |
-| CONTRATO-13 | P1: Filtros | T3 | Implemented |
-| CONTRATO-14 | P1: Filtros | T2 | Implemented |
-| CONTRATO-15 | P1: Filtros | T3, T17 | Implemented |
-| CONTRATO-16 | P1: Valores em dinheiro | T5, T18 | Implemented |
-| CONTRATO-17 | P1: Valores em dinheiro | T9, T19 | Implemented |
-| CONTRATO-18 | P1: Valores em dinheiro | T9, T18 | Implemented |
-| CONTRATO-19 | P1: Valores em dinheiro | T9, T10, T19 | Implemented |
-| CONTRATO-20 | P1: Valores em dinheiro | T10, T19 | Implemented |
-| CONTRATO-21 | P1: Valores em dinheiro | T10 | Implemented |
-| CONTRATO-22 | P1: Datas | T3, T6 | Implemented |
-| CONTRATO-23 | P1: Datas | T6 | Implemented |
-| CONTRATO-24 | P1: Datas | T11, T20 | Implemented |
-| CONTRATO-25 | P1: Datas | T6, T20 | Implemented |
-| CONTRATO-26 | P1: Preferências | T7, T21 | Implemented |
-| CONTRATO-27 | P1: Preferências | T21 | Implemented |
-| CONTRATO-28 | P1: Preferências | T7 | Implemented |
-| CONTRATO-29 | P1: Erros e avisos | T8 | Implemented |
-| CONTRATO-30 | P1: Erros e avisos | T8, T12, T22 | Implemented |
-| CONTRATO-31 | P1: Erros e avisos | T12, T22 | Implemented |
-| CONTRATO-32 | P1: Erros e avisos | T13 | Implemented |
-| CONTRATO-33 | P1: Erros e avisos | T12, T22 | Implemented |
-| CONTRATO-34 | P1: Erros e avisos | T12 | Implemented |
-| CONTRATO-35 | P1: Erros e avisos | T12 | Implemented |
+| CONTRATO-01 | P1: Listas e paginação | T1, T14 | Verified |
+| CONTRATO-02 | P1: Listas e paginação | T1, T14 | Verified |
+| CONTRATO-03 | P1: Listas e paginação | T1 | Verified |
+| CONTRATO-04 | P1: Listas e paginação | T1 | Verified |
+| CONTRATO-05 | P1: Listas e paginação | T14, T15, T17 | Verified |
+| CONTRATO-06 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-07 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-08 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-09 | P1: Listas e paginação | T4, T16 | Verified |
+| CONTRATO-10 | P1: Filtros | T3, T16 | Verified |
+| CONTRATO-11 | P1: Filtros | T3 | Verified |
+| CONTRATO-12 | P1: Filtros | T16 | Verified |
+| CONTRATO-13 | P1: Filtros | T3 | Verified |
+| CONTRATO-14 | P1: Filtros | T2 | Verified |
+| CONTRATO-15 | P1: Filtros | T3, T17 | Verified |
+| CONTRATO-16 | P1: Valores em dinheiro | T5, T18 | Verified |
+| CONTRATO-17 | P1: Valores em dinheiro | T9, T19 | Verified |
+| CONTRATO-18 | P1: Valores em dinheiro | T9, T18 | Verified |
+| CONTRATO-19 | P1: Valores em dinheiro | T9, T10, T19 | Verified |
+| CONTRATO-20 | P1: Valores em dinheiro | T10, T19 | Verified |
+| CONTRATO-21 | P1: Valores em dinheiro | T10 | Verified |
+| CONTRATO-22 | P1: Datas | T3, T6 | Verified |
+| CONTRATO-23 | P1: Datas | T6 | Verified |
+| CONTRATO-24 | P1: Datas | T11, T20 | Verified |
+| CONTRATO-25 | P1: Datas | T6, T20 | Verified |
+| CONTRATO-26 | P1: Preferências | T7, T21 | Verified |
+| CONTRATO-27 | P1: Preferências | T21 | Verified |
+| CONTRATO-28 | P1: Preferências | T7 | Verified |
+| CONTRATO-29 | P1: Erros e avisos | T8 | Verified |
+| CONTRATO-30 | P1: Erros e avisos | T8, T12, T22 | Verified |
+| CONTRATO-31 | P1: Erros e avisos | T12, T22 | Verified |
+| CONTRATO-32 | P1: Erros e avisos | T13 | Verified |
+| CONTRATO-33 | P1: Erros e avisos | T12, T22 | Verified |
+| CONTRATO-34 | P1: Erros e avisos | T12 | Verified |
+| CONTRATO-35 | P1: Erros e avisos | T12 | Verified |
 
-**Coverage:** 35 total, 0 mapped to tasks, 35 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
 ---
 
