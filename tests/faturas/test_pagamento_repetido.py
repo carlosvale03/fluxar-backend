@@ -65,7 +65,7 @@ class PagamentoRepetidoTests(FaturasTestCase):
 
     def assert_recusa_sem_pagar(self, resp, pagamentos=1, saldo=Decimal('600.00')):
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': CHAVE_COM_OUTROS_DADOS})
+        self.assertEqual(resp.data, {'detail': CHAVE_COM_OUTROS_DADOS, 'code': 'invalid'})
         self.assertEqual(PagamentoDeFatura.objects.count(), pagamentos)
         self.assertEqual(self.saldo(), saldo)
         self.assertEqual(self.saldo(self.outra_conta), Decimal('500.00'))
@@ -96,7 +96,7 @@ class PagamentoRepetidoTests(FaturasTestCase):
             with self.subTest(extra=extra):
                 resp = self.pagar(amount='100.00', **extra)
                 self.assertEqual(resp.status_code, 400)
-                self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA})
+                self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA, 'code': 'invalid'})
                 self.assertEqual(PagamentoDeFatura.objects.count(), 1)
                 self.assertEqual(self.saldo(), Decimal('600.00'))
 
@@ -108,7 +108,7 @@ class PagamentoRepetidoTests(FaturasTestCase):
         resp = self.client.post(f'/api/invoices/{self.setembro.id}/pay/', corpo, format='json')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA})
+        self.assertEqual(resp.data, {'detail': FATURA_JA_PAGA, 'code': 'invalid'})
         self.assertEqual(self.saldo(), Decimal('600.00'))
 
     def test_repetir_a_chave_depois_do_estorno_devolve_a_resposta_original_sem_pagar(self):

@@ -201,43 +201,43 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CONTRATO-01 | P1: Listas e paginação | - | Pending |
-| CONTRATO-02 | P1: Listas e paginação | - | Pending |
-| CONTRATO-03 | P1: Listas e paginação | - | Pending |
-| CONTRATO-04 | P1: Listas e paginação | - | Pending |
-| CONTRATO-05 | P1: Listas e paginação | - | Pending |
-| CONTRATO-06 | P1: Listas e paginação | - | Pending |
-| CONTRATO-07 | P1: Listas e paginação | - | Pending |
-| CONTRATO-08 | P1: Listas e paginação | - | Pending |
-| CONTRATO-09 | P1: Listas e paginação | - | Pending |
-| CONTRATO-10 | P1: Filtros | - | Pending |
-| CONTRATO-11 | P1: Filtros | - | Pending |
-| CONTRATO-12 | P1: Filtros | - | Pending |
-| CONTRATO-13 | P1: Filtros | - | Pending |
-| CONTRATO-14 | P1: Filtros | - | Pending |
-| CONTRATO-15 | P1: Filtros | - | Pending |
-| CONTRATO-16 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-17 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-18 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-19 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-20 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-21 | P1: Valores em dinheiro | - | Pending |
-| CONTRATO-22 | P1: Datas | - | Pending |
-| CONTRATO-23 | P1: Datas | - | Pending |
-| CONTRATO-24 | P1: Datas | - | Pending |
-| CONTRATO-25 | P1: Datas | - | Pending |
-| CONTRATO-26 | P1: Preferências | - | Pending |
-| CONTRATO-27 | P1: Preferências | - | Pending |
-| CONTRATO-28 | P1: Preferências | - | Pending |
-| CONTRATO-29 | P1: Erros e avisos | - | Pending |
-| CONTRATO-30 | P1: Erros e avisos | - | Pending |
-| CONTRATO-31 | P1: Erros e avisos | - | Pending |
-| CONTRATO-32 | P1: Erros e avisos | - | Pending |
-| CONTRATO-33 | P1: Erros e avisos | - | Pending |
-| CONTRATO-34 | P1: Erros e avisos | - | Pending |
-| CONTRATO-35 | P1: Erros e avisos | - | Pending |
+| CONTRATO-01 | P1: Listas e paginação | T1, T14 | Verified |
+| CONTRATO-02 | P1: Listas e paginação | T1, T14 | Verified |
+| CONTRATO-03 | P1: Listas e paginação | T1 | Verified |
+| CONTRATO-04 | P1: Listas e paginação | T1 | Verified |
+| CONTRATO-05 | P1: Listas e paginação | T14, T15, T17 | Verified |
+| CONTRATO-06 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-07 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-08 | P1: Listas e paginação | T15 | Verified |
+| CONTRATO-09 | P1: Listas e paginação | T4, T16 | Verified |
+| CONTRATO-10 | P1: Filtros | T3, T16 | Verified |
+| CONTRATO-11 | P1: Filtros | T3 | Verified |
+| CONTRATO-12 | P1: Filtros | T16 | Verified |
+| CONTRATO-13 | P1: Filtros | T3 | Verified |
+| CONTRATO-14 | P1: Filtros | T2 | Verified |
+| CONTRATO-15 | P1: Filtros | T3, T17 | Verified |
+| CONTRATO-16 | P1: Valores em dinheiro | T5, T18 | Verified |
+| CONTRATO-17 | P1: Valores em dinheiro | T9, T19 | Verified |
+| CONTRATO-18 | P1: Valores em dinheiro | T9, T18 | Verified |
+| CONTRATO-19 | P1: Valores em dinheiro | T9, T10, T19 | Verified |
+| CONTRATO-20 | P1: Valores em dinheiro | T10, T19 | Verified |
+| CONTRATO-21 | P1: Valores em dinheiro | T10 | Verified |
+| CONTRATO-22 | P1: Datas | T3, T6 | Verified |
+| CONTRATO-23 | P1: Datas | T6 | Verified |
+| CONTRATO-24 | P1: Datas | T11, T20 | Verified |
+| CONTRATO-25 | P1: Datas | T6, T20 | Verified |
+| CONTRATO-26 | P1: Preferências | T7, T21 | Verified |
+| CONTRATO-27 | P1: Preferências | T21 | Verified |
+| CONTRATO-28 | P1: Preferências | T7 | Verified |
+| CONTRATO-29 | P1: Erros e avisos | T8 | Verified |
+| CONTRATO-30 | P1: Erros e avisos | T8, T12, T22 | Verified |
+| CONTRATO-31 | P1: Erros e avisos | T12, T22 | Verified |
+| CONTRATO-32 | P1: Erros e avisos | T13 | Verified |
+| CONTRATO-33 | P1: Erros e avisos | T12, T22 | Verified |
+| CONTRATO-34 | P1: Erros e avisos | T12 | Verified |
+| CONTRATO-35 | P1: Erros e avisos | T12 | Verified |
 
-**Coverage:** 35 total, 0 mapped to tasks, 35 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
 ---
 

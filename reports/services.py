@@ -7,7 +7,9 @@ from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractH
 from accounts.faturas import fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
+from core.valores import dinheiro
 from .models import FocusedMonitorItem
+from transactions.filtros import TIPOS_DE_DESPESA
 from transactions.models import Transaction, Category, Tag
 from budgets.models import Budget
 from budgets.services import BudgetService
@@ -94,7 +96,7 @@ class ReportService:
         
         if period_days:
             # Filtro por range de data direto
-            expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD'], date__gte=start_date, date__lte=end_date)
+            expense_q = Q(type__in=TIPOS_DE_DESPESA, date__gte=start_date, date__lte=end_date)
             income_base_q = Q(type='INCOME', date__gte=start_date, date__lte=end_date)
             # Para range livre, ignoramos a regra de 'mês da fatura' para cartões para ser mais intuitivo
         else:
@@ -157,9 +159,9 @@ class ReportService:
             card_details.append({
                 'id': str(card.id),
                 'name': card.name,
-                'limit': card.limit,
-                'current_invoice': invoice_amount_now, # Fatura "ativa" para gastos hoje
-                'available_limit': available_limit, # Real-time consolidado
+                'limit': dinheiro(card.limit),
+                'current_invoice': dinheiro(invoice_amount_now), # Fatura "ativa" para gastos hoje
+                'available_limit': dinheiro(available_limit), # Real-time consolidado
                 'color': card.color or '#CBD5E1',
                 'institution': card.institution,
                 'due_day': card.due_day
@@ -173,14 +175,15 @@ class ReportService:
         )
 
         return {
+            # Dinheiro como texto; percentuais e razões continuam números (CONTRATO-16)
             'summary': {
-                'total_balance': total_balance,
-                'monthly_income': month_income,
-                'monthly_expense': month_expense,
-                'net_result': net_result,
-                'total_credit_limit': total_credit_limit,
-                'total_current_invoices': total_current_invoices,
-                'net_worth': total_balance - total_current_invoices,
+                'total_balance': dinheiro(total_balance),
+                'monthly_income': dinheiro(month_income),
+                'monthly_expense': dinheiro(month_expense),
+                'net_result': dinheiro(net_result),
+                'total_credit_limit': dinheiro(total_credit_limit),
+                'total_current_invoices': dinheiro(total_current_invoices),
+                'net_worth': dinheiro(total_balance - total_current_invoices),
                 'savings_rate': health_metrics['savings_rate'],
                 'total_liquid_balance': health_metrics['total_liquid_balance'],
                 'total_investment_balance': health_metrics['total_investment_balance'],
@@ -320,8 +323,8 @@ class ReportService:
 
         return {
             'savings_rate': float(savings_rate.quantize(Decimal('0.01'))),
-            'total_liquid_balance': float(total_liquid_balance),
-            'total_investment_balance': float(total_investment_balance),
+            'total_liquid_balance': dinheiro(total_liquid_balance),
+            'total_investment_balance': dinheiro(total_investment_balance),
             'liquidity_ratio': float(liquidity_ratio.quantize(Decimal('0.01'))),
             'financial_score': int(score)
         }
@@ -348,7 +351,7 @@ class ReportService:
             
             if item['type'] == 'INCOME':
                 raw_days[d_str]['income'] += item['total']
-            elif item['type'] in ['EXPENSE', 'CREDIT_CARD']:
+            elif item['type'] in TIPOS_DE_DESPESA:
                 raw_days[d_str]['expense'] += item['total']
         
         # 2. Transformar em formato esperado pelo Frontend
@@ -363,9 +366,9 @@ class ReportService:
             
             days_list.append({
                 'date': d_str,
-                'total_incomes': income,
-                'total_expenses': expense,
-                'net_amount': net,
+                'total_incomes': dinheiro(income),
+                'total_expenses': dinheiro(expense),
+                'net_amount': dinheiro(net),
                 'is_positive': net >= 0
             })
             
@@ -376,8 +379,8 @@ class ReportService:
             'start_date': start_date.strftime('%Y-%m-%d'),
             'end_date': end_date.strftime('%Y-%m-%d'),
             'days': days_list,
-                'total_income': total_period_income,
-            'total_expense': total_period_expense
+            'total_income': dinheiro(total_period_income),
+            'total_expense': dinheiro(total_period_expense)
         }
 
     @staticmethod
@@ -391,7 +394,7 @@ class ReportService:
         expense_q = Q(date__gte=start_date, date__lte=end_date)
         expense_q &= ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN'])
         # Inclui Despesas e Cartão de Crédito
-        expense_q &= Q(type__in=['EXPENSE', 'CREDIT_CARD'])
+        expense_q &= Q(type__in=TIPOS_DE_DESPESA)
         
         # 2. Barras (Receita vs Despesa) - SEMPRE DIÁRIO conforme pedido do usuário
         # Agrupamento diário padrão (via get_calendar_data) para manter o Fluxo de Caixa Diário detalhado
@@ -401,8 +404,8 @@ class ReportService:
             income_vs_expense.append({
                 'label': datetime.strptime(d['date'], '%Y-%m-%d').strftime('%d'),
                 'full_date': d['date'], # Adicionando a data completa para facilitar o filtro mensal no frontend
-                'income': float(d['total_incomes']),
-                'expense': float(d['total_expenses'])
+                'income': d['total_incomes'],
+                'expense': d['total_expenses']
             })
             
         from django.db.models import F
@@ -419,7 +422,7 @@ class ReportService:
         for item in full_cat_expenses:
             expense_by_category.append({
                 'category_name': item['effective_name'] or 'Sem Categoria',
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['effective_color'] or '#CBD5E1'
             })
 
@@ -437,7 +440,7 @@ class ReportService:
         for item in full_cat_incomes:
             income_by_category.append({
                 'category_name': item['effective_name'] or 'Sem Categoria',
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['effective_color'] or '#CBD5E1'
             })
 
@@ -462,7 +465,7 @@ class ReportService:
         
         # 1. Evolução Patrimonial (Net Worth)
         summary_res = ReportService.get_dashboard_summary(user)
-        current_balance = summary_res['summary']['total_balance']
+        current_balance = Decimal(summary_res['summary']['total_balance'])
         
         transactions = Transaction.objects.filter(
             user=user,
@@ -475,7 +478,7 @@ class ReportService:
         daily_diffs = {}
         for t in transactions:
             d = t.date
-            if t.type in ['EXPENSE', 'CREDIT_CARD']:
+            if t.type in TIPOS_DE_DESPESA:
                  daily_diffs[d] = daily_diffs.get(d, 0) + t.amount
             elif t.type == 'INCOME':
                  daily_diffs[d] = daily_diffs.get(d, 0) - t.amount
@@ -484,7 +487,7 @@ class ReportService:
         simulated_balance = current_balance
         curr = end_date
         while curr >= start_date:
-            evolution.append({'date': curr.strftime('%Y-%m-%d'), 'balance': float(simulated_balance)})
+            evolution.append({'date': curr.strftime('%Y-%m-%d'), 'balance': dinheiro(simulated_balance)})
             diff = daily_diffs.get(curr, 0)
             simulated_balance += diff
             curr -= timedelta(days=1)
@@ -494,7 +497,7 @@ class ReportService:
         # Extraímos dia da semana (1=Dom, 2=Seg...) e hora do created_at
         frequency_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD'],
+            type__in=TIPOS_DE_DESPESA,
             date__gt=start_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -667,8 +670,8 @@ class ReportService:
                 'type': 'category' if item.category else 'tag',
                 'icon': item.category.icon if item.category else None,
                 'color': item.category.color if item.category else item.tag.color,
-                'current_month': float(current_month_total),
-                'average_month': float(average),
+                'current_month': dinheiro(current_month_total),
+                'average_month': dinheiro(average),
                 'status': status
             })
 
@@ -677,7 +680,7 @@ class ReportService:
         six_months_ago = end_date - timedelta(days=180)
         # Query de meses com gasto (agrupado por mês)
         month_totals = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=six_months_ago, date__lte=end_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -688,7 +691,7 @@ class ReportService:
         
         # Média por transação (para definir o que é "grande")
         avg_txn = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD']
+            user=user, type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(Avg('amount'))['amount__avg'] or Decimal('0.00')
@@ -716,7 +719,7 @@ class ReportService:
         # C. Detecção de Padrões (Recorrência de 3 meses / Janela 5 dias)
         three_months_ago = end_date - timedelta(days=90)
         history = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=three_months_ago, date__lte=end_date
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -811,7 +814,7 @@ class ReportService:
             projections.append({
                 'years': years,
                 'label': f"{years} {'Ano' if years == 1 else 'Anos'}",
-                'value': float(fv.quantize(Decimal('0.01')))
+                'value': dinheiro(fv)
             })
 
         # 7. Análise de Gastos Fixos vs Variáveis
@@ -832,7 +835,7 @@ class ReportService:
 
         fixed_expenses_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).filter(period_filter).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).filter(fixed_q)
@@ -841,7 +844,7 @@ class ReportService:
 
         total_period_exp = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).filter(period_filter).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -853,12 +856,12 @@ class ReportService:
             hist_start = end_date - timedelta(days=lookback_days)
             
             hist_fixed = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gte=hist_start, date__lte=end_date
             ).filter(fixed_q).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             hist_total = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gte=hist_start, date__lte=end_date
             ).exclude(
                 type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -887,7 +890,7 @@ class ReportService:
         # 9. Análise de Risco (Perfil de Volatilidade)
         # Buscamos os gastos dos últimos 6 meses para calcular desvio padrão
         six_months_data = Transaction.objects.filter(
-            user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+            user=user, type__in=TIPOS_DE_DESPESA,
             date__gt=end_date - timedelta(days=180)
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -915,7 +918,7 @@ class ReportService:
             
             # Detecção de Sazonalidade (Categoriacom maior desvio)
             cat_variance = Transaction.objects.filter(
-                user=user, type__in=['EXPENSE', 'CREDIT_CARD'],
+                user=user, type__in=TIPOS_DE_DESPESA,
                 date__gt=end_date - timedelta(days=180)
             ).exclude(
                 type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
@@ -935,7 +938,7 @@ class ReportService:
         # Buscamos a data da primeira transação de gasto para ajustar o período de média se necessário
         first_txn_date = Transaction.objects.filter(
             user=user, 
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).aggregate(models.Min('date'))['date__min']
@@ -959,7 +962,7 @@ class ReportService:
             user=user,
             date__gte=start_date,
             date__lte=end_date,
-            type__in=['EXPENSE', 'CREDIT_CARD']
+            type__in=TIPOS_DE_DESPESA
         ).exclude(
             type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
         ).annotate(weekday=ExtractWeekDay('date')).values('weekday').annotate(total=Sum('amount')).order_by('weekday')
@@ -978,8 +981,18 @@ class ReportService:
         for i in range(1, 8):
             spend_by_weekday.append({
                 'label': weekday_map[i],
-                'amount': data_by_weekday[i]
+                'amount': dinheiro(data_by_weekday[i])
             })
+
+        # Dinheiro como texto na saída (CONTRATO-16)
+        investment_data['total_invested'] = dinheiro(investment_data['total_invested'])
+        for mes in investment_data['monthly_history']:
+            mes['contribution'] = dinheiro(mes['contribution'])
+            mes['returns'] = dinheiro(mes['returns'])
+        for ativo in investment_data['asset_allocation']:
+            ativo['value'] = dinheiro(ativo['value'])
+        if next_expense_data:
+            next_expense_data['amount'] = dinheiro(next_expense_data['amount'])
 
         risk_analysis = {
             'level': risk_level,
@@ -996,14 +1009,14 @@ class ReportService:
             'next_big_expense': next_expense_data,
             'financial_freedom_projection': projections,
             'fixed_vs_variable': {
-                'fixed': float(fixed_expenses),
-                'variable': float(variable_expenses),
-                'total': float(total_period_exp)
+                'fixed': dinheiro(fixed_expenses),
+                'variable': dinheiro(variable_expenses),
+                'total': dinheiro(total_period_exp)
             },
             'daily_spending_report': {
-                'safe_daily_spend': float(safe_daily_spend),
+                'safe_daily_spend': dinheiro(safe_daily_spend),
                 'remaining_days': remaining_days,
-                'available_for_month': float(available_for_month)
+                'available_for_month': dinheiro(available_for_month)
             },
             'risk_analysis': risk_analysis,
             'spend_by_weekday': spend_by_weekday,
@@ -1051,7 +1064,7 @@ class ReportService:
         # 2. Agregação de Despesas
         expense_qs = Transaction.objects.filter(
             user=user,
-            type__in=['EXPENSE', 'CREDIT_CARD'],
+            type__in=TIPOS_DE_DESPESA,
             date__gte=start_date,
             date__lte=target_end
         ).exclude(
@@ -1092,6 +1105,9 @@ class ReportService:
         for key in sorted(data_map.keys()):
             val = data_map[key]
             val['balance'] = val['income'] - val['expense']
+            # Dinheiro como texto (CONTRATO-16)
+            for campo in ('income', 'expense', 'balance'):
+                val[campo] = dinheiro(val[campo])
             comparison_list.append(val)
 
         return comparison_list
@@ -1125,7 +1141,7 @@ class ReportService:
         # Despesas (Inclui Credit Card)
         expense_txs = Transaction.objects.filter(
             user=user, 
-            type__in=['EXPENSE', 'CREDIT_CARD'], 
+            type__in=TIPOS_DE_DESPESA, 
             date__gte=start_date, 
             date__lte=today
         )
@@ -1145,9 +1161,9 @@ class ReportService:
         last_transaction_date = last_tx.date.strftime('%Y-%m-%d') if last_tx else None
 
         return {
-            "total_balance": float(total_balance),
-            "avg_income_value": float(avg_income_value),
-            "avg_expense_value": float(avg_expense_value),
+            "total_balance": dinheiro(total_balance),
+            "avg_income_value": dinheiro(avg_income_value),
+            "avg_expense_value": dinheiro(avg_expense_value),
             "income_count_per_day": float(income_count_per_day),
             "expense_count_per_day": float(expense_count_per_day),
             "last_transaction_date": last_transaction_date
@@ -1223,13 +1239,13 @@ class ReportService:
             # Ganhos e Gastos mensais para o LineChart
             m_data = base_qs.filter(date__year=curr.year, date__month=curr.month).aggregate(
                 income=Sum(Case(When(type='INCOME', then=F('amount')), default=0, output_field=models.DecimalField())),
-                expense=Sum(Case(When(type__in=['EXPENSE', 'CREDIT_CARD'], then=F('amount')), default=0, output_field=models.DecimalField()))
+                expense=Sum(Case(When(type__in=TIPOS_DE_DESPESA, then=F('amount')), default=0, output_field=models.DecimalField()))
             )
             
             history_chart.append({
                 'month': curr.strftime('%b/%y'),
-                'income': float(m_data['income'] or 0),
-                'expense': float(m_data['expense'] or 0)
+                'income': dinheiro(m_data['income']),
+                'expense': dinheiro(m_data['expense'])
             })
             
             # Próximo mês
@@ -1242,8 +1258,8 @@ class ReportService:
             'tag_name': tag.name,
             'color': tag.color,
             'focus_monitor': {
-                'current_month': float(current_total),
-                'average_month': float(average),
+                'current_month': dinheiro(current_total),
+                'average_month': dinheiro(average),
                 'status': status
             },
             'history_chart': history_chart
@@ -1263,7 +1279,7 @@ class ReportService:
         base_transactions = Transaction.objects.filter(user=user, date__gte=start_date, date__lte=end_date)
         
         # 1. Gastos (Despesa + Cartão)
-        expense_q = Q(type__in=['EXPENSE', 'CREDIT_CARD']) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
+        expense_q = Q(type__in=TIPOS_DE_DESPESA) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
         expenses = base_transactions.filter(expense_q)
         
         # Sem tags (tag de outro usuário conta como ausente, ISOL-15)
@@ -1277,7 +1293,7 @@ class ReportService:
             expense_by_tag.append({
                 'id': str(item['tags__id']),
                 'name': item['tags__name'],
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['tags__color'] or '#CBD5E1'
             })
             
@@ -1285,7 +1301,7 @@ class ReportService:
             expense_by_tag.append({
                 'id': 'others',
                 'name': 'Outros',
-                'amount': float(others_expenses),
+                'amount': dinheiro(others_expenses),
                 'color': '#94a3b8'
             })
 
@@ -1304,7 +1320,7 @@ class ReportService:
             income_by_tag.append({
                 'id': str(item['tags__id']),
                 'name': item['tags__name'],
-                'amount': float(item['total']),
+                'amount': dinheiro(item['total']),
                 'color': item['tags__color'] or '#CBD5E1'
             })
             
@@ -1312,7 +1328,7 @@ class ReportService:
             income_by_tag.append({
                 'id': 'others',
                 'name': 'Outros',
-                'amount': float(others_incomes),
+                'amount': dinheiro(others_incomes),
                 'color': '#94a3b8'
             })
             

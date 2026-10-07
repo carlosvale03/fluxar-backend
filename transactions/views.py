@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Case, DecimalField, F, Q, Sum, When
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,7 +8,9 @@ from .serializers import (
     TransferSerializer, CreditCardExpenseSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
+from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account
@@ -16,11 +18,13 @@ from accounts.saldo import recalcular
 from core.fields import get_owned_or_400, CATEGORIA_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA
 from core.valores import ler_valor
 
-class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class CategoryViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None  # Remove paginação para retornar árvore completa
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = frozenset({'type'})
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -53,7 +57,7 @@ class CategoryViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
                 print(f"DEBUG ERROR DETAIL: {e.detail}")
             raise e
 
-class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -63,7 +67,7 @@ class TagViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-from core.pagination import StandardResultsSetPagination
+from core.pagination import PaginacaoPadrao
 
 # Histórico da conta excluída: só leitura (SALDO-36, AD-003)
 DE_CONTA_EXCLUIDA = {'detail': 'Esta transação é de uma conta excluída e não pode ser alterada.'}
@@ -88,62 +92,54 @@ def _envolve_conta_excluida(transacoes):
         return False
     return Transaction.objects.filter(filtro, account__is_active=False).exists()
 
-class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+# Entradas somam no total do dia; as demais transações subtraem (CONTRATO-09)
+TIPOS_DE_ENTRADA = ('INCOME', 'TRANSFER_IN')
+
+
+def _totais_do_dia(filtradas, datas):
+    """
+    Para cada data de `datas`, a soma com sinal de todas as transações do
+    filtro naquele dia, e não só as da página (CONTRATO-09), como texto com
+    duas casas: `{"AAAA-MM-DD": "-123.45"}`.
+    """
+    if not datas:
+        return {}
+    linhas = (
+        Transaction.objects.filter(pk__in=filtradas.values('pk'), date__in=datas)
+        .order_by().values('date')
+        .annotate(total=Sum(Case(
+            When(type__in=TIPOS_DE_ENTRADA, then=F('amount')),
+            default=-F('amount'),
+            output_field=DecimalField(max_digits=15, decimal_places=2),
+        )))
+    )
+    return {linha['date'].isoformat(): f"{linha['total']:.2f}" for linha in linhas}
+
+
+class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
+    pagination_class = PaginacaoPadrao
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = PAGINACAO | {
+        'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
+        'type', 'categoryId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
+    }
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
-        # Filtros de Query Params
-        account_id = self.request.query_params.get('accountId') or self.request.query_params.get('account')
-        card_id = self.request.query_params.get('credit_card')
-        month = self.request.query_params.get('month')
-        year = self.request.query_params.get('year')
-        invoice_id = self.request.query_params.get('invoice')
-        
-        start_date = self.request.query_params.get('startDate')
-        end_date = self.request.query_params.get('endDate')
-        transaction_type = self.request.query_params.get('type')
-        category_id = self.request.query_params.get('categoryId') or self.request.query_params.get('category')
-        search = self.request.query_params.get('search')
-        
-        if account_id and account_id != 'ALL':
-            queryset = queryset.filter(account_id=account_id)
-        if card_id:
-            queryset = queryset.filter(credit_card_id=card_id)
-        if invoice_id:
-            queryset = queryset.filter(invoice_id=invoice_id)
-        if month and year:
-            queryset = queryset.filter(date__month=month, date__year=year)
-            
-        if start_date:
-            queryset = queryset.filter(date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(date__lte=end_date)
-            
-        if transaction_type and transaction_type != 'ALL':
-            if transaction_type == 'EXPENSE':
-                queryset = queryset.filter(type__in=['EXPENSE', 'CREDIT_CARD', 'CREDIT_CARD_EXPENSE', 'INVOICE_PAYMENT'])
-            elif transaction_type == 'TRANSFER':
-                queryset = queryset.filter(type__in=['TRANSFER', 'TRANSFER_OUT', 'TRANSFER_IN'])
-            else:
-                queryset = queryset.filter(type=transaction_type)
-                
-        if category_id and category_id != 'ALL':
-            queryset = queryset.filter(category_id=category_id)
-            
-        if search:
-            queryset = queryset.filter(description__icontains=search)
-            
-        # Filtro por Tags (Etiquetas)
-        tag_ids = self.request.query_params.getlist('tagIds')
-        if tag_ids:
-            queryset = queryset.filter(tags__id__in=tag_ids).distinct()
-            
+        # O mesmo filtro da exportação (CONTRATO-13), só na lista
+        if self.action == 'list':
+            queryset = filtrar_transacoes(queryset, self.request.query_params, self.request.user)
         return queryset.order_by('-date', '-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        resposta = self.get_paginated_response(self.get_serializer(page, many=True).data)
+        resposta.data['day_totals'] = _totais_do_dia(queryset, {t.date for t in page})
+        return resposta
 
     def update(self, request, *args, **kwargs):
         # Vale para PUT e PATCH, antes de validar o corpo
@@ -245,7 +241,8 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
             deleted_count, _ = pernas.delete()
             return Response({'status': f'{deleted_count} transações removidas.'})
             
-        return Response({'error': 'Informe recurring_source ou transfer_id'}, status=status.HTTP_400_BAD_REQUEST)
+        # Erro no formato do DRF, em português (CONTRATO-29)
+        raise ValidationError({'detail': 'Informe recurring_source ou transfer_id.'})
 
     @action(detail=False, methods=['patch'], url_path='bulk-update')
     def bulk_update(self, request):
@@ -256,7 +253,7 @@ class TransactionViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         """
         recurring_id = request.data.get('recurring_source')
         if not recurring_id:
-            return Response({'error': 'Informe recurring_source'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'recurring_source': ['Este campo é obrigatório.']})
         serie = get_owned_or_400(
             RecurringTransaction.objects.all(), request.user, recurring_id,
             'recurring_source', SERIE_NAO_ENCONTRADA,

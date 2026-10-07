@@ -217,7 +217,7 @@ class RecusaEFalhaTests(PagamentoTestCase):
         resp = self.pagar(self.setembro, '1050.01')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': VALOR_MAIOR})
+        self.assertEqual(resp.data, {'detail': VALOR_MAIOR, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_falha_no_meio_do_pagamento_deixa_tudo_como_estava(self):

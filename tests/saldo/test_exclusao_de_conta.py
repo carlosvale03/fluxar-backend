@@ -58,7 +58,7 @@ class ExclusaoDeContaTests(SaldoTestCase):
         self.assertEqual(resp.status_code, 204)
         self.assertFalse(Account.objects.get(pk=self.a.poupanca.pk).is_active)
         self.assertNotIn(str(self.a.poupanca.id), self.ids_na_lista())
-        historico = self.cliente.get('/api/transactions/', {'account': str(self.a.poupanca.id)})
+        historico = self.cliente.get('/api/transactions/', {'accountId': str(self.a.poupanca.id)})
         self.assertEqual(historico.status_code, 200)
         self.assertEqual(
             {item['id'] for item in historico.data['results']}, {str(receita.id), str(despesa.id)},

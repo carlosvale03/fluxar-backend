@@ -292,7 +292,8 @@ class RespostaDoLimiteTests(APITestCase):
         self.assertEqual(resposta.headers['Retry-After'], retry_after)
         unidade = 'minuto' if minutos == 1 else 'minutos'
         self.assertEqual(
-            resposta.data, {'detail': f'Muitas tentativas. Tente novamente em {minutos} {unidade}.'},
+            resposta.data,
+            {'detail': f'Muitas tentativas. Tente novamente em {minutos} {unidade}.', 'code': 'throttled'},
         )
 
     # AUTH-36 -----------------------------------------------------------
@@ -332,4 +333,4 @@ class RespostaNaoEncontradoTests(APITestCase):
         resposta = self.client.get('/api/accounts/00000000-0000-0000-0000-000000000000/')
 
         self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(resposta.data, {'detail': 'Não encontrado.'})
+        self.assertEqual(resposta.data, {'detail': 'Não encontrado.', 'code': 'not_found'})

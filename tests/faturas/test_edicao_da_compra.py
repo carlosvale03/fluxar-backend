@@ -113,7 +113,7 @@ class EdicaoDaCompraTests(FaturasTestCase):
         resp = self.editar(self.parcelas()[0], description='Outra', amount='10.00')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': MENSAGEM})
+        self.assertEqual(resp.data, {'detail': MENSAGEM, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_mudar_a_data_de_compra_com_parte_paga_recebe_400(self):
@@ -123,7 +123,7 @@ class EdicaoDaCompraTests(FaturasTestCase):
         resp = self.editar(self.parcelas()[2], purchase_date='2026-01-10')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': MENSAGEM})
+        self.assertEqual(resp.data, {'detail': MENSAGEM, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_editar_todas_as_futuras_com_futura_em_fatura_paga_recebe_400(self):
@@ -133,5 +133,5 @@ class EdicaoDaCompraTests(FaturasTestCase):
         resp = self.editar(self.parcelas()[1], amount='30.00', update_scope='ALL_FUTURE')
 
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.data, {'detail': MENSAGEM})
+        self.assertEqual(resp.data, {'detail': MENSAGEM, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)

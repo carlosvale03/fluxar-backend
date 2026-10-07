@@ -1,4 +1,4 @@
-from rest_framework import generics, status, permissions, filters
+from rest_framework import exceptions, generics, status, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from datetime import timedelta
+from decimal import Decimal
 import uuid
 from .serializers import (
     EMAIL_JA_CADASTRADO,
@@ -44,6 +45,9 @@ from core.throttles import (
 )
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
+from core.pagination import PaginacaoPadrao
+from core.valores import dinheiro
 import logging
 
 User = get_user_model()
@@ -169,7 +173,7 @@ class LogoutView(APIView):
         apagar_cookie_de_renovacao(response)
         return response
 
-class VerifyEmailView(SemTransacaoPorRequisicao, APIView):
+class VerifyEmailView(ParametrosConhecidosMixin, SemTransacaoPorRequisicao, APIView):
     """
     Verifica o e-mail do usuário através do token recebido.
     """
@@ -177,6 +181,8 @@ class VerifyEmailView(SemTransacaoPorRequisicao, APIView):
     # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
     authentication_classes = ()
     throttle_classes = (LinkIPThrottle,)
+    # O link de verificação traz o token (CONTRATO-14)
+    parametros_permitidos = frozenset({'token'})
 
     @staticmethod
     def _token_valido(token_str):
@@ -367,7 +373,7 @@ class ResetPasswordView(SemTransacaoPorRequisicao, APIView):
 
         return Response({"message": "Senha redefinida com sucesso."}, status=status.HTTP_200_OK)
 
-class MeView(APIView):
+class MeView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia o perfil do usuário logado.
     GET: Retorna dados do usuário.
@@ -419,7 +425,8 @@ class UserAvatarView(APIView):
                 avatar_url = request.build_absolute_uri(user.avatar.url)
                 return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
             else:
-                 return Response({"error": "Erro ao salvar arquivo."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # Erro no formato do DRF, em português (CONTRATO-29)
+                raise exceptions.APIException('Não foi possível salvar o arquivo.')
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -450,7 +457,7 @@ class ChangePasswordView(APIView):
 
 # --- Admin Views ---
 
-class AdminUserListView(generics.ListAPIView):
+class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
     Acesso: Apenas administradores (is_staff=True ou role='ADMIN').
@@ -458,6 +465,10 @@ class AdminUserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by('-created_at')
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = AdminUserSerializer
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
+    # Parâmetros conhecidos da lista (CONTRATO-14)
+    parametros_permitidos = PAGINACAO | {'search', 'show_archived', 'role', 'plan'}
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'email']
 
@@ -511,7 +522,7 @@ class AdminUserListView(generics.ListAPIView):
             encerrar_todas(user)
         return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
-class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Gerencia um usuário específico. Permite ao admin alterar planos, 
     roles ou desativar contas manualmente.
@@ -643,7 +654,7 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         serializer.save()
 
-class AdminStatsView(APIView):
+class AdminStatsView(ParametrosConhecidosMixin, APIView):
     """
     Endpoint para fornecer métricas globais da plataforma para o dashboard admin.
     Acesso: Apenas administradores.
@@ -656,9 +667,10 @@ class AdminStatsView(APIView):
         
         # Faturamento estimado (simulado com base nos planos)
         # TODO: Integrar com Stripe/Gateway real futuramente
+        # Em Decimal e como texto na resposta (CONTRATO-16)
         estimated_revenue = (
-            User.objects.filter(plan='PREMIUM').count() * 19.90 +
-            User.objects.filter(plan='PREMIUM_PLUS').count() * 39.90
+            User.objects.filter(plan='PREMIUM').count() * Decimal('19.90') +
+            User.objects.filter(plan='PREMIUM_PLUS').count() * Decimal('39.90')
         )
 
         # Taxa de conversão
@@ -690,7 +702,7 @@ class AdminStatsView(APIView):
         return Response({
             "total_users": total_users,
             "premium_users": premium_users,
-            "estimated_revenue": estimated_revenue,
+            "estimated_revenue": dinheiro(estimated_revenue),
             "conversion_rate": round(conversion_rate, 2),
             "recent_users": recent_users,
             "status": "Operacional",
@@ -699,7 +711,7 @@ class AdminStatsView(APIView):
             "api_version": "1.2.5"
         })
 
-class AdminSystemSettingsView(APIView):
+class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia configurações globais do sistema (ex: modo manutenção).
     """
@@ -737,15 +749,18 @@ class AdminSystemSettingsView(APIView):
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
 
-class AdminGlobalLogsView(generics.ListAPIView):
+class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna todos os logs do sistema para auditoria global.
     """
     queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
     permission_classes = (permissions.IsAdminUser,)
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
+    parametros_permitidos = PAGINACAO
 
-class AdminUserFinancialStatsView(APIView):
+class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     """
     Endpoint para fornecer métricas financeiras de um usuário específico.
     Acesso: Apenas administradores.
@@ -758,13 +773,15 @@ class AdminUserFinancialStatsView(APIView):
         stats = ReportService.get_user_financial_stats(user)
         return Response(stats)
 
-class AdminUserLogsView(generics.ListAPIView):
+class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna os logs de atividade de um usuário específico.
     """
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = SystemLogSerializer
-    pagination_class = None
+    # Lista paginada (CONTRATO-02, AD-021)
+    pagination_class = PaginacaoPadrao
+    parametros_permitidos = PAGINACAO
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
@@ -818,28 +835,26 @@ class AdminClearUserDataView(APIView):
         if not admin_password or not request.user.check_password(admin_password):
             return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
 
-        try:
-            # Apaga dados relacionados explicitamente
-            user.transactions.all().delete()
-            user.categories.all().delete()
-            user.recurring_transactions.all().delete()
-            user.tags.all().delete()
-            user.focused_monitors.all().delete()
-            user.goals.all().delete()
-            user.budgets.all().delete()
-            user.credit_cards.all().delete()
-            user.accounts.all().delete()
+        # Erro inesperado sobe e vira 500, sem o texto da exceção (CONTRATO-29)
+        # Apaga dados relacionados explicitamente
+        user.transactions.all().delete()
+        user.categories.all().delete()
+        user.recurring_transactions.all().delete()
+        user.tags.all().delete()
+        user.focused_monitors.all().delete()
+        user.goals.all().delete()
+        user.budgets.all().delete()
+        user.credit_cards.all().delete()
+        user.accounts.all().delete()
 
-            SystemLog.objects.create(
-                user=user,
-                action="CLEAR_DATA",
-                description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
-                admin_name=request.user.name
-            )
+        SystemLog.objects.create(
+            user=user,
+            action="CLEAR_DATA",
+            description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
+            admin_name=request.user.name
+        )
 
-            return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminHardDeleteView(APIView):
     """

@@ -198,7 +198,7 @@ class CompraNoCartaoComContaExcluidaTests(ContaExcluidaTestCase):
         }, format='json')
 
         self.assertEqual(resp.status_code, 400, resp.data)
-        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_compra_pelo_service_recusada(self):
@@ -247,7 +247,7 @@ class TransferenciaPeloServiceComContaExcluidaTests(ContaExcluidaTestCase):
         resp = self.cliente.post(f'/api/goals/{self.a.meta.id}/{acao}/', corpo, format='json')
 
         self.assertEqual(resp.status_code, 400, resp.data)
-        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA})
+        self.assertEqual(resp.data, {'detail': CONTA_NAO_ENCONTRADA, 'code': 'invalid'})
         self.assertEqual(self.estado(), antes)
 
     def test_aporte_em_meta_com_cofrinho_excluido_recusado(self):

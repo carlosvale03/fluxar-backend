@@ -109,7 +109,7 @@ class PagamentosSimultaneosTests(TransactionTestCase):
 
         self.assertEqual(sorted(r.status_code for r in respostas), [200, 400])
         recusa = next(r for r in respostas if r.status_code == 400)
-        self.assertEqual(recusa.data, {'detail': CHAVE_COM_OUTROS_DADOS})
+        self.assertEqual(recusa.data, {'detail': CHAVE_COM_OUTROS_DADOS, 'code': 'invalid'})
         pagamento = PagamentoDeFatura.objects.get()
         status = dict(CreditCardInvoice.objects.values_list('id', 'status'))
         paga, outra = (

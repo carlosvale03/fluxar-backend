@@ -31,7 +31,7 @@ class LimiteDisponivelTests(FaturasTestCase):
         return cartao.data['available_limit'], dashboard.data['credit_cards'][0]['available_limit']
 
     def test_tela_do_cartao_e_dashboard_mostram_o_limite_menos_as_pendentes(self):
-        self.assertEqual(self.limites(), (Decimal('3800.00'), Decimal('3800.00')))
+        self.assertEqual(self.limites(), ('3800.00', '3800.00'))
 
     def test_continuam_iguais_depois_de_um_pagamento_parcial(self):
         resp = self.client.post(f'/api/invoices/{self.setembro.id}/pay/', {
@@ -40,4 +40,4 @@ class LimiteDisponivelTests(FaturasTestCase):
         self.assertEqual(resp.status_code, 200, resp.data)
 
         # Restam R$ 300,00 da compra dividida mais R$ 200,00 de outubro
-        self.assertEqual(self.limites(), (Decimal('4500.00'), Decimal('4500.00')))
+        self.assertEqual(self.limites(), ('4500.00', '4500.00'))

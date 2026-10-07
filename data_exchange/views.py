@@ -1,17 +1,24 @@
 import json
 from rest_framework import views, status, permissions, parsers
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.http import HttpResponse
-from django.utils.dateparse import parse_datetime
 from accounts.models import Account
+from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
 from .services import ImportService, ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
+from core.filtros import ParametrosConhecidosMixin
 # Tenta importar IsPremium, fallback para IsAuthenticated se não existir (evita crash se BD-007 não tiver ok)
 try:
     from reports.permissions import IsPremium
 except ImportError:
     IsPremium = permissions.IsAuthenticated
+
+# Erros no formato do DRF, em português e sem o texto da exceção (CONTRATO-29)
+ARQUIVO_NAO_ENVIADO = 'Arquivo não enviado.'
+ARQUIVO_ILEGIVEL = 'Não foi possível ler o arquivo. Confira o formato e as colunas escolhidas.'
+
 
 class ImportOFXView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -22,7 +29,7 @@ class ImportOFXView(views.APIView):
         account_id = request.data.get('account_id')
         
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
         
         account = get_owned_or_400(
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
@@ -55,13 +62,13 @@ class ImportSpreadsheetPreflightView(views.APIView):
             mapping = {}
 
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
         
         try:
             unique_accounts = ImportService.preflight_spreadsheet(file_obj, mapping, import_type)
             return Response({'accounts': unique_accounts}, status=200)
-        except Exception as e:
-            return Response({'error': str(e)}, status=400)
+        except Exception:
+            raise ValidationError({'file': [ARQUIVO_ILEGIVEL]})
 
 class ImportSpreadsheetView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -87,7 +94,7 @@ class ImportSpreadsheetView(views.APIView):
             account_mapping = None
         
         if not file_obj:
-            return Response({'error': 'Arquivo não enviado.'}, status=400)
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
             
         account = get_owned_or_400(
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
@@ -108,45 +115,21 @@ class ImportSpreadsheetView(views.APIView):
         
         return Response(summary, status=status.HTTP_200_OK if result['created'] >= 0 else status.HTTP_400_BAD_REQUEST)
 
-class ExportTransactionsPDFView(views.APIView):
+# Parâmetros conhecidos da exportação (CONTRATO-14)
+PARAMETROS_DA_EXPORTACAO = frozenset({
+    'accountId', 'categoryId', 'type', 'startDate', 'endDate', 'tagIds', 'search',
+})
+
+
+class ExportTransactionsPDFView(ParametrosConhecidosMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
+    parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
-        qs = Transaction.objects.filter(user=request.user)
-        
-        # Extração de parâmetros da query string
-        account_id = request.query_params.get('accountId')
-        category_id = request.query_params.get('categoryId')
-        type_ = request.query_params.get('type')
-        start_date_str = request.query_params.get('startDate')
-        end_date_str = request.query_params.get('endDate')
-        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
-        tags_str = request.query_params.get('tagIds')
-
-        if account_id and account_id != 'ALL': 
-            qs = qs.filter(account_id=account_id)
-        
-        if category_id and category_id != 'ALL':
-            qs = qs.filter(category_id=category_id)
-
-        if type_ and type_ != 'ALL':
-            qs = qs.filter(type=type_)
-
-        if start_date_str:
-            dt = parse_datetime(start_date_str)
-            if dt: qs = qs.filter(date__gte=dt.date())
-
-        if end_date_str:
-            dt = parse_datetime(end_date_str)
-            if dt: qs = qs.filter(date__lte=dt.date())
-
-        if tag_ids:
-            qs = qs.filter(tags__id__in=tag_ids).distinct()
-        elif tags_str:
-            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
-            if ids:
-                qs = qs.filter(tags__id__in=ids).distinct()
-        
+        # O mesmo filtro da lista de transações (CONTRATO-13)
+        qs = filtrar_transacoes(
+            Transaction.objects.filter(user=request.user), request.query_params, request.user,
+        )
         qs = qs.order_by('date')
         
         buffer = ExportService.generate_pdf(qs, request.user)
@@ -155,45 +138,15 @@ class ExportTransactionsPDFView(views.APIView):
         response['Content-Disposition'] = f'attachment; filename="relatorio_fluxar.pdf"'
         return response
 
-class ExportTransactionsXLSView(views.APIView):
+class ExportTransactionsXLSView(ParametrosConhecidosMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
+    parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
-        qs = Transaction.objects.filter(user=request.user)
-        
-        # Extração de parâmetros da query string
-        account_id = request.query_params.get('accountId')
-        category_id = request.query_params.get('categoryId')
-        type_ = request.query_params.get('type')
-        start_date_str = request.query_params.get('startDate')
-        end_date_str = request.query_params.get('endDate')
-        tag_ids = request.query_params.getlist('tagIds') or request.query_params.getlist('tagIds[]')
-        tags_str = request.query_params.get('tagIds')
-
-        if account_id and account_id != 'ALL': 
-            qs = qs.filter(account_id=account_id)
-        
-        if category_id and category_id != 'ALL':
-            qs = qs.filter(category_id=category_id)
-
-        if type_ and type_ != 'ALL':
-            qs = qs.filter(type=type_)
-
-        if start_date_str:
-            dt = parse_datetime(start_date_str)
-            if dt: qs = qs.filter(date__gte=dt.date())
-
-        if end_date_str:
-            dt = parse_datetime(end_date_str)
-            if dt: qs = qs.filter(date__lte=dt.date())
-
-        if tag_ids:
-            qs = qs.filter(tags__id__in=tag_ids).distinct()
-        elif tags_str:
-            ids = [tid.strip() for tid in tags_str.split(',') if tid.strip()]
-            if ids:
-                qs = qs.filter(tags__id__in=ids).distinct()
-        
+        # O mesmo filtro da lista de transações (CONTRATO-13)
+        qs = filtrar_transacoes(
+            Transaction.objects.filter(user=request.user), request.query_params, request.user,
+        )
         qs = qs.order_by('date')
         
         buffer = ExportService.generate_xls(qs)

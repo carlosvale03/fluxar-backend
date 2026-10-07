@@ -12,6 +12,7 @@ from .faturas import resposta_do_pagamento
 from .services import AccountService, CreditCardService
 from core.datas import hoje
 from core.fields import CONTA_NAO_ENCONTRADA
+from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.valores import ler_saldo
 from transactions.models import Transaction
@@ -22,7 +23,7 @@ SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o
 COM_PENDENTES = 'Resolva as transações pendentes antes de excluir a conta: efetive, mova ou exclua cada uma.'
 SALDO_JA_NESSE_VALOR = 'O saldo já está nesse valor.'
 
-class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     """
     CRUD de Contas (Checking, Savings, Wallet, Investment).
     """
@@ -79,7 +80,7 @@ class AccountViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         return Response(self.get_serializer(conta).data, status=status.HTTP_201_CREATED)
 
 
-class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
+class CreditCardViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     """
     CRUD de Cartões de Crédito.
     """
@@ -106,7 +107,7 @@ class CreditCardViewSet(UserQuerySetMixin, viewsets.ModelViewSet):
         serializer = CreditCardInvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 
-class CreditCardInvoiceViewSet(UserQuerySetMixin, viewsets.ReadOnlyModelViewSet):
+class CreditCardInvoiceViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Leitura das faturas e as ações `pay`, `unpay` e `transactions`. A fatura
     só nasce e muda pelas compras e pelos pagamentos: criar, editar ou

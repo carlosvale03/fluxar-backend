@@ -4,7 +4,7 @@ from .faturas import proximo_vencimento, status_exibido
 from .services import AccountService, CreditCardService
 from core.services.plan_limits import PlanLimitsService
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
-from core.valores import validar_valor_positivo
+from core.valores import dinheiro, validar_valor_positivo
 
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -129,11 +129,12 @@ class CreditCardSerializer(serializers.ModelSerializer):
 
     def get_available_limit(self, obj):
         data = self.get_invoice_data(obj)
-        return data['available_limit']
+        # Dinheiro como texto (CONTRATO-16)
+        return dinheiro(data['available_limit'])
 
     def get_current_invoice_total(self, obj):
         data = self.get_invoice_data(obj)
-        return data['current_invoice_total']
+        return dinheiro(data['current_invoice_total'])
     
     def get_next_due_date(self, obj):
         return proximo_vencimento(obj)

@@ -4,6 +4,9 @@ from .services import BudgetService
 from transactions.models import Category
 from transactions.serializers import CategorySerializer
 from core.fields import OwnedPrimaryKeyRelatedField, CATEGORIA_NAO_ENCONTRADA
+from core.valores import dinheiro
+
+ORCAMENTO_DUPLICADO = 'Já existe um orçamento para esta categoria neste mês.'
 
 class BudgetSerializer(serializers.ModelSerializer):
     # Só categorias do usuário da requisição (AD-032)
@@ -38,7 +41,8 @@ class BudgetSerializer(serializers.ModelSerializer):
         return obj._usage_data
 
     def get_total_spent(self, obj):
-        return self.get_usage_data(obj)['total_spent']
+        # Dinheiro como texto (CONTRATO-16)
+        return dinheiro(self.get_usage_data(obj)['total_spent'])
 
     def get_percentage_used(self, obj):
         return self.get_usage_data(obj)['percentage_used']
@@ -51,6 +55,21 @@ class BudgetSerializer(serializers.ModelSerializer):
         if value.type != 'EXPENSE':
             raise serializers.ValidationError("Orçamentos apenas para categorias de DESPESA.")
         return value
+
+    def validate(self, data):
+        # Orçamento duplicado vira erro no campo da categoria, em vez de
+        # estourar a constraint do banco (CONTRATO-30)
+        categoria = data.get('category', getattr(self.instance, 'category', None))
+        mes = data.get('month', getattr(self.instance, 'month', None))
+        ano = data.get('year', getattr(self.instance, 'year', None))
+        repetidos = Budget.objects.filter(
+            user=self.context['request'].user, category=categoria, month=mes, year=ano,
+        )
+        if self.instance is not None:
+            repetidos = repetidos.exclude(pk=self.instance.pk)
+        if categoria is not None and repetidos.exists():
+            raise serializers.ValidationError({'category': [ORCAMENTO_DUPLICADO]})
+        return data
 
     def create(self, validated_data):
         user = self.context['request'].user

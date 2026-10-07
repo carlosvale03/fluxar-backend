@@ -1,7 +1,7 @@
 from django.db import transaction as db_transaction
 from django.core.exceptions import ValidationError
-from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from core.datas import hoje
 from transactions.services import TransactionService
 from .models import Goal, GoalDeposit
 
@@ -27,15 +27,9 @@ class GoalService:
         if account.user != goal.user:
             raise ValidationError("Conta de origem não pertence ao dono da meta.")
 
-        # Garantir que date_deposit é um objeto date
-        if isinstance(date_deposit, str):
-            from datetime import datetime
-            try:
-                date_deposit = datetime.strptime(date_deposit, '%Y-%m-%d').date()
-            except ValueError:
-                date_deposit = date.today()
-        elif not date_deposit:
-            date_deposit = date.today()
+        # A data vem lida pela view (CONTRATO-25); sem data, hoje em Brasília
+        if not date_deposit:
+            date_deposit = hoje()
 
         if not description:
             description = f"Aporte na Meta: {goal.name}"
@@ -95,15 +89,9 @@ class GoalService:
         if amount > progress['current_amount']:
             raise ValidationError(f"Saldo insuficiente na meta. Disponível: {progress['current_amount']}")
 
-        # Garantir que date_withdrawal é um objeto date
-        if isinstance(date_withdrawal, str):
-            from datetime import datetime
-            try:
-                date_withdrawal = datetime.strptime(date_withdrawal, '%Y-%m-%d').date()
-            except ValueError:
-                date_withdrawal = date.today()
-        elif not date_withdrawal:
-            date_withdrawal = date.today()
+        # A data vem lida pela view (CONTRATO-25); sem data, hoje em Brasília
+        if not date_withdrawal:
+            date_withdrawal = hoje()
 
         if not description:
             description = f"Resgate da Meta: {goal.name}"

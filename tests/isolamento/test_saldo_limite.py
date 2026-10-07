@@ -26,7 +26,7 @@ class SaldoELimiteSoDoDonoTests(DoisUsuariosTestCase):
         # (Carteira 0, Conta A 900 e Cofrinho A 0)
         resp = self.como(self.a.usuario).get('/api/reports/dashboard/', {'month': 9, 'year': 2026})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data['summary']['total_balance'], Decimal('900.00'))
+        self.assertEqual(resp.data['summary']['total_balance'], '900.00')
 
     def test_compras_de_b_no_cartao_de_a_nao_mudam_o_limite_de_a(self):
         """

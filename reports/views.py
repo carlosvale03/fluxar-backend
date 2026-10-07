@@ -1,17 +1,29 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from datetime import date
+from core.filtros import ParametrosConhecidosMixin
 from .services import ReportService
 from .permissions import IsPremium
 from .models import FocusedMonitorItem
 from .serializers import FocusedMonitorItemSerializer
 
-class ReportViewSet(viewsets.ViewSet):
+class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
     """
     ViewSet para relatórios e dashboards. Não possui model associado.
     """
     permission_classes = [permissions.IsAuthenticated]
+    # Parâmetros conhecidos de cada relatório (CONTRATO-14)
+    parametros_por_acao = {
+        'dashboard': frozenset({'month', 'year', 'days'}),
+        'calendar': frozenset({'month', 'year', 'period', 'days'}),
+        'charts_simple': frozenset({'month', 'year', 'period', 'days'}),
+        'tag_distribution': frozenset({'month', 'year', 'period', 'days'}),
+        'charts_advanced': frozenset({'period', 'days'}),
+        'monthly_comparison': frozenset({'months', 'month', 'year'}),
+        'tag_insights': frozenset({'tag_id', 'months'}),
+    }
 
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
@@ -23,7 +35,8 @@ class ReportViewSet(viewsets.ViewSet):
             month = int(month) if month else date.today().month
             year = int(year) if year else date.today().year
         except ValueError:
-            return Response({"error": "Mês/Ano inválidos"}, status=status.HTTP_400_BAD_REQUEST)
+            # Erros no formato do DRF, em português (CONTRATO-29)
+            raise ValidationError({'detail': 'Mês/Ano inválidos.'})
             
         data = ReportService.get_dashboard_summary(request.user, month, year, period_days=days)
         return Response(data)
@@ -66,11 +79,11 @@ class ReportViewSet(viewsets.ViewSet):
         months = int(request.query_params.get('months', 6))
         
         if not tag_id:
-            return Response({"error": "tag_id é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'tag_id': ['Este campo é obrigatório.']})
             
         data = ReportService.get_tag_insights(request.user, tag_id, months=months)
         if data is None:
-            return Response({"error": "Tag não encontrada"}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFound('Tag não encontrada.')
             
         return Response(data)
 
@@ -85,7 +98,7 @@ class ReportViewSet(viewsets.ViewSet):
 
 
 
-class FocusedMonitorViewSet(viewsets.ModelViewSet):
+class FocusedMonitorViewSet(ParametrosConhecidosMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsPremium]
     serializer_class = FocusedMonitorItemSerializer
 

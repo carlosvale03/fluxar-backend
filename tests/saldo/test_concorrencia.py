@@ -115,7 +115,7 @@ class ConcorrenciaTests(TransactionTestCase):
 
         self.assertEqual(sorted(r.status_code for r in respostas), [200, 400])
         recusa = next(r for r in respostas if r.status_code == 400)
-        self.assertEqual(recusa.data, {'detail': FATURA_JA_PAGA})
+        self.assertEqual(recusa.data, {'detail': FATURA_JA_PAGA, 'code': 'invalid'})
         self.assertEqual(self.saldo(pagadora), Decimal('2000.00'))
         # A conta padrão do cartão não muda
         self.assertEqual(self.saldo(self.a.conta), Decimal('1000.00'))
