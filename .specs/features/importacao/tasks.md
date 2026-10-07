@@ -223,16 +223,17 @@ T12 → T13
 
 **Done when**:
 
-- [ ] OFX com `fitid` já gravado na conta é ignorado mesmo com a descrição editada
-- [ ] OFX antigo (transação gravada sem `fitid`) é reconhecido pela data, valor, tipo e descrição
-- [ ] Duas compras iguais de R$ 5,00 no mesmo arquivo, com zero existentes, gravam as duas; com uma existente, gravam uma
-- [ ] Transferência igual (origem, destino, data, valor) é ignorada
-- [ ] A consulta não carrega transações fora das contas e do período do arquivo
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] OFX com `fitid` já gravado na conta é ignorado mesmo com a descrição editada
+- [x] OFX antigo (transação gravada sem `fitid`) é reconhecido pela data, valor, tipo e descrição
+- [x] Duas compras iguais de R$ 5,00 no mesmo arquivo, com zero existentes, gravam as duas; com uma existente, gravam uma
+- [x] Transferência igual (origem, destino, data, valor) é ignorada
+- [x] A consulta não carrega transações fora das contas e do período do arquivo
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 6 testes novos; suíte 743 → 749)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(importacao): ignora linhas já importadas contando as repetições`
 

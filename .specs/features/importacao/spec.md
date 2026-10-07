@@ -268,11 +268,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-31 | P1: Resultado da importação | - | Pending |
 | IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
 | IMPORT-33 | P1: Resultado da importação | - | Pending |
-| IMPORT-34 | P1: Linhas já importadas | T4 | In Progress |
-| IMPORT-35 | P1: Linhas já importadas | - | Pending |
-| IMPORT-36 | P1: Linhas já importadas | - | Pending |
-| IMPORT-37 | P1: Linhas já importadas | - | Pending |
-| IMPORT-38 | P1: Linhas já importadas | - | Pending |
+| IMPORT-34 | P1: Linhas já importadas | T4, T5 | Implemented |
+| IMPORT-35 | P1: Linhas já importadas | T5 | Implemented |
+| IMPORT-36 | P1: Linhas já importadas | T5 | Implemented |
+| IMPORT-37 | P1: Linhas já importadas | T5 | Implemented |
+| IMPORT-38 | P1: Linhas já importadas | T5 | Implemented |
 | IMPORT-39 | P1: Linhas já importadas | - | Pending |
 | IMPORT-40 | P2: Tempo de processamento | - | Pending |
 | IMPORT-41 | P2: Tempo de processamento | - | Pending |
