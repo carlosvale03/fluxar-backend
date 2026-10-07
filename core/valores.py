@@ -6,12 +6,63 @@ forma enviada. O limite de casas vem do `DecimalField` com `decimal_places=2`.
 
 Na saída, todo valor em dinheiro passa por `dinheiro()` (CONTRATO-16, AD-041).
 """
+import re
 from decimal import ROUND_HALF_UP, Decimal
 
 from rest_framework import serializers
 
 VALOR_NAO_POSITIVO = 'O valor deve ser maior que zero.'
+VALOR_INVALIDO = 'Valor inválido'
 CENTAVO = Decimal('0.01')
+
+MILHAR_E_DECIMAL = re.compile(r'(\d{1,3}(?:\.\d{3})*|\d+),(\d{0,2})')
+SO_DECIMAL = re.compile(r'(\d*)\.(\d{1,2})')
+SO_DIGITOS = re.compile(r'\d+')
+
+
+def ler_valor_em_texto(texto):
+    """
+    Valor em texto no formato brasileiro (AD-009, IMPORT-09, IMPORT-10), com
+    a mesma regra de `lerValorDigitado` no frontend: com vírgula, a vírgula é
+    decimal e os pontos são de milhar; sem vírgula, os pontos são de milhar
+    quando todos os grupos depois deles têm três dígitos e a parte antes do
+    primeiro ponto não é zero, e decimal nos demais casos. Aceita "R$" e
+    sinal de menos. Ilegível, zero ou com mais de duas casas levanta
+    `ValueError(VALOR_INVALIDO)` (IMPORT-12).
+    """
+    limpo = re.sub(r'\s', '', str(texto).replace('R$', ''))
+    negativo = limpo.startswith('-')
+    if negativo:
+        limpo = limpo[1:]
+
+    fracao = ''
+    if ',' in limpo:
+        partes = MILHAR_E_DECIMAL.fullmatch(limpo)
+        if not partes:
+            raise ValueError(VALOR_INVALIDO)
+        inteiro, fracao = partes.group(1).replace('.', ''), partes.group(2)
+    elif '.' in limpo:
+        grupos = limpo.split('.')
+        milhar = (
+            SO_DIGITOS.fullmatch(grupos[0]) and int(grupos[0]) != 0
+            and all(re.fullmatch(r'\d{3}', g) for g in grupos[1:])
+        )
+        if milhar:
+            inteiro = ''.join(grupos)
+        else:
+            partes = SO_DECIMAL.fullmatch(limpo)
+            if not partes:
+                raise ValueError(VALOR_INVALIDO)
+            inteiro, fracao = partes.group(1) or '0', partes.group(2)
+    elif SO_DIGITOS.fullmatch(limpo):
+        inteiro = limpo
+    else:
+        raise ValueError(VALOR_INVALIDO)
+
+    valor = Decimal(f'{inteiro}.{fracao.ljust(2, "0")}')
+    if valor == 0:
+        raise ValueError(VALOR_INVALIDO)
+    return -valor if negativo else valor
 
 
 def dinheiro(valor):

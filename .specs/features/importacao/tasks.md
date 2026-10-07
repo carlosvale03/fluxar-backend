@@ -96,14 +96,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] "1.234,56" → 1234.56; "R$ -45,00" → -45.00; "1.500" → 1500.00; "1.500.000" → 1500000.00; "12.5" → 12.50; "0.50" → 0.50
-- [ ] "abc", "0,00" e "1,234" levantam o erro de "Valor inválido"
-- [ ] "04/03/2026", "04/03/26" e "2026-03-04" → 4 de março de 2026; "29/02/2025" e "2026/03/04" levantam "Data inválida"
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] "1.234,56" → 1234.56; "R$ -45,00" → -45.00; "1.500" → 1500.00; "1.500.000" → 1500000.00; "12.5" → 12.50; "0.50" → 0.50
+- [x] "abc", "0,00" e "1,234" levantam o erro de "Valor inválido"
+- [x] "04/03/2026", "04/03/26" e "2026-03-04" → 4 de março de 2026; "29/02/2025" e "2026/03/04" levantam "Data inválida"
+- [x] Quick gate passa
+- [x] Test count: pelo menos 6 testes (real: 7 testes novos; suíte 701 → 708)
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(importacao): lê valores e datas no formato brasileiro`
 

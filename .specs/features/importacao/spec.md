@@ -243,13 +243,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-06 | P1: Arquivos aceitos e limites | - | Pending |
 | IMPORT-07 | P1: Arquivos aceitos e limites | - | Pending |
 | IMPORT-08 | P1: Arquivos aceitos e limites | - | Pending |
-| IMPORT-09 | P1: Valores e datas no formato brasileiro | - | Pending |
-| IMPORT-10 | P1: Valores e datas no formato brasileiro | - | Pending |
+| IMPORT-09 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
+| IMPORT-10 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-11 | P1: Valores e datas no formato brasileiro | - | Pending |
-| IMPORT-12 | P1: Valores e datas no formato brasileiro | - | Pending |
-| IMPORT-13 | P1: Valores e datas no formato brasileiro | - | Pending |
+| IMPORT-12 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
+| IMPORT-13 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-14 | P1: Valores e datas no formato brasileiro | - | Pending |
-| IMPORT-15 | P1: Valores e datas no formato brasileiro | - | Pending |
+| IMPORT-15 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
 | IMPORT-16 | P1: Tipo, status e conta de cada linha | - | Pending |
 | IMPORT-17 | P1: Tipo, status e conta de cada linha | - | Pending |
 | IMPORT-18 | P1: Tipo, status e conta de cada linha | - | Pending |
