@@ -338,6 +338,14 @@
 - **Date**: 2026-10-03
 - **Status**: active
 
+### AD-043
+- **Decision**: A importação roda dentro da requisição, em quatro etapas (leitura, interpretação, repetidos e gravação) em `data_exchange/importacao/`. Cada linha grava num savepoint próprio, as contas do arquivo ficam travadas durante a gravação e o saldo é recalculado uma vez no fim por `recalculo_adiado()`. O gunicorn roda com `gthread` (`gunicorn.conf.py`), para outras requisições seguirem atendidas durante uma importação.
+- **Reason**: um erro numa linha desfazia o arquivo inteiro (FIN-11), não havia limite nem concorrência (OPS-03), e não há infraestrutura de fila no Render.
+- **Trade-off**: a requisição fica ocupada durante a importação, e as escritas nas contas do arquivo esperam a trava.
+- **Scope**: importacao, saldo e deploy.
+- **Date**: 2026-10-07
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `contratos-frontend-backend` concluída, nos dois repositórios
