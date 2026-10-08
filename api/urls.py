@@ -21,7 +21,8 @@ from .views import (
     AdminHardDeleteView,
     AdminClearUserDataView,
     AdminSystemSettingsView,
-    AdminGlobalLogsView
+    AdminGlobalLogsView,
+    AdminPlansView,
 )
 
 urlpatterns = [
@@ -58,4 +59,5 @@ urlpatterns = [
     path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
     path('admin/settings/', AdminSystemSettingsView.as_view(), name='admin_settings'),
     path('admin/logs/', AdminGlobalLogsView.as_view(), name='admin-logs'),
+    path('admin/plans/', AdminPlansView.as_view(), name='admin_plans'),
 ]

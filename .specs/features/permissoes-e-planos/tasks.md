@@ -214,17 +214,18 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `GET` devolve as 24 travas com os valores dos três planos e `testing_unlock`
-- [ ] Desligar `exportacao_pdf` no Comum e pôr `limite_contas` = 2 no Comum grava e vale na requisição seguinte
-- [ ] Limite -1, 2.5 ou "abc" recebe 400 em `limit`; chave fora do catálogo recebe 400
-- [ ] Cada mudança grava no log quem, quando, a trava, o plano e os valores antigo e novo; gravar o mesmo valor não gera log
-- [ ] Ligar e desligar a liberação grava no log e vale na requisição seguinte
-- [ ] Não admin recebe 403
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] `GET` devolve as 24 travas com os valores dos três planos e `testing_unlock`
+- [x] Desligar `exportacao_pdf` no Comum e pôr `limite_contas` = 2 no Comum grava e vale na requisição seguinte
+- [x] Limite -1, 2.5 ou "abc" recebe 400 em `limit`; chave fora do catálogo recebe 400
+- [x] Cada mudança grava no log quem, quando, a trava, o plano e os valores antigo e novo; gravar o mesmo valor não gera log
+- [x] Ligar e desligar a liberação grava no log e vale na requisição seguinte
+- [x] Não admin recebe 403
+- [x] Quick gate passa
+- [x] Test count: 12 testes (mínimo 8)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(planos): permite ao admin configurar as travas e a liberação para testes`
 

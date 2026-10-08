@@ -23,9 +23,10 @@ from .serializers import (
     AdminUserSerializer,
     SystemLogSerializer,
     AdminResetPasswordSerializer,
-    GlobalSettingSerializer
+    GlobalSettingSerializer,
+    AlteracaoDePlanoSerializer,
 )
-from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
+from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting, TravaDePlano
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -47,6 +48,7 @@ from .utils.email_service import _mask_email, send_verification_email, send_pass
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
+from core import travas
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
 import logging
@@ -744,6 +746,14 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
         else:
             settings_to_update = request.data
 
+        # A liberação para testes muda só pela rota dos planos, que grava o
+        # log com os valores antigo e novo (PERM-13)
+        if 'testing_unlock' in settings_to_update:
+            return Response(
+                {"testing_unlock": ["A liberação para testes muda só em /api/admin/plans/."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         for key, value in settings_to_update.items():
             str_value = str(value).lower() if isinstance(value, bool) else str(value)
             setting, created = GlobalSetting.objects.update_or_create(
@@ -760,6 +770,91 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
 
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
+
+def _texto_da_trava(chave, valor):
+    """O valor de uma trava como aparece no log."""
+    if travas.CATALOGO[chave].tipo == travas.RECURSO:
+        return 'liberado' if valor is not False else 'bloqueado'
+    return 'sem limite' if valor is None else str(valor)
+
+
+class AdminPlansView(ParametrosConhecidosMixin, APIView):
+    """
+    Configuração das travas dos planos e da liberação para testes
+    (PERM-10 a PERM-13, PERM-24).
+
+    GET devolve o catálogo com o valor de cada plano, lido do banco e não do
+    cache. PATCH grava uma mudança, registra no log só quando o valor muda e
+    chama `travas.invalidar()`, para valer na requisição seguinte; os outros
+    processos veem a mudança em até 30 segundos.
+    """
+    permission_classes = (EhAdministrador,)
+
+    def resposta(self):
+        config = travas.ler_configuracao()
+        return Response({
+            "testing_unlock": config.testing_unlock,
+            "catalog": travas.catalogo_com_valores(config),
+        })
+
+    def get(self, request):
+        return self.resposta()
+
+    def patch(self, request):
+        serializer = AlteracaoDePlanoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        dados = serializer.validated_data
+        if 'testing_unlock' in dados:
+            self.gravar_liberacao(request, dados['testing_unlock'])
+        else:
+            self.gravar_trava(request, dados)
+        travas.invalidar()
+        return self.resposta()
+
+    def gravar_liberacao(self, request, ligada):
+        setting, _ = GlobalSetting.objects.get_or_create(key='testing_unlock', defaults={'value': 'true'})
+        setting = GlobalSetting.objects.select_for_update().get(pk=setting.pk)
+        antes = travas.liberacao_ligada(setting.value)
+        if antes == ligada:
+            return
+        setting.value = 'true' if ligada else 'false'
+        setting.save(update_fields=['value', 'updated_at'])
+        texto = {True: 'ligada', False: 'desligada'}
+        SystemLog.objects.create(
+            action="UPDATE_TESTING_UNLOCK",
+            description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
+            admin_name=request.user.name,
+        )
+
+    def gravar_trava(self, request, dados):
+        chave, plano = dados['key'], dados['plan']
+        recurso = travas.CATALOGO[chave].tipo == travas.RECURSO
+        # Sem a linha, os campos nulos valem liberado e sem limite (AD-044)
+        linha, _ = TravaDePlano.objects.get_or_create(chave=chave, plano=plano)
+        # Trava a linha: com dois admins ao mesmo tempo, vale a última
+        # gravação e as duas ficam no log com o valor certo (PERM-13)
+        linha = TravaDePlano.objects.select_for_update().get(pk=linha.pk)
+        if recurso:
+            antes, depois = linha.liberado is not False, dados['enabled']
+        else:
+            antes, depois = linha.limite, dados['limit']
+        if antes == depois:
+            return
+        if recurso:
+            linha.liberado = depois
+        else:
+            linha.limite = depois
+        linha.atualizada_por = request.user
+        linha.save()
+        SystemLog.objects.create(
+            action="UPDATE_PLAN_LOCK",
+            description=(
+                f"Trava '{chave}' no plano {plano}: "
+                f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
+            ),
+            admin_name=request.user.name,
+        )
+
 
 class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """

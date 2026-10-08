@@ -140,24 +140,28 @@ _configuracao = None
 _lido_em = None
 
 
+def liberacao_ligada(valor):
+    """O texto da `GlobalSetting`; sem a chave, a liberação vale ligada, como antes da feature (PERM-28)."""
+    return valor is None or valor.lower() == 'true'
+
+
+def ler_configuracao():
+    """A configuração atual do banco, sem o cache."""
+    liberacao = GlobalSetting.objects.filter(key='testing_unlock').values_list('value', flat=True).first()
+    valores = {}
+    for chave, plano, liberado, limite in TravaDePlano.objects.values_list('chave', 'plano', 'liberado', 'limite'):
+        trava = CATALOGO.get(chave)
+        if trava is not None:
+            valores[(chave, plano)] = limite if trava.tipo == LIMITE else liberado
+    return Configuracao(testing_unlock=liberacao_ligada(liberacao), valores=valores)
+
+
 def configuracao():
     """A configuração das travas, lida do banco no máximo uma vez a cada 30 s."""
     global _configuracao, _lido_em
     agora = time.monotonic()
     if _lido_em is None or agora - _lido_em >= TTL:
-        liberacao = GlobalSetting.objects.filter(key='testing_unlock').values_list('value', flat=True).first()
-        valores = {}
-        for chave, plano, liberado, limite in TravaDePlano.objects.values_list(
-            'chave', 'plano', 'liberado', 'limite',
-        ):
-            trava = CATALOGO.get(chave)
-            if trava is not None:
-                valores[(chave, plano)] = limite if trava.tipo == LIMITE else liberado
-        _configuracao = Configuracao(
-            # Sem a chave, a liberação vale ligada, como antes da feature (PERM-28)
-            testing_unlock=liberacao is None or liberacao.lower() == 'true',
-            valores=valores,
-        )
+        _configuracao = ler_configuracao()
         _lido_em = agora
     return _configuracao
 
@@ -177,6 +181,34 @@ def valor_configurado(config, chave, plano):
     if CATALOGO[chave].tipo == RECURSO:
         return valor is not False
     return valor
+
+
+TIPOS_NA_API = {RECURSO: 'feature', LIMITE: 'limit'}
+
+
+def valor_na_api(chave, valor):
+    """`true`/`false` para recurso e `{limit: int | null}` para limite."""
+    return valor if CATALOGO[chave].tipo == RECURSO else {'limit': valor}
+
+
+def catalogo_com_valores(config):
+    """
+    Cada trava do catálogo, na ordem da spec, com o valor dos três planos
+    (PERM-10, PERM-27).
+    """
+    return [
+        {
+            'key': trava.chave,
+            'type': TIPOS_NA_API[trava.tipo],
+            'name': trava.nome,
+            'description': trava.descricao,
+            'values': {
+                plano: valor_na_api(trava.chave, valor_configurado(config, trava.chave, plano))
+                for plano in PLANOS
+            },
+        }
+        for trava in CATALOGO.values()
+    ]
 
 
 # Decisão por usuário -------------------------------------------------------
