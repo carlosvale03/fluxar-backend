@@ -439,14 +439,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O seletor de arquivo de planilha aceita `.csv,.xlsx` e recusa `.xls` com a mensagem do backend
-- [ ] O resumo mostra lidas, gravadas, ignoradas e rejeitadas, e cada rejeitada com "Linha N: motivo"
-- [ ] Com `suggested: 3`, mostra "3 linhas com categoria sugerida" e o atalho leva a `/transacoes?import_batch=<id>&suggested_category=true`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] O seletor de arquivo de planilha aceita `.csv,.xlsx` e recusa `.xls` com a mensagem do backend
+- [x] O resumo mostra lidas, gravadas, ignoradas e rejeitadas, e cada rejeitada com "Linha N: motivo"
+- [x] Com `suggested: 3`, mostra "3 linhas com categoria sugerida" e o atalho leva a `/transacoes?import_batch=<id>&suggested_category=true`
+- [x] Quick gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 6 testes novos; suíte 188 → 194)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(frontend): mostra o resultado completo da importação`
 

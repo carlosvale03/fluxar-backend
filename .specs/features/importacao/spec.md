@@ -237,7 +237,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | -------------- | ----- | ----- | ------ |
 | IMPORT-01 | P1: Arquivos aceitos e limites | T2 | Implemented |
 | IMPORT-02 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-03 | P1: Arquivos aceitos e limites | - | Pending |
+| IMPORT-03 | P1: Arquivos aceitos e limites | T12 | Implemented |
 | IMPORT-04 | P1: Arquivos aceitos e limites | T2 | Implemented |
 | IMPORT-05 | P1: Arquivos aceitos e limites | T2 | Implemented |
 | IMPORT-06 | P1: Arquivos aceitos e limites | T2 | Implemented |
@@ -267,7 +267,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-30 | P1: Resultado da importação | T7 | Implemented |
 | IMPORT-31 | P1: Resultado da importação | T7 | Implemented |
 | IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
-| IMPORT-33 | P1: Resultado da importação | - | Pending |
+| IMPORT-33 | P1: Resultado da importação | T12 | Implemented |
 | IMPORT-34 | P1: Linhas já importadas | T4, T5 | Implemented |
 | IMPORT-35 | P1: Linhas já importadas | T5 | Implemented |
 | IMPORT-36 | P1: Linhas já importadas | T5 | Implemented |
@@ -279,7 +279,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-42 | P2: Correções de categoria | T4, T10 | Implemented |
 | IMPORT-43 | P2: Correções de categoria | T11 | Implemented |
 | IMPORT-44 | P2: Correções de categoria | T11 | Implemented |
-| IMPORT-45 | P2: Correções de categoria | T10 | In Progress |
+| IMPORT-45 | P2: Correções de categoria | T10, T12 | In Progress |
 | IMPORT-46 | P2: Correções de categoria | T10 | In Progress |
 | IMPORT-47 | P2: Correções de categoria | T11 | Implemented |
 | IMPORT-48 | P2: Correções de categoria | T4, T10 | Implemented |
