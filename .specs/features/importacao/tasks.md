@@ -407,15 +407,16 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Depois de corrigir "UBER *TRIP 1234" para Transporte, "UBER *TRIP 5678" importa em Transporte com `category_suggested` e o resumo tem `suggested: 1`
-- [ ] Duas correções para a mesma descrição: vale a mais recente
-- [ ] Linha com categoria no arquivo mantém a do arquivo, sem sugestão
-- [ ] Categoria da correção excluída: a linha fica sem categoria
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Depois de corrigir "UBER *TRIP 1234" para Transporte, "UBER *TRIP 5678" importa em Transporte com `category_suggested` e o resumo tem `suggested: 1`
+- [x] Duas correções para a mesma descrição: vale a mais recente
+- [x] Linha com categoria no arquivo mantém a do arquivo, sem sugestão
+- [x] Categoria da correção excluída: a linha fica sem categoria
+- [x] Build gate passa
+- [x] Test count: pelo menos 5 testes (real: 5 testes novos; suíte 777 → 782; 10.000 linhas em cerca de 16 s)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(importacao): sugere a categoria pelas correções do usuário`
 
