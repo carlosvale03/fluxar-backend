@@ -113,6 +113,14 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         _mover(GoalService.withdraw, goal, account_to, amount, date_withdrawal, request.data.get('description'))
         return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
 
+    @decorators.action(detail=True, methods=['post'], url_path='dismiss-correction')
+    def dismiss_correction(self, request, pk=None):
+        """O usuário viu o aviso da correção, que não aparece mais (META-11)."""
+        goal = self.get_object()
+        Goal.objects.filter(pk=goal.pk).update(valor_antes_da_correcao=None)
+        goal.refresh_from_db()
+        return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
+
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         goal = self.get_object()

@@ -22,6 +22,7 @@ class GoalSerializer(serializers.ModelSerializer):
     months_remaining = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     deposits = serializers.SerializerMethodField()
+    correction = serializers.SerializerMethodField()
 
     # Só contas do usuário da requisição (AD-032)
     account = OwnedPrimaryKeyRelatedField(
@@ -41,7 +42,7 @@ class GoalSerializer(serializers.ModelSerializer):
             'account', 'target_date', 'image', 'is_active', 'status',
             'progress_percentage', 'amount_remaining', 
             'suggested_monthly_saving', 'months_remaining',
-            'deposits', 'created_at', 'updated_at',
+            'deposits', 'correction', 'created_at', 'updated_at',
             'cofrinho_name', 'institution', 'color'
         ]
         read_only_fields = ['id', 'current_amount', 'created_at', 'updated_at', 'deposits']
@@ -64,6 +65,15 @@ class GoalSerializer(serializers.ModelSerializer):
         # Só movimentos em contas do dono da meta (ISOL-15)
         deposits = obj.deposits.filter(account__user_id=obj.user_id)
         return GoalDepositSerializer(deposits, many=True).data
+
+    def get_correction(self, obj):
+        """
+        Aviso único da correção do recálculo (META-11): o valor de antes e o de
+        depois, até o usuário confirmar em `dismiss-correction`.
+        """
+        if obj.valor_antes_da_correcao is None:
+            return None
+        return {'before': dinheiro(obj.valor_antes_da_correcao), 'after': dinheiro(0)}
 
     def _get_prog(self, obj):
         if not hasattr(self, '_prog_cache'):

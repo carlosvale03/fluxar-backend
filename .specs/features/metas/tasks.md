@@ -157,15 +157,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Meta com `current_amount` inflado pelo rateio volta à soma dos registros
-- [ ] Meta que daria −R$ 50,00 fica em zero, com um registro de correção de R$ 50,00 e `correction: {before: "-50.00", after: "0.00"}`
-- [ ] Depois de `dismiss-correction`, o aviso não aparece mais
-- [ ] Banco vazio: a migração não faz nada
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Meta com `current_amount` inflado pelo rateio volta à soma dos registros
+- [x] Meta que daria −R$ 50,00 fica em zero, com um registro de correção de R$ 50,00 e `correction: {before: "-50.00", after: "0.00"}`
+- [x] Depois de `dismiss-correction`, o aviso não aparece mais
+- [x] Banco vazio: a migração não faz nada
+- [x] Build gate passa
+- [x] Test count: 7 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: recalcula as metas gravadas e registra as correções`
 
