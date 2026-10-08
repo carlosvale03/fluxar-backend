@@ -346,6 +346,14 @@
 - **Date**: 2026-10-07
 - **Status**: active
 
+### AD-044
+- **Decision**: As travas dos planos ficam na tabela `TravaDePlano` (uma linha por chave e plano; linha ausente = liberado e sem limite) e a liberação para testes na `GlobalSetting` `testing_unlock`, lidas com cache de 30 s por `core/travas.py`. `acesso(usuario)` é a única decisão: administrador e liberação ligada liberam tudo; senão vale a configuração do plano atual do usuário. As rotas usam `RecursoLiberado` e `conferir_limite`, que respondem 403 `plan_locked` ou `plan_limit_reached`, e o frontend decide só pelo `access` do `/auth/me`.
+- **Reason**: os planos estavam escritos em cerca de oito pontos, com valores divergentes entre frontend e backend (SEG-08), e o usuário quer configurá-los pelo painel (AD-017).
+- **Trade-off**: uma mudança de trava leva até 30 segundos para valer nos outros processos.
+- **Scope**: permissoes-e-planos, painel-admin, gestao-do-salario, vinculo-entre-transacoes e toda rota nova que dependa de plano.
+- **Date**: 2026-10-07
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `importacao` concluída, nos dois repositórios
