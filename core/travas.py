@@ -325,3 +325,36 @@ def conferir_limite(usuario, chave, **contexto):
     type(usuario).objects.select_for_update().filter(pk=usuario.pk).exists()
     if uso(usuario, chave, **contexto) >= limite:
         raise LimiteDoPlano(chave, limite)
+
+
+# Acesso informado ao frontend ----------------------------------------------
+
+# Limites cujo uso depende de um contexto; o /auth/me informa só o limite
+LIMITES_POR_CONTEXTO = frozenset({'limite_subcategorias'})
+
+
+def acesso_na_api(usuario):
+    """
+    O `access` do `/auth/me` (PERM-17): `{is_admin, testing_unlock, plan,
+    features: {chave: bool}, limits: {chave: {limit, used}}}`. O frontend
+    decide só por ele (PERM-18).
+    """
+    decisao = acesso(usuario)
+    limites = {}
+    for trava in CATALOGO.values():
+        if trava.tipo != LIMITE:
+            continue
+        item = {'limit': decisao.limite(trava.chave)}
+        if trava.chave not in LIMITES_POR_CONTEXTO:
+            item['used'] = uso(usuario, trava.chave)
+        limites[trava.chave] = item
+    return {
+        'is_admin': decisao.is_admin,
+        'testing_unlock': decisao.testing_unlock,
+        'plan': decisao.plano,
+        'features': {
+            trava.chave: decisao.recurso_liberado(trava.chave)
+            for trava in CATALOGO.values() if trava.tipo == RECURSO
+        },
+        'limits': limites,
+    }

@@ -5,6 +5,7 @@ from .views import (
     RenovarSessaoView,
     LogoutView,
     MeView,
+    PlansView,
     ChangePasswordView,
     VerifyEmailView,
     ResendVerificationView,
@@ -39,6 +40,9 @@ urlpatterns = [
     # Auth Protected Endpoints
     path('auth/me/', MeView.as_view(), name='auth_me'),
     path('auth/me/avatar/', UserAvatarView.as_view(), name='auth_avatar'),
+
+    # Página de planos (PERM-27)
+    path('plans/', PlansView.as_view(), name='plans'),
 
     # User Management
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST

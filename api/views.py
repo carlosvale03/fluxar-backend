@@ -385,12 +385,15 @@ class MeView(ParametrosConhecidosMixin, APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        serializer = UserProfileSerializer(request.user, context={'request': request})
+        # Com o acesso do usuário aos recursos e limites do plano (PERM-17)
+        serializer = UserProfileSerializer(request.user, context={'request': request, 'com_acesso': True})
         return Response(serializer.data)
 
     def put(self, request):
         user = request.user
-        serializer = UserProfileSerializer(user, data=request.data, partial=True, context={'request': request})
+        serializer = UserProfileSerializer(
+            user, data=request.data, partial=True, context={'request': request, 'com_acesso': True},
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -398,6 +401,19 @@ class MeView(ParametrosConhecidosMixin, APIView):
 
     def patch(self, request):
         return self.put(request)
+
+class PlansView(ParametrosConhecidosMixin, APIView):
+    """
+    Página de planos (PERM-27): o que cada plano libera, pela configuração
+    atual, e o plano do usuário. Exige login, mas não exige ser admin.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return Response({
+            "plan": request.user.plan,
+            "catalog": travas.catalogo_com_valores(travas.configuracao()),
+        })
 
 class UserAvatarView(APIView):
     """

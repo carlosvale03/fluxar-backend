@@ -308,14 +308,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `/auth/me` de um Comum com `limite_contas` = 2 e 1 conta traz `limits.limite_contas` = `{limit: 2, used: 1}` e `features` com cada chave
-- [ ] Com a liberação ligada, `access.testing_unlock` é verdadeiro, tudo vem liberado e `plan` é o plano real
-- [ ] `/api/plans/` devolve as 24 travas com nome, descrição e os valores dos três planos, e o plano do usuário
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `/auth/me` de um Comum com `limite_contas` = 2 e 1 conta traz `limits.limite_contas` = `{limit: 2, used: 1}` e `features` com cada chave
+- [x] Com a liberação ligada, `access.testing_unlock` é verdadeiro, tudo vem liberado e `plan` é o plano real
+- [x] `/api/plans/` devolve as 24 travas com nome, descrição e os valores dos três planos, e o plano do usuário
+- [x] Build gate passa
+- [x] Test count: 7 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(planos): informa o acesso do usuário e o que cada plano libera`
 

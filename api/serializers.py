@@ -170,6 +170,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         }
         
         ret['preferences'] = preferences
+        # O acesso do próprio usuário, só no /auth/me (PERM-17)
+        if self.context.get('com_acesso'):
+            ret['access'] = travas.acesso_na_api(instance)
         return ret
     
     def update(self, instance, validated_data):
