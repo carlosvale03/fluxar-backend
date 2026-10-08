@@ -515,14 +515,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com `limite_contas` = `{limit: 2, used: 2}`, a tela de contas mostra "2 de 2", desabilita "Nova conta" e mostra o link para os planos
-- [ ] Cada um dos 6 limites desabilita a criação quando atingido
-- [ ] Busca no código: nenhum número de limite nem nome de plano usado para decidir acesso em `src` (fora de `use-plan.ts` e da página de planos, que só exibem)
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Com `limite_contas` = `{limit: 2, used: 2}`, a tela de contas mostra "2 de 2", desabilita "Nova conta" e mostra o link para os planos
+- [x] Cada um dos 6 limites desabilita a criação quando atingido
+- [x] Busca no código: nenhum número de limite nem nome de plano usado para decidir acesso em `src` (fora de `use-plan.ts` e da página de planos, que só exibem)
+- [x] Build gate (frontend) passa
+- [x] Test count: 8 testes (mínimo 7)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): mostra os limites do plano vindos da API`
 
