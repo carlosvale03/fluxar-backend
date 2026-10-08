@@ -12,6 +12,7 @@ from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
+from core.travas import RecursoLiberado, exigir_recurso
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account
 from accounts.saldo import recalcular
@@ -60,7 +61,7 @@ class CategoryViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mod
 class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('tags')]
     
     # get_queryset removido pois o Mixin resolve
 
@@ -148,6 +149,20 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             return Response(DE_CONTA_EXCLUIDA, status=status.HTTP_400_BAD_REQUEST)
         return super().update(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        # Lançar como recorrente e lançar com tags dependem do plano (PERM-15)
+        if serializer.validated_data.get('is_recurring'):
+            exigir_recurso(self.request.user, 'transacoes_recorrentes')
+        if serializer.validated_data.get('tags'):
+            exigir_recurso(self.request.user, 'tags')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        # Editar uma ocorrência é essencial; pôr tags depende do plano (PERM-15)
+        if serializer.validated_data.get('tags'):
+            exigir_recurso(self.request.user, 'tags')
+        serializer.save()
+
     def destroy(self, request, *args, **kwargs):
         transacao = self.get_object()
         if transacao.type == 'CREDIT_CARD':
@@ -187,11 +202,19 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         )
         return Response({'status': 'Transferência realizada'}, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['post'], url_path='credit-card-expense')
+    @action(
+        detail=False, methods=['post'], url_path='credit-card-expense',
+        permission_classes=[permissions.IsAuthenticated, RecursoLiberado('cartoes')],
+    )
     def credit_card_expense(self, request):
         serializer = CreditCardExpenseSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        # Parcelar acima de 1x e lançar com tags dependem do plano (PERM-15)
+        if data['installments'] > 1:
+            exigir_recurso(request.user, 'compras_parceladas')
+        if data.get('tags'):
+            exigir_recurso(request.user, 'tags')
         
         txs = TransactionService.create_credit_card_expense(
             user=request.user,
@@ -219,6 +242,9 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         transfer_id = request.query_params.get('transfer_id')
         
         if recurring_id:
+            # Excluir a série inteira depende do plano; as pernas de uma
+            # transferência seguem liberadas (PERM-15)
+            exigir_recurso(request.user, 'transacoes_recorrentes')
             # Só as pendentes saem; as efetivadas ficam no histórico e a série
             # é encerrada (SALDO-22)
             serie = get_owned_or_400(
@@ -245,7 +271,10 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         # Erro no formato do DRF, em português (CONTRATO-29)
         raise ValidationError({'detail': 'Informe recurring_source ou transfer_id.'})
 
-    @action(detail=False, methods=['patch'], url_path='bulk-update')
+    @action(
+        detail=False, methods=['patch'], url_path='bulk-update',
+        permission_classes=[permissions.IsAuthenticated, RecursoLiberado('transacoes_recorrentes')],
+    )
     def bulk_update(self, request):
         """
         Altera todas as ocorrências de uma série (SALDO-21): descrição, valor,

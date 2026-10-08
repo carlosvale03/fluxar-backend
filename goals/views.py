@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from .models import Goal
 from .serializers import GoalSerializer, GoalDepositSerializer
 from .services import GoalService
-from core.permissions import IsPremiumPlus
+from core.travas import RecursoLiberado
 from accounts.models import Account
 from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
@@ -48,8 +48,9 @@ def _mover(operacao, *args):
 class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Goal.objects.all()
     serializer_class = GoalSerializer
-    # Permissão: IsAuthenticated E IsPremiumPlus
-    permission_classes = [permissions.IsAuthenticated, IsPremiumPlus]
+    # Metas, aportes, resgates e histórico (PERM-15). O cofrinho é uma conta
+    # comum: transferências e ajuste de saldo seguem liberados (PERM-22)
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('metas')]
     
     def destroy(self, request, *args, **kwargs):
         """Bloqueia a exclusão se a meta ainda tiver saldo."""

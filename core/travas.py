@@ -21,6 +21,9 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from django.db.models import Q
+from rest_framework import status
+from rest_framework.exceptions import APIException
+from rest_framework.permissions import BasePermission
 
 from accounts.models import Account, CreditCard
 from api.models import GlobalSetting, TravaDePlano
@@ -250,3 +253,44 @@ def acesso(usuario):
 def uso(usuario, chave, **contexto):
     """Quantos itens o usuário já tem para o limite `chave`."""
     return CATALOGO[chave].contar(usuario, **contexto)
+
+
+# Bloqueio nas rotas --------------------------------------------------------
+
+class PlanoBloqueado(APIException):
+    """
+    HTTP 403 `{detail, code: "plan_locked", feature}` para um recurso
+    bloqueado no plano do usuário (PERM-15). O handler de
+    `core/exceptions.py` acrescenta os `extras` ao corpo.
+    """
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = 'Este recurso não está disponível no seu plano.'
+    default_code = 'plan_locked'
+
+    def __init__(self, chave):
+        super().__init__()
+        self.extras = {'feature': chave}
+
+
+def exigir_recurso(usuario, chave):
+    """Levanta `PlanoBloqueado` se o recurso `chave` está bloqueado para o usuário."""
+    if not acesso(usuario).recurso_liberado(chave):
+        raise PlanoBloqueado(chave)
+
+
+def RecursoLiberado(chave, acoes=None):
+    """
+    Permissão do DRF que exige o recurso `chave` do catálogo. Com `acoes`,
+    vale só para essas ações do ViewSet; as outras seguem liberadas.
+    Depois de `IsAuthenticated`, para o anônimo receber 401.
+    """
+    class _RecursoLiberado(BasePermission):
+        def has_permission(self, request, view):
+            if not (request.user and request.user.is_authenticated):
+                return False
+            if acoes is None or getattr(view, 'action', None) in acoes:
+                exigir_recurso(request.user, chave)
+            return True
+
+    _RecursoLiberado.__name__ = f'RecursoLiberado_{chave}'
+    return _RecursoLiberado

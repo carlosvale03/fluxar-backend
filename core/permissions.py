@@ -31,13 +31,3 @@ class EhAdministrador(permissions.BasePermission):
         return bool(
             usuario and usuario.is_authenticated and usuario.is_active and usuario.role == 'ADMIN'
         )
-
-class IsPremiumPlus(permissions.BasePermission):
-    """
-    Permite acesso apenas a usuários Premium Plus ou Superusers.
-    """
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        # Fase de Testes: Todos têm permissão Premium Plus
-        return True

@@ -246,16 +246,17 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Para cada uma das 16 chaves de recurso com rota, com a liberação desligada e a trava fechada no Comum, a rota responde 403 `{code: "plan_locked", feature: <chave>}`; com a trava aberta, responde normalmente
-- [ ] `compras_parceladas` fechada recusa só `installments > 1`; `transacoes_recorrentes` fechada recusa `is_recurring`, `bulk-update` e `bulk-delete` por série, mas não por `transfer_id`; `tags` fechada recusa transação com tags
-- [ ] Com `metas` fechada, o cofrinho continua recebendo transferências e ajuste de saldo
-- [ ] Com `cartoes` fechada, ler cartões e faturas, pagar e estornar continuam funcionando, e criar cartão ou compra no cartão recebe 403
-- [ ] Com a liberação ligada, nenhuma rota do catálogo é travada
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 24 testes
+- [x] Para cada uma das 16 chaves de recurso com rota, com a liberação desligada e a trava fechada no Comum, a rota responde 403 `{code: "plan_locked", feature: <chave>}`; com a trava aberta, responde normalmente
+- [x] `compras_parceladas` fechada recusa só `installments > 1`; `transacoes_recorrentes` fechada recusa `is_recurring`, `bulk-update` e `bulk-delete` por série, mas não por `transfer_id`; `tags` fechada recusa transação com tags
+- [x] Com `metas` fechada, o cofrinho continua recebendo transferências e ajuste de saldo
+- [x] Com `cartoes` fechada, ler cartões e faturas, pagar e estornar continuam funcionando, e criar cartão ou compra no cartão recebe 403
+- [x] Com a liberação ligada, nenhuma rota do catálogo é travada
+- [x] Full gate passa
+- [x] Test count: 27 testes (mínimo 24)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(planos): aplica as travas de recurso em cada rota do catálogo`
 

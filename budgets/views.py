@@ -9,11 +9,13 @@ from .serializers import BudgetSerializer
 from transactions.models import Category
 from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
+from core.travas import RecursoLiberado
 
 class BudgetViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Budget.objects.all()
     serializer_class = BudgetSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # Todas as rotas, inclusive a importação de outro mês (PERM-15)
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('orcamentos')]
     # Parâmetros conhecidos da lista (CONTRATO-14)
     parametros_permitidos = frozenset({
         'month', 'year', 'category', 'start_month', 'start_year', 'end_month', 'end_year',
