@@ -257,15 +257,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-20 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
 | IMPORT-21 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
 | IMPORT-22 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-23 | P1: Tipo, status e conta de cada linha | - | Pending |
+| IMPORT-23 | P1: Tipo, status e conta de cada linha | T7 | Implemented |
 | IMPORT-24 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-25 | P1: Tipo, status e conta de cada linha | - | Pending |
+| IMPORT-25 | P1: Tipo, status e conta de cada linha | T7 | Implemented |
 | IMPORT-26 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-27 | P1: Resultado da importação | - | Pending |
-| IMPORT-28 | P1: Resultado da importação | - | Pending |
-| IMPORT-29 | P1: Resultado da importação | - | Pending |
-| IMPORT-30 | P1: Resultado da importação | - | Pending |
-| IMPORT-31 | P1: Resultado da importação | - | Pending |
+| IMPORT-27 | P1: Resultado da importação | T7 | Implemented |
+| IMPORT-28 | P1: Resultado da importação | T7 | Implemented |
+| IMPORT-29 | P1: Resultado da importação | T7 | Implemented |
+| IMPORT-30 | P1: Resultado da importação | T7 | Implemented |
+| IMPORT-31 | P1: Resultado da importação | T7 | Implemented |
 | IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
 | IMPORT-33 | P1: Resultado da importação | - | Pending |
 | IMPORT-34 | P1: Linhas já importadas | T4, T5 | Implemented |

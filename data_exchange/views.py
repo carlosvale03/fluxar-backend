@@ -6,8 +6,10 @@ from django.http import HttpResponse
 from accounts.models import Account
 from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
-from .importacao.leitura import contas_da_planilha, ler_planilha
-from .services import ImportService, ExportService
+from .importacao.gravacao import Gravacao
+from .importacao.interpretacao import Interpretador, interpretar_ofx
+from .importacao.leitura import contas_da_planilha, ler_ofx, ler_planilha
+from .services import ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
 # Tenta importar IsPremium, fallback para IsAuthenticated se não existir (evita crash se BD-007 não tiver ok)
@@ -35,17 +37,10 @@ class ImportOFXView(views.APIView):
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
         )
         
-        result = ImportService.process_ofx(file_obj, account, request.user)
-        
-        # Garante que as chaves batam com o frontend (total, imported, ignored, errors)
-        summary = {
-            'total': result.get('total', 0),
-            'imported': result.get('created', 0),
-            'ignored': result.get('ignored', 0),
-            'errors': len(result.get('errors', []))
-        }
-        
-        return Response(summary, status=status.HTTP_200_OK if result['created'] > 0 else status.HTTP_400_BAD_REQUEST)
+        # Sempre 200 com o resumo quando o arquivo é aceito, inclusive com zero
+        # gravadas (IMPORT-29, IMPORT-31)
+        resultados = [interpretar_ofx(tx, account) for tx in ler_ofx(file_obj)]
+        return Response(Gravacao(request.user).importar(resultados), status=status.HTTP_200_OK)
 
 class ImportSpreadsheetPreflightView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -87,9 +82,9 @@ class ImportSpreadsheetView(views.APIView):
             mapping = {}
 
         try:
-            account_mapping = json.loads(account_mapping_raw) if account_mapping_raw else None
+            account_mapping = json.loads(account_mapping_raw) if account_mapping_raw else {}
         except:
-            account_mapping = None
+            account_mapping = {}
         
         if not file_obj:
             raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
@@ -98,20 +93,11 @@ class ImportSpreadsheetView(views.APIView):
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
         ) if account_id else None
         
-        result = ImportService.process_spreadsheet(
-            file_obj, mapping, account, request.user, 
-            import_type=import_type, account_mapping=account_mapping
-        )
-        
-        summary = {
-            'total': result.get('total', 0),
-            'imported': result.get('created', 0),
-            'ignored': result.get('ignored', 0),
-            'errors': len(result.get('errors', [])),
-            'errors_list': result.get('errors', [])
-        }
-        
-        return Response(summary, status=status.HTTP_200_OK if result['created'] >= 0 else status.HTTP_400_BAD_REQUEST)
+        linhas = ler_planilha(file_obj, mapping, import_type)
+        interpretador = Interpretador(request.user, mapping, import_type, account, account_mapping)
+        resultados = [interpretador.planilha(linha) for linha in linhas]
+        # Sempre 200 com o resumo quando o arquivo é aceito (IMPORT-29, IMPORT-31)
+        return Response(Gravacao(request.user).importar(resultados), status=status.HTTP_200_OK)
 
 # Parâmetros conhecidos da exportação (CONTRATO-14)
 PARAMETROS_DA_EXPORTACAO = frozenset({

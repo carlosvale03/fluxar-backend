@@ -284,18 +284,19 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O Independent Test de IMPORT-27 a IMPORT-33 (10 linhas, rejeitadas 3, 6 e 9) grava 7 e responde 200 com 10, 7, 0 e 3 e os motivos exatos
-- [ ] Erro de banco simulado na linha 5 rejeita só ela com "Erro ao gravar a linha", sem o texto da exceção, e as outras ficam gravadas
-- [ ] Reimportar o mesmo arquivo responde 200 com zero gravadas
-- [ ] Categoria "alimentação" reaproveita "Alimentação"; uma nova é criada uma vez só
-- [ ] Transferência importada cria as duas pernas pelas regras do saldo
-- [ ] Arquivo só com o cabeçalho responde 200 com zeros
-- [ ] O saldo final de cada conta segue SALDO-01
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 9 testes
+- [x] O Independent Test de IMPORT-27 a IMPORT-33 (10 linhas, rejeitadas 3, 6 e 9) grava 7 e responde 200 com 10, 7, 0 e 3 e os motivos exatos
+- [x] Erro de banco simulado na linha 5 rejeita só ela com "Erro ao gravar a linha", sem o texto da exceção, e as outras ficam gravadas
+- [x] Reimportar o mesmo arquivo responde 200 com zero gravadas
+- [x] Categoria "alimentação" reaproveita "Alimentação"; uma nova é criada uma vez só
+- [x] Transferência importada cria as duas pernas pelas regras do saldo
+- [x] Arquivo só com o cabeçalho responde 200 com zeros
+- [x] O saldo final de cada conta segue SALDO-01
+- [x] Full gate passa
+- [x] Test count: pelo menos 9 testes (real: 9 testes novos; suíte 753 → 762)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(importacao): grava cada linha válida e informa as rejeitadas com o motivo`
 
