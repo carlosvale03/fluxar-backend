@@ -11,7 +11,7 @@ from collections import namedtuple
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import Exists, F, OuterRef, Q, Sum
 
 CrossLink = namedtuple('CrossLink', 'tipo registro_id relacao alheio_id')
 
@@ -108,12 +108,37 @@ def _recalcular_faturas(apps, fatura_ids):
         CreditCardInvoice.objects.filter(pk=fatura.pk).update(total_amount=_soma(compras))
 
 
-def _recalcular_metas(apps, meta_ids):
-    """Valor da meta como aportes menos resgates restantes (AD-028)."""
-    Goal = apps.get_model('goals', 'Goal')
+def _registros_que_contam(apps, meta_id):
+    """
+    Os registros da meta que entram no valor dela pela regra de
+    `goals/valores.calcular` (META-01, AD-045): os sem transação e os com as
+    transações ligadas efetivadas, só em contas do dono da meta. A regra é
+    repetida aqui porque a migração `transactions/0007` roda com o registro
+    histórico, antes dos campos das pernas (`goals/0008`): sem eles, todo
+    registro é resolvido pelo `transaction_id`.
+    """
     GoalDeposit = apps.get_model('goals', 'GoalDeposit')
+    Transaction = apps.get_model('transactions', 'Transaction')
+    nao_efetivadas = Transaction.objects.exclude(status='COMPLETED')
+    registros = GoalDeposit.objects.filter(goal_id=meta_id, account__user_id=F('goal__user_id'))
+    antigo = Q(transaction_id__isnull=False)
+    campos = {campo.name for campo in GoalDeposit._meta.get_fields()}
+    if {'transacao_saida', 'transacao_entrada'} <= campos:
+        registros = registros.exclude(
+            Exists(nao_efetivadas.filter(pk=OuterRef('transacao_saida_id')))
+            | Exists(nao_efetivadas.filter(pk=OuterRef('transacao_entrada_id')))
+        )
+        antigo &= Q(transacao_saida__isnull=True, transacao_entrada__isnull=True)
+    return registros.exclude(antigo & Exists(nao_efetivadas.filter(
+        Q(transfer_id=OuterRef('transaction_id')) | Q(pk=OuterRef('transaction_id')),
+    )))
+
+
+def _recalcular_metas(apps, meta_ids):
+    """Valor da meta como aportes menos resgates que contam (META-01, AD-045)."""
+    Goal = apps.get_model('goals', 'Goal')
     for meta_id in meta_ids:
-        registros = GoalDeposit.objects.filter(goal_id=meta_id)
+        registros = _registros_que_contam(apps, meta_id)
         valor = _soma(registros.filter(type='DEPOSIT')) - _soma(registros.filter(type='WITHDRAWAL'))
         Goal.objects.filter(pk=meta_id).update(current_amount=valor)
 

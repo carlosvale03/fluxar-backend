@@ -1,6 +1,8 @@
 from decimal import Decimal
 
 from django.apps import apps
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 
 from accounts.models import Account, CreditCard, CreditCardInvoice
 from budgets.models import Budget
@@ -8,6 +10,7 @@ from core.isolation import find_cross_links, fix_cross_links
 from goals.models import Goal, GoalDeposit
 from reports.models import FocusedMonitorItem
 from transactions.models import Category, RecurringTransaction, Tag, Transaction
+from transactions.services import TransactionService
 from tests.isolamento.base import DoisUsuariosTestCase
 from tests.isolamento.ligacoes import DIA, gravar_ligacoes_cruzadas
 
@@ -97,6 +100,47 @@ class CorrecaoDeLigacoesCruzadasTests(DoisUsuariosTestCase):
         # Fatura de B: só a compra de B
         self.assertEqual(CreditCardInvoice.objects.get(pk=self.b.fatura.pk).total_amount, Decimal('120.00'))
         # Meta de A: aportes menos resgates restantes (AD-028)
+        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('250.00'))
+
+    def aportes_com_transferencia_pendente(self):
+        """
+        Dois aportes na meta de A com a transferência pendente: um antigo, só
+        com o `transaction_id`, e um ligado às duas pernas. Pela META-01, os
+        dois ficam fora do valor da meta.
+        """
+        for valor, ligado in (('70.00', False), ('30.00', True)):
+            transfer_id = TransactionService.create_transfer(
+                user=self.a.usuario, account_from=self.a.conta, account_to=self.a.cofrinho,
+                amount=Decimal(valor), date=DIA, description='Aporte',
+            )
+            Transaction.objects.filter(transfer_id=transfer_id).update(status='PENDING')
+            pernas = {}
+            if ligado:
+                pernas = {
+                    'transacao_saida': Transaction.objects.get(transfer_id=transfer_id, type='TRANSFER_OUT'),
+                    'transacao_entrada': Transaction.objects.get(transfer_id=transfer_id, type='TRANSFER_IN'),
+                }
+            GoalDeposit.objects.create(
+                goal=self.a.meta, account=self.a.conta, amount=Decimal(valor), type='DEPOSIT', date=DIA,
+                transaction_id=transfer_id, **pernas,
+            )
+
+    def test_valor_da_meta_conta_so_os_aportes_efetivados(self):
+        self.aportes_com_transferencia_pendente()
+
+        fix_cross_links(apps)
+
+        # 300 - 50 dos registros sem transação; os aportes pendentes ficam de fora (META-01)
+        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('250.00'))
+
+    def test_valor_da_meta_com_o_registro_historico_da_migracao(self):
+        self.aportes_com_transferencia_pendente()
+        estado = MigrationExecutor(connection).loader.project_state(
+            ('transactions', '0007_corrige_isolamento'),
+        )
+
+        fix_cross_links(estado.apps)
+
         self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('250.00'))
 
     def test_subcategoria_pendurada_vira_raiz_e_volta_para_a_lista_do_dono(self):
