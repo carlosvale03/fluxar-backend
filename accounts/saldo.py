@@ -56,6 +56,20 @@ def calcular(conta):
     return conta.initial_balance + entradas - saidas
 
 
+def travar(*conta_ids):
+    """
+    Trava as contas com `select_for_update` em ordem de id e devolve
+    `{id: conta}`. Ignora `None`. Toda operação que trava contas e metas trava
+    as contas primeiro, por aqui, e só depois as metas (AD-045), para que
+    operações simultâneas não se travem em deadlock.
+    """
+    from .models import Account
+
+    ids = {conta_id for conta_id in conta_ids if conta_id is not None}
+    contas = Account.objects.select_for_update().filter(pk__in=ids).order_by('pk')
+    return {conta.pk: conta for conta in contas}
+
+
 def recalcular(*conta_ids):
     """
     Grava em cada conta o saldo de `calcular`. Ignora `None`. Trava as contas

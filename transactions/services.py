@@ -162,7 +162,7 @@ class TransactionService:
         `target_account_id`, a da outra perna. O tipo não muda. As contas
         antigas e as novas são recalculadas (AD-038).
         """
-        from accounts.saldo import recalcular
+        from accounts.saldo import recalcular, travar
         from .serializers import TIPO_NAO_ALTERAVEL
 
         dados = dict(dados)
@@ -183,6 +183,10 @@ class TransactionService:
             conta_da_outra = conta_da_outra or parceira.account
             if conta_da_outra is not None and conta_da_outra.pk == conta.pk:
                 raise ValidationError({'detail': MESMA_CONTA})
+
+        # As contas antigas e as novas, em ordem de id, antes da meta ligada
+        # à transferência, que os signals travam depois (AD-045)
+        travar(*contas_antigas, conta.pk, conta_da_outra.pk if conta_da_outra is not None else None)
 
         for campo, valor in dados.items():
             setattr(perna, campo, valor)

@@ -29,6 +29,25 @@ def _ligados(transacao):
     ).select_related('goal')
 
 
+def _travar_contas(transacao, registros):
+    """
+    Trava as contas das pernas ligadas aos registros antes das metas, na
+    ordem de `accounts/saldo.travar` (AD-045).
+    """
+    from accounts.saldo import travar
+    from transactions.models import Transaction
+
+    pernas = {transacao.pk}
+    for registro in registros:
+        pernas |= {registro.transacao_saida_id, registro.transacao_entrada_id}
+    filtro = Q(pk__in=pernas - {None})
+    for referencia in {transacao.transfer_id} | {registro.transaction_id for registro in registros}:
+        if referencia is not None:
+            filtro |= Q(transfer_id=referencia, user_id=transacao.user_id)
+    contas = set(Transaction.objects.filter(filtro).values_list('account_id', flat=True))
+    travar(transacao.account_id, *contas)
+
+
 def _recalcular_ou_recusar(meta_ids, recusar=True):
     from .valores import recalcular
 
@@ -66,6 +85,7 @@ def ao_excluir(transacao, origem):
     if not registros:
         return
     with transaction.atomic():
+        _travar_contas(transacao, registros)
         meta_ids = {registro.goal_id for registro in registros}
         type(registros[0]).objects.filter(pk__in=[r.pk for r in registros]).delete()
         _recalcular_ou_recusar(meta_ids, recusar=isinstance(origem, Transaction))
@@ -95,17 +115,19 @@ def ao_salvar(transacao):
     registros = list(_ligados(transacao))
     if not registros:
         return
-    for registro in registros:
-        if registro.transacao_saida_id is None and registro.transacao_entrada_id is None:
-            continue
-        if not _perna_no_cofrinho(registro, transacao):
-            registro.delete()
-            continue
-        registro.amount = transacao.amount
-        registro.date = transacao.date
-        # A conta do registro é a outra perna: a origem do aporte ou o destino do resgate
-        outra_id = registro.transacao_saida_id if registro.type == 'DEPOSIT' else registro.transacao_entrada_id
-        if outra_id == transacao.pk:
-            registro.account_id = transacao.account_id
-        registro.save(update_fields=['amount', 'date', 'account'])
-    _recalcular_ou_recusar({registro.goal_id for registro in registros})
+    with transaction.atomic():
+        _travar_contas(transacao, registros)
+        for registro in registros:
+            if registro.transacao_saida_id is None and registro.transacao_entrada_id is None:
+                continue
+            if not _perna_no_cofrinho(registro, transacao):
+                registro.delete()
+                continue
+            registro.amount = transacao.amount
+            registro.date = transacao.date
+            # A conta do registro é a outra perna: a origem do aporte ou o destino do resgate
+            outra_id = registro.transacao_saida_id if registro.type == 'DEPOSIT' else registro.transacao_entrada_id
+            if outra_id == transacao.pk:
+                registro.account_id = transacao.account_id
+            registro.save(update_fields=['amount', 'date', 'account'])
+        _recalcular_ou_recusar({registro.goal_id for registro in registros})

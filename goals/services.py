@@ -1,7 +1,7 @@
 from django.db import transaction as db_transaction
 from django.core.exceptions import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
-from accounts.models import Account
+from accounts.saldo import travar
 from core.datas import hoje
 from core.valores import reais
 from transactions.models import Transaction
@@ -18,15 +18,18 @@ COFRINHO_INSUFICIENTE = 'O cofrinho tem só {valor}.'
 
 def _travar(meta, conta):
     """
-    Trava a meta e, depois, as contas envolvidas em ordem de id, como em
-    `accounts/saldo.recalcular` (META-22). Devolve a meta e o cofrinho lidos
-    de novo, já travados.
+    Trava as contas envolvidas em ordem de id e, só depois, a meta (META-22),
+    na mesma ordem da edição de uma transferência ligada à meta. Devolve a
+    meta e o cofrinho lidos de novo, já travados.
     """
+    cofrinho_id = Goal.objects.values_list('account_id', flat=True).get(pk=meta.pk)
+    contas = travar(cofrinho_id, conta.pk if conta is not None else None)
     meta = Goal.objects.select_for_update().get(pk=meta.pk)
     if not meta.account_id:
         raise ValidationError(SEM_COFRINHO)
-    ids = {meta.account_id} | ({conta.pk} if conta is not None else set())
-    contas = {c.pk: c for c in Account.objects.select_for_update().filter(pk__in=ids).order_by('pk')}
+    if meta.account_id not in contas:
+        # O cofrinho mudou entre a leitura e a trava da meta
+        contas.update(travar(meta.account_id))
     return meta, contas[meta.account_id]
 
 
