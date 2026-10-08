@@ -182,17 +182,18 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Sem nenhuma linha, todo recurso está liberado e todo limite sem limite nos três planos, e `testing_unlock` está ligada depois da migração
-- [ ] Admin tem tudo liberado e sem limite mesmo com tudo travado no plano dele
-- [ ] Com a liberação ligada, um Comum com tudo travado tem tudo liberado, e o plano gravado não muda
-- [ ] Nenhuma chave essencial (cadastro, contas, transações, transferências, categorias, dashboard simples) existe no catálogo
-- [ ] A contagem de `limite_contas` ignora o cofrinho de uma meta
-- [ ] Mudanças no banco aparecem em até 30 s, ou na hora depois de `invalidar()`
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Sem nenhuma linha, todo recurso está liberado e todo limite sem limite nos três planos, e `testing_unlock` está ligada depois da migração
+- [x] Admin tem tudo liberado e sem limite mesmo com tudo travado no plano dele
+- [x] Com a liberação ligada, um Comum com tudo travado tem tudo liberado, e o plano gravado não muda
+- [x] Nenhuma chave essencial (cadastro, contas, transações, transferências, categorias, dashboard simples) existe no catálogo
+- [x] A contagem de `limite_contas` ignora o cofrinho de uma meta
+- [x] Mudanças no banco aparecem em até 30 s, ou na hora depois de `invalidar()`
+- [x] Quick gate passa
+- [x] Test count: 15 testes (mínimo 8)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(planos): cria o catálogo de travas e a decisão de acesso por usuário`
 

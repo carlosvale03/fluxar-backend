@@ -162,3 +162,24 @@ class GlobalSetting(models.Model):
 
     def __str__(self):
         return f"{self.key}: {self.value}"
+
+class TravaDePlano(models.Model):
+    """
+    O valor de uma trava do catálogo (`core/travas.py`) para um plano (AD-044).
+
+    Recursos usam `liberado`; limites usam `limite`, em que nulo é sem limite.
+    Sem a linha, o recurso fica liberado e o limite fica sem limite (PERM-28).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chave = models.CharField(max_length=50)
+    plano = models.CharField(max_length=20, choices=User.PLAN_CHOICES)
+    liberado = models.BooleanField(null=True)
+    limite = models.PositiveIntegerField(null=True)
+    atualizada_em = models.DateTimeField(auto_now=True)
+    atualizada_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='+')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['chave', 'plano'], name='trava_unica_por_plano')]
+
+    def __str__(self):
+        return f"{self.chave} ({self.plano})"

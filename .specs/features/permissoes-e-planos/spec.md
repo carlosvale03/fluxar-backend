@@ -248,12 +248,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-06 | P1: Quem é administrador | T2 | Implemented |
 | PERM-07 | P1: Quem é administrador | T3 | Implemented |
 | PERM-08 | P1: Quem é administrador | T1 | Implemented |
-| PERM-09 | P1: Quem é administrador | - | Pending |
+| PERM-09 | P1: Quem é administrador | T4 | Implemented |
 | PERM-10 | P1: Configuração das travas pelo administrador | - | Pending |
 | PERM-11 | P1: Configuração das travas pelo administrador | - | Pending |
 | PERM-12 | P1: Configuração das travas pelo administrador | - | Pending |
 | PERM-13 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-14 | P1: Configuração das travas pelo administrador | - | Pending |
+| PERM-14 | P1: Configuração das travas pelo administrador | T4 | Implemented |
 | PERM-15 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-16 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-17 | P1: Travas aplicadas em cada tela e rota | - | Pending |
@@ -262,12 +262,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-20 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-21 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-22 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-23 | P1: Liberação para testes | - | Pending |
+| PERM-23 | P1: Liberação para testes | T4 | Implemented |
 | PERM-24 | P1: Liberação para testes | - | Pending |
 | PERM-25 | P1: Liberação para testes | - | Pending |
 | PERM-26 | P1: Liberação para testes | - | Pending |
 | PERM-27 | P2: Página de planos | - | Pending |
-| PERM-28 | P2: Implantação | - | Pending |
+| PERM-28 | P2: Implantação | T4 | Implemented |
 | PERM-29 | P2: Implantação | T3 | Implemented |
 
 **Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (design e tasks ainda não iniciados)
