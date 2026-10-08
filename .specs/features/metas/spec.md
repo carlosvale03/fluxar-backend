@@ -195,8 +195,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-01 | P1: Valor das metas e saldo livre do cofrinho | T1 | Implemented |
 | META-02 | P1: Valor das metas e saldo livre do cofrinho | T1, T5 | Implemented |
 | META-03 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-04 | P1: Valor das metas e saldo livre do cofrinho | T5 | In Progress |
-| META-05 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
+| META-04 | P1: Valor das metas e saldo livre do cofrinho | T5, T11 | Implemented |
+| META-05 | P1: Valor das metas e saldo livre do cofrinho | T11 | Implemented |
 | META-06 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-07 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-08 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |

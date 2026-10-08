@@ -405,14 +405,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Duas metas no mesmo cofrinho aparecem no mesmo grupo, com saldo, soma e saldo livre
-- [ ] Saldo livre de −200.00 mostra "O cofrinho <nome> tem R$ 200,00 a menos do que as metas somam."
-- [ ] O texto que explicava o rateio sai
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Duas metas no mesmo cofrinho aparecem no mesmo grupo, com saldo, soma e saldo livre
+- [x] Saldo livre de −200.00 mostra "O cofrinho <nome> tem R$ 200,00 a menos do que as metas somam."
+- [x] O texto que explicava o rateio sai
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: agrupa as metas por cofrinho e mostra o saldo livre`
 
