@@ -134,5 +134,5 @@ class RotasReescritasTests(ContratosTestCase):
         resp = self.client.post('/api/import/spreadsheet/preflight/', {'file': arquivo}, format='multipart')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.data, {
-            'file': ['Não foi possível ler o arquivo. Confira o formato e as colunas escolhidas.'],
+            'file': ['Não foi possível ler o arquivo.'],
         })

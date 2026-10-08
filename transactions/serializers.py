@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
 from dateutil.relativedelta import relativedelta
-from .models import Transaction, Category, Tag, RecurringTransaction
+from .models import Transaction, Category, Tag, RecurringTransaction, CorrecaoDeCategoria
 from accounts.models import Account, CreditCard
 from .services import TransactionService, CategoryService
 from core.fields import (
@@ -9,6 +9,7 @@ from core.fields import (
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
 )
 from core.valores import dinheiro, validar_valor_positivo
+from data_exchange.importacao.texto import normalizar_descricao
 
 # Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
 # Transferência, compra no cartão e pagamento de fatura nascem só das
@@ -105,6 +106,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         write_only=True
     )
     recurring_source = serializers.PrimaryKeyRelatedField(read_only=True)
+    # Lote da importação e categoria sugerida pelo histórico (IMPORT-45, IMPORT-46)
+    category_suggested = serializers.BooleanField(source='categoria_sugerida', read_only=True)
 
     class Meta:
         model = Transaction
@@ -116,11 +119,13 @@ class TransactionSerializer(serializers.ModelSerializer):
             'is_installment', 'installment_number', 'installment_total',
             'transfer_id', 'related_transaction', 'target_account_id', 'update_scope',
             'is_recurring', 'frequency', 'recurring_source',
+            'import_batch', 'category_suggested',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'invoice', 'is_installment', 'installment_number', 'installment_total',
             'transfer_id', 'related_transaction', 'signed_amount', 'recurring_source',
+            'import_batch', 'category_suggested',
             'created_at', 'updated_at'
         ]
         # Valor maior que zero, com até duas casas (SALDO-09)
@@ -345,12 +350,37 @@ class TransactionSerializer(serializers.ModelSerializer):
                 txn.save()
 
         # 3. Normal Update
+        correcao = self._correcao_de_categoria(instance, validated_data)
+        if correcao is not None:
+            validated_data['categoria_sugerida'] = False
         t = super().update(instance, validated_data)
+        if correcao is not None:
+            correcao.save()
         
         if tags is not None:
             t.tags.set(tags)
             
         return t
+
+    def _correcao_de_categoria(self, instance, validated_data):
+        """
+        A correção a gravar quando a categoria de uma transação importada é
+        definida ou trocada, ou `None` (IMPORT-42). Guarda a descrição de
+        antes da edição, que é a que volta nas próximas importações
+        (IMPORT-43). A correção é sempre do dono da transação (IMPORT-49).
+        """
+        if instance.import_batch is None or 'category' not in validated_data:
+            return None
+        depois = validated_data['category']
+        if (depois.pk if depois else None) == instance.category_id:
+            return None
+        return CorrecaoDeCategoria(
+            user_id=instance.user_id, transacao=instance,
+            descricao=instance.description,
+            descricao_normalizada=normalizar_descricao(instance.description),
+            conta=validated_data.get('account', instance.account),
+            categoria_antes_id=instance.category_id, categoria_depois=depois,
+        )
 
 # Serializers Específicos para Ações
 class TransferSerializer(serializers.Serializer):

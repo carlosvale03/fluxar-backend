@@ -110,7 +110,8 @@ def capture_old_transaction_state(sender, instance, **kwargs):
     """
     instance._old_account_id = None
     instance._old_invoice_id = None
-    if instance.pk:
+    # Uma transação nova não tem estado anterior: sem consulta (IMPORT-40)
+    if instance.pk and not instance._state.adding:
         anterior = (
             Transaction.objects.filter(pk=instance.pk).values_list('account_id', 'invoice_id').first()
         )

@@ -338,16 +338,23 @@
 - **Date**: 2026-10-03
 - **Status**: active
 
+### AD-043
+- **Decision**: A importação roda dentro da requisição, em quatro etapas (leitura, interpretação, repetidos e gravação) em `data_exchange/importacao/`. Cada linha grava num savepoint próprio, as contas do arquivo ficam travadas durante a gravação e o saldo é recalculado uma vez no fim por `recalculo_adiado()`. O gunicorn roda com `gthread` (`gunicorn.conf.py`), para outras requisições seguirem atendidas durante uma importação.
+- **Reason**: um erro numa linha desfazia o arquivo inteiro (FIN-11), não havia limite nem concorrência (OPS-03), e não há infraestrutura de fila no Render.
+- **Trade-off**: a requisição fica ocupada durante a importação, e as escritas nas contas do arquivo esperam a trava.
+- **Scope**: importacao, saldo e deploy.
+- **Date**: 2026-10-07
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `contratos-frontend-backend` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T22) e verificado: `validation.md` com PASS, 35 de 35 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: coleções completas e paginação única (AD-021), filtro desconhecido com 400 e filtro de transações compartilhado com a exportação (AD-022), total do dia, dinheiro como texto e em centavos no frontend (AD-041), datas `AAAA-MM-DD`, preferências salvas e tema aplicado ao carregar, erros em português com `code`, tratamento único de erros e só o Sonner (AD-042); backend com 701 testes e frontend com 188
+- **Feature**: `importacao` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 49 de 49 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: leitura de OFX, CSV e XLSX com formatos e limites, valores e datas no formato brasileiro (AD-009), tipo, status e conta de cada linha, savepoint por linha e resumo com rejeitadas, repetidos por contagem e `fitid`, trava das contas, recálculo de saldo adiado, gunicorn com threads (AD-043), correções e sugestão de categoria (AD-031), diálogo e lista filtrada no frontend; backend com 782 testes e frontend com 198
 - **In-progress** (file:line): nenhum
-- **Deploy**: os dois PRs precisam subir juntos (filtros e datas estritos no backend)
-- **Observações do verificador**: sem teste acima de 100 itens numa coleção; tempo esgotado testado pela configuração e pelo `ECONNABORTED`, sem requisição real expirando; 403 de plano fica com `permissoes-e-planos`
-- **Fora do escopo, anotado**: `print` de depuração em `CategoryViewSet.create`; `months` inválido em relatórios dá 500; importação põe `str(e)` nas mensagens por linha; URL desconhecida devolve o 404 HTML do Django; `@radix-ui/react-toast` sem uso no `package.json`; `GoalSimulator` projeta em ponto flutuante só para exibir
-- **Next step**: o usuário faz o push das duas branches `fix/contratos-frontend-backend` e abre os PRs para a `development`. Depois do merge, a próxima é `importacao`
+- **Deploy**: migração `transactions/0010_importacao`; `gunicorn.conf.py` é lido pelo Start Command atual; `WEB_CONCURRENCY` e `GUNICORN_THREADS` ajustam workers e threads (DEPLOY.md)
+- **Observações do verificador**: IMPORT-41 só pela configuração; IMPORT-05 testado no preflight, sem importação de 10.001 linhas; `accept` do OFX sem teste; IMPORT-07 testado na função, não na rota
+- **Next step**: o usuário faz o push das duas branches `fix/importacao` e abre os PRs para a `development`. Depois do merge, a próxima é `permissoes-e-planos`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/contratos-frontend-backend (backend e frontend)
+- **Branch**: fix/importacao (backend e frontend)

@@ -18,6 +18,7 @@ TIPOS_DE_DESPESA = ('EXPENSE', 'CREDIT_CARD')
 TIPOS_DE_TRANSFERENCIA = ('TRANSFER_OUT', 'TRANSFER_IN')
 
 TIPO_INVALIDO = 'Tipo inválido. Use ALL, INCOME, EXPENSE ou TRANSFER.'
+LOTE_INVALIDO = 'Lote de importação inválido.'
 
 
 def categorias_com_descendentes(usuario, ids):
@@ -94,6 +95,15 @@ def filtrar_transacoes(qs, params, usuario):
         qs = qs.filter(recurring_source__isnull=False)
     if params.get('transfer_id'):
         qs = qs.filter(transfer_id=params.get('transfer_id'))
+
+    # Atalho do resultado da importação para as sugeridas do lote (IMPORT-45)
+    lote = params.get('import_batch')
+    if lote:
+        if not _uuid_valido(lote):
+            raise ValidationError({'import_batch': [LOTE_INVALIDO]})
+        qs = qs.filter(import_batch=lote)
+    if params.get('suggested_category') == 'true':
+        qs = qs.filter(categoria_sugerida=True)
 
     tag_ids = params.getlist('tagIds')
     if tag_ids:
