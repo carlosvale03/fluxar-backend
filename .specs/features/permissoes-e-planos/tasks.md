@@ -369,15 +369,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] A tabela mostra as 24 travas com os valores dos três planos
-- [ ] Desligar um recurso ou mudar um limite envia o `PATCH` certo; limite inválido mostra o erro no campo
-- [ ] A chave da liberação para testes envia `{testing_unlock}`
-- [ ] Usuário sem o papel não vê os links do painel e é levado ao dashboard ao abrir uma página do painel
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] A tabela mostra as 24 travas com os valores dos três planos
+- [x] Desligar um recurso ou mudar um limite envia o `PATCH` certo; limite inválido mostra o erro no campo
+- [x] A chave da liberação para testes envia `{testing_unlock}`
+- [x] Usuário sem o papel não vê os links do painel e é levado ao dashboard ao abrir uma página do painel
+- [x] Quick gate (frontend) passa
+- [x] Test count: 9 testes (mínimo 6)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): configura as travas e a liberação para testes no painel`
 
