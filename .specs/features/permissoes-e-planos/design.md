@@ -1,7 +1,7 @@
 # Permissoes e planos Design
 
 **Spec**: `.specs/features/permissoes-e-planos/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

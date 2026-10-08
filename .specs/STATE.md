@@ -356,13 +356,14 @@
 
 ## Handoff
 
-- **Feature**: `importacao` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 49 de 49 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: leitura de OFX, CSV e XLSX com formatos e limites, valores e datas no formato brasileiro (AD-009), tipo, status e conta de cada linha, savepoint por linha e resumo com rejeitadas, repetidos por contagem e `fitid`, trava das contas, recálculo de saldo adiado, gunicorn com threads (AD-043), correções e sugestão de categoria (AD-031), diálogo e lista filtrada no frontend; backend com 782 testes e frontend com 198
+- **Feature**: `permissoes-e-planos` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T15, mais três correções pós-lote) e verificado: `validation.md` com PASS, 29 de 29 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: administrador pelo papel atual (AD-016), proteção do último admin e da própria conta, `create_admin.py` sem repromover, comando `divergencias_de_admin`, catálogo de 24 travas com `TravaDePlano` e liberação para testes (AD-044), painel de travas com log, travas e limites nas rotas com 403 `plan_locked`/`plan_limit_reached`, `access` no `/auth/me`, página de planos e travas em todas as telas; backend com 872 testes e frontend com 270
 - **In-progress** (file:line): nenhum
-- **Deploy**: migração `transactions/0010_importacao`; `gunicorn.conf.py` é lido pelo Start Command atual; `WEB_CONCURRENCY` e `GUNICORN_THREADS` ajustam workers e threads (DEPLOY.md)
-- **Observações do verificador**: IMPORT-41 só pela configuração; IMPORT-05 testado no preflight, sem importação de 10.001 linhas; `accept` do OFX sem teste; IMPORT-07 testado na função, não na rota
-- **Next step**: o usuário faz o push das duas branches `fix/importacao` e abre os PRs para a `development`. Depois do merge, a próxima é `permissoes-e-planos`
+- **Deploy**: migrações de `TravaDePlano` e de `testing_unlock = 'true'`; depois do deploy, rodar `python manage.py divergencias_de_admin` no Render Shell
+- **Observações do verificador**: `gestao_do_salario` e `vinculos` ainda sem rota nem tela (as specs delas aplicam a trava); leitura de cartões liberada com `cartoes` fechado (SPEC_DEVIATION, PERM-22); sem teste de admin rebaixado recebendo `plan_locked`; "última gravação vale" testado só em sequência
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo` (duas categorias "Lazer"); `print` de depuração em `CategoryViewSet.create` e nos signals de metas; `create_admin.py` não promove o e-mail configurado se ele já existe como usuário comum
+- **Next step**: o usuário faz o push das duas branches `fix/permissoes-e-planos` e abre os PRs para a `development`. Depois do merge, a próxima é `metas`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/importacao (backend e frontend)
+- **Branch**: fix/permissoes-e-planos (backend e frontend)
