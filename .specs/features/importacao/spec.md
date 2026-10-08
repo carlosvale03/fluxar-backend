@@ -279,13 +279,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPORT-42 | P2: Correções de categoria | T4, T10 | Implemented |
 | IMPORT-43 | P2: Correções de categoria | T11 | Implemented |
 | IMPORT-44 | P2: Correções de categoria | T11 | Implemented |
-| IMPORT-45 | P2: Correções de categoria | T10, T12 | In Progress |
-| IMPORT-46 | P2: Correções de categoria | T10 | In Progress |
+| IMPORT-45 | P2: Correções de categoria | T10, T12, T13 | Implemented |
+| IMPORT-46 | P2: Correções de categoria | T10, T13 | Implemented |
 | IMPORT-47 | P2: Correções de categoria | T11 | Implemented |
 | IMPORT-48 | P2: Correções de categoria | T4, T10 | Implemented |
 | IMPORT-49 | P2: Correções de categoria | T10, T11 | Implemented |
 
-**Coverage:** 49 total, 0 mapped to tasks, 49 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 49 total, 49 mapped to tasks, 0 unmapped
 
 ---
 

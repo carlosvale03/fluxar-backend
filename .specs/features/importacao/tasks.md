@@ -468,13 +468,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Abrir `/transacoes?import_batch=abc&suggested_category=true` envia os dois parâmetros e mostra o filtro ativo
-- [ ] Transação com `category_suggested` mostra o selo na lista e no formulário
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Abrir `/transacoes?import_batch=abc&suggested_category=true` envia os dois parâmetros e mostra o filtro ativo
+- [x] Transação com `category_suggested` mostra o selo na lista e no formulário
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 3 testes (real: 4 testes novos; suíte 194 → 198; lint 139 → 138 erros)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): filtra as transações sugeridas e mostra de onde veio a categoria`
 
