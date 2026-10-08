@@ -136,8 +136,8 @@ class GoalService:
         suggestion = Decimal('0')
         months = 0
         if goal.target_date:
-            from datetime import date
-            today = date.today()
+            # Meses a partir de hoje em Brasília, com mínimo de 1 (META-24, AD-008)
+            today = hoje()
             months = (goal.target_date.year - today.year) * 12 + (goal.target_date.month - today.month)
             if months <= 0: months = 1
             if remaining > 0:

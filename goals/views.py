@@ -11,7 +11,8 @@ from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.datas import hoje, ler_data
-from core.valores import ler_valor
+from core.valores import dinheiro, ler_valor
+from .valores import saldo_livre
 
 CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
 META_COM_SALDO = 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.'
@@ -116,6 +117,28 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
     def withdraw(self, request, pk=None):
         """Resgate para outra conta (`account_to` ou `account_id`) ou para o saldo livre (`to_free_balance`)."""
         return self._movimentar(request, GoalService.resgatar, ('account_to', 'account_id'), 'to_free_balance')
+
+    @decorators.action(detail=False, methods=['get'], url_path='piggy-banks')
+    def piggy_banks(self, request):
+        """
+        Um item por cofrinho com metas do usuário: saldo, soma das metas,
+        inclusive as arquivadas, e saldo livre, que pode ser negativo
+        (META-02, META-04).
+        """
+        cofrinhos = Account.objects.filter(
+            user=request.user, type='PIGGY_BANK', goals__user=request.user,
+        ).distinct().order_by('name', 'pk')
+        itens = []
+        for cofrinho in cofrinhos:
+            livre = saldo_livre(cofrinho)
+            itens.append({
+                'account_id': cofrinho.pk,
+                'name': cofrinho.name,
+                'balance': dinheiro(cofrinho.balance),
+                'goals_total': dinheiro(cofrinho.balance - livre),
+                'free_balance': dinheiro(livre),
+            })
+        return Response(itens)
 
     @decorators.action(detail=True, methods=['post'], url_path='dismiss-correction')
     def dismiss_correction(self, request, pk=None):

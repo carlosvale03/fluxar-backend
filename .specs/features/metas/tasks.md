@@ -221,14 +221,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `piggy-banks` devolve um item por cofrinho com `balance`, `goals_total` e `free_balance` em texto; saldo livre negativo aparece negativo
-- [ ] Meta que atinge o alvo fica `COMPLETED` e ainda recebe aporte
-- [ ] Com o relógio às 23h de Brasília do último dia do mês, a sugestão conta os meses a partir do dia de Brasília, com mínimo de 1
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] `piggy-banks` devolve um item por cofrinho com `balance`, `goals_total` e `free_balance` em texto; saldo livre negativo aparece negativo
+- [x] Meta que atinge o alvo fica `COMPLETED` e ainda recebe aporte
+- [x] Com o relógio às 23h de Brasília do último dia do mês, a sugestão conta os meses a partir do dia de Brasília, com mínimo de 1
+- [x] Build gate passa
+- [x] Test count: 5 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o saldo livre de cada cofrinho e a sugestão mensal pelo dia de Brasília`
 

@@ -193,9 +193,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | META-01 | P1: Valor das metas e saldo livre do cofrinho | T1 | Implemented |
-| META-02 | P1: Valor das metas e saldo livre do cofrinho | T1 | In Progress |
+| META-02 | P1: Valor das metas e saldo livre do cofrinho | T1, T5 | Implemented |
 | META-03 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-04 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
+| META-04 | P1: Valor das metas e saldo livre do cofrinho | T5 | In Progress |
 | META-05 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
 | META-06 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-07 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
@@ -214,8 +214,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-20 | P1: Aportes e resgates | T4 | Implemented |
 | META-21 | P1: Aportes e resgates | T4 | In Progress |
 | META-22 | P1: Aportes e resgates | T4 | Implemented |
-| META-23 | P1: Aportes e resgates | - | Pending |
-| META-24 | P1: Aportes e resgates | - | Pending |
+| META-23 | P1: Aportes e resgates | T5 | Implemented |
+| META-24 | P1: Aportes e resgates | T5 | Implemented |
 | META-25 | P1: Cadastro e consulta das metas | - | Pending |
 | META-26 | P1: Cadastro e consulta das metas | - | Pending |
 | META-27 | P1: Cadastro e consulta das metas | - | Pending |
