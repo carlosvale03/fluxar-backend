@@ -189,17 +189,18 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com R$ 200,00 livres, aporte de R$ 150,00 do saldo livre sobe a meta em R$ 150,00 sem nova transação; outro de R$ 100,00 recebe 400 "O saldo livre do cofrinho é de R$ 50,00."
-- [ ] Aporte de outra conta cria a transferência e registra só nessa meta; usar o próprio cofrinho como origem é recusado pela SALDO-17
-- [ ] Resgate acima da meta recebe "A meta tem R$ <valor> para resgatar."; para outra conta acima do cofrinho, "O cofrinho tem só R$ <valor>."
-- [ ] Resgate para o saldo livre registra sem transferência
-- [ ] Valor menor que R$ 0,01 e conta de outro usuário recebem 400 no campo
-- [ ] Meta arquivada recebe "Metas arquivadas não recebem aportes." e ainda permite resgate
-- [ ] Dois resgates simultâneos de R$ 300,00 numa meta de R$ 500,00: só um passa (teste com threads)
-- [ ] Test count: pelo menos 12 testes
+- [x] Com R$ 200,00 livres, aporte de R$ 150,00 do saldo livre sobe a meta em R$ 150,00 sem nova transação; outro de R$ 100,00 recebe 400 "O saldo livre do cofrinho é de R$ 50,00."
+- [x] Aporte de outra conta cria a transferência e registra só nessa meta; usar o próprio cofrinho como origem é recusado pela SALDO-17
+- [x] Resgate acima da meta recebe "A meta tem R$ <valor> para resgatar."; para outra conta acima do cofrinho, "O cofrinho tem só R$ <valor>."
+- [x] Resgate para o saldo livre registra sem transferência
+- [x] Valor menor que R$ 0,01 e conta de outro usuário recebem 400 no campo
+- [x] Meta arquivada recebe "Metas arquivadas não recebem aportes." e ainda permite resgate
+- [x] Dois resgates simultâneos de R$ 300,00 numa meta de R$ 500,00: só um passa (teste com threads)
+- [x] Test count: 13 testes (mínimo 12)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: faz aportes e resgates com outra conta ou com o saldo livre do cofrinho`
 

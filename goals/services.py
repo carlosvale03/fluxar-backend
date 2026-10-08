@@ -1,126 +1,120 @@
 from django.db import transaction as db_transaction
 from django.core.exceptions import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
+from accounts.models import Account
 from core.datas import hoje
+from core.valores import reais
+from transactions.models import Transaction
 from transactions.services import TransactionService
 from .models import Goal, GoalDeposit
+from .valores import recalcular, saldo_livre
+
+SEM_COFRINHO = 'Esta meta não possui um cofrinho vinculado.'
+META_ARQUIVADA = 'Metas arquivadas não recebem aportes.'
+SALDO_LIVRE_INSUFICIENTE = 'O saldo livre do cofrinho é de {valor}.'
+VALOR_DA_META_INSUFICIENTE = 'A meta tem {valor} para resgatar.'
+COFRINHO_INSUFICIENTE = 'O cofrinho tem só {valor}.'
+
+
+def _travar(meta, conta):
+    """
+    Trava a meta e, depois, as contas envolvidas em ordem de id, como em
+    `accounts/saldo.recalcular` (META-22). Devolve a meta e o cofrinho lidos
+    de novo, já travados.
+    """
+    meta = Goal.objects.select_for_update().get(pk=meta.pk)
+    if not meta.account_id:
+        raise ValidationError(SEM_COFRINHO)
+    ids = {meta.account_id} | ({conta.pk} if conta is not None else set())
+    contas = {c.pk: c for c in Account.objects.select_for_update().filter(pk__in=ids).order_by('pk')}
+    return meta, contas[meta.account_id]
+
+
+def _registrar(meta, tipo, conta, valor, data, descricao, transfer_id=None):
+    """
+    Grava o registro do aporte ou do resgate; com transferência, ligado às
+    duas pernas (AD-045). Depois recalcula a meta.
+    """
+    pernas = {}
+    if transfer_id is not None:
+        for perna in Transaction.objects.filter(transfer_id=transfer_id, user_id=meta.user_id):
+            pernas['transacao_saida' if perna.type == 'TRANSFER_OUT' else 'transacao_entrada'] = perna
+    GoalDeposit.objects.create(
+        goal=meta, account=conta, amount=valor, type=tipo, description=descricao, date=data,
+        transaction_id=transfer_id, **pernas,
+    )
+    recalcular(meta.pk)
+
 
 class GoalService:
     @staticmethod
     @db_transaction.atomic
-    def deposit(goal, account, amount, date_deposit=None, description=None):
+    def aportar(goal, amount, date_deposit=None, account=None, description=None):
         """
-        Realiza um aporte na meta via Transferência:
-        1. Cria Transferência entre Conta Origem e Cofrinho da Meta
-        2. Cria GoalDeposit (para histórico)
-        3. O saldo da meta agora é dinâmico (saldo da conta vinculada)
+        Aporte na meta (META-12 a META-14, META-21):
+        - com `account`, cria a transferência dessa conta para o cofrinho pelas
+          regras da spec `saldo`; o próprio cofrinho como origem cai na
+          SALDO-17;
+        - sem `account`, usa o saldo livre do cofrinho, sem transferência, até
+          o valor dele.
+        Meta arquivada não recebe aporte; meta concluída recebe (META-23).
         """
-        if not goal.account:
-            raise ValidationError("Esta meta não possui um cofrinho vinculado.")
-
-        if amount <= 0:
-            raise ValidationError("O valor do depósito deve ser positivo.")
-        
-        # Garantir que amount é Decimal
         amount = Decimal(str(amount))
+        meta, cofrinho = _travar(goal, account)
+        if not meta.is_active:
+            raise ValidationError(META_ARQUIVADA)
+        date_deposit = date_deposit or hoje()
+        description = description or f"Aporte na Meta: {meta.name}"
 
-        if account.user != goal.user:
-            raise ValidationError("Conta de origem não pertence ao dono da meta.")
+        if account is None:
+            livre = saldo_livre(cofrinho)
+            if amount > livre:
+                raise ValidationError(SALDO_LIVRE_INSUFICIENTE.format(valor=reais(livre)))
+            _registrar(meta, 'DEPOSIT', cofrinho, amount, date_deposit, description)
+            return meta
 
-        # A data vem lida pela view (CONTRATO-25); sem data, hoje em Brasília
-        if not date_deposit:
-            date_deposit = hoje()
-
-        if not description:
-            description = f"Aporte na Meta: {goal.name}"
-            
-        # 1. Realizar Transferência Real
-        # Isso afeta o saldo de ambas as contas.
         transfer_id = TransactionService.create_transfer(
-            user=goal.user,
-            account_from=account,
-            account_to=goal.account,
-            amount=amount,
-            date=date_deposit,
-            description=description
+            user=meta.user, account_from=account, account_to=cofrinho,
+            amount=amount, date=date_deposit, description=description,
         )
-        
-        # 2. Criar registro de histórico de depósito na Meta
-        GoalDeposit.objects.create(
-            goal=goal,
-            account=account,
-            amount=amount,
-            type='DEPOSIT',
-            transaction_id=transfer_id,
-            description=description,
-            date=date_deposit
-        )
-        
-        # O current_amount na Meta serve como um cache do saldo total alocado.
-        # Ele é incrementado a cada depósito específico para esta meta.
-        goal.current_amount += amount
-        goal.save()
-        
-        return goal
+        _registrar(meta, 'DEPOSIT', account, amount, date_deposit, description, transfer_id)
+        return meta
 
     @staticmethod
     @db_transaction.atomic
-    def withdraw(goal, account_to, amount, date_withdrawal=None, description=None):
+    def resgatar(goal, amount, date_withdrawal=None, account=None, description=None):
         """
-        Realiza o resgate de dinheiro da meta para uma conta:
-        1. Cria Transferência entre Cofrinho da Meta e Conta de Destino
-        2. Cria GoalDeposit (tipo WITHDRAWAL para histórico)
-        3. O saldo da meta é atualizado (proporcionalmente refletirá a saída)
+        Resgate da meta (META-15 a META-18), também de meta arquivada:
+        - até o valor da meta;
+        - com `account`, até o saldo do cofrinho, com a transferência do
+          cofrinho para essa conta;
+        - sem `account`, para o saldo livre do cofrinho, sem transferência.
+        A trava da meta faz o segundo de dois resgates simultâneos ler o valor
+        já recalculado (META-22).
         """
-        if not goal.account:
-            raise ValidationError("Esta meta não possui um cofrinho vinculado.")
-
-        if amount <= 0:
-            raise ValidationError("O valor do resgate deve ser positivo.")
-        
-        # Garantir que amount é Decimal
         amount = Decimal(str(amount))
+        meta, cofrinho = _travar(goal, account)
+        if amount > meta.current_amount:
+            raise ValidationError(VALOR_DA_META_INSUFICIENTE.format(valor=reais(max(meta.current_amount, 0))))
+        date_withdrawal = date_withdrawal or hoje()
+        description = description or f"Resgate da Meta: {meta.name}"
 
-        if account_to.user != goal.user:
-            raise ValidationError("Conta de destino não pertence ao dono da meta.")
+        if account is None:
+            _registrar(meta, 'WITHDRAWAL', cofrinho, amount, date_withdrawal, description)
+            return meta
 
-        # Validar se há saldo suficiente na meta (proporcional)
-        progress = GoalService.get_progress(goal)
-        if amount > progress['current_amount']:
-            raise ValidationError(f"Saldo insuficiente na meta. Disponível: {progress['current_amount']}")
-
-        # A data vem lida pela view (CONTRATO-25); sem data, hoje em Brasília
-        if not date_withdrawal:
-            date_withdrawal = hoje()
-
-        if not description:
-            description = f"Resgate da Meta: {goal.name}"
-            
-        # 1. Realizar Transferência Real (REVERSA: Cofrinho -> Conta)
+        saldo_do_cofrinho = cofrinho.balance
+        # As regras da transferência (SALDO-17, SALDO-35) respondem primeiro;
+        # a recusa pelo saldo do cofrinho desfaz a transferência no `atomic`
         transfer_id = TransactionService.create_transfer(
-            user=goal.user,
-            account_from=goal.account,
-            account_to=account_to,
-            amount=amount,
-            date=date_withdrawal,
-            description=description
+            user=meta.user, account_from=cofrinho, account_to=account,
+            amount=amount, date=date_withdrawal, description=description,
         )
-        
-        # 2. Criar registro de histórico de resgate na Meta
-        GoalDeposit.objects.create(
-            goal=goal,
-            account=account_to,
-            amount=amount,
-            type='WITHDRAWAL',
-            transaction_id=transfer_id,
-            description=description,
-            date=date_withdrawal
-        )
-        
-        # O current_amount na Meta serve como um cache do saldo total alocado.
-        # Ele é decrementado a cada resgate específico desta meta.
-        goal.current_amount -= amount
-        goal.save()
+        if amount > saldo_do_cofrinho:
+            raise ValidationError(COFRINHO_INSUFICIENTE.format(valor=reais(max(saldo_do_cofrinho, 0))))
+        _registrar(meta, 'WITHDRAWAL', account, amount, date_withdrawal, description, transfer_id)
+        return meta
+
     @staticmethod
     def get_progress(goal):
         """
