@@ -5,5 +5,4 @@ class GoalsConfig(AppConfig):
     name = 'goals'
 
     def ready(self):
-        print("[DEBUG GOALS] Carregando sinais de automação de metas...")
         import goals.signals

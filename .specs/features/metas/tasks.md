@@ -126,16 +126,17 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Uma transferência comum de R$ 200,00 para o cofrinho sobe o saldo livre em R$ 200,00 e não muda nenhuma meta; uma despesa paga pelo cofrinho também só muda o saldo livre
-- [ ] Excluir a transferência de um aporte de R$ 500,00 deixa a meta em R$ 0,00 na mesma requisição
-- [ ] Mudar valor ou data da transferência muda o registro da meta igual
-- [ ] Trocar o destino de um aporte para outra conta remove o registro
-- [ ] Excluir o aporte depois de um resgate recebe 400 "A meta <nome> ficaria negativa. Desfaça o resgate antes." e nada muda
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Uma transferência comum de R$ 200,00 para o cofrinho sobe o saldo livre em R$ 200,00 e não muda nenhuma meta; uma despesa paga pelo cofrinho também só muda o saldo livre
+- [x] Excluir a transferência de um aporte de R$ 500,00 deixa a meta em R$ 0,00 na mesma requisição
+- [x] Mudar valor ou data da transferência muda o registro da meta igual
+- [x] Trocar o destino de um aporte para outra conta remove o registro
+- [x] Excluir o aporte depois de um resgate recebe 400 "A meta <nome> ficaria negativa. Desfaça o resgate antes." e nada muda
+- [x] Full gate passa
+- [x] Test count: 12 testes (mínimo 7)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: mantém o valor da meta junto da transferência e remove o rateio do cofrinho`
 
