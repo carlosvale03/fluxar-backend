@@ -9,9 +9,16 @@ class GoalDepositSerializer(serializers.ModelSerializer):
     account_name = serializers.ReadOnlyField(source='account.name')
     datetime = serializers.ReadOnlyField(source='date')
     
+    # O `transfer_id` da transferência, ou nulo sem transferência (META-32)
+    transaction = serializers.ReadOnlyField(source='transaction_id')
+    is_correction = serializers.ReadOnlyField(source='eh_correcao')
+
     class Meta:
         model = GoalDeposit
-        fields = ['id', 'amount', 'type', 'description', 'date', 'datetime', 'account', 'account_name', 'created_at']
+        fields = [
+            'id', 'amount', 'type', 'description', 'date', 'datetime', 'account', 'account_name',
+            'transaction', 'is_correction', 'created_at',
+        ]
         read_only_fields = ['id', 'created_at']
 
 class GoalSerializer(serializers.ModelSerializer):

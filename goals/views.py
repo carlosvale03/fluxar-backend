@@ -7,7 +7,8 @@ from .serializers import GoalSerializer, GoalDepositSerializer
 from .services import GoalService
 from core.travas import RecursoLiberado, conferir_limite
 from accounts.models import Account
-from core.filtros import ParametrosConhecidosMixin
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
+from core.pagination import PaginacaoPadrao
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.datas import hoje, ler_data
@@ -58,6 +59,8 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
     # Metas, aportes, resgates e histórico (PERM-15). O cofrinho é uma conta
     # comum: transferências e ajuste de saldo seguem liberados (PERM-22)
     permission_classes = [permissions.IsAuthenticated, RecursoLiberado('metas')]
+    # Só o histórico é paginado (META-32, CONTRATO-14)
+    parametros_por_acao = {'history': PAGINACAO}
     
     def perform_create(self, serializer):
         # O cofrinho criado com a meta não conta no limite de contas (PERM-16)
@@ -170,8 +173,16 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
 
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):
+        """
+        Histórico de aportes e resgates, paginado no formato de CONTRATO-02, do
+        mais recente para o mais antigo (META-32). Só movimentos em contas do
+        dono da meta (ISOL-15).
+        """
         goal = self.get_object()
-        # Só movimentos em contas do dono da meta, como em GoalSerializer.deposits (ISOL-15)
-        deposits = goal.deposits.filter(account__user_id=goal.user_id).order_by('-created_at')
-        serializer = GoalDepositSerializer(deposits, many=True)
-        return Response(serializer.data)
+        deposits = (
+            goal.deposits.filter(account__user_id=goal.user_id)
+            .select_related('account').order_by('-date', '-created_at', '-pk')
+        )
+        paginacao = PaginacaoPadrao()
+        pagina = paginacao.paginate_queryset(deposits, request, view=self)
+        return paginacao.get_paginated_response(GoalDepositSerializer(pagina, many=True).data)

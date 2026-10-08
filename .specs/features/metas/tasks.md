@@ -283,14 +283,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Uma meta com 45 registros devolve páginas de 20, com `count` 45, do mais recente ao mais antigo
-- [ ] Com `metas` fechada, `piggy-banks`, `history` e as rotas de trocos recebem 403 `plan_locked`, e a transferência para o cofrinho continua aceita
-- [ ] A exclusão definitiva do usuário apaga as metas, os registros e os trocos
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Uma meta com 45 registros devolve páginas de 20, com `count` 45, do mais recente ao mais antigo
+- [x] Com `metas` fechada, `piggy-banks`, `history` e as rotas de trocos recebem 403 `plan_locked`, e a transferência para o cofrinho continua aceita
+- [x] A exclusão definitiva do usuário apaga as metas, os registros e os trocos
+- [x] Build gate passa
+- [x] Test count: 5 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: pagina o histórico da meta`
 

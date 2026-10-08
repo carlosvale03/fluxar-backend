@@ -223,9 +223,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-29 | P1: Cadastro e consulta das metas | T6 | In Progress |
 | META-30 | P1: Cadastro e consulta das metas | T6 | In Progress |
 | META-31 | P1: Cadastro e consulta das metas | T6 | Implemented |
-| META-32 | P1: Cadastro e consulta das metas | - | Pending |
-| META-33 | P1: Cadastro e consulta das metas | - | Pending |
-| META-34 | P1: Cadastro e consulta das metas | - | Pending |
+| META-32 | P1: Cadastro e consulta das metas | T7 | In Progress |
+| META-33 | P1: Cadastro e consulta das metas | T7 | Implemented |
+| META-34 | P1: Cadastro e consulta das metas | T7 | Implemented |
 | META-35 | P1: Cofrinho de trocos | - | Pending |
 | META-36 | P1: Cofrinho de trocos | - | Pending |
 | META-37 | P1: Cofrinho de trocos | - | Pending |
