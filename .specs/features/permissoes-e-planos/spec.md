@@ -258,14 +258,14 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-16 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-17 | P1: Travas aplicadas em cada tela e rota | T8 | Implemented |
 | PERM-18 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
-| PERM-19 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
+| PERM-19 | P1: Travas aplicadas em cada tela e rota | T9, T12 | In Progress |
 | PERM-20 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
 | PERM-21 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-22 | P1: Travas aplicadas em cada tela e rota | T6 | In Progress |
 | PERM-23 | P1: Liberação para testes | T4 | Implemented |
 | PERM-24 | P1: Liberação para testes | T5, T10 | Implemented |
 | PERM-25 | P1: Liberação para testes | T11 | Implemented |
-| PERM-26 | P1: Liberação para testes | T6 | In Progress |
+| PERM-26 | P1: Liberação para testes | T6, T12 | In Progress |
 | PERM-27 | P2: Página de planos | T8, T11 | Implemented |
 | PERM-28 | P2: Implantação | T4 | Implemented |
 | PERM-29 | P2: Implantação | T3 | Implemented |

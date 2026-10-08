@@ -429,13 +429,14 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Para cada uma das 6 chaves fechada, a tela mostra o aviso e nenhuma chamada à rota travada é feita
-- [ ] Com cada chave aberta, a tela carrega normalmente
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Para cada uma das 6 chaves fechada, a tela mostra o aviso e nenhuma chamada à rota travada é feita
+- [x] Com cada chave aberta, a tela carrega normalmente
+- [x] Quick gate (frontend) passa
+- [x] Test count: 12 testes (mínimo 8)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): aplica as travas de relatórios, dashboard e calendário`
 
