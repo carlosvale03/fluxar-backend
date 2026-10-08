@@ -255,12 +255,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-13 | P1: Configuração das travas pelo administrador | T5 | In Progress |
 | PERM-14 | P1: Configuração das travas pelo administrador | T4 | Implemented |
 | PERM-15 | P1: Travas aplicadas em cada tela e rota | T6 | Implemented |
-| PERM-16 | P1: Travas aplicadas em cada tela e rota | - | Pending |
+| PERM-16 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-17 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-18 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-19 | P1: Travas aplicadas em cada tela e rota | - | Pending |
 | PERM-20 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-21 | P1: Travas aplicadas em cada tela e rota | - | Pending |
+| PERM-21 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-22 | P1: Travas aplicadas em cada tela e rota | T6 | In Progress |
 | PERM-23 | P1: Liberação para testes | T4 | Implemented |
 | PERM-24 | P1: Liberação para testes | T5 | In Progress |

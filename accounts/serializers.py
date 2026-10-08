@@ -2,8 +2,8 @@ from rest_framework import serializers
 from .models import Account, CreditCard, CreditCardInvoice
 from .faturas import proximo_vencimento, status_exibido
 from .services import AccountService, CreditCardService
-from core.services.plan_limits import PlanLimitsService
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
+from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -17,16 +17,11 @@ class AccountSerializer(serializers.ModelSerializer):
         # is_active só muda pela exclusão, que confere saldo e pendentes (SALDO-34)
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_manual', 'balance', 'is_active']
 
-    def validate(self, data):
-        # Validar limite APENAS na criação
-        if not self.instance:
-            user = self.context['request'].user
-            if not PlanLimitsService.can_add_account(user):
-                raise serializers.ValidationError("Limite de contas excedido para o seu plano.")
-        return data
-
     def create(self, validated_data):
         user = self.context['request'].user
+        # Só a criação confere o limite; o cofrinho de uma meta nasce fora
+        # daqui e não conta (PERM-16)
+        conferir_limite(user, 'limite_contas')
         validated_data['user'] = user
         return super().create(validated_data)
 
@@ -115,11 +110,6 @@ class CreditCardSerializer(serializers.ModelSerializer):
             self.validate_closing_day(data['closing_day'])
         if 'due_day' in data:
             self.validate_due_day(data['due_day'])
-            
-        if not self.instance:
-            user = self.context['request'].user
-            if not PlanLimitsService.can_add_card(user):
-                raise serializers.ValidationError("Limite de cartões excedido para o seu plano.")
         return data
 
     def get_invoice_data(self, obj):
@@ -141,6 +131,7 @@ class CreditCardSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
+        conferir_limite(user, 'limite_cartoes')
         validated_data['user'] = user
         return super().create(validated_data)
 

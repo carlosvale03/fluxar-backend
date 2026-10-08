@@ -12,7 +12,7 @@ from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
-from core.travas import RecursoLiberado, exigir_recurso
+from core.travas import RecursoLiberado, conferir_limite, exigir_recurso
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account
 from accounts.saldo import recalcular
@@ -66,6 +66,7 @@ class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVie
     # get_queryset removido pois o Mixin resolve
 
     def perform_create(self, serializer):
+        conferir_limite(self.request.user, 'limite_tags')
         serializer.save(user=self.request.user)
 
 from core.pagination import PaginacaoPadrao

@@ -262,44 +262,6 @@ class TransactionService:
         return obter_fatura(card, month, year)
 
 class CategoryService:
-    # Definição simples de limites (em futuro mover para tabela de Planos)
-    PLAN_LIMITS = {
-        'FREE': {'max_roots': 20, 'max_subs_per_root': 5},
-        'PREMIUM': {'max_roots': 9999, 'max_subs_per_root': 9999},
-        'PREMIUM_PLUS': {'max_roots': 9999, 'max_subs_per_root': 9999},
-        'COMMON': {'max_roots': 9999, 'max_subs_per_root': 9999}
-    }
-
-    @staticmethod
-    def check_limits(user, parent_category=None):
-        """
-        Verifica se o usuário pode criar nova categoria/subcategoria de acordo com o plano.
-        """
-        # Se usuário não tem profile/plano ainda, assume FREE
-        plan_type = 'FREE'
-        if hasattr(user, 'plan'):
-             plan_type = str(user.plan).upper()
-        
-        limits = CategoryService.PLAN_LIMITS.get(plan_type, CategoryService.PLAN_LIMITS['FREE'])
-
-        if parent_category:
-            # Validando Subcategoria
-            # Filtramos apenas is_active=True para garantir que deletadas não contem.
-            qs = Category.objects.filter(user=user, parent=parent_category, is_active=True)
-            count = qs.count()
-            
-            if count >= limits['max_subs_per_root']:
-                raise ValidationError(
-                    f"Você atingiu o limite de {limits['max_subs_per_root']} subcategorias para esta categoria no plano Grátis."
-                )
-        else:
-            # Validando Categoria Raiz
-            count = Category.objects.filter(user=user, parent__isnull=True, is_active=True).count()
-            if count >= limits['max_roots']:
-                raise ValidationError(
-                    f"Você atingiu o limite de {limits['max_roots']} categorias principais no plano Grátis."
-                )
-
     @staticmethod
     def clone_templates_to_user(user):
         """

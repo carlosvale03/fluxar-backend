@@ -294,3 +294,34 @@ def RecursoLiberado(chave, acoes=None):
 
     _RecursoLiberado.__name__ = f'RecursoLiberado_{chave}'
     return _RecursoLiberado
+
+
+class LimiteDoPlano(APIException):
+    """
+    HTTP 403 `{detail, code: "plan_limit_reached", feature, limit}` para a
+    criação além do limite do plano (PERM-16).
+    """
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = 'Você atingiu o limite do seu plano.'
+    default_code = 'plan_limit_reached'
+
+    def __init__(self, chave, limite):
+        super().__init__()
+        self.extras = {'feature': chave, 'limit': limite}
+
+
+def conferir_limite(usuario, chave, **contexto):
+    """
+    Chamada na criação de um item: recusa quando o uso atual já é maior ou
+    igual ao limite do plano. Os itens existentes nunca são apagados nem
+    bloqueados por limite (PERM-16, PERM-21). `contexto` leva o que a contagem
+    precisa, como o `parent` das subcategorias.
+    """
+    limite = acesso(usuario).limite(chave)
+    if limite is None:
+        return
+    # Trava o usuário até o fim da requisição, para duas criações simultâneas
+    # não passarem juntas do limite
+    type(usuario).objects.select_for_update().filter(pk=usuario.pk).exists()
+    if uso(usuario, chave, **contexto) >= limite:
+        raise LimiteDoPlano(chave, limite)

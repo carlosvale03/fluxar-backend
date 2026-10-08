@@ -277,16 +277,17 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com `limite_contas` = 2 e 5 contas, as 5 continuam e criar a sexta recebe 403 `{code: "plan_limit_reached", feature: "limite_contas", limit: 2}`
-- [ ] Cada um dos 6 limites recusa a criação no limite e aceita abaixo dele
-- [ ] `limite_subcategorias` conta por categoria-pai
-- [ ] Criar uma meta com cofrinho não conta no limite de contas
-- [ ] Fechar uma trava ou baixar o plano não apaga nem altera nenhum dado
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 9 testes
+- [x] Com `limite_contas` = 2 e 5 contas, as 5 continuam e criar a sexta recebe 403 `{code: "plan_limit_reached", feature: "limite_contas", limit: 2}`
+- [x] Cada um dos 6 limites recusa a criação no limite e aceita abaixo dele
+- [x] `limite_subcategorias` conta por categoria-pai
+- [x] Criar uma meta com cofrinho não conta no limite de contas
+- [x] Fechar uma trava ou baixar o plano não apaga nem altera nenhum dado
+- [x] Full gate passa
+- [x] Test count: 9 testes (mínimo 9)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(planos): aplica os limites de cada plano na criação de itens`
 
