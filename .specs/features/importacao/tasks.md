@@ -375,17 +375,18 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Trocar a categoria de uma transação importada grava descrição, conta, categoria de antes, de depois e data
-- [ ] Definir a categoria de uma importada sem categoria também grava a correção
-- [ ] Trocar a categoria de uma transação não importada não grava nada
-- [ ] Trocar uma sugerida grava a correção e desliga `category_suggested`
-- [ ] `?import_batch=<id>&suggested_category=true` lista só as sugeridas daquele lote
-- [ ] As correções de um usuário não aparecem para outro (IMPORT-49) e somem com a exclusão dele (IMPORT-48)
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Trocar a categoria de uma transação importada grava descrição, conta, categoria de antes, de depois e data
+- [x] Definir a categoria de uma importada sem categoria também grava a correção
+- [x] Trocar a categoria de uma transação não importada não grava nada
+- [x] Trocar uma sugerida grava a correção e desliga `category_suggested`
+- [x] `?import_batch=<id>&suggested_category=true` lista só as sugeridas daquele lote
+- [x] As correções de um usuário não aparecem para outro (IMPORT-49) e somem com a exclusão dele (IMPORT-48)
+- [x] Full gate passa
+- [x] Test count: pelo menos 7 testes (real: 10 testes novos; suíte 767 → 777)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat(transactions): registra as correções de categoria das transações importadas`
 

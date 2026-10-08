@@ -12,6 +12,7 @@ DATA_INVALIDA = 'Data inválida'
 # dd/mm/aaaa, dd/mm/aa e aaaa-mm-dd
 DATA_COM_BARRA = re.compile(r'(\d{1,2})/(\d{1,2})/(\d{4}|\d{2})')
 DATA_ISO = re.compile(r'(\d{4})-(\d{2})-(\d{2})')
+DIGITOS = re.compile(r'\d')
 
 
 def normalizar(texto):
@@ -22,6 +23,15 @@ def normalizar(texto):
         c for c in unicodedata.normalize('NFKD', str(texto))
         if not unicodedata.combining(c)
     ).lower().strip()
+
+
+def normalizar_descricao(texto):
+    """
+    Descrição comparada nas correções de categoria: minúsculas, sem acentos,
+    sem dígitos e com os espaços repetidos reduzidos a um (IMPORT-43).
+    "UBER *TRIP 1234" e "UBER *TRIP 5678" dão "uber *trip".
+    """
+    return ' '.join(DIGITOS.sub('', normalizar(texto)).split())
 
 
 def ler_data_em_texto(texto):
