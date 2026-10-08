@@ -364,14 +364,12 @@
 
 ## Handoff
 
-- **Feature**: `permissoes-e-planos` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T15, mais três correções pós-lote) e verificado: `validation.md` com PASS, 29 de 29 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: administrador pelo papel atual (AD-016), proteção do último admin e da própria conta, `create_admin.py` sem repromover, comando `divergencias_de_admin`, catálogo de 24 travas com `TravaDePlano` e liberação para testes (AD-044), painel de travas com log, travas e limites nas rotas com 403 `plan_locked`/`plan_limit_reached`, `access` no `/auth/me`, página de planos e travas em todas as telas; backend com 872 testes e frontend com 270
-- **In-progress** (file:line): nenhum
-- **Deploy**: migrações de `TravaDePlano` e de `testing_unlock = 'true'`; depois do deploy, rodar `python manage.py divergencias_de_admin` no Render Shell
-- **Observações do verificador**: `gestao_do_salario` e `vinculos` ainda sem rota nem tela (as specs delas aplicam a trava); leitura de cartões liberada com `cartoes` fechado (SPEC_DEVIATION, PERM-22); sem teste de admin rebaixado recebendo `plan_locked`; "última gravação vale" testado só em sequência
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo` (duas categorias "Lazer"); `print` de depuração em `CategoryViewSet.create` e nos signals de metas; `create_admin.py` não promove o e-mail configurado se ele já existe como usuário comum
-- **Next step**: o usuário faz o push das duas branches `fix/permissoes-e-planos` e abre os PRs para a `development`. Depois do merge, a próxima é `metas`
+- **Feature**: `metas`, em andamento nos dois repositórios
+- **Phase / Task**: Execute pausado pelo usuário em 2026-10-08, dentro da T15 (cofrinho de trocos na tela); T1 a T14 concluídas e commitadas
+- **Completed**: backend T1 a T10 (valor derivado e saldo livre, vínculo com transferências, correção dos valores gravados, aporte e resgate com saldo livre, cofrinhos, cadastro, histórico paginado, configuração, geração e depósito dos trocos) e os ajustes de ordem das travas e do recálculo em `core/isolation.py`; frontend T11 a T14 (metas por cofrinho, aporte e resgate pelo saldo livre, formulário e exclusão, histórico paginado e aviso de correção)
+- **In-progress** (file:line): T15 no frontend, sem commit: `src/components/goals/SpareChangeBank.tsx` (reescrito para as rotas de trocos), `src/services/goals.ts`, `src/types/goals.ts`, `src/app/(app)/metas/page.tsx`, `tests/contratos/dinheiro-nos-formularios.test.tsx` e o novo `tests/metas/cofrinho-de-trocos.test.tsx`
+- **Next step**: conferir e terminar a T15 (testes, build gate do frontend), marcar a T15 no tasks.md, rodar o verificador leve e fechar a feature; depois, o usuário faz o push das branches `fix/metas-aportes-resgates-e-cofrinho`
 - **Blockers**: nenhum
-- **Uncommitted files**: nenhum
-- **Branch**: fix/permissoes-e-planos (backend e frontend)
+- **Uncommitted files**: só os da T15 no frontend, listados acima
+- **Branch**: fix/metas-aportes-resgates-e-cofrinho (backend e frontend)
+- **Lembretes**: commits no padrão da padraogitglobal (`tipo: descrição`, sem co-autoria); pasta `goals/management/` só com `__pycache__`, pode ser apagada à mão; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`
