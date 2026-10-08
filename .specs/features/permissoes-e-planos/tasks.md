@@ -399,13 +399,14 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com a liberação ligada, o perfil de um Comum mostra "Plano Comum" e "Todos os recursos estão liberados durante a fase de testes."
-- [ ] A página de planos mostra cada trava com o valor dos três planos, vindos de `/api/plans/`, e destaca o plano do usuário
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Com a liberação ligada, o perfil de um Comum mostra "Plano Comum" e "Todos os recursos estão liberados durante a fase de testes."
+- [x] A página de planos mostra cada trava com o valor dos três planos, vindos de `/api/plans/`, e destaca o plano do usuário
+- [x] Build gate (frontend) passa
+- [x] Test count: 5 testes (mínimo 4)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): mostra o plano no perfil e o que cada plano libera`
 
