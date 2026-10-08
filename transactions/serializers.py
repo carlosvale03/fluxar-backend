@@ -3,11 +3,12 @@ from django.db import transaction
 from dateutil.relativedelta import relativedelta
 from .models import Transaction, Category, Tag, RecurringTransaction, CorrecaoDeCategoria
 from accounts.models import Account, CreditCard
-from .services import TransactionService, CategoryService
+from .services import TransactionService
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
 )
+from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
 from data_exchange.importacao.texto import normalizar_descricao
 
@@ -49,8 +50,11 @@ class CategorySerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         parent = validated_data.get('parent')
         
-        # Check Limits
-        CategoryService.check_limits(user, parent)
+        # Categorias principais e subcategorias da mesma categoria (PERM-16)
+        if parent:
+            conferir_limite(user, 'limite_subcategorias', parent=parent)
+        else:
+            conferir_limite(user, 'limite_categorias')
         
         validated_data['user'] = user
         return super().create(validated_data)

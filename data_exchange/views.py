@@ -12,18 +12,14 @@ from .importacao.leitura import contas_da_planilha, ler_ofx, ler_planilha
 from .services import ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
-# Tenta importar IsPremium, fallback para IsAuthenticated se não existir (evita crash se BD-007 não tiver ok)
-try:
-    from reports.permissions import IsPremium
-except ImportError:
-    IsPremium = permissions.IsAuthenticated
+from core.travas import RecursoLiberado, acesso
 
 # Erros no formato do DRF, em português e sem o texto da exceção (CONTRATO-29)
 ARQUIVO_NAO_ENVIADO = 'Arquivo não enviado.'
 
 
 class ImportOFXView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('importacao_ofx')]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
     
     def post(self, request):
@@ -43,7 +39,7 @@ class ImportOFXView(views.APIView):
         return Response(Gravacao(request.user).importar(resultados), status=status.HTTP_200_OK)
 
 class ImportSpreadsheetPreflightView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('importacao_planilha')]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
     def post(self, request):
@@ -64,7 +60,7 @@ class ImportSpreadsheetPreflightView(views.APIView):
         return Response({'accounts': contas_da_planilha(linhas, mapping, import_type)}, status=200)
 
 class ImportSpreadsheetView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('importacao_planilha')]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
     def post(self, request):
@@ -93,6 +89,11 @@ class ImportSpreadsheetView(views.APIView):
             Account.objects.all(), request.user, account_id, 'account_id', CONTA_NAO_ENCONTRADA,
         ) if account_id else None
         
+        # Com `tags` travado, a coluna de tags é ignorada e a linha é gravada:
+        # um recurso acessório não recusa uma linha válida (PERM-15)
+        if not acesso(request.user).recurso_liberado('tags'):
+            mapping.pop('tags_column', None)
+
         linhas = ler_planilha(file_obj, mapping, import_type)
         interpretador = Interpretador(request.user, mapping, import_type, account, account_mapping)
         resultados = [interpretador.planilha(linha) for linha in linhas]
@@ -106,7 +107,7 @@ PARAMETROS_DA_EXPORTACAO = frozenset({
 
 
 class ExportTransactionsPDFView(ParametrosConhecidosMixin, views.APIView):
-    permission_classes = [permissions.IsAuthenticated, IsPremium]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('exportacao_pdf')]
     parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):
@@ -123,7 +124,7 @@ class ExportTransactionsPDFView(ParametrosConhecidosMixin, views.APIView):
         return response
 
 class ExportTransactionsXLSView(ParametrosConhecidosMixin, views.APIView):
-    permission_classes = [permissions.IsAuthenticated, IsPremium]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('exportacao_xlsx')]
     parametros_permitidos = PARAMETROS_DA_EXPORTACAO
 
     def get(self, request):

@@ -16,6 +16,9 @@ def exception_handler(exc, context):
 
     O 429 diz em quantos minutos tentar de novo (AUTH-36). O cabeçalho
     Retry-After, em segundos, continua vindo do DRF.
+
+    As travas dos planos respondem `{detail, code, feature[, limit]}`, com os
+    `extras` da exceção (PERM-15, PERM-16).
     """
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
@@ -26,6 +29,10 @@ def exception_handler(exc, context):
         response.data = {"detail": f"Muitas tentativas. Tente novamente em {minutos} {unidade}."}
     if response is not None:
         _acrescentar_codigo(exc, response)
+        # As travas dos planos levam a chave e, no limite, o valor (PERM-15, PERM-16)
+        extras = getattr(exc, 'extras', None)
+        if extras and isinstance(response.data, dict):
+            response.data.update(extras)
     return response
 
 

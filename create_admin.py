@@ -7,6 +7,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 def create_admin():
+    """
+    Cria o primeiro administrador só quando não há nenhum administrador ativo
+    e nunca altera contas existentes (PERM-07). Antes, o script repromovia o
+    e-mail configurado a cada boot e desfazia os rebaixamentos do painel.
+    """
     User = get_user_model()
     
     username = os.getenv('DJANGO_SUPERUSER_NAME', 'Admin')
@@ -17,47 +22,20 @@ def create_admin():
         print("Pulei a criação de admin: DJANGO_SUPERUSER_EMAIL ou DJANGO_SUPERUSER_PASSWORD não configurados.")
         return
 
-    # Tenta obter o usuário existente
-    user, created = User.objects.get_or_create(
-        email=email,
-        defaults={
-            'name': username,
-            'is_staff': True,
-            'is_superuser': True,
-            'role': 'ADMIN',
-            'plan': 'PREMIUM_PLUS',
-            'email_verified': True,
-        }
-    )
+    if User.objects.filter(role='ADMIN', is_active=True).exists():
+        print("Já existe um administrador ativo; nenhuma conta foi criada ou alterada.")
+        return
 
-    if created:
-        user.set_password(password)
-        user.save()
-        print(f"Superusuário criado com sucesso: {email}")
-    else:
-        # Garante que o usuário existente tenha permissões de admin
-        updated = False
-        if not user.is_superuser:
-            user.is_superuser = True
-            updated = True
-        if not user.is_staff:
-            user.is_staff = True
-            updated = True
-        if user.role != 'ADMIN':
-            user.role = 'ADMIN'
-            updated = True
-        if user.plan != 'PREMIUM_PLUS':
-            user.plan = 'PREMIUM_PLUS'
-            updated = True
-        if not user.email_verified:
-            user.email_verified = True
-            updated = True
-            
-        if updated:
-            user.save()
-            print(f"Permissões do usuário {email} atualizadas para ADMIN.")
-        else:
-            print(f"Usuário admin {email} já existe e está configurado corretamente.")
+    if User.objects.filter(email__iexact=email).exists():
+        print(
+            "Não há administrador ativo, e o e-mail configurado já pertence a uma conta. "
+            "Nenhuma conta foi alterada: promova um administrador manualmente."
+        )
+        return
+
+    # O primeiro administrador também entra no admin do Django
+    User.objects.create_superuser(email=email, password=password, name=username)
+    print("Administrador criado com sucesso.")
 
 if __name__ == "__main__":
     create_admin()

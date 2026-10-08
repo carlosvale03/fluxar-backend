@@ -14,6 +14,7 @@ from core.datas import hoje
 from core.fields import CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
+from core.travas import RecursoLiberado
 from core.valores import ler_saldo
 from transactions.models import Transaction
 from transactions.serializers import TransactionSerializer
@@ -86,7 +87,15 @@ class CreditCardViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.M
     """
     queryset = CreditCard.objects.all()
     serializer_class = CreditCardSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # SPEC_DEVIATION: com `cartoes` travado, a leitura dos cartões (lista e
+    # detalhe) e as faturas de um cartão seguem liberadas; só criar, editar e
+    # excluir cartão recebem 403 (PERM-15).
+    # Reason: a PERM-22 prevalece sobre a lista de rotas da trava: o usuário
+    # precisa ler os cartões e as faturas para pagar e estornar as existentes.
+    permission_classes = [
+        permissions.IsAuthenticated,
+        RecursoLiberado('cartoes', acoes={'create', 'update', 'partial_update', 'destroy'}),
+    ]
 
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True)
@@ -115,7 +124,11 @@ class CreditCardInvoiceViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, vie
     """
     queryset = CreditCardInvoice.objects.all()
     serializer_class = CreditCardInvoiceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # SPEC_DEVIATION: com `cartoes` travado, só a lista geral recebe 403; o
+    # detalhe, as compras da fatura, `pay` e `unpay` seguem liberados.
+    # Reason: a PERM-22 prevalece: pagar e estornar faturas existentes
+    # continua liberado em qualquer plano.
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('cartoes', acoes={'list'})]
 
     def get_queryset(self):
         # Garante que só vê faturas dos seus cartões

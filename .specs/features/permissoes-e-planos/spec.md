@@ -240,37 +240,37 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PERM-01 | P1: Quem é administrador | - | Pending |
-| PERM-02 | P1: Quem é administrador | - | Pending |
-| PERM-03 | P1: Quem é administrador | - | Pending |
-| PERM-04 | P1: Quem é administrador | - | Pending |
-| PERM-05 | P1: Quem é administrador | - | Pending |
-| PERM-06 | P1: Quem é administrador | - | Pending |
-| PERM-07 | P1: Quem é administrador | - | Pending |
-| PERM-08 | P1: Quem é administrador | - | Pending |
-| PERM-09 | P1: Quem é administrador | - | Pending |
-| PERM-10 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-11 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-12 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-13 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-14 | P1: Configuração das travas pelo administrador | - | Pending |
-| PERM-15 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-16 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-17 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-18 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-19 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-20 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-21 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-22 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-23 | P1: Liberação para testes | - | Pending |
-| PERM-24 | P1: Liberação para testes | - | Pending |
-| PERM-25 | P1: Liberação para testes | - | Pending |
-| PERM-26 | P1: Liberação para testes | - | Pending |
-| PERM-27 | P2: Página de planos | - | Pending |
-| PERM-28 | P2: Implantação | - | Pending |
-| PERM-29 | P2: Implantação | - | Pending |
+| PERM-01 | P1: Quem é administrador | T1 | Verified |
+| PERM-02 | P1: Quem é administrador | T1 | Verified |
+| PERM-03 | P1: Quem é administrador | T10 | Verified |
+| PERM-04 | P1: Quem é administrador | T1 | Verified |
+| PERM-05 | P1: Quem é administrador | T2 | Verified |
+| PERM-06 | P1: Quem é administrador | T2 | Verified |
+| PERM-07 | P1: Quem é administrador | T3 | Verified |
+| PERM-08 | P1: Quem é administrador | T1 | Verified |
+| PERM-09 | P1: Quem é administrador | T4 | Verified |
+| PERM-10 | P1: Configuração das travas pelo administrador | T5, T10 | Verified |
+| PERM-11 | P1: Configuração das travas pelo administrador | T5, T10 | Verified |
+| PERM-12 | P1: Configuração das travas pelo administrador | T5, T10 | Verified |
+| PERM-13 | P1: Configuração das travas pelo administrador | T5, T10 | Verified |
+| PERM-14 | P1: Configuração das travas pelo administrador | T4 | Verified |
+| PERM-15 | P1: Travas aplicadas em cada tela e rota | T6 | Verified |
+| PERM-16 | P1: Travas aplicadas em cada tela e rota | T7 | Verified |
+| PERM-17 | P1: Travas aplicadas em cada tela e rota | T8 | Verified |
+| PERM-18 | P1: Travas aplicadas em cada tela e rota | T9, T15 | Verified |
+| PERM-19 | P1: Travas aplicadas em cada tela e rota | T9, T12, T13, T14 | Verified |
+| PERM-20 | P1: Travas aplicadas em cada tela e rota | T9, T15 | Verified |
+| PERM-21 | P1: Travas aplicadas em cada tela e rota | T7 | Verified |
+| PERM-22 | P1: Travas aplicadas em cada tela e rota | T6, T13 | Verified |
+| PERM-23 | P1: Liberação para testes | T4 | Verified |
+| PERM-24 | P1: Liberação para testes | T5, T10 | Verified |
+| PERM-25 | P1: Liberação para testes | T11 | Verified |
+| PERM-26 | P1: Liberação para testes | T6, T12, T14 | Verified |
+| PERM-27 | P2: Página de planos | T8, T11 | Verified |
+| PERM-28 | P2: Implantação | T4 | Verified |
+| PERM-29 | P2: Implantação | T3 | Verified |
 
-**Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 29 total, 29 mapped to tasks, 0 unmapped
 
 ---
 

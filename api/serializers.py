@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
+from core import travas
 from core.throttles import LoginFalhasEmailThrottle
 
 from .sessoes import criar_sessao
@@ -169,6 +170,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         }
         
         ret['preferences'] = preferences
+        # O acesso do próprio usuário, só no /auth/me (PERM-17)
+        if self.context.get('com_acesso'):
+            ret['access'] = travas.acesso_na_api(instance)
         return ret
     
     def update(self, instance, validated_data):
@@ -285,3 +289,60 @@ class GlobalSettingSerializer(serializers.ModelSerializer):
 class AdminResetPasswordSerializer(serializers.Serializer):
     admin_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
+
+
+class LimiteDoPlanoField(serializers.Field):
+    """Um inteiro maior ou igual a zero, ou nulo para sem limite (PERM-12)."""
+    default_error_messages = {
+        'invalid': 'Informe um número inteiro maior ou igual a zero, ou nenhum valor para sem limite.',
+    }
+
+    def to_internal_value(self, data):
+        if isinstance(data, bool) or not isinstance(data, int) or data < 0:
+            self.fail('invalid')
+        return data
+
+    def to_representation(self, value):
+        return value
+
+
+class AlteracaoDePlanoSerializer(serializers.Serializer):
+    """
+    O PATCH de `/api/admin/plans/`: `{testing_unlock}`, `{key, plan, enabled}`
+    para um recurso ou `{key, plan, limit}` para um limite (PERM-11, PERM-12).
+    """
+    testing_unlock = serializers.BooleanField(required=False)
+    key = serializers.CharField(required=False)
+    plan = serializers.ChoiceField(choices=travas.PLANOS, required=False)
+    enabled = serializers.BooleanField(required=False)
+    limit = LimiteDoPlanoField(required=False, allow_null=True)
+
+    CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
+
+    def validate(self, attrs):
+        if 'testing_unlock' in attrs:
+            if set(attrs) != {'testing_unlock'}:
+                raise serializers.ValidationError(
+                    {'testing_unlock': ['Envie a liberação para testes sozinha, sem uma trava.']}
+                )
+            return attrs
+
+        erros = {}
+        chave = attrs.get('key')
+        trava = travas.CATALOGO.get(chave)
+        if chave is None:
+            erros['key'] = [self.CAMPO_OBRIGATORIO]
+        elif trava is None:
+            erros['key'] = ['Trava desconhecida.']
+        if 'plan' not in attrs:
+            erros['plan'] = [self.CAMPO_OBRIGATORIO]
+        if trava is not None:
+            # Cada tipo de trava aceita só o seu campo
+            proprio, alheio = ('enabled', 'limit') if trava.tipo == travas.RECURSO else ('limit', 'enabled')
+            if alheio in attrs:
+                erros[alheio] = ['Este campo não vale para esta trava.']
+            elif proprio not in attrs:
+                erros[proprio] = [self.CAMPO_OBRIGATORIO]
+        if erros:
+            raise serializers.ValidationError(erros)
+        return attrs

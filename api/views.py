@@ -23,9 +23,10 @@ from .serializers import (
     AdminUserSerializer,
     SystemLogSerializer,
     AdminResetPasswordSerializer,
-    GlobalSettingSerializer
+    GlobalSettingSerializer,
+    AlteracaoDePlanoSerializer,
 )
-from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting
+from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting, TravaDePlano
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -46,6 +47,8 @@ from core.throttles import (
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
+from core.permissions import EhAdministrador
+from core import travas
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
 import logging
@@ -382,12 +385,15 @@ class MeView(ParametrosConhecidosMixin, APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        serializer = UserProfileSerializer(request.user, context={'request': request})
+        # Com o acesso do usuário aos recursos e limites do plano (PERM-17)
+        serializer = UserProfileSerializer(request.user, context={'request': request, 'com_acesso': True})
         return Response(serializer.data)
 
     def put(self, request):
         user = request.user
-        serializer = UserProfileSerializer(user, data=request.data, partial=True, context={'request': request})
+        serializer = UserProfileSerializer(
+            user, data=request.data, partial=True, context={'request': request, 'com_acesso': True},
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -395,6 +401,19 @@ class MeView(ParametrosConhecidosMixin, APIView):
 
     def patch(self, request):
         return self.put(request)
+
+class PlansView(ParametrosConhecidosMixin, APIView):
+    """
+    Página de planos (PERM-27): o que cada plano libera, pela configuração
+    atual, e o plano do usuário. Exige login, mas não exige ser admin.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return Response({
+            "plan": request.user.plan,
+            "catalog": travas.catalogo_com_valores(travas.configuracao()),
+        })
 
 class UserAvatarView(APIView):
     """
@@ -457,13 +476,58 @@ class ChangePasswordView(APIView):
 
 # --- Admin Views ---
 
+ULTIMO_ADMIN = "O sistema precisa ter pelo menos um administrador ativo."
+PROPRIA_CONTA = (
+    "Você não pode remover o próprio acesso de administrador nem arquivar ou excluir "
+    "a própria conta pelo painel."
+)
+
+
+class AcaoDeAdminRecusada(exceptions.APIException):
+    """HTTP 400 com `detail` e `code` (PERM-05, PERM-06)."""
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+def garantir_admin_restante(afetados):
+    """
+    Recusa com 400 quando tirar o papel, arquivar ou excluir os usuários
+    `afetados` deixaria o sistema sem nenhum administrador ativo (PERM-05).
+
+    Trava os administradores ativos até o fim da requisição, para duas
+    mudanças simultâneas não rebaixarem os dois últimos.
+    """
+    ids = {u.pk for u in afetados if u.role == 'ADMIN' and u.is_active}
+    if not ids:
+        return
+    ativos = set(
+        User.objects.select_for_update().filter(role='ADMIN', is_active=True).values_list('pk', flat=True)
+    )
+    if not ativos - ids:
+        raise AcaoDeAdminRecusada(ULTIMO_ADMIN, code='last_admin')
+
+
+def recusar_a_propria_conta(request, afetados):
+    """
+    O administrador não tira o próprio papel nem arquiva ou exclui a própria
+    conta pelo painel (PERM-06). Conferido depois de `garantir_admin_restante`,
+    porque o último administrador só é afetado por uma ação sobre si mesmo.
+    """
+    if any(u.pk == request.user.pk for u in afetados):
+        raise AcaoDeAdminRecusada(PROPRIA_CONTA, code='own_account')
+
+
+def recusar_remocao_de_admin(request, afetados):
+    """As duas regras da remoção de um administrador, na ordem (PERM-05, PERM-06)."""
+    garantir_admin_restante(afetados)
+    recusar_a_propria_conta(request, afetados)
+
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
-    Acesso: Apenas administradores (is_staff=True ou role='ADMIN').
+    Acesso: só administradores, pelo papel (PERM-02).
     """
     queryset = User.objects.all().order_by('-created_at')
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = AdminUserSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
@@ -504,17 +568,9 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         if not user_ids:
             return Response({"detail": "Nenhum usuário selecionado."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verificar se está tentando excluir o último admin ou a si mesmo
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         users_to_delete = User.objects.filter(id__in=user_ids)
-        
-        if any(u.id == request.user.id for u in users_to_delete):
-             return Response({"detail": "Você não pode excluir sua própria conta em uma ação em massa."}, status=status.HTTP_400_BAD_REQUEST)
-
-        admin_count = User.objects.filter(role='ADMIN').count()
-        admins_to_delete = users_to_delete.filter(role='ADMIN').count()
-        
-        if admin_count - admins_to_delete < 1:
-            return Response({"detail": "Ação bloqueada: O sistema deve ter pelo menos um administrador."}, status=status.HTTP_400_BAD_REQUEST)
+        recusar_remocao_de_admin(request, users_to_delete)
 
         users_to_delete.update(is_active=False)
         # A conta arquivada perde as sessões abertas (SESSAO-17)
@@ -529,7 +585,7 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
     Acesso: Apenas administradores.
     """
     queryset = User.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = AdminUserSerializer
 
     def update(self, request, *args, **kwargs):
@@ -590,29 +646,9 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             )
             
         instance = self.get_object()
-        
-        # Evitar que o admin se arquive/exclua
-        if instance.id == request.user.id:
-            action = "excluir" if permanent else "arquivar"
-            return Response(
-                {"detail": f"Você não pode {action} sua própria conta administrativa."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Verificar se é o último admin (ativo ou total conforme a ação)
-        if instance.role == 'ADMIN':
-            if permanent:
-                admin_count = User.objects.filter(role='ADMIN').count()
-            else:
-                admin_count = User.objects.filter(role='ADMIN', is_active=True).count()
-                
-            if admin_count <= 1:
-                status_type = "cadastrado" if permanent else "ativo"
-                return Response(
-                    {"detail": f"Ação bloqueada: Este é o último administrador {status_type} do sistema."}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
+        recusar_remocao_de_admin(request, [instance])
+
         if permanent:
             user_email = instance.email
             instance.delete()
@@ -639,18 +675,12 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
-        instance = self.get_object()
-        new_role = self.request.data.get('role')
-        
-        # Impedir que o admin tire o próprio admin
-        if instance.id == self.request.user.id and new_role and new_role != 'ADMIN':
-             raise permissions.exceptions.PermissionDenied("Você não pode remover seu próprio papel administrativo.")
-
-        # Impedir de demover o último admin
-        if instance.role == 'ADMIN' and new_role and new_role != 'ADMIN':
-            admin_count = User.objects.filter(role='ADMIN').count()
-            if admin_count <= 1:
-                raise permissions.exceptions.PermissionDenied("Ação bloqueada: Este é o último administrador do sistema.")
+        instance = serializer.instance
+        dados = serializer.validated_data
+        # Tirar o papel ou desativar a conta de um administrador (PERM-05, PERM-06)
+        perde_o_acesso = dados.get('role', instance.role) != 'ADMIN' or not dados.get('is_active', instance.is_active)
+        if perde_o_acesso:
+            recusar_remocao_de_admin(self.request, [instance])
 
         serializer.save()
 
@@ -659,7 +689,7 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
     Endpoint para fornecer métricas globais da plataforma para o dashboard admin.
     Acesso: Apenas administradores.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request):
         total_users = User.objects.count()
@@ -715,7 +745,7 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia configurações globais do sistema (ex: modo manutenção).
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request):
         settings = GlobalSetting.objects.all()
@@ -731,6 +761,14 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
             settings_to_update = {key: value}
         else:
             settings_to_update = request.data
+
+        # A liberação para testes muda só pela rota dos planos, que grava o
+        # log com os valores antigo e novo (PERM-13)
+        if 'testing_unlock' in settings_to_update:
+            return Response(
+                {"testing_unlock": ["A liberação para testes muda só em /api/admin/plans/."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         for key, value in settings_to_update.items():
             str_value = str(value).lower() if isinstance(value, bool) else str(value)
@@ -749,13 +787,98 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
 
+def _texto_da_trava(chave, valor):
+    """O valor de uma trava como aparece no log."""
+    if travas.CATALOGO[chave].tipo == travas.RECURSO:
+        return 'liberado' if valor is not False else 'bloqueado'
+    return 'sem limite' if valor is None else str(valor)
+
+
+class AdminPlansView(ParametrosConhecidosMixin, APIView):
+    """
+    Configuração das travas dos planos e da liberação para testes
+    (PERM-10 a PERM-13, PERM-24).
+
+    GET devolve o catálogo com o valor de cada plano, lido do banco e não do
+    cache. PATCH grava uma mudança, registra no log só quando o valor muda e
+    chama `travas.invalidar()`, para valer na requisição seguinte; os outros
+    processos veem a mudança em até 30 segundos.
+    """
+    permission_classes = (EhAdministrador,)
+
+    def resposta(self):
+        config = travas.ler_configuracao()
+        return Response({
+            "testing_unlock": config.testing_unlock,
+            "catalog": travas.catalogo_com_valores(config),
+        })
+
+    def get(self, request):
+        return self.resposta()
+
+    def patch(self, request):
+        serializer = AlteracaoDePlanoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        dados = serializer.validated_data
+        if 'testing_unlock' in dados:
+            self.gravar_liberacao(request, dados['testing_unlock'])
+        else:
+            self.gravar_trava(request, dados)
+        travas.invalidar()
+        return self.resposta()
+
+    def gravar_liberacao(self, request, ligada):
+        setting, _ = GlobalSetting.objects.get_or_create(key='testing_unlock', defaults={'value': 'true'})
+        setting = GlobalSetting.objects.select_for_update().get(pk=setting.pk)
+        antes = travas.liberacao_ligada(setting.value)
+        if antes == ligada:
+            return
+        setting.value = 'true' if ligada else 'false'
+        setting.save(update_fields=['value', 'updated_at'])
+        texto = {True: 'ligada', False: 'desligada'}
+        SystemLog.objects.create(
+            action="UPDATE_TESTING_UNLOCK",
+            description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
+            admin_name=request.user.name,
+        )
+
+    def gravar_trava(self, request, dados):
+        chave, plano = dados['key'], dados['plan']
+        recurso = travas.CATALOGO[chave].tipo == travas.RECURSO
+        # Sem a linha, os campos nulos valem liberado e sem limite (AD-044)
+        linha, _ = TravaDePlano.objects.get_or_create(chave=chave, plano=plano)
+        # Trava a linha: com dois admins ao mesmo tempo, vale a última
+        # gravação e as duas ficam no log com o valor certo (PERM-13)
+        linha = TravaDePlano.objects.select_for_update().get(pk=linha.pk)
+        if recurso:
+            antes, depois = linha.liberado is not False, dados['enabled']
+        else:
+            antes, depois = linha.limite, dados['limit']
+        if antes == depois:
+            return
+        if recurso:
+            linha.liberado = depois
+        else:
+            linha.limite = depois
+        linha.atualizada_por = request.user
+        linha.save()
+        SystemLog.objects.create(
+            action="UPDATE_PLAN_LOCK",
+            description=(
+                f"Trava '{chave}' no plano {plano}: "
+                f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
+            ),
+            admin_name=request.user.name,
+        )
+
+
 class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna todos os logs do sistema para auditoria global.
     """
     queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
     parametros_permitidos = PAGINACAO
@@ -765,7 +888,7 @@ class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     Endpoint para fornecer métricas financeiras de um usuário específico.
     Acesso: Apenas administradores.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request, pk):
         from reports.services import ReportService
@@ -777,7 +900,7 @@ class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna os logs de atividade de um usuário específico.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = SystemLogSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
@@ -791,7 +914,7 @@ class AdminResetPasswordView(APIView):
     """
     Permite que um administrador redefina a senha de um usuário.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -826,7 +949,7 @@ class AdminClearUserDataView(APIView):
     Limpa todos os dados financeiros e cadastros (contas, transações, etc.) de um usuário,
     mantendo apenas o seu login, senha e assinatura.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -860,7 +983,7 @@ class AdminHardDeleteView(APIView):
     """
     Exclui um usuário e todos os seus dados permanentemente do banco de dados.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -868,6 +991,9 @@ class AdminHardDeleteView(APIView):
 
         if not admin_password or not request.user.check_password(admin_password):
             return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
+        recusar_remocao_de_admin(request, [user])
 
         user_name = user.name
         # Delete user

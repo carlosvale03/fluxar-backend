@@ -5,13 +5,16 @@ from rest_framework.response import Response
 from datetime import date
 from core.filtros import ParametrosConhecidosMixin
 from .services import ReportService
-from .permissions import IsPremium
+from core.travas import RecursoLiberado
 from .models import FocusedMonitorItem
 from .serializers import FocusedMonitorItemSerializer
 
 class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
     """
     ViewSet para relatórios e dashboards. Não possui model associado.
+
+    O dashboard e os gráficos simples são essenciais (PERM-14); as outras
+    ações exigem a trava do plano delas (PERM-15).
     """
     permission_classes = [permissions.IsAuthenticated]
     # Parâmetros conhecidos de cada relatório (CONTRATO-14)
@@ -41,7 +44,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         data = ReportService.get_dashboard_summary(request.user, month, year, period_days=days)
         return Response(data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated, RecursoLiberado('calendario')])
     def calendar(self, request):
         month = request.query_params.get('month')
         year = request.query_params.get('year')
@@ -59,13 +62,12 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         data = ReportService.get_simple_charts(request.user, month, year, period_days=period)
         return Response(data)
 
-    @action(detail=False, methods=['get'], url_path='charts/advanced', permission_classes=[permissions.IsAuthenticated, IsPremium])
+    @action(detail=False, methods=['get'], url_path='charts/advanced', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('relatorios_avancados')])
     def charts_advanced(self, request):
-        # Premium Only
         period = request.query_params.get('period') or request.query_params.get('days')
         data = ReportService.get_advanced_charts(request.user, period_days=period)
         return Response(data)
-    @action(detail=False, methods=['get'], url_path='charts/monthly-comparison')
+    @action(detail=False, methods=['get'], url_path='charts/monthly-comparison', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('comparacao_mensal')])
     def monthly_comparison(self, request):
         months = int(request.query_params.get('months', 6))
         month = request.query_params.get('month')
@@ -73,7 +75,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         data = ReportService.get_monthly_comparison(request.user, months=months, month=month, year=year)
         return Response(data)
 
-    @action(detail=False, methods=['get'], url_path='charts/tag-insights')
+    @action(detail=False, methods=['get'], url_path='charts/tag-insights', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('analise_por_tag')])
     def tag_insights(self, request):
         tag_id = request.query_params.get('tag_id')
         months = int(request.query_params.get('months', 6))
@@ -87,7 +89,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
             
         return Response(data)
 
-    @action(detail=False, methods=['get'], url_path='charts/tag-distribution')
+    @action(detail=False, methods=['get'], url_path='charts/tag-distribution', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('analise_por_tag')])
     def tag_distribution(self, request):
         month = request.query_params.get('month')
         year = request.query_params.get('year')
@@ -99,7 +101,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
 
 
 class FocusedMonitorViewSet(ParametrosConhecidosMixin, viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated, IsPremium]
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('monitor_de_foco')]
     serializer_class = FocusedMonitorItemSerializer
 
     def get_queryset(self):

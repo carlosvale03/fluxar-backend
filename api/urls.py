@@ -5,6 +5,7 @@ from .views import (
     RenovarSessaoView,
     LogoutView,
     MeView,
+    PlansView,
     ChangePasswordView,
     VerifyEmailView,
     ResendVerificationView,
@@ -21,7 +22,8 @@ from .views import (
     AdminHardDeleteView,
     AdminClearUserDataView,
     AdminSystemSettingsView,
-    AdminGlobalLogsView
+    AdminGlobalLogsView,
+    AdminPlansView,
 )
 
 urlpatterns = [
@@ -38,6 +40,9 @@ urlpatterns = [
     # Auth Protected Endpoints
     path('auth/me/', MeView.as_view(), name='auth_me'),
     path('auth/me/avatar/', UserAvatarView.as_view(), name='auth_avatar'),
+
+    # Página de planos (PERM-27)
+    path('plans/', PlansView.as_view(), name='plans'),
 
     # User Management
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST
@@ -58,4 +63,5 @@ urlpatterns = [
     path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
     path('admin/settings/', AdminSystemSettingsView.as_view(), name='admin_settings'),
     path('admin/logs/', AdminGlobalLogsView.as_view(), name='admin-logs'),
+    path('admin/plans/', AdminPlansView.as_view(), name='admin_plans'),
 ]
