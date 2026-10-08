@@ -317,13 +317,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Duas importações simultâneas da mesma planilha gravam cada linha uma vez
-- [ ] Duas importações simultâneas do mesmo OFX gravam cada `fitid` uma vez
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Duas importações simultâneas da mesma planilha gravam cada linha uma vez
+- [x] Duas importações simultâneas do mesmo OFX gravam cada `fitid` uma vez
+- [x] Quick gate passa
+- [x] Test count: pelo menos 2 testes (real: 2 testes novos; suíte 762 → 764)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `test(importacao): cobre importações simultâneas do mesmo arquivo`
 
