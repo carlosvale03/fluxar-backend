@@ -257,9 +257,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-15 | P1: Travas aplicadas em cada tela e rota | T6 | Implemented |
 | PERM-16 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-17 | P1: Travas aplicadas em cada tela e rota | T8 | Implemented |
-| PERM-18 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-19 | P1: Travas aplicadas em cada tela e rota | - | Pending |
-| PERM-20 | P1: Travas aplicadas em cada tela e rota | - | Pending |
+| PERM-18 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
+| PERM-19 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
+| PERM-20 | P1: Travas aplicadas em cada tela e rota | T9 | In Progress |
 | PERM-21 | P1: Travas aplicadas em cada tela e rota | T7 | Implemented |
 | PERM-22 | P1: Travas aplicadas em cada tela e rota | T6 | In Progress |
 | PERM-23 | P1: Liberação para testes | T4 | Implemented |
@@ -270,7 +270,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-28 | P2: Implantação | T4 | Implemented |
 | PERM-29 | P2: Implantação | T3 | Implemented |
 
-**Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 29 total, 29 mapped to tasks, 0 unmapped
 
 ---
 

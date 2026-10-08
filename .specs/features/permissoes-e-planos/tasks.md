@@ -339,15 +339,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `usePlan().podeUsar("metas")` segue `access.features.metas`; nenhum plano fixo em `use-plan.ts`
-- [ ] `RecursoBloqueado` mostra o aviso e o link para `/planos` sem renderizar o conteúdo
-- [ ] `AvisoDeLimite` mostra "uso de limite" e desabilita a criação no limite
-- [ ] Um 403 `plan_locked` mostra o aviso com link e relê o `/auth/me`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] `usePlan().podeUsar("metas")` segue `access.features.metas`; nenhum plano fixo em `use-plan.ts`
+- [x] `RecursoBloqueado` mostra o aviso e o link para `/planos` sem renderizar o conteúdo
+- [x] `AvisoDeLimite` mostra "uso de limite" e desabilita a criação no limite
+- [x] Um 403 `plan_locked` mostra o aviso com link e relê o `/auth/me`
+- [x] Quick gate (frontend) passa
+- [x] Test count: 13 testes (mínimo 6)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): decide o que mostrar pelo acesso que a API informa`
 
