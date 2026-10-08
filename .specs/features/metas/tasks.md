@@ -314,14 +314,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Ativar grava a meta e a hora da ativação; `GET` devolve `active`, `goal`, `paused`, `pending_total` e `pending_count`
-- [ ] Meta arquivada ou excluída deixa `paused: true` até escolher outra
-- [ ] Desativar mantém os trocos pendentes no total
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Ativar grava a meta e a hora da ativação; `GET` devolve `active`, `goal`, `paused`, `pending_total` e `pending_count`
+- [x] Meta arquivada ou excluída deixa `paused: true` até escolher outra
+- [x] Desativar mantém os trocos pendentes no total
+- [x] Quick gate passa
+- [x] Test count: 7 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: guarda a configuração do cofrinho de trocos`
 

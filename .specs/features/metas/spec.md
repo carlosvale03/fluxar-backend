@@ -226,7 +226,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-32 | P1: Cadastro e consulta das metas | T7 | In Progress |
 | META-33 | P1: Cadastro e consulta das metas | T7 | Implemented |
 | META-34 | P1: Cadastro e consulta das metas | T7 | Implemented |
-| META-35 | P1: Cofrinho de trocos | - | Pending |
+| META-35 | P1: Cofrinho de trocos | T8 | In Progress |
 | META-36 | P1: Cofrinho de trocos | - | Pending |
 | META-37 | P1: Cofrinho de trocos | - | Pending |
 | META-38 | P1: Cofrinho de trocos | - | Pending |
@@ -235,10 +235,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-41 | P1: Cofrinho de trocos | - | Pending |
 | META-42 | P1: Cofrinho de trocos | - | Pending |
 | META-43 | P1: Cofrinho de trocos | - | Pending |
-| META-44 | P1: Cofrinho de trocos | - | Pending |
-| META-45 | P1: Cofrinho de trocos | - | Pending |
+| META-44 | P1: Cofrinho de trocos | T8 | In Progress |
+| META-45 | P1: Cofrinho de trocos | T8 | In Progress |
 
-**Coverage:** 45 total, 0 mapped to tasks, 45 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 45 total, 45 mapped to tasks, 0 unmapped
 
 ---
 

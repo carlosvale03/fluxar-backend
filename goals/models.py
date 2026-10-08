@@ -54,3 +54,36 @@ class GoalDeposit(models.Model):
 
     def __str__(self):
         return f"{self.get_type_display()} de {self.amount} para {self.goal.name} em {self.date}"
+
+
+class ConfiguracaoDeTrocos(models.Model):
+    """
+    Cofrinho de trocos do usuário (META-35, META-44, META-45): a meta que
+    recebe os trocos e a hora da ativação, a partir da qual as despesas
+    efetivadas geram troco.
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='configuracao_de_trocos')
+    ativo = models.BooleanField(default=False)
+    # Meta arquivada ou excluída pausa os trocos até o usuário escolher outra (META-44)
+    meta = models.ForeignKey(Goal, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    ativado_em = models.DateTimeField(null=True, blank=True)
+
+
+class Troco(models.Model):
+    """
+    O troco de uma despesa até o próximo real (META-36). Pendente até o
+    depósito; depois, depositado e ligado ao aporte, ou descartado quando a
+    conta foi excluída (META-38, META-43).
+    """
+    PENDENTE = 'PENDENTE'
+    DEPOSITADO = 'DEPOSITADO'
+    DESCARTADO = 'DESCARTADO'
+    STATUS = [(PENDENTE, 'Pendente'), (DEPOSITADO, 'Depositado'), (DESCARTADO, 'Descartado')]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trocos')
+    despesa = models.ForeignKey('transactions.Transaction', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    conta = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    valor = models.DecimalField(max_digits=15, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS, default=PENDENTE)
+    aporte = models.ForeignKey(GoalDeposit, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    criado_em = models.DateTimeField(auto_now_add=True)

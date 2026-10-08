@@ -4,7 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Goal
 from .serializers import GoalSerializer, GoalDepositSerializer
-from .services import GoalService
+from .services import GoalService, META_ARQUIVADA
+from . import trocos
 from core.travas import RecursoLiberado, conferir_limite
 from accounts.models import Account
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
@@ -18,6 +19,7 @@ from .valores import saldo_livre
 CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
 META_COM_VALOR = 'Resgate o valor da meta antes de excluí-la.'
 TROCA_COM_VALOR = 'Resgate o valor da meta antes de trocar o cofrinho.'
+META_NAO_ENCONTRADA = 'Meta não encontrada.'
 
 
 def _data_do_movimento(texto):
@@ -186,3 +188,31 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         paginacao = PaginacaoPadrao()
         pagina = paginacao.paginate_queryset(deposits, request, view=self)
         return paginacao.get_paginated_response(GoalDepositSerializer(pagina, many=True).data)
+
+    def _meta_dos_trocos(self, request, obrigatoria):
+        """
+        A meta escolhida para os trocos: só metas ativas do usuário, com o
+        erro no campo `goal` (AD-010, META-44).
+        """
+        goal = request.data.get('goal')
+        if goal in (None, ''):
+            if obrigatoria:
+                _exigir({'goal': goal})
+            return None
+        meta = get_owned_or_400(Goal.objects.all(), request.user, goal, 'goal', META_NAO_ENCONTRADA)
+        if not meta.is_active:
+            raise ValidationError({'goal': [META_ARQUIVADA]})
+        return meta
+
+    @decorators.action(detail=False, methods=['get', 'put'], url_path='spare-change')
+    def spare_change(self, request):
+        """
+        Cofrinho de trocos: `GET` devolve `active`, `goal`, `paused`,
+        `pending_total` e `pending_count`; `PUT` recebe `{active, goal}` para
+        ativar, escolher a meta ou desativar (META-35, META-44, META-45).
+        """
+        if request.method == 'PUT':
+            _exigir({'active': request.data.get('active')})
+            ativo = _verdadeiro(request.data.get('active'))
+            trocos.configurar(request.user, ativo, self._meta_dos_trocos(request, obrigatoria=ativo))
+        return Response(trocos.resumo(request.user), status=status.HTTP_200_OK)

@@ -1,0 +1,58 @@
+"""
+Cofrinho de trocos (META-35 a META-45).
+
+O usuário ativa os trocos escolhendo a meta que vai recebê-los. A partir da
+ativação, cada despesa efetivada gera um troco pendente, lembrado até o
+depósito. Com a meta arquivada ou excluída, os trocos ficam pausados até o
+usuário escolher outra (META-44); desativar para de contar trocos novos e
+mantém os pendentes (META-45).
+"""
+from decimal import Decimal
+
+from django.db.models import Count, Sum
+from django.utils import timezone
+
+from core.valores import dinheiro
+
+from .models import ConfiguracaoDeTrocos, Troco
+
+
+def configuracao_de(usuario):
+    """A configuração do usuário, ou `None` se ele nunca ativou os trocos."""
+    return ConfiguracaoDeTrocos.objects.filter(user=usuario).select_related('meta').first()
+
+
+def pausado(config):
+    """Trocos ativos com a meta arquivada ou excluída (META-44)."""
+    return bool(config and config.ativo and (config.meta is None or not config.meta.is_active))
+
+
+def resumo(usuario):
+    """A configuração e os trocos pendentes, para `GET /goals/spare-change/`."""
+    config = configuracao_de(usuario)
+    pendentes = Troco.objects.filter(user=usuario, status=Troco.PENDENTE).aggregate(
+        total=Sum('valor'), quantidade=Count('pk'),
+    )
+    return {
+        'active': bool(config and config.ativo),
+        'goal': config.meta_id if config else None,
+        'paused': pausado(config),
+        'pending_total': dinheiro(pendentes['total'] or Decimal('0.00')),
+        'pending_count': pendentes['quantidade'],
+    }
+
+
+def configurar(usuario, ativo, meta=None):
+    """
+    Ativa ou desativa os trocos. Ativar grava a hora da ativação (META-35);
+    escolher outra meta com os trocos já ativos mantém essa hora. Desativar
+    sem meta mantém a meta escolhida e os trocos pendentes (META-45).
+    """
+    config, _ = ConfiguracaoDeTrocos.objects.get_or_create(user=usuario)
+    if ativo and not config.ativo:
+        config.ativado_em = timezone.now()
+    config.ativo = ativo
+    if meta is not None:
+        config.meta = meta
+    config.save()
+    return config
