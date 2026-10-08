@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, post_delete, pre_delete, pre_sav
 from django.dispatch import receiver
 import cloudinary.uploader
 
-from . import vinculo
+from . import trocos, vinculo
 
 @receiver(pre_delete, sender='transactions.Transaction')
 def remover_registros_da_transacao_excluida(sender, instance, origin=None, **kwargs):
@@ -25,6 +25,18 @@ def acompanhar_transacao_alterada(sender, instance, created, **kwargs):
     if created:
         return
     vinculo.ao_salvar(instance)
+
+
+@receiver(post_save, sender='transactions.Transaction')
+def acompanhar_troco_da_despesa(sender, instance, created, **kwargs):
+    """A despesa efetivada gera, recalcula ou remove o troco pendente (META-36, META-41, META-42)."""
+    trocos.ao_salvar(instance, created)
+
+
+@receiver(pre_delete, sender='transactions.Transaction')
+def remover_troco_da_despesa_excluida(sender, instance, **kwargs):
+    """A despesa excluída leva junto o troco pendente (META-41)."""
+    trocos.ao_excluir(instance)
 
 # --- Cloudinary Image Cleanup ---
 

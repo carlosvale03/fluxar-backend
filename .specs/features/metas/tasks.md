@@ -343,15 +343,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Despesas de R$ 12,30 na conta A e R$ 7,60 na conta B geram trocos de R$ 0,70 e R$ 0,40; R$ 12,00 não gera troco
-- [ ] Despesa pendente, sem conta, no cofrinho, ajuste de saldo ou anterior à ativação não gera troco
-- [ ] Editar R$ 12,30 para R$ 12,80 antes do depósito muda o troco para R$ 0,20; excluir remove o troco pendente
-- [ ] Editar ou excluir despesa com troco depositado não mexe no aporte
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Despesas de R$ 12,30 na conta A e R$ 7,60 na conta B geram trocos de R$ 0,70 e R$ 0,40; R$ 12,00 não gera troco
+- [x] Despesa pendente, sem conta, no cofrinho, ajuste de saldo ou anterior à ativação não gera troco
+- [x] Editar R$ 12,30 para R$ 12,80 antes do depósito muda o troco para R$ 0,20; excluir remove o troco pendente
+- [x] Editar ou excluir despesa com troco depositado não mexe no aporte
+- [x] Full gate passa
+- [x] Test count: 10 testes (mínimo 8)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: calcula o troco de cada despesa efetivada`
 
