@@ -17,6 +17,21 @@ class IsAuthenticatedOrPublic(permissions.BasePermission):
     def has_permission(self, request, view):
         return super().has_permission(request, view)
 
+class EhAdministrador(permissions.BasePermission):
+    """
+    Libera só quem tem o papel `ADMIN` e a conta ativa (PERM-01, PERM-02).
+
+    O `request.user` vem do banco a cada requisição (SessaoJWTAuthentication),
+    então uma promoção ou um rebaixamento vale na requisição seguinte, e não
+    quando o token vence (PERM-04). O `is_staff` não conta: ele serve só para o
+    admin do Django (AD-016, PERM-08).
+    """
+    def has_permission(self, request, view):
+        usuario = request.user
+        return bool(
+            usuario and usuario.is_authenticated and usuario.is_active and usuario.role == 'ADMIN'
+        )
+
 class IsPremiumPlus(permissions.BasePermission):
     """
     Permite acesso apenas a usuários Premium Plus ou Superusers.

@@ -92,15 +92,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Usuário com `is_staff` e sem o papel `ADMIN` recebe 403 em cada função de administração da PERM-02
-- [ ] Usuário `ADMIN` sem `is_staff` acessa todas elas
-- [ ] Promovido no banco, o mesmo token passa a acessar na requisição seguinte; rebaixado, perde o acesso na seguinte
-- [ ] `ADMIN` sem `is_staff` não entra no `/admin/` do Django
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Usuário com `is_staff` e sem o papel `ADMIN` recebe 403 em cada função de administração da PERM-02
+- [x] Usuário `ADMIN` sem `is_staff` acessa todas elas
+- [x] Promovido no banco, o mesmo token passa a acessar na requisição seguinte; rebaixado, perde o acesso na seguinte
+- [x] `ADMIN` sem `is_staff` não entra no `/admin/` do Django
+- [x] Full gate passa
+- [x] Test count: 8 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): reconhece o administrador só pelo papel atual`
 

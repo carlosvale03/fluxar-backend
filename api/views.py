@@ -46,6 +46,7 @@ from core.throttles import (
 from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
+from core.permissions import EhAdministrador
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
 import logging
@@ -460,10 +461,10 @@ class ChangePasswordView(APIView):
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
-    Acesso: Apenas administradores (is_staff=True ou role='ADMIN').
+    Acesso: só administradores, pelo papel (PERM-02).
     """
     queryset = User.objects.all().order_by('-created_at')
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = AdminUserSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
@@ -529,7 +530,7 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
     Acesso: Apenas administradores.
     """
     queryset = User.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = AdminUserSerializer
 
     def update(self, request, *args, **kwargs):
@@ -659,7 +660,7 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
     Endpoint para fornecer métricas globais da plataforma para o dashboard admin.
     Acesso: Apenas administradores.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request):
         total_users = User.objects.count()
@@ -715,7 +716,7 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
     """
     Gerencia configurações globais do sistema (ex: modo manutenção).
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request):
         settings = GlobalSetting.objects.all()
@@ -755,7 +756,7 @@ class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
     parametros_permitidos = PAGINACAO
@@ -765,7 +766,7 @@ class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     Endpoint para fornecer métricas financeiras de um usuário específico.
     Acesso: Apenas administradores.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def get(self, request, pk):
         from reports.services import ReportService
@@ -777,7 +778,7 @@ class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Retorna os logs de atividade de um usuário específico.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
     serializer_class = SystemLogSerializer
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
@@ -791,7 +792,7 @@ class AdminResetPasswordView(APIView):
     """
     Permite que um administrador redefina a senha de um usuário.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -826,7 +827,7 @@ class AdminClearUserDataView(APIView):
     Limpa todos os dados financeiros e cadastros (contas, transações, etc.) de um usuário,
     mantendo apenas o seu login, senha e assinatura.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -860,7 +861,7 @@ class AdminHardDeleteView(APIView):
     """
     Exclui um usuário e todos os seus dados permanentemente do banco de dados.
     """
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (EhAdministrador,)
 
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
