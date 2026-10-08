@@ -463,14 +463,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] A lista de cofrinhos do formulário tem só contas `PIGGY_BANK` ativas
-- [ ] Com `piggy_bank_empty: true`, a tela pergunta e, confirmando, chama `DELETE /accounts/{id}/`
-- [ ] A recusa de exclusão com valor mostra a mensagem do backend
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] A lista de cofrinhos do formulário tem só contas `PIGGY_BANK` ativas
+- [x] Com `piggy_bank_empty: true`, a tela pergunta e, confirmando, chama `DELETE /accounts/{id}/`
+- [x] A recusa de exclusão com valor mostra a mensagem do backend
+- [x] Quick gate (frontend) passa
+- [x] Test count: 6 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: oferece só cofrinhos e pergunta pelo cofrinho vazio ao excluir a meta`
 
