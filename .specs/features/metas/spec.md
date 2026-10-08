@@ -203,16 +203,16 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-09 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-10 | P1: Valor das metas e saldo livre do cofrinho | T3 | Implemented |
 | META-11 | P1: Valor das metas e saldo livre do cofrinho | T3 | In Progress |
-| META-12 | P1: Aportes e resgates | T4 | In Progress |
-| META-13 | P1: Aportes e resgates | T4 | In Progress |
-| META-14 | P1: Aportes e resgates | T4 | In Progress |
-| META-15 | P1: Aportes e resgates | T4 | In Progress |
-| META-16 | P1: Aportes e resgates | T4 | In Progress |
-| META-17 | P1: Aportes e resgates | T4 | In Progress |
-| META-18 | P1: Aportes e resgates | T4 | In Progress |
+| META-12 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-13 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-14 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-15 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-16 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-17 | P1: Aportes e resgates | T4, T12 | Implemented |
+| META-18 | P1: Aportes e resgates | T4, T12 | Implemented |
 | META-19 | P1: Aportes e resgates | T4 | Implemented |
 | META-20 | P1: Aportes e resgates | T4 | Implemented |
-| META-21 | P1: Aportes e resgates | T4 | In Progress |
+| META-21 | P1: Aportes e resgates | T4, T12 | Implemented |
 | META-22 | P1: Aportes e resgates | T4 | Implemented |
 | META-23 | P1: Aportes e resgates | T5 | Implemented |
 | META-24 | P1: Aportes e resgates | T5 | Implemented |

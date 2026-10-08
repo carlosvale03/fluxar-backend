@@ -434,14 +434,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Escolher "Saldo livre do cofrinho" envia `from_free_balance: true` sem conta; no resgate, `to_free_balance: true`
-- [ ] O próprio cofrinho não aparece entre as contas de origem do aporte
-- [ ] A recusa de saldo livre, de valor da meta e de meta arquivada aparece com a mensagem do backend
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Escolher "Saldo livre do cofrinho" envia `from_free_balance: true` sem conta; no resgate, `to_free_balance: true`
+- [x] O próprio cofrinho não aparece entre as contas de origem do aporte
+- [x] A recusa de saldo livre, de valor da meta e de meta arquivada aparece com a mensagem do backend
+- [x] Quick gate (frontend) passa
+- [x] Test count: 9 testes (mínimo 4)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite aportar e resgatar pelo saldo livre do cofrinho`
 
