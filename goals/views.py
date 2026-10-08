@@ -216,3 +216,16 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
             ativo = _verdadeiro(request.data.get('active'))
             trocos.configurar(request.user, ativo, self._meta_dos_trocos(request, obrigatoria=ativo))
         return Response(trocos.resumo(request.user), status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['post'], url_path='spare-change/deposit')
+    def spare_change_deposit(self, request):
+        """
+        Deposita os trocos pendentes, um aporte por conta de origem
+        (META-38 a META-40, META-43). Responde `{deposits: [{account_id,
+        amount}], discarded}`; um pedido repetido responde `deposits` vazio.
+        """
+        try:
+            resposta = trocos.depositar(request.user)
+        except DjangoValidationError as erro:
+            raise ValidationError({'detail': erro.messages[0]})
+        return Response(resposta, status=status.HTTP_200_OK)

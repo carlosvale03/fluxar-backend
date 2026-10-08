@@ -9,6 +9,8 @@ mantém os pendentes (META-45).
 """
 from decimal import Decimal, ROUND_CEILING
 
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 
@@ -18,6 +20,8 @@ from .models import ConfiguracaoDeTrocos, Troco
 
 # Descrição da despesa do ajuste de saldo (`accounts/views.py`, `adjust_balance`)
 AJUSTE_DE_SALDO = 'Ajuste de saldo'
+TROCOS_PAUSADOS = 'Os trocos estão pausados. Escolha outra meta.'
+DESCRICAO_DO_DEPOSITO = 'Depósito dos trocos'
 
 
 def configuracao_de(usuario):
@@ -108,3 +112,54 @@ def ao_salvar(despesa, criada):
 def ao_excluir(despesa):
     """A despesa excluída leva junto o troco pendente; o depositado fica (META-41, META-42)."""
     Troco.objects.filter(despesa_id=despesa.pk, status=Troco.PENDENTE).delete()
+
+
+@transaction.atomic
+def depositar(usuario):
+    """
+    Deposita os trocos pendentes na meta dos trocos: um aporte por conta de
+    origem, com a soma dos trocos dela, e cada troco marcado como depositado
+    e ligado ao aporte (META-38). Trocos de conta excluída são descartados
+    (META-43). A trava da configuração serializa pedidos simultâneos, e o
+    segundo não encontra mais trocos pendentes (META-39, META-40). Com os
+    trocos desativados, os pendentes continuam depositáveis (META-45); com a
+    meta arquivada ou excluída, o depósito é recusado (META-44).
+
+    Trava a configuração, as contas dos trocos e só então os trocos: a
+    edição de uma despesa trava a conta dela antes do troco (AD-045).
+    Devolve `{deposits: [{account_id, amount}], discarded}`.
+    """
+    from accounts.saldo import travar
+    from core.datas import hoje
+    from .models import GoalDeposit
+    from .services import GoalService
+
+    config = ConfiguracaoDeTrocos.objects.select_for_update().filter(user=usuario).first()
+    resposta = {'deposits': [], 'discarded': 0}
+    pendentes = Troco.objects.filter(user=usuario, status=Troco.PENDENTE)
+    if config is None or not pendentes.exists():
+        return resposta
+    if config.meta is None or not config.meta.is_active:
+        raise ValidationError(TROCOS_PAUSADOS)
+
+    contas = travar(config.meta.account_id, *pendentes.values_list('conta_id', flat=True))
+    trocos = list(pendentes.select_for_update().order_by('pk'))
+    contas.update(travar(*{troco.conta_id for troco in trocos} - set(contas)))
+
+    por_conta = {}
+    for troco in trocos:
+        conta = contas.get(troco.conta_id)
+        if conta is None or not conta.is_active:
+            resposta['discarded'] += 1
+            Troco.objects.filter(pk=troco.pk).update(status=Troco.DESCARTADO)
+            continue
+        por_conta.setdefault(conta.pk, []).append(troco)
+
+    for conta_id in sorted(por_conta, key=str):
+        do_grupo = por_conta[conta_id]
+        total = sum((troco.valor for troco in do_grupo), Decimal('0.00'))
+        GoalService.aportar(config.meta, total, hoje(), account=contas[conta_id], description=DESCRICAO_DO_DEPOSITO)
+        aporte = GoalDeposit.objects.filter(goal_id=config.meta_id, account_id=conta_id).latest('pk')
+        Troco.objects.filter(pk__in=[troco.pk for troco in do_grupo]).update(status=Troco.DEPOSITADO, aporte=aporte)
+        resposta['deposits'].append({'account_id': str(conta_id), 'amount': dinheiro(total)})
+    return resposta

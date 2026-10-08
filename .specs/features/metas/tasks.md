@@ -373,15 +373,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] O cenário do Independent Test cria um aporte de R$ 0,70 a partir de A e um de R$ 0,40 a partir de B, e a meta sobe R$ 1,10
-- [ ] Reenviar o pedido responde 200 com `deposits` vazio
-- [ ] Dois pedidos simultâneos depositam cada troco uma vez (teste com threads)
-- [ ] Trocos de conta excluída são descartados e `discarded` informa quantos
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] O cenário do Independent Test cria um aporte de R$ 0,70 a partir de A e um de R$ 0,40 a partir de B, e a meta sobe R$ 1,10
+- [x] Reenviar o pedido responde 200 com `deposits` vazio
+- [x] Dois pedidos simultâneos depositam cada troco uma vez (teste com threads)
+- [x] Trocos de conta excluída são descartados e `discarded` informa quantos
+- [x] Build gate passa
+- [x] Test count: 7 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: deposita os trocos por conta de origem uma vez só`
 
