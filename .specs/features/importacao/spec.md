@@ -235,55 +235,55 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| IMPORT-01 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-02 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-03 | P1: Arquivos aceitos e limites | T12 | Implemented |
-| IMPORT-04 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-05 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-06 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-07 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-08 | P1: Arquivos aceitos e limites | T2 | Implemented |
-| IMPORT-09 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-10 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-11 | P1: Valores e datas no formato brasileiro | T2 | Implemented |
-| IMPORT-12 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-13 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-14 | P1: Valores e datas no formato brasileiro | T2 | Implemented |
-| IMPORT-15 | P1: Valores e datas no formato brasileiro | T1 | Implemented |
-| IMPORT-16 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-17 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-18 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-19 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-20 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-21 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-22 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-23 | P1: Tipo, status e conta de cada linha | T7 | Implemented |
-| IMPORT-24 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-25 | P1: Tipo, status e conta de cada linha | T7 | Implemented |
-| IMPORT-26 | P1: Tipo, status e conta de cada linha | T3 | Implemented |
-| IMPORT-27 | P1: Resultado da importação | T7 | Implemented |
-| IMPORT-28 | P1: Resultado da importação | T7 | Implemented |
-| IMPORT-29 | P1: Resultado da importação | T7 | Implemented |
-| IMPORT-30 | P1: Resultado da importação | T7 | Implemented |
-| IMPORT-31 | P1: Resultado da importação | T7 | Implemented |
-| IMPORT-32 | P1: Resultado da importação | T2 | Implemented |
-| IMPORT-33 | P1: Resultado da importação | T12 | Implemented |
-| IMPORT-34 | P1: Linhas já importadas | T4, T5 | Implemented |
-| IMPORT-35 | P1: Linhas já importadas | T5 | Implemented |
-| IMPORT-36 | P1: Linhas já importadas | T5 | Implemented |
-| IMPORT-37 | P1: Linhas já importadas | T5 | Implemented |
-| IMPORT-38 | P1: Linhas já importadas | T5 | Implemented |
-| IMPORT-39 | P1: Linhas já importadas | T8 | Implemented |
-| IMPORT-40 | P2: Tempo de processamento | T6, T9 | Implemented |
-| IMPORT-41 | P2: Tempo de processamento | T9 | Implemented |
-| IMPORT-42 | P2: Correções de categoria | T4, T10 | Implemented |
-| IMPORT-43 | P2: Correções de categoria | T11 | Implemented |
-| IMPORT-44 | P2: Correções de categoria | T11 | Implemented |
-| IMPORT-45 | P2: Correções de categoria | T10, T12, T13 | Implemented |
-| IMPORT-46 | P2: Correções de categoria | T10, T13 | Implemented |
-| IMPORT-47 | P2: Correções de categoria | T11 | Implemented |
-| IMPORT-48 | P2: Correções de categoria | T4, T10 | Implemented |
-| IMPORT-49 | P2: Correções de categoria | T10, T11 | Implemented |
+| IMPORT-01 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-02 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-03 | P1: Arquivos aceitos e limites | T12 | Verified |
+| IMPORT-04 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-05 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-06 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-07 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-08 | P1: Arquivos aceitos e limites | T2 | Verified |
+| IMPORT-09 | P1: Valores e datas no formato brasileiro | T1 | Verified |
+| IMPORT-10 | P1: Valores e datas no formato brasileiro | T1 | Verified |
+| IMPORT-11 | P1: Valores e datas no formato brasileiro | T2 | Verified |
+| IMPORT-12 | P1: Valores e datas no formato brasileiro | T1 | Verified |
+| IMPORT-13 | P1: Valores e datas no formato brasileiro | T1 | Verified |
+| IMPORT-14 | P1: Valores e datas no formato brasileiro | T2 | Verified |
+| IMPORT-15 | P1: Valores e datas no formato brasileiro | T1 | Verified |
+| IMPORT-16 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-17 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-18 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-19 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-20 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-21 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-22 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-23 | P1: Tipo, status e conta de cada linha | T7 | Verified |
+| IMPORT-24 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-25 | P1: Tipo, status e conta de cada linha | T7 | Verified |
+| IMPORT-26 | P1: Tipo, status e conta de cada linha | T3 | Verified |
+| IMPORT-27 | P1: Resultado da importação | T7 | Verified |
+| IMPORT-28 | P1: Resultado da importação | T7 | Verified |
+| IMPORT-29 | P1: Resultado da importação | T7 | Verified |
+| IMPORT-30 | P1: Resultado da importação | T7 | Verified |
+| IMPORT-31 | P1: Resultado da importação | T7 | Verified |
+| IMPORT-32 | P1: Resultado da importação | T2 | Verified |
+| IMPORT-33 | P1: Resultado da importação | T12 | Verified |
+| IMPORT-34 | P1: Linhas já importadas | T4, T5 | Verified |
+| IMPORT-35 | P1: Linhas já importadas | T5 | Verified |
+| IMPORT-36 | P1: Linhas já importadas | T5 | Verified |
+| IMPORT-37 | P1: Linhas já importadas | T5 | Verified |
+| IMPORT-38 | P1: Linhas já importadas | T5 | Verified |
+| IMPORT-39 | P1: Linhas já importadas | T8 | Verified |
+| IMPORT-40 | P2: Tempo de processamento | T6, T9 | Verified |
+| IMPORT-41 | P2: Tempo de processamento | T9 | Verified |
+| IMPORT-42 | P2: Correções de categoria | T4, T10 | Verified |
+| IMPORT-43 | P2: Correções de categoria | T11 | Verified |
+| IMPORT-44 | P2: Correções de categoria | T11 | Verified |
+| IMPORT-45 | P2: Correções de categoria | T10, T12, T13 | Verified |
+| IMPORT-46 | P2: Correções de categoria | T10, T13 | Verified |
+| IMPORT-47 | P2: Correções de categoria | T11 | Verified |
+| IMPORT-48 | P2: Correções de categoria | T4, T10 | Verified |
+| IMPORT-49 | P2: Correções de categoria | T10, T11 | Verified |
 
 **Coverage:** 49 total, 49 mapped to tasks, 0 unmapped
 
