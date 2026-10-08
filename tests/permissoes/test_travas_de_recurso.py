@@ -325,6 +325,33 @@ class RecursoParcialTests(TravasTestCase):
         resposta = self.client.post('/api/transactions/', self.corpo_transacao(tags=[]), format='json')
         self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
 
+    def test_tags_fechada_aceita_editar_com_as_mesmas_tags_e_recusa_mudar(self):
+        # Editar a transação é essencial; só mudar as tags usa a trava (PERM-21)
+        transacao = Transaction.objects.filter(user=self.d.usuario).first()
+        transacao.tags.set([self.d.tag])
+        outra = Tag.objects.create(user=self.d.usuario, name='Outra')
+        fechar('tags')
+        rota = f'/api/transactions/{transacao.pk}/'
+
+        resposta = self.client.patch(rota, {
+            'description': 'Com as mesmas tags', 'tags': [str(self.d.tag.pk)],
+        }, format='json')
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        resposta = self.client.patch(rota, {'description': 'Sem o campo'}, format='json')
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+
+        self.assert_travada(self.client.patch(rota, {
+            'tags': [str(self.d.tag.pk), str(outra.pk)],
+        }, format='json'), 'tags')
+        self.assert_travada(self.client.patch(rota, {'tags': []}, format='json'), 'tags')
+        self.assertEqual(
+            list(Transaction.objects.get(pk=transacao.pk).tags.values_list('pk', flat=True)), [self.d.tag.pk],
+        )
+        self.assert_travada(
+            self.client.post('/api/transactions/', self.corpo_transacao(tags=[str(self.d.tag.pk)]), format='json'),
+            'tags',
+        )
+
     def test_planilha_com_tags_fechada_ignora_as_tags_e_grava_a_linha(self):
         fechar('tags')
         tags_antes = Tag.objects.filter(user=self.d.usuario).count()

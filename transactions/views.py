@@ -159,9 +159,14 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
         serializer.save()
 
     def perform_update(self, serializer):
-        # Editar uma ocorrência é essencial; pôr tags depende do plano (PERM-15)
-        if serializer.validated_data.get('tags'):
-            exigir_recurso(self.request.user, 'tags')
+        # Editar uma ocorrência é essencial; mudar as tags depende do plano
+        # (PERM-15). Reenviar as tags que ela já tem, ou não enviar o campo,
+        # não usa o recurso travado (PERM-21)
+        if 'tags' in serializer.validated_data:
+            novas = {tag.pk for tag in serializer.validated_data['tags']}
+            atuais = set(serializer.instance.tags.values_list('pk', flat=True))
+            if novas != atuais:
+                exigir_recurso(self.request.user, 'tags')
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
