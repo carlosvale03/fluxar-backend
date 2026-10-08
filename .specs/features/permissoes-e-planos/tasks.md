@@ -457,15 +457,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com `metas` fechada, a tela Metas mostra o aviso sem chamar `/api/goals/`
-- [ ] Com `cartoes` fechada, a tela Cartões mostra o aviso e as faturas em aberto com o botão de pagar
-- [ ] Com `compras_parceladas` fechada, o parcelamento fica limitado a 1x com o aviso; com `transacoes_recorrentes` fechada, a opção recorrente e as ações de série mostram o aviso
-- [ ] Com `tags` fechada, a tela Tags mostra o aviso e o campo de tags some dos formulários
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Com `metas` fechada, a tela Metas mostra o aviso sem chamar `/api/goals/`
+- [x] Com `cartoes` fechada, a tela Cartões mostra o aviso e as faturas em aberto com o botão de pagar
+- [x] Com `compras_parceladas` fechada, o parcelamento fica limitado a 1x com o aviso; com `transacoes_recorrentes` fechada, a opção recorrente e as ações de série mostram o aviso
+- [x] Com `tags` fechada, a tela Tags mostra o aviso e o campo de tags some dos formulários
+- [x] Quick gate (frontend) passa
+- [x] Test count: 13 testes (mínimo 8)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): aplica as travas de orçamentos, metas, tags e cartões`
 
