@@ -354,6 +354,14 @@
 - **Date**: 2026-10-07
 - **Status**: active
 
+### AD-045
+- **Decision**: O valor de cada meta (`Goal.current_amount`) é sempre o resultado de `goals/valores.py`: aportes menos resgates registrados para ela, contando os registros sem transferência e os com a transferência efetivada, gravado sob trava da meta. Cada registro aponta para as duas pernas da transferência, e os signals de `Transaction` mantêm o registro e o valor na mesma operação, recusando o que deixaria uma meta negativa. O saldo livre do cofrinho é o saldo da conta menos a soma das metas dele.
+- **Reason**: o valor era um número solto incrementado em três lugares, inclusive num rateio automático que errava os valores e deixava dinheiro que não existe depois de uma exclusão (FIN-09, FIN-20, FIN-37, FIN-38).
+- **Trade-off**: todo caminho que muda registros de meta chama `recalcular()`, e os signals de transação consultam os registros ligados.
+- **Scope**: metas, saldo, gestao-do-salario e importacao.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `permissoes-e-planos` concluída, nos dois repositórios
