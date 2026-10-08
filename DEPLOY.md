@@ -48,6 +48,8 @@ O frontend chama a API por `/api` na própria origem, e o Next.js repassa para o
 - `python manage.py check_isolation`: deve listar 0 ligações entre usuários.
 - `python manage.py check_saldos`: deve terminar com "Contas com saldo divergente: 0" (a migração `transactions/0008` recalcula os saldos no `migrate`).
 - `python manage.py check_email_case`: lista as contas cujos e-mails só diferem na caixa, para resolução manual.
+- `python manage.py divergencias_de_admin`: lista quem tem `is_staff` sem o papel `ADMIN` e quem tem o papel sem `is_staff`, e termina com "Contas divergentes: N". Não altera ninguém: o administrador do app é só quem tem o papel (AD-016), e cada caso é decidido à mão (PERM-29).
+- O `create_admin.py` só cria o administrador de `DJANGO_SUPERUSER_EMAIL` quando não existe nenhum administrador ativo, e nunca promove nem altera contas existentes (PERM-07).
 
 ## 🩺 Health Check
 O Render monitora a saúde da aplicação através do endpoint:

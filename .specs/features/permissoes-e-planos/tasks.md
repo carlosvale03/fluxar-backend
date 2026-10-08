@@ -151,14 +151,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Com um admin ativo, o script não cria nem promove ninguém, nem o e-mail configurado
-- [ ] Sem admin ativo, o script cria o admin configurado
-- [ ] O comando lista quem tem `is_staff` sem o papel e quem tem o papel sem `is_staff`, termina com "Contas divergentes: N" e não altera nenhuma conta
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Com um admin ativo, o script não cria nem promove ninguém, nem o e-mail configurado
+- [x] Sem admin ativo, o script cria o admin configurado
+- [x] O comando lista quem tem `is_staff` sem o papel e quem tem o papel sem `is_staff`, termina com "Contas divergentes: N" e não altera nenhuma conta
+- [x] Build gate passa
+- [x] Test count: 5 testes (mínimo 4)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): cria o primeiro admin sem repromover e lista divergências de papel`
 

@@ -246,7 +246,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-04 | P1: Quem é administrador | T1 | Implemented |
 | PERM-05 | P1: Quem é administrador | T2 | Implemented |
 | PERM-06 | P1: Quem é administrador | T2 | Implemented |
-| PERM-07 | P1: Quem é administrador | - | Pending |
+| PERM-07 | P1: Quem é administrador | T3 | Implemented |
 | PERM-08 | P1: Quem é administrador | T1 | Implemented |
 | PERM-09 | P1: Quem é administrador | - | Pending |
 | PERM-10 | P1: Configuração das travas pelo administrador | - | Pending |
@@ -268,7 +268,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-26 | P1: Liberação para testes | - | Pending |
 | PERM-27 | P2: Página de planos | - | Pending |
 | PERM-28 | P2: Implantação | - | Pending |
-| PERM-29 | P2: Implantação | - | Pending |
+| PERM-29 | P2: Implantação | T3 | Implemented |
 
 **Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (design e tasks ainda não iniciados)
 
