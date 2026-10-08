@@ -345,13 +345,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Um CSV de 10.000 linhas válidas importa em até 30 segundos no container local
-- [ ] `gunicorn.conf.py` declara `gthread` com mais de uma thread e `WEB_CONCURRENCY` com padrão 2
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Um CSV de 10.000 linhas válidas importa em até 30 segundos no container local
+- [x] `gunicorn.conf.py` declara `gthread` com mais de uma thread e `WEB_CONCURRENCY` com padrão 2
+- [x] Build gate passa
+- [x] Test count: pelo menos 2 testes (real: 3 testes novos; suíte 764 → 767; 10.000 linhas em cerca de 15 s)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `perf(importacao): importa 10 mil linhas em até 30 segundos sem travar o servidor`
 

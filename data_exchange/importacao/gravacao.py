@@ -106,10 +106,11 @@ class Gravacao:
                 amount=linha.valor, date=linha.data, description=linha.descricao,
                 category=self.categoria(linha, novas), import_batch=self.lote, fitid=linha.fitid,
             )]
-        tags = [self.tag(nome, novas) for nome in linha.tags]
-        if tags:
-            for perna in pernas:
-                perna.tags.set(tags)
+        # Transação nova não tem tags: grava as ligações numa consulta só (IMPORT-40)
+        tags = {self.tag(nome, novas).pk for nome in linha.tags}
+        Transaction.tags.through.objects.bulk_create([
+            Transaction.tags.through(transaction_id=perna.pk, tag_id=tag) for perna in pernas for tag in tags
+        ])
 
     def categoria(self, linha, novas):
         """A categoria e a subcategoria da linha, criadas quando o usuário ainda não as tem (IMPORT-23)."""

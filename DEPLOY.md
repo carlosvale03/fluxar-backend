@@ -21,6 +21,7 @@ O serviço deve ser configurado como **Web Service** (Python 3). O Render roda o
   - `createcachetable` cria a tabela de cache usada pelos limites de tentativas; sem ela, as rotas de autenticação respondem 500.
   - Se o plano não tiver Pre-Deploy Command, coloque os três comandos no fim do Build Command.
 - **Start Command:** `gunicorn core.wsgi:application`
+  - O gunicorn lê sozinho o `gunicorn.conf.py` da raiz: workers `gthread` com threads, timeout de 120 s e a porta de `PORT`. Assim uma importação ocupa só uma thread, e as outras requisições seguem atendidas (AD-043).
 
 ### Variáveis de Ambiente (Production)
 Configure estas chaves no painel do Render:
@@ -32,6 +33,8 @@ Configure estas chaves no painel do Render:
 - `FRONTEND_URL`: endereço do frontend, usado nos links dos e-mails. Obrigatória: sem ela o backend não sobe.
 - `CORS_ALLOWED_ORIGINS`: origens do frontend, separadas por vírgula. Sem ela, nenhuma origem é liberada.
 - `NUM_PROXIES`: quantos proxies ficam na frente da aplicação, para ler o IP do cliente nos limites de tentativas (padrão `1`).
+- `WEB_CONCURRENCY`: quantos workers do gunicorn (padrão `2`). Se a memória do plano não der, use `1`; as threads continuam atendendo outras requisições durante uma importação.
+- `GUNICORN_THREADS`: threads por worker (padrão `4`).
 - E-mail: `RESEND_API_KEY`, `DEFAULT_FROM_EMAIL` e, para o fallback SMTP, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER` e `EMAIL_HOST_PASSWORD`.
 
 ### Frontend na Vercel (proxy da API)
