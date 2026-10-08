@@ -256,13 +256,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Dentro do contexto, 100 transações numa conta disparam um recálculo só, e o saldo final segue SALDO-01
-- [ ] Fora do contexto, o comportamento continua igual (suíte `tests.saldo` passa)
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Dentro do contexto, 100 transações numa conta disparam um recálculo só, e o saldo final segue SALDO-01
+- [x] Fora do contexto, o comportamento continua igual (suíte `tests.saldo` passa)
+- [x] Full gate passa
+- [x] Test count: pelo menos 3 testes (real: 4 testes novos; suíte 749 → 753)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `perf(accounts): recalcula o saldo uma vez por importação`
 
