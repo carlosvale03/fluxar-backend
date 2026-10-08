@@ -487,13 +487,14 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Cada uma das 4 chaves fechada mostra o aviso no botão correspondente, sem chamar a rota
-- [ ] Nenhuma comparação com o nome de um plano sobra na tela
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Cada uma das 4 chaves fechada mostra o aviso no botão correspondente, sem chamar a rota
+- [x] Nenhuma comparação com o nome de um plano sobra na tela
+- [x] Quick gate (frontend) passa
+- [x] Test count: 6 testes (mínimo 4)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat(frontend): aplica as travas de importação e exportação`
 
