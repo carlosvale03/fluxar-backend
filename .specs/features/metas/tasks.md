@@ -252,16 +252,17 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Meta sem cofrinho cria um novo; duas metas no mesmo cofrinho aparecem no mesmo item de `piggy-banks`
-- [ ] Conta corrente como cofrinho recebe 400 no campo `account`; nome vazio e alvo 0 recebem 400 no campo
-- [ ] Trocar o cofrinho com valor recebe "Resgate o valor da meta antes de trocar o cofrinho."
-- [ ] Excluir com R$ 10,00 recebe "Resgate o valor da meta antes de excluí-la."; excluir a última meta de um cofrinho zerado devolve `piggy_bank_empty: true`
-- [ ] A lista de metas não traz `deposits`
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Meta sem cofrinho cria um novo; duas metas no mesmo cofrinho aparecem no mesmo item de `piggy-banks`
+- [x] Conta corrente como cofrinho recebe 400 no campo `account`; nome vazio e alvo 0 recebem 400 no campo
+- [x] Trocar o cofrinho com valor recebe "Resgate o valor da meta antes de trocar o cofrinho."
+- [x] Excluir com R$ 10,00 recebe "Resgate o valor da meta antes de excluí-la."; excluir a última meta de um cofrinho zerado devolve `piggy_bank_empty: true`
+- [x] A lista de metas não traz `deposits`
+- [x] Quick gate passa
+- [x] Test count: 9 testes (mínimo 8)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: valida o cofrinho e o cadastro das metas`
 

@@ -3,7 +3,7 @@ from .models import Goal, GoalDeposit
 from .services import GoalService
 from accounts.models import Account
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
-from core.valores import dinheiro
+from core.valores import dinheiro, validar_valor_positivo
 
 class GoalDepositSerializer(serializers.ModelSerializer):
     account_name = serializers.ReadOnlyField(source='account.name')
@@ -21,12 +21,12 @@ class GoalSerializer(serializers.ModelSerializer):
     suggested_monthly_saving = serializers.SerializerMethodField()
     months_remaining = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
-    deposits = serializers.SerializerMethodField()
     correction = serializers.SerializerMethodField()
 
-    # Só contas do usuário da requisição (AD-032)
+    # Só cofrinhos ativos do usuário da requisição (META-26, AD-032); sem
+    # cofrinho, a meta ganha um novo (META-25)
     account = OwnedPrimaryKeyRelatedField(
-        queryset=Account.objects.all(), not_found_message=CONTA_NAO_ENCONTRADA,
+        queryset=Account.objects.filter(type='PIGGY_BANK', is_active=True), not_found_message=CONTA_NAO_ENCONTRADA,
         required=False, allow_null=True,
     )
     
@@ -42,10 +42,12 @@ class GoalSerializer(serializers.ModelSerializer):
             'account', 'target_date', 'image', 'is_active', 'status',
             'progress_percentage', 'amount_remaining', 
             'suggested_monthly_saving', 'months_remaining',
-            'deposits', 'correction', 'created_at', 'updated_at',
+            'correction', 'created_at', 'updated_at',
             'cofrinho_name', 'institution', 'color'
         ]
-        read_only_fields = ['id', 'current_amount', 'created_at', 'updated_at', 'deposits']
+        read_only_fields = ['id', 'current_amount', 'created_at', 'updated_at']
+        # Alvo de pelo menos R$ 0,01 (META-27)
+        extra_kwargs = {'target_amount': {'validators': [validar_valor_positivo]}}
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -60,11 +62,6 @@ class GoalSerializer(serializers.ModelSerializer):
             else:
                 ret['image'] = instance.image.url
         return ret
-
-    def get_deposits(self, obj):
-        # Só movimentos em contas do dono da meta (ISOL-15)
-        deposits = obj.deposits.filter(account__user_id=obj.user_id)
-        return GoalDepositSerializer(deposits, many=True).data
 
     def get_correction(self, obj):
         """

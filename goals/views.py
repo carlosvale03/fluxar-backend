@@ -15,7 +15,8 @@ from core.valores import dinheiro, ler_valor
 from .valores import saldo_livre
 
 CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
-META_COM_SALDO = 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.'
+META_COM_VALOR = 'Resgate o valor da meta antes de excluí-la.'
+TROCA_COM_VALOR = 'Resgate o valor da meta antes de trocar o cofrinho.'
 
 
 def _data_do_movimento(texto):
@@ -63,13 +64,32 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
         conferir_limite(self.request.user, 'limite_metas')
         serializer.save()
 
+    def perform_update(self, serializer):
+        """Trocar o cofrinho só com a meta zerada (META-28)."""
+        meta = serializer.instance
+        novo = serializer.validated_data.get('account', meta.account)
+        if novo != meta.account and meta.current_amount > 0:
+            raise ValidationError({'detail': TROCA_COM_VALOR})
+        serializer.save()
+
     def destroy(self, request, *args, **kwargs):
-        """Bloqueia a exclusão se a meta ainda tiver saldo."""
+        """
+        Exclui só a meta zerada (META-29). A resposta diz se o cofrinho ficou
+        sem metas e com saldo zero, para a interface perguntar se exclui o
+        cofrinho também (META-30).
+        """
         goal = self.get_object()
-        if goal.current_amount != 0:
-            raise ValidationError({'detail': META_COM_SALDO})
-        return super().destroy(request, *args, **kwargs)
-    
+        if goal.current_amount > 0:
+            raise ValidationError({'detail': META_COM_VALOR})
+        cofrinho = goal.account
+        goal.delete()
+        cofrinho_vazio = (
+            cofrinho is not None and cofrinho.user_id == request.user.pk and cofrinho.is_active
+            and not Goal.objects.filter(account=cofrinho).exists()
+            and Account.objects.get(pk=cofrinho.pk).balance == 0
+        )
+        return Response({'piggy_bank_empty': cofrinho_vazio}, status=status.HTTP_200_OK)
+
     def get_queryset(self):
         # UserQuerySetMixin já filtra user=self.request.user
         return super().get_queryset()

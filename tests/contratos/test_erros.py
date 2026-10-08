@@ -99,7 +99,7 @@ class RotasReescritasTests(ContratosTestCase):
         resp = self.client.delete(f'/api/goals/{self.meta.pk}/')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.data, {
-            'detail': 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.',
+            'detail': 'Resgate o valor da meta antes de excluí-la.',
             'code': 'invalid',
         })
 

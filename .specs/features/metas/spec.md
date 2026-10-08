@@ -216,13 +216,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-22 | P1: Aportes e resgates | T4 | Implemented |
 | META-23 | P1: Aportes e resgates | T5 | Implemented |
 | META-24 | P1: Aportes e resgates | T5 | Implemented |
-| META-25 | P1: Cadastro e consulta das metas | - | Pending |
-| META-26 | P1: Cadastro e consulta das metas | - | Pending |
-| META-27 | P1: Cadastro e consulta das metas | - | Pending |
-| META-28 | P1: Cadastro e consulta das metas | - | Pending |
-| META-29 | P1: Cadastro e consulta das metas | - | Pending |
-| META-30 | P1: Cadastro e consulta das metas | - | Pending |
-| META-31 | P1: Cadastro e consulta das metas | - | Pending |
+| META-25 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-26 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-27 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-28 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-29 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-30 | P1: Cadastro e consulta das metas | T6 | In Progress |
+| META-31 | P1: Cadastro e consulta das metas | T6 | Implemented |
 | META-32 | P1: Cadastro e consulta das metas | - | Pending |
 | META-33 | P1: Cadastro e consulta das metas | - | Pending |
 | META-34 | P1: Cadastro e consulta das metas | - | Pending |
