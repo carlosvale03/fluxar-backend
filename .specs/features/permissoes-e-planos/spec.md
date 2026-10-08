@@ -244,8 +244,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PERM-02 | P1: Quem é administrador | T1 | Implemented |
 | PERM-03 | P1: Quem é administrador | - | Pending |
 | PERM-04 | P1: Quem é administrador | T1 | Implemented |
-| PERM-05 | P1: Quem é administrador | - | Pending |
-| PERM-06 | P1: Quem é administrador | - | Pending |
+| PERM-05 | P1: Quem é administrador | T2 | Implemented |
+| PERM-06 | P1: Quem é administrador | T2 | Implemented |
 | PERM-07 | P1: Quem é administrador | - | Pending |
 | PERM-08 | P1: Quem é administrador | T1 | Implemented |
 | PERM-09 | P1: Quem é administrador | - | Pending |

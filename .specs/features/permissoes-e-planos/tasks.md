@@ -122,14 +122,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Rebaixar, arquivar ou excluir o último admin ativo recebe 400 com "O sistema precisa ter pelo menos um administrador ativo."
-- [ ] Com dois admins ativos, rebaixar um é aceito
-- [ ] Admin tirando o próprio papel, arquivando ou excluindo a própria conta recebe 400
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Rebaixar, arquivar ou excluir o último admin ativo recebe 400 com "O sistema precisa ter pelo menos um administrador ativo."
+- [x] Com dois admins ativos, rebaixar um é aceito
+- [x] Admin tirando o próprio papel, arquivando ou excluindo a própria conta recebe 400
+- [x] Quick gate passa
+- [x] Test count: 6 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix(api): impede ficar sem administrador e mexer na própria conta pelo painel`
 

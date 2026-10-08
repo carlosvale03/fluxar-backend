@@ -458,6 +458,51 @@ class ChangePasswordView(APIView):
 
 # --- Admin Views ---
 
+ULTIMO_ADMIN = "O sistema precisa ter pelo menos um administrador ativo."
+PROPRIA_CONTA = (
+    "Você não pode remover o próprio acesso de administrador nem arquivar ou excluir "
+    "a própria conta pelo painel."
+)
+
+
+class AcaoDeAdminRecusada(exceptions.APIException):
+    """HTTP 400 com `detail` e `code` (PERM-05, PERM-06)."""
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
+def garantir_admin_restante(afetados):
+    """
+    Recusa com 400 quando tirar o papel, arquivar ou excluir os usuários
+    `afetados` deixaria o sistema sem nenhum administrador ativo (PERM-05).
+
+    Trava os administradores ativos até o fim da requisição, para duas
+    mudanças simultâneas não rebaixarem os dois últimos.
+    """
+    ids = {u.pk for u in afetados if u.role == 'ADMIN' and u.is_active}
+    if not ids:
+        return
+    ativos = set(
+        User.objects.select_for_update().filter(role='ADMIN', is_active=True).values_list('pk', flat=True)
+    )
+    if not ativos - ids:
+        raise AcaoDeAdminRecusada(ULTIMO_ADMIN, code='last_admin')
+
+
+def recusar_a_propria_conta(request, afetados):
+    """
+    O administrador não tira o próprio papel nem arquiva ou exclui a própria
+    conta pelo painel (PERM-06). Conferido depois de `garantir_admin_restante`,
+    porque o último administrador só é afetado por uma ação sobre si mesmo.
+    """
+    if any(u.pk == request.user.pk for u in afetados):
+        raise AcaoDeAdminRecusada(PROPRIA_CONTA, code='own_account')
+
+
+def recusar_remocao_de_admin(request, afetados):
+    """As duas regras da remoção de um administrador, na ordem (PERM-05, PERM-06)."""
+    garantir_admin_restante(afetados)
+    recusar_a_propria_conta(request, afetados)
+
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
@@ -505,17 +550,9 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         if not user_ids:
             return Response({"detail": "Nenhum usuário selecionado."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verificar se está tentando excluir o último admin ou a si mesmo
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         users_to_delete = User.objects.filter(id__in=user_ids)
-        
-        if any(u.id == request.user.id for u in users_to_delete):
-             return Response({"detail": "Você não pode excluir sua própria conta em uma ação em massa."}, status=status.HTTP_400_BAD_REQUEST)
-
-        admin_count = User.objects.filter(role='ADMIN').count()
-        admins_to_delete = users_to_delete.filter(role='ADMIN').count()
-        
-        if admin_count - admins_to_delete < 1:
-            return Response({"detail": "Ação bloqueada: O sistema deve ter pelo menos um administrador."}, status=status.HTTP_400_BAD_REQUEST)
+        recusar_remocao_de_admin(request, users_to_delete)
 
         users_to_delete.update(is_active=False)
         # A conta arquivada perde as sessões abertas (SESSAO-17)
@@ -591,29 +628,9 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             )
             
         instance = self.get_object()
-        
-        # Evitar que o admin se arquive/exclua
-        if instance.id == request.user.id:
-            action = "excluir" if permanent else "arquivar"
-            return Response(
-                {"detail": f"Você não pode {action} sua própria conta administrativa."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Verificar se é o último admin (ativo ou total conforme a ação)
-        if instance.role == 'ADMIN':
-            if permanent:
-                admin_count = User.objects.filter(role='ADMIN').count()
-            else:
-                admin_count = User.objects.filter(role='ADMIN', is_active=True).count()
-                
-            if admin_count <= 1:
-                status_type = "cadastrado" if permanent else "ativo"
-                return Response(
-                    {"detail": f"Ação bloqueada: Este é o último administrador {status_type} do sistema."}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
+        recusar_remocao_de_admin(request, [instance])
+
         if permanent:
             user_email = instance.email
             instance.delete()
@@ -640,18 +657,12 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
-        instance = self.get_object()
-        new_role = self.request.data.get('role')
-        
-        # Impedir que o admin tire o próprio admin
-        if instance.id == self.request.user.id and new_role and new_role != 'ADMIN':
-             raise permissions.exceptions.PermissionDenied("Você não pode remover seu próprio papel administrativo.")
-
-        # Impedir de demover o último admin
-        if instance.role == 'ADMIN' and new_role and new_role != 'ADMIN':
-            admin_count = User.objects.filter(role='ADMIN').count()
-            if admin_count <= 1:
-                raise permissions.exceptions.PermissionDenied("Ação bloqueada: Este é o último administrador do sistema.")
+        instance = serializer.instance
+        dados = serializer.validated_data
+        # Tirar o papel ou desativar a conta de um administrador (PERM-05, PERM-06)
+        perde_o_acesso = dados.get('role', instance.role) != 'ADMIN' or not dados.get('is_active', instance.is_active)
+        if perde_o_acesso:
+            recusar_remocao_de_admin(self.request, [instance])
 
         serializer.save()
 
@@ -869,6 +880,9 @@ class AdminHardDeleteView(APIView):
 
         if not admin_password or not request.user.check_password(admin_password):
             return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
+        recusar_remocao_de_admin(request, [user])
 
         user_name = user.name
         # Delete user
