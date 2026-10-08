@@ -13,6 +13,8 @@ class Goal(models.Model):
     image = CloudinaryField('image', folder='goals', resource_type='image', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # Valor antes da correção da META-11; mostrado uma vez, até o usuário confirmar
+    valor_antes_da_correcao = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -33,7 +35,20 @@ class GoalDeposit(models.Model):
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     type = models.CharField(max_length=15, choices=TRANSACTION_TYPES, default='DEPOSIT')
     description = models.CharField(max_length=255, blank=True, null=True)
+    # `transfer_id` da transferência; nos registros antigos, o `transfer_id`
+    # ou o `id` da transação (META-01, META-10)
     transaction_id = models.UUIDField(null=True, blank=True, db_index=True)
+    # As duas pernas da transferência do aporte ou do resgate (AD-045). Sem
+    # elas e sem `transaction_id`, o registro não tem transação: saldo livre
+    # ou correção (META-13, META-16, META-11)
+    transacao_saida = models.ForeignKey(
+        'transactions.Transaction', on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    transacao_entrada = models.ForeignKey(
+        'transactions.Transaction', on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    # Registro de correção do recálculo da implantação (META-11)
+    eh_correcao = models.BooleanField(default=False)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 

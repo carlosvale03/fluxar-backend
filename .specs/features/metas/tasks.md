@@ -96,15 +96,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Valor = aportes − resgates, contando registros sem transação e registros com a transferência efetivada; uma transferência pendente não conta
-- [ ] Registro antigo com só o `transaction_id` é resolvido pelas transações desse `transfer_id`
-- [ ] Saldo livre = saldo do cofrinho − soma das metas, inclusive as arquivadas
-- [ ] `recalcular` grava `current_amount` e devolve as metas que ficariam negativas
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Valor = aportes − resgates, contando registros sem transação e registros com a transferência efetivada; uma transferência pendente não conta
+- [x] Registro antigo com só o `transaction_id` é resolvido pelas transações desse `transfer_id`
+- [x] Saldo livre = saldo do cofrinho − soma das metas, inclusive as arquivadas
+- [x] `recalcular` grava `current_amount` e devolve as metas que ficariam negativas
+- [x] Quick gate passa
+- [x] Test count: 9 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: calcula o valor das metas pelos aportes e resgates`
 

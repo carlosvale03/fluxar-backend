@@ -192,8 +192,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| META-01 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
-| META-02 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
+| META-01 | P1: Valor das metas e saldo livre do cofrinho | T1 | Implemented |
+| META-02 | P1: Valor das metas e saldo livre do cofrinho | T1 | In Progress |
 | META-03 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
 | META-04 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
 | META-05 | P1: Valor das metas e saldo livre do cofrinho | - | Pending |
