@@ -520,14 +520,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] A tela mostra `pending_total` e `pending_count` da API, sem buscar transações
-- [ ] Depositar chama a rota e mostra os aportes e, quando houver, quantos trocos foram descartados
-- [ ] Com `paused`, a tela pede outra meta; desativar mantém o total pendente
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] A tela mostra `pending_total` e `pending_count` da API, sem buscar transações
+- [x] Depositar chama a rota e mostra os aportes e, quando houver, quantos trocos foram descartados
+- [x] Com `paused`, a tela pede outra meta; desativar mantém o total pendente
+- [x] Build gate (frontend) passa
+- [x] Test count: pelo menos 4 testes (real: 6 testes novos em `tests/metas/cofrinho-de-trocos.test.tsx`; suíte do frontend com 299)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra e deposita os trocos calculados pelo backend`
 
