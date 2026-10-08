@@ -492,13 +492,14 @@ T14 → T15
 
 **Done when**:
 
-- [ ] O histórico pede `page` e mostra total e controles
-- [ ] Meta com `correction` mostra o aviso; "Entendi" chama `dismiss-correction` e o aviso some
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O histórico pede `page` e mostra total e controles
+- [x] Meta com `correction` mostra o aviso; "Entendi" chama `dismiss-correction` e o aviso some
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: pagina o histórico da meta e avisa a correção do valor`
 

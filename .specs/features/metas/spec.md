@@ -202,7 +202,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-08 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-09 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
 | META-10 | P1: Valor das metas e saldo livre do cofrinho | T3 | Implemented |
-| META-11 | P1: Valor das metas e saldo livre do cofrinho | T3 | In Progress |
+| META-11 | P1: Valor das metas e saldo livre do cofrinho | T3, T14 | Implemented |
 | META-12 | P1: Aportes e resgates | T4, T12 | Implemented |
 | META-13 | P1: Aportes e resgates | T4, T12 | Implemented |
 | META-14 | P1: Aportes e resgates | T4, T12 | Implemented |
@@ -223,7 +223,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | META-29 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
 | META-30 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
 | META-31 | P1: Cadastro e consulta das metas | T6 | Implemented |
-| META-32 | P1: Cadastro e consulta das metas | T7 | In Progress |
+| META-32 | P1: Cadastro e consulta das metas | T7, T14 | Implemented |
 | META-33 | P1: Cadastro e consulta das metas | T7 | Implemented |
 | META-34 | P1: Cadastro e consulta das metas | T7 | Implemented |
 | META-35 | P1: Cofrinho de trocos | T8 | In Progress |
