@@ -312,15 +312,16 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Senha errada recebe 400 `{password: ["Senha incorreta."]}` e a conta não muda
-- [ ] Senha certa desativa a conta, encerra as sessões de todos os aparelhos e devolve `deletion_scheduled_for` 30 dias depois
-- [ ] O e-mail sai com a data e como desistir; com o envio falhando, o pedido vale igual
-- [ ] O único admin ativo recebe 400 "O sistema precisa ter pelo menos um administrador ativo."
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Senha errada recebe 400 `{password: ["Senha incorreta."]}` e a conta não muda
+- [x] Senha certa desativa a conta, encerra as sessões de todos os aparelhos e devolve `deletion_scheduled_for` 30 dias depois
+- [x] O e-mail sai com a data e como desistir; com o envio falhando, o pedido vale igual
+- [x] O único admin ativo recebe 400 "O sistema precisa ter pelo menos um administrador ativo."
+- [x] Quick gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite ao usuário pedir a exclusão da própria conta`
 

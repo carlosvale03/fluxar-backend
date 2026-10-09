@@ -86,6 +86,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     terms_accepted = models.BooleanField(default=False)
     terms_accepted_at = models.DateTimeField(blank=True, null=True)
 
+    # 6. Exclusão pedida pelo usuário: a conta fica desativada até a exclusão
+    # definitiva, 30 dias depois do pedido (LGPD-05, AD-018)
+    exclusao_pedida_em = models.DateTimeField(null=True, blank=True)
+    exclusao_agendada_para = models.DateTimeField(null=True, blank=True, db_index=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'

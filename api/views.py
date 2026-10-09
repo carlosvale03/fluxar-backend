@@ -1,4 +1,4 @@
-from rest_framework import exceptions, generics, status, permissions, filters
+from rest_framework import exceptions, generics, serializers, status, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -44,7 +44,12 @@ from core.throttles import (
     ReenvioEmailThrottle,
     ReenvioIPThrottle,
 )
-from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
+from .utils.email_service import (
+    _mask_email,
+    send_account_deletion_email,
+    send_password_reset_email,
+    send_verification_email,
+)
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
@@ -476,6 +481,53 @@ class ChangePasswordView(APIView):
             return Response({"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+PRAZO_PARA_DESISTIR = timedelta(days=30)
+SENHA_OBRIGATORIA = "Este campo é obrigatório."
+
+
+def _data_na_api(valor):
+    """Data e hora no mesmo formato ISO dos serializers."""
+    return serializers.DateTimeField().to_representation(valor)
+
+
+class PedidoDeExclusaoView(APIView):
+    """
+    O usuário pede a exclusão da própria conta, confirmando a senha atual
+    (LGPD-03 a LGPD-06, LGPD-09, AD-018).
+
+    A conta é desativada na hora, perde todas as sessões e fica marcada para
+    a exclusão definitiva 30 dias depois. O e-mail com a data sai na própria
+    requisição, e a falha no envio não desfaz o pedido (AD-011).
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        user = request.user
+        senha = request.data.get('password')
+        if not isinstance(senha, str) or not senha:
+            return Response({"password": [SENHA_OBRIGATORIA]}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(senha):
+            return Response({"password": ["Senha incorreta."]}, status=status.HTTP_400_BAD_REQUEST)
+        # O último administrador ativo não sai (LGPD-09)
+        garantir_admin_restante([user])
+
+        agora = timezone.now()
+        user.is_active = False
+        user.exclusao_pedida_em = agora
+        user.exclusao_agendada_para = agora + PRAZO_PARA_DESISTIR
+        user.save(update_fields=['is_active', 'exclusao_pedida_em', 'exclusao_agendada_para'])
+        # Desconecta todos os aparelhos (LGPD-05, SESSAO-17)
+        encerrar_todas(user)
+
+        email_sent = send_account_deletion_email(user, user.exclusao_agendada_para)
+        if not email_sent:
+            logger.warning("Aviso de exclusão não enviado destinatario=%s", _mask_email(user.email))
+
+        return Response({
+            "deletion_scheduled_for": _data_na_api(user.exclusao_agendada_para),
+            "email_sent": email_sent,
+        }, status=status.HTTP_200_OK)
 
 # --- Admin Views ---
 

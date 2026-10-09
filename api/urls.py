@@ -7,6 +7,7 @@ from .views import (
     MeView,
     PlansView,
     ChangePasswordView,
+    PedidoDeExclusaoView,
     VerifyEmailView,
     ResendVerificationView,
     ForgotPasswordView,
@@ -48,6 +49,8 @@ urlpatterns = [
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST
     path('users/me/avatar/', UserAvatarView.as_view(), name='users_avatar'),
     path('users/me/password/', ChangePasswordView.as_view(), name='users_me_password'),
+    # Pedido de exclusão da própria conta (LGPD-03 a LGPD-06)
+    path('users/me/delete/', PedidoDeExclusaoView.as_view(), name='users_me_delete'),
 
     # System
     path('health/', health_check, name='health_check'),
