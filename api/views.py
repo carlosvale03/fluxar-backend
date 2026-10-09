@@ -31,6 +31,7 @@ from .serializers import (
     conta_do_token_de_cancelamento,
 )
 from .models import (
+    DecisaoDeConsentimento,
     EmailVerificationToken,
     GlobalSetting,
     PasswordResetToken,
@@ -1169,6 +1170,36 @@ class AceiteDosTermosView(APIView):
             "accepted_version": user.versao_dos_termos_aceita,
             "current_version": termos.VERSAO_VIGENTE,
         }, status=status.HTTP_200_OK)
+
+CONSENTIMENTO_INVALIDO = "Informe true ou false."
+
+
+class ConsentimentoView(APIView):
+    """
+    O consentimento para o uso de dados anonimizados na melhoria do produto
+    (LGPD-34, LGPD-35). GET devolve o estado atual e a última decisão; PUT
+    com `{consent}` grava uma decisão nova, com a data e a versão vigente da
+    política, sem apagar as anteriores, e atualiza o cache do usuário.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def resposta(self, user):
+        ultima = DecisaoDeConsentimento.objects.filter(user=user).order_by('-decidido_em').first()
+        return Response({
+            "consent": user.consentimento_melhoria,
+            "decided_at": _data_na_api(ultima.decidido_em) if ultima else None,
+            "policy_version": ultima.versao_da_politica if ultima else None,
+        }, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        return self.resposta(request.user)
+
+    def put(self, request):
+        consentiu = request.data.get('consent')
+        if not isinstance(consentiu, bool):
+            return Response({"consent": [CONSENTIMENTO_INVALIDO]}, status=status.HTTP_400_BAD_REQUEST)
+        termos.registrar_decisao(request.user, consentiu)
+        return self.resposta(request.user)
 
 # --- System Views ---
 

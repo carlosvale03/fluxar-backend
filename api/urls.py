@@ -18,6 +18,7 @@ from .views import (
     RotinaDiariaView,
     TermosView,
     AceiteDosTermosView,
+    ConsentimentoView,
     UserAvatarView,
     AdminUserListView,
     AdminUserDetailView,
@@ -60,6 +61,8 @@ urlpatterns = [
     path('users/me/delete/', PedidoDeExclusaoView.as_view(), name='users_me_delete'),
     # Download dos dados financeiros, em qualquer plano (LGPD-02)
     path('users/me/export/', ExportarMeusDadosView.as_view(), name='users_me_export'),
+    # Consentimento de melhoria do produto (LGPD-34, LGPD-35)
+    path('users/me/consent/', ConsentimentoView.as_view(), name='users_me_consent'),
 
     # Versão vigente dos termos e da política, pública (LGPD-28, LGPD-31)
     path('terms/', TermosView.as_view(), name='terms'),

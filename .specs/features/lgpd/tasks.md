@@ -524,13 +524,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Dar e retirar o consentimento grava duas decisões com data e versão, sem apagar a anterior
-- [ ] `GET` devolve o estado atual e a data da última decisão
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Dar e retirar o consentimento grava duas decisões com data e versão, sem apagar a anterior
+- [x] `GET` devolve o estado atual e a data da última decisão
+- [x] Quick gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite dar e retirar o consentimento a qualquer momento`
 
