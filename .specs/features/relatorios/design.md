@@ -1,7 +1,7 @@
 # Relatórios Design
 
 **Spec**: `.specs/features/relatorios/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

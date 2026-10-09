@@ -168,31 +168,31 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Transações que entram nos relatórios | T1, T2, T7, T10 | Implemented |
-| REL-02 | P1: Transações que entram nos relatórios | T1, T2, T7 | Implemented |
-| REL-03 | P1: Transações que entram nos relatórios | T1, T2, T7 | Implemented |
-| REL-04 | P1: Transações que entram nos relatórios | T2, T4, T11 | Implemented |
-| REL-05 | P1: Transações que entram nos relatórios | T2, T7 | Implemented |
-| REL-06 | P1: Transações que entram nos relatórios | T6, T10 | Implemented |
-| REL-07 | P1: Transações que entram nos relatórios | T2, T7 | Implemented |
-| REL-08 | P1: Transações que entram nos relatórios | T2, T4 | Implemented |
-| REL-09 | P1: Transações que entram nos relatórios | T8 | Implemented |
-| REL-10 | P1: Transações que entram nos relatórios | T2, T7, T8 | Implemented |
-| REL-11 | P1: Transações que entram nos relatórios | T1, T8 | Implemented |
-| REL-12 | P1: Transações que entram nos relatórios | T3 | Implemented |
-| REL-13 | P1: Patrimônio, liquidez e reservas | T2, T4, T10 | Implemented |
-| REL-14 | P1: Patrimônio, liquidez e reservas | T2, T5 | Implemented |
-| REL-15 | P1: Patrimônio, liquidez e reservas | T4, T11 | Implemented |
-| REL-16 | P1: Patrimônio, liquidez e reservas | T2, T8 | Implemented |
-| REL-17 | P1: Patrimônio, liquidez e reservas | T2, T7, T8 | Implemented |
-| REL-18 | P1: Patrimônio, liquidez e reservas | T2, T4, T11 | Implemented |
-| REL-19 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |
-| REL-20 | P1: Score financeiro e dinheiro guardado | T2, T10 | Implemented |
-| REL-21 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |
-| REL-22 | P1: Score financeiro e dinheiro guardado | T5, T12 | Implemented |
-| REL-23 | P1: Telas e exportação | T12 | Implemented |
-| REL-24 | P1: Telas e exportação | T13 | Implemented |
-| REL-25 | P1: Telas e exportação | T9 | Implemented |
+| REL-01 | P1: Transações que entram nos relatórios | T1, T2, T7, T10 | Verified |
+| REL-02 | P1: Transações que entram nos relatórios | T1, T2, T7 | Verified |
+| REL-03 | P1: Transações que entram nos relatórios | T1, T2, T7 | Verified |
+| REL-04 | P1: Transações que entram nos relatórios | T2, T4, T11 | Verified |
+| REL-05 | P1: Transações que entram nos relatórios | T2, T7 | Verified |
+| REL-06 | P1: Transações que entram nos relatórios | T6, T10 | Verified |
+| REL-07 | P1: Transações que entram nos relatórios | T2, T7 | Verified |
+| REL-08 | P1: Transações que entram nos relatórios | T2, T4 | Verified |
+| REL-09 | P1: Transações que entram nos relatórios | T8 | Verified |
+| REL-10 | P1: Transações que entram nos relatórios | T2, T7, T8 | Verified |
+| REL-11 | P1: Transações que entram nos relatórios | T1, T8 | Verified |
+| REL-12 | P1: Transações que entram nos relatórios | T3 | Verified |
+| REL-13 | P1: Patrimônio, liquidez e reservas | T2, T4, T10 | Verified |
+| REL-14 | P1: Patrimônio, liquidez e reservas | T2, T5 | Verified |
+| REL-15 | P1: Patrimônio, liquidez e reservas | T4, T11 | Verified |
+| REL-16 | P1: Patrimônio, liquidez e reservas | T2, T8 | Verified |
+| REL-17 | P1: Patrimônio, liquidez e reservas | T2, T7, T8 | Verified |
+| REL-18 | P1: Patrimônio, liquidez e reservas | T2, T4, T11 | Verified |
+| REL-19 | P1: Score financeiro e dinheiro guardado | T5 | Verified |
+| REL-20 | P1: Score financeiro e dinheiro guardado | T2, T10 | Verified |
+| REL-21 | P1: Score financeiro e dinheiro guardado | T5 | Verified |
+| REL-22 | P1: Score financeiro e dinheiro guardado | T5, T12 | Verified |
+| REL-23 | P1: Telas e exportação | T12 | Verified |
+| REL-24 | P1: Telas e exportação | T13 | Verified |
+| REL-25 | P1: Telas e exportação | T9 | Verified |
 
 **Coverage:** 25 total, 25 mapped to tasks, 0 unmapped
 
