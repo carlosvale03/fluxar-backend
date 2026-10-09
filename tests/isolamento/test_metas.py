@@ -56,13 +56,15 @@ class EscritaContaDaMetaTests(DoisUsuariosTestCase):
         self.assertEqual(resp.data['account'], self.a.cofrinho.id)
 
     def test_edicao_com_conta_de_a_continua_funcionando(self):
+        # O cofrinho da meta só pode ser uma conta do tipo cofrinho (META-26)
+        outro_cofrinho = Account.objects.create(user=self.a.usuario, name='Outro A', type='PIGGY_BANK')
         resp = self.cliente.patch(
-            f'{URL}{self.a.meta.id}/', {'account': str(self.a.conta.id)}, format='json',
+            f'{URL}{self.a.meta.id}/', {'account': str(outro_cofrinho.id)}, format='json',
         )
 
         self.assertEqual(resp.status_code, 200, resp.data)
-        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).account, self.a.conta)
-        self.assertEqual(resp.data['account'], self.a.conta.id)
+        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).account, outro_cofrinho)
+        self.assertEqual(resp.data['account'], outro_cofrinho.id)
 
 
 class LeituraContaDaMetaTests(DoisUsuariosTestCase):
@@ -85,8 +87,9 @@ class LeituraContaDaMetaTests(DoisUsuariosTestCase):
 
         self.assertEqual(detalhe.status_code, 200)
         self.assertIsNone(detalhe.data['account'])
-        self.assertEqual([d['id'] for d in detalhe.data['deposits']], [movimento_de_b.id])
-        self.assertNotIn(movimento_de_a.id, [d['id'] for d in detalhe.data['deposits']])
+        # A meta não traz mais o histórico (META-31); o histórico da meta tem
+        # o próprio teste de isolamento (test_historico_meta.py)
+        self.assertNotIn('deposits', detalhe.data)
         self.assertNotIn('Cofrinho A', str(detalhe.data))
         self.assertNotIn('Salário A', str(detalhe.data))
 
@@ -94,4 +97,4 @@ class LeituraContaDaMetaTests(DoisUsuariosTestCase):
         itens = lista.data['results'] if isinstance(lista.data, dict) else lista.data
         meta_na_lista = next(item for item in itens if item['id'] == self.b.meta.id)
         self.assertIsNone(meta_na_lista['account'])
-        self.assertEqual([d['id'] for d in meta_na_lista['deposits']], [movimento_de_b.id])
+        self.assertNotIn('deposits', meta_na_lista)

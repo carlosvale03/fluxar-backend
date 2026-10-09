@@ -143,5 +143,6 @@ class FiltroDesconhecidoTests(ContratosTestCase):
         resp = self.client.patch(f'/api/tags/{self.tag.pk}/?x=1', {'name': 'Editada'}, format='json')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(Tag.objects.get(pk=self.tag.pk).name, 'Editada')
+        # A exclusão da meta responde 200 com `piggy_bank_empty` (META-30)
         resp = self.client.delete(f'/api/goals/{self.meta.pk}/?x=1')
-        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 200)

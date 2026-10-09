@@ -6,6 +6,7 @@ from tests.isolamento.base import DoisUsuariosTestCase
 
 
 class HistoricoDaMetaTests(DoisUsuariosTestCase):
+    """O histórico vem paginado (META-32): os movimentos ficam em `results`."""
 
     def setUp(self):
         # Movimento no cofrinho de A gravado à força na meta de B, como antes da correção
@@ -27,7 +28,7 @@ class HistoricoDaMetaTests(DoisUsuariosTestCase):
         resp = self.como(self.b.usuario).get(self.url)
 
         self.assertEqual(resp.status_code, 200)
-        self.assertNotIn(self.movimento_de_a.id, [m['id'] for m in resp.data])
+        self.assertNotIn(self.movimento_de_a.id, [m['id'] for m in resp.data['results']])
         self.assertNotIn('Cofrinho A', str(resp.data))
         self.assertNotIn('Salário A', str(resp.data))
 
@@ -36,7 +37,7 @@ class HistoricoDaMetaTests(DoisUsuariosTestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            [(m['id'], m['account_name'], m['type']) for m in resp.data],
+            [(m['id'], m['account_name'], m['type']) for m in resp.data['results']],
             [
                 (self.resgate_de_b.id, 'Conta B', 'WITHDRAWAL'),
                 (self.aporte_de_b.id, 'Cofrinho B', 'DEPOSIT'),

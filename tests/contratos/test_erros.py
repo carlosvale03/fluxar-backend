@@ -65,7 +65,7 @@ class FormatoDosErrosTests(ContratosTestCase):
         meta = Goal.objects.create(user=self.a.usuario, name='Meta', target_amount=Decimal('100.00'), account=cofrinho)
         self.client.raise_request_exception = False
 
-        with patch.object(GoalService, 'deposit', side_effect=RuntimeError('segredo interno do banco')):
+        with patch.object(GoalService, 'aportar', side_effect=RuntimeError('segredo interno do banco')):
             resp = self.client.post(f'/api/goals/{meta.pk}/deposit/', {
                 'amount': '10.00', 'account_id': str(self.a.conta.pk),
             }, format='json')
@@ -92,13 +92,14 @@ class RotasReescritasTests(ContratosTestCase):
         }, format='json')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.data['code'], 'invalid')
-        self.assertTrue(resp.data['detail'].startswith('Saldo insuficiente na meta.'), resp.data)
+        # Resgate acima do valor da meta (META-17)
+        self.assertEqual(resp.data['detail'], 'A meta tem R$ 0,00 para resgatar.')
 
         Goal.objects.filter(pk=self.meta.pk).update(current_amount=Decimal('5.00'))
         resp = self.client.delete(f'/api/goals/{self.meta.pk}/')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.data, {
-            'detail': 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.',
+            'detail': 'Resgate o valor da meta antes de excluí-la.',
             'code': 'invalid',
         })
 

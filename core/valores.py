@@ -80,6 +80,18 @@ def dinheiro(valor):
     return str(abs(valor) if valor == 0 else valor)
 
 
+def reais(valor):
+    """
+    Valor em reais para as mensagens ao usuário, no formato brasileiro:
+    "R$ 1.234,56" e "-R$ 200,00".
+    """
+    texto = dinheiro(valor)
+    negativo = texto.startswith('-')
+    inteiro, centavos = texto.lstrip('-').split('.')
+    inteiro = f'{int(inteiro):,}'.replace(',', '.')
+    return f'{"-" if negativo else ""}R$ {inteiro},{centavos}'
+
+
 def validar_valor_positivo(valor):
     """Validador de campo: recusa zero e negativos."""
     if valor <= 0:

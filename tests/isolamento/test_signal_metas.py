@@ -8,8 +8,8 @@ from tests.isolamento.base import DoisUsuariosTestCase
 
 class SignalMetasDoCofrinhoTests(DoisUsuariosTestCase):
     """
-    O signal de metas roda em `transaction.on_commit`; dentro do TestCase, o
-    `captureOnCommitCallbacks(execute=True)` executa o callback ao fim do bloco.
+    O rateio automático saiu (META-03): o `captureOnCommitCallbacks(execute=True)`
+    executa qualquer callback pendente, para provar que nenhum muda as metas.
     """
 
     def setUp(self):
@@ -26,10 +26,10 @@ class SignalMetasDoCofrinhoTests(DoisUsuariosTestCase):
         self.assertEqual(resp.status_code, 201, resp.data)
         self.assertFalse(GoalDeposit.objects.filter(goal=self.b.meta).exists())
         self.assertEqual(Goal.objects.get(pk=self.b.meta.pk).current_amount, Decimal('0.00'))
-        # A meta de A recebe o movimento inteiro
-        aporte = GoalDeposit.objects.get(goal=self.a.meta)
-        self.assertEqual((aporte.type, aporte.amount, aporte.account), ('DEPOSIT', Decimal('100.00'), self.a.cofrinho))
-        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('100.00'))
+        # Sem rateio: a entrada muda só o saldo livre, e a meta de A também
+        # fica como estava (META-03, AD-028)
+        self.assertFalse(GoalDeposit.objects.filter(goal=self.a.meta).exists())
+        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('0.00'))
 
     def test_saida_do_cofrinho_de_a_nao_resgata_da_meta_de_b(self):
         Goal.objects.filter(pk=self.a.meta.pk).update(current_amount=Decimal('100.00'))
@@ -43,6 +43,6 @@ class SignalMetasDoCofrinhoTests(DoisUsuariosTestCase):
 
         self.assertFalse(GoalDeposit.objects.filter(goal=self.b.meta).exists())
         self.assertEqual(Goal.objects.get(pk=self.b.meta.pk).current_amount, Decimal('300.00'))
-        resgate = GoalDeposit.objects.get(goal=self.a.meta)
-        self.assertEqual((resgate.type, resgate.amount), ('WITHDRAWAL', Decimal('40.00')))
-        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('60.00'))
+        # Sem rateio: a saída muda só o saldo livre (META-03, AD-028)
+        self.assertFalse(GoalDeposit.objects.filter(goal=self.a.meta).exists())
+        self.assertEqual(Goal.objects.get(pk=self.a.meta.pk).current_amount, Decimal('100.00'))

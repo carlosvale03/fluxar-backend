@@ -354,16 +354,24 @@
 - **Date**: 2026-10-07
 - **Status**: active
 
+### AD-045
+- **Decision**: O valor de cada meta (`Goal.current_amount`) é sempre o resultado de `goals/valores.py`: aportes menos resgates registrados para ela, contando os registros sem transferência e os com a transferência efetivada, gravado sob trava da meta. Cada registro aponta para as duas pernas da transferência, e os signals de `Transaction` mantêm o registro e o valor na mesma operação, recusando o que deixaria uma meta negativa. O saldo livre do cofrinho é o saldo da conta menos a soma das metas dele.
+- **Reason**: o valor era um número solto incrementado em três lugares, inclusive num rateio automático que errava os valores e deixava dinheiro que não existe depois de uma exclusão (FIN-09, FIN-20, FIN-37, FIN-38).
+- **Trade-off**: todo caminho que muda registros de meta chama `recalcular()`, e os signals de transação consultam os registros ligados.
+- **Scope**: metas, saldo, gestao-do-salario e importacao.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `permissoes-e-planos` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T15, mais três correções pós-lote) e verificado: `validation.md` com PASS, 29 de 29 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: administrador pelo papel atual (AD-016), proteção do último admin e da própria conta, `create_admin.py` sem repromover, comando `divergencias_de_admin`, catálogo de 24 travas com `TravaDePlano` e liberação para testes (AD-044), painel de travas com log, travas e limites nas rotas com 403 `plan_locked`/`plan_limit_reached`, `access` no `/auth/me`, página de planos e travas em todas as telas; backend com 872 testes e frontend com 270
+- **Feature**: `metas` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T15, mais os ajustes de ordem das travas e do recálculo no isolamento) e verificado: `validation.md` com PASS, 45 de 45 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: valor da meta derivado dos aportes e resgates sob trava (AD-045), saldo livre por cofrinho com aviso, fim do rateio automático, vínculo com as transferências, correção dos valores gravados com aviso único, aporte e resgate pelo saldo livre, cadastro só com cofrinhos, exclusão com o cofrinho vazio, histórico paginado e cofrinho de trocos no backend; backend com 959 testes e frontend com 299
 - **In-progress** (file:line): nenhum
-- **Deploy**: migrações de `TravaDePlano` e de `testing_unlock = 'true'`; depois do deploy, rodar `python manage.py divergencias_de_admin` no Render Shell
-- **Observações do verificador**: `gestao_do_salario` e `vinculos` ainda sem rota nem tela (as specs delas aplicam a trava); leitura de cartões liberada com `cartoes` fechado (SPEC_DEVIATION, PERM-22); sem teste de admin rebaixado recebendo `plan_locked`; "última gravação vale" testado só em sequência
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo` (duas categorias "Lazer"); `print` de depuração em `CategoryViewSet.create` e nos signals de metas; `create_admin.py` não promove o e-mail configurado se ele já existe como usuário comum
-- **Next step**: o usuário faz o push das duas branches `fix/permissoes-e-planos` e abre os PRs para a `development`. Depois do merge, a próxima é `metas`
+- **Deploy**: migrações de `goals` (campos novos, recálculo das metas e trocos) rodam no Pre-Deploy; metas com valor negativo viram zero com aviso único na tela
+- **Observações do verificador**: docstring de `get_progress` ainda cita o rateio; sem teste dedicado de transferência entre dois cofrinhos; troca de cofrinho sem teste no frontend; divisão do salário numa meta depende da `gestao-do-salario`
+- **Fora do escopo, anotado**: pasta `goals/management/` só com `__pycache__`; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `print` de depuração em `CategoryViewSet.create`
+- **Next step**: o usuário faz o push das duas branches `fix/metas-aportes-resgates-e-cofrinho` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `relatorios`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/permissoes-e-planos (backend e frontend)
+- **Branch**: fix/metas-aportes-resgates-e-cofrinho (backend e frontend)

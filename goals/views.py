@@ -4,17 +4,22 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from .models import Goal
 from .serializers import GoalSerializer, GoalDepositSerializer
-from .services import GoalService
+from .services import GoalService, META_ARQUIVADA
+from . import trocos
 from core.travas import RecursoLiberado, conferir_limite
 from accounts.models import Account
-from core.filtros import ParametrosConhecidosMixin
+from core.filtros import PAGINACAO, ParametrosConhecidosMixin
+from core.pagination import PaginacaoPadrao
 from core.mixins import UserQuerySetMixin
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.datas import hoje, ler_data
-from core.valores import ler_valor
+from core.valores import dinheiro, ler_valor
+from .valores import saldo_livre
 
 CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
-META_COM_SALDO = 'Não é possível excluir uma meta com saldo pendente. Resgate o dinheiro primeiro para zerar a meta.'
+META_COM_VALOR = 'Resgate o valor da meta antes de excluí-la.'
+TROCA_COM_VALOR = 'Resgate o valor da meta antes de trocar o cofrinho.'
+META_NAO_ENCONTRADA = 'Meta não encontrada.'
 
 
 def _data_do_movimento(texto):
@@ -25,6 +30,11 @@ def _data_do_movimento(texto):
     if texto in (None, ''):
         return hoje()
     return ler_data(texto, 'date')
+
+
+def _verdadeiro(valor):
+    """Booleano do corpo: `true` em JSON ou "true" em formulário."""
+    return valor is True or (isinstance(valor, str) and valor.lower() == 'true')
 
 
 def _exigir(campos):
@@ -51,72 +61,171 @@ class GoalViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelVi
     # Metas, aportes, resgates e histórico (PERM-15). O cofrinho é uma conta
     # comum: transferências e ajuste de saldo seguem liberados (PERM-22)
     permission_classes = [permissions.IsAuthenticated, RecursoLiberado('metas')]
+    # Só o histórico é paginado (META-32, CONTRATO-14)
+    parametros_por_acao = {'history': PAGINACAO}
     
     def perform_create(self, serializer):
         # O cofrinho criado com a meta não conta no limite de contas (PERM-16)
         conferir_limite(self.request.user, 'limite_metas')
         serializer.save()
 
+    def perform_update(self, serializer):
+        """Trocar o cofrinho só com a meta zerada (META-28)."""
+        meta = serializer.instance
+        novo = serializer.validated_data.get('account', meta.account)
+        if novo != meta.account and meta.current_amount > 0:
+            raise ValidationError({'detail': TROCA_COM_VALOR})
+        serializer.save()
+
     def destroy(self, request, *args, **kwargs):
-        """Bloqueia a exclusão se a meta ainda tiver saldo."""
+        """
+        Exclui só a meta zerada (META-29). A resposta diz se o cofrinho ficou
+        sem metas e com saldo zero, para a interface perguntar se exclui o
+        cofrinho também (META-30).
+        """
         goal = self.get_object()
-        if goal.current_amount != 0:
-            raise ValidationError({'detail': META_COM_SALDO})
-        return super().destroy(request, *args, **kwargs)
-    
+        if goal.current_amount > 0:
+            raise ValidationError({'detail': META_COM_VALOR})
+        cofrinho = goal.account
+        goal.delete()
+        cofrinho_vazio = (
+            cofrinho is not None and cofrinho.user_id == request.user.pk and cofrinho.is_active
+            and not Goal.objects.filter(account=cofrinho).exists()
+            and Account.objects.get(pk=cofrinho.pk).balance == 0
+        )
+        return Response({'piggy_bank_empty': cofrinho_vazio}, status=status.HTTP_200_OK)
+
     def get_queryset(self):
         # UserQuerySetMixin já filtra user=self.request.user
         return super().get_queryset()
 
-    @decorators.action(detail=True, methods=['post'])
-    def deposit(self, request, pk=None):
-        goal = self.get_object()
-        
-        # Validar dados de entrada manualmente ou usar serializer simples
-        amount = request.data.get('amount')
-        account_id = request.data.get('account_id') or request.data.get('account_from')
-        
-        _exigir({'amount': amount, 'account_id': account_id})
-        # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
-        amount = ler_valor(amount)
-        date_deposit = _data_do_movimento(request.data.get('date'))
-            
-        # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
-        account_field = 'account_id' if request.data.get('account_id') else 'account_from'
-        account = get_owned_or_400(
-            Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
+    def _conta_do_movimento(self, request, campos, saldo_livre):
+        """
+        A conta de origem do aporte ou de destino do resgate, lida do primeiro
+        campo preenchido de `campos`. Com o saldo livre (`saldo_livre`
+        verdadeiro), não há conta (META-13, META-16). Erro no campo que a
+        requisição usou, com a mensagem de ID inexistente (META-20, AD-010);
+        só contas ativas (SALDO-35).
+        """
+        if saldo_livre:
+            return None
+        campo = next((c for c in campos if request.data.get(c)), campos[0])
+        return get_owned_or_400(
+            Account.objects.filter(is_active=True), request.user, request.data.get(campo), campo,
+            CONTA_NAO_ENCONTRADA,
         )
-        
-        _mover(GoalService.deposit, goal, account, amount, date_deposit, request.data.get('description'))
-        # Retornar a meta atualizada
+
+    def _movimentar(self, request, operacao, campos, campo_do_saldo_livre):
+        goal = self.get_object()
+        amount = request.data.get('amount')
+        saldo_livre = _verdadeiro(request.data.get(campo_do_saldo_livre))
+        obrigatorios = {'amount': amount}
+        if not saldo_livre:
+            campo = next((c for c in campos if request.data.get(c)), campos[0])
+            obrigatorios[campo] = request.data.get(campo)
+        _exigir(obrigatorios)
+        # Valor maior que zero, com até duas casas, com o erro no campo (META-19, SALDO-09)
+        amount = ler_valor(amount)
+        data = _data_do_movimento(request.data.get('date'))
+        conta = self._conta_do_movimento(request, campos, saldo_livre)
+
+        _mover(operacao, goal, amount, data, conta, request.data.get('description'))
+        goal.refresh_from_db()
         return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['post'])
+    def deposit(self, request, pk=None):
+        """Aporte de outra conta (`account_id` ou `account_from`) ou do saldo livre (`from_free_balance`)."""
+        return self._movimentar(request, GoalService.aportar, ('account_id', 'account_from'), 'from_free_balance')
+
+    @decorators.action(detail=True, methods=['post'])
     def withdraw(self, request, pk=None):
+        """Resgate para outra conta (`account_to` ou `account_id`) ou para o saldo livre (`to_free_balance`)."""
+        return self._movimentar(request, GoalService.resgatar, ('account_to', 'account_id'), 'to_free_balance')
+
+    @decorators.action(detail=False, methods=['get'], url_path='piggy-banks')
+    def piggy_banks(self, request):
+        """
+        Um item por cofrinho com metas do usuário: saldo, soma das metas,
+        inclusive as arquivadas, e saldo livre, que pode ser negativo
+        (META-02, META-04).
+        """
+        cofrinhos = Account.objects.filter(
+            user=request.user, type='PIGGY_BANK', goals__user=request.user,
+        ).distinct().order_by('name', 'pk')
+        itens = []
+        for cofrinho in cofrinhos:
+            livre = saldo_livre(cofrinho)
+            itens.append({
+                'account_id': cofrinho.pk,
+                'name': cofrinho.name,
+                'balance': dinheiro(cofrinho.balance),
+                'goals_total': dinheiro(cofrinho.balance - livre),
+                'free_balance': dinheiro(livre),
+            })
+        return Response(itens)
+
+    @decorators.action(detail=True, methods=['post'], url_path='dismiss-correction')
+    def dismiss_correction(self, request, pk=None):
+        """O usuário viu o aviso da correção, que não aparece mais (META-11)."""
         goal = self.get_object()
-        
-        amount = request.data.get('amount')
-        # account_to é para onde o dinheiro sai do cofrinho
-        account_id = request.data.get('account_to') or request.data.get('account_id')
-        
-        _exigir({'amount': amount, 'account_to': account_id})
-        # Valor maior que zero, com até duas casas, com o erro no campo (SALDO-09)
-        amount = ler_valor(amount)
-        date_withdrawal = _data_do_movimento(request.data.get('date'))
-            
-        # Erro no campo que a requisição usou (AD-010); só contas ativas (SALDO-35)
-        account_field = 'account_to' if request.data.get('account_to') else 'account_id'
-        account_to = get_owned_or_400(
-            Account.objects.filter(is_active=True), request.user, account_id, account_field, CONTA_NAO_ENCONTRADA,
-        )
-        
-        _mover(GoalService.withdraw, goal, account_to, amount, date_withdrawal, request.data.get('description'))
+        Goal.objects.filter(pk=goal.pk).update(valor_antes_da_correcao=None)
+        goal.refresh_from_db()
         return Response(self.get_serializer(goal).data, status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['get'])
     def history(self, request, pk=None):
+        """
+        Histórico de aportes e resgates, paginado no formato de CONTRATO-02, do
+        mais recente para o mais antigo (META-32). Só movimentos em contas do
+        dono da meta (ISOL-15).
+        """
         goal = self.get_object()
-        # Só movimentos em contas do dono da meta, como em GoalSerializer.deposits (ISOL-15)
-        deposits = goal.deposits.filter(account__user_id=goal.user_id).order_by('-created_at')
-        serializer = GoalDepositSerializer(deposits, many=True)
-        return Response(serializer.data)
+        deposits = (
+            goal.deposits.filter(account__user_id=goal.user_id)
+            .select_related('account').order_by('-date', '-created_at', '-pk')
+        )
+        paginacao = PaginacaoPadrao()
+        pagina = paginacao.paginate_queryset(deposits, request, view=self)
+        return paginacao.get_paginated_response(GoalDepositSerializer(pagina, many=True).data)
+
+    def _meta_dos_trocos(self, request, obrigatoria):
+        """
+        A meta escolhida para os trocos: só metas ativas do usuário, com o
+        erro no campo `goal` (AD-010, META-44).
+        """
+        goal = request.data.get('goal')
+        if goal in (None, ''):
+            if obrigatoria:
+                _exigir({'goal': goal})
+            return None
+        meta = get_owned_or_400(Goal.objects.all(), request.user, goal, 'goal', META_NAO_ENCONTRADA)
+        if not meta.is_active:
+            raise ValidationError({'goal': [META_ARQUIVADA]})
+        return meta
+
+    @decorators.action(detail=False, methods=['get', 'put'], url_path='spare-change')
+    def spare_change(self, request):
+        """
+        Cofrinho de trocos: `GET` devolve `active`, `goal`, `paused`,
+        `pending_total` e `pending_count`; `PUT` recebe `{active, goal}` para
+        ativar, escolher a meta ou desativar (META-35, META-44, META-45).
+        """
+        if request.method == 'PUT':
+            _exigir({'active': request.data.get('active')})
+            ativo = _verdadeiro(request.data.get('active'))
+            trocos.configurar(request.user, ativo, self._meta_dos_trocos(request, obrigatoria=ativo))
+        return Response(trocos.resumo(request.user), status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['post'], url_path='spare-change/deposit')
+    def spare_change_deposit(self, request):
+        """
+        Deposita os trocos pendentes, um aporte por conta de origem
+        (META-38 a META-40, META-43). Responde `{deposits: [{account_id,
+        amount}], discarded}`; um pedido repetido responde `deposits` vazio.
+        """
+        try:
+            resposta = trocos.depositar(request.user)
+        except DjangoValidationError as erro:
+            raise ValidationError({'detail': erro.messages[0]})
+        return Response(resposta, status=status.HTTP_200_OK)

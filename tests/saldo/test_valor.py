@@ -19,8 +19,17 @@ class ValorDasOperacoesTests(SaldoTestCase):
 
     def setUp(self):
         super().setUp()
-        # Saldo na meta, para que o resgate seja possível
+        # Saldo na meta e no cofrinho, para que o resgate seja possível: o
+        # valor da meta vem dos registros (META-01) e o resgate para outra
+        # conta vai até o saldo do cofrinho (META-18)
+        GoalDeposit.objects.create(
+            goal=self.a.meta, account=self.a.cofrinho, amount=Decimal('500.00'),
+            type='DEPOSIT', date=self.a.fatura.closing_date,
+        )
         Goal.objects.filter(pk=self.a.meta.pk).update(current_amount=Decimal('500.00'))
+        Account.objects.filter(pk=self.a.cofrinho.pk).update(
+            initial_balance=Decimal('500.00'), balance=Decimal('500.00'),
+        )
 
     # Cada operação: (url, corpo sem o valor)
     def transacao(self):
@@ -120,7 +129,8 @@ class ValorDasOperacoesTests(SaldoTestCase):
     def test_aporte_aceita_uma_casa(self):
         self.assert_aceito(self.aporte, 200)
         self.assertEqual(self.saldo(self.a.conta), Decimal('899.90'))
-        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('100.10'))
+        # O cofrinho começa com R$ 500,00 (setUp)
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('600.10'))
 
     def test_resgate_recusa_valor_invalido(self):
         self.assert_recusa(self.resgate)
@@ -128,4 +138,5 @@ class ValorDasOperacoesTests(SaldoTestCase):
     def test_resgate_aceita_uma_casa(self):
         self.assert_aceito(self.resgate, 200)
         self.assertEqual(self.saldo(self.a.conta), Decimal('1100.10'))
-        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('-100.10'))
+        # O cofrinho começa com R$ 500,00; o resgate não pode deixá-lo negativo (META-18)
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('399.90'))

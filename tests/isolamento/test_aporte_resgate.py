@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from accounts.models import Account
@@ -15,8 +16,17 @@ class AporteEResgateTests(DoisUsuariosTestCase):
 
     def setUp(self):
         self.cliente = self.como(self.a.usuario)
-        # Saldo na meta de A, para que o resgate seja possível
+        # Saldo na meta e no cofrinho de A, para que o resgate seja possível:
+        # o valor da meta vem dos registros (META-01) e o resgate para outra
+        # conta vai até o saldo do cofrinho (META-18)
+        GoalDeposit.objects.create(
+            goal=self.a.meta, account=self.a.cofrinho, amount=Decimal('200.00'),
+            type='DEPOSIT', date=date(2026, 9, 1),
+        )
         Goal.objects.filter(pk=self.a.meta.pk).update(current_amount=Decimal('200.00'))
+        Account.objects.filter(pk=self.a.cofrinho.pk).update(
+            initial_balance=Decimal('200.00'), balance=Decimal('200.00'),
+        )
 
     def url(self, acao):
         return f'/api/goals/{self.a.meta.id}/{acao}/'
@@ -41,7 +51,7 @@ class AporteEResgateTests(DoisUsuariosTestCase):
         }, format='json')
 
         self.assertEqual(resp.status_code, 200, resp.data)
-        movimento = GoalDeposit.objects.get(goal=self.a.meta)
+        movimento = GoalDeposit.objects.get(goal=self.a.meta, transaction_id__isnull=False)
         self.assertEqual((movimento.type, movimento.account, movimento.amount), (tipo, self.a.conta, Decimal('50.00')))
         pernas = Transaction.objects.filter(transfer_id=movimento.transaction_id)
         self.assertEqual({t.account for t in pernas}, {self.a.conta, self.a.cofrinho})
