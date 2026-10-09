@@ -388,12 +388,14 @@
 
 ## Handoff
 
-- **Feature**: `lgpd`, em andamento (só o backend até aqui)
-- **Phase / Task**: Execute pausado pelo usuário em 2026-10-09, dentro da T10 (download dos dados financeiros); T1 a T9 concluídas e commitadas
-- **Completed**: T1 a T7 (campo criptografado com `cryptography`, dados pessoais criptografados com a migração 0014, CPF pelos dígitos verificadores, máscaras no admin, nome aleatório nas imagens, logs sem dados pessoais com filtro, log de auditoria sem nomes com as migrações 0015 e 0016); T8 (pedido de exclusão, `f515c6c`); T9 (login com `deletion_pending` e cancelamento, `5e30bfb`)
-- **In-progress** (file:line): T10 sem commit no backend: `api/urls.py`, `api/views.py`, `data_exchange/services.py` (refatoração de `generate_xls` para o XLSX com cinco abas) e o novo `tests/lgpd/test_meus_dados.py`
-- **Next step**: conferir e terminar a T10, depois T11 a T16 (exclusão definitiva, rotina diária, termos, bloqueio, consentimento e conjunto anonimizado) e o lote 3 de frontend (T17 a T23); no T14, dar aos usuários criados nos testes o aceite da versão vigente por padrão, para o bloqueio dos termos não quebrar a suíte; no T12, atualizar `DEPLOY.md` e `.env.example` com `FIELD_ENCRYPTION_KEY` e `ROTINA_DIARIA_TOKEN`
+- **Feature**: `lgpd` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T23, mais o ajuste do toast no 403 dos termos) e verificado: `validation.md` com PASS, sensor leve com 8 de 8 mutações mortas
+- **Completed**: dados pessoais criptografados (AD-047), CPF pelos dígitos verificadores, máscaras no painel admin, imagens com nome aleatório, logs sem dados pessoais, log de auditoria sem nomes, pedido de exclusão com 30 dias e cancelamento no login, download dos dados em qualquer plano, exclusão definitiva com `RegistroDeExclusao`, rotina diária por GitHub Actions (AD-048), termos por versão com bloqueio até o aceite, consentimento no cadastro e nas configurações e conjunto anonimizado; backend com 1123 testes e frontend com 348
+- **In-progress** (file:line): nenhum
+- **Deploy**: `FIELD_ENCRYPTION_KEY` precisa estar no Render antes do deploy que roda a migração 0014 (guardar uma cópia fora do Render); `ROTINA_DIARIA_TOKEN` no Render e os secrets `API_URL` e `ROTINA_DIARIA_TOKEN` no GitHub; a migração 0019 deixa todos os usuários sem aceite, então todos veem a tela de aceite no primeiro acesso
+- **Observações do verificador**: o teste independente de LGPD-21 (suíte inteira com captura de logs) não está automatizado; sem teste de que o admin criado por `create_admin.py` fica bloqueado até o aceite; textos novos da página de termos pedem revisão
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas
+- **Next step**: o usuário faz o push das duas branches `fix/lgpd-dados-pessoais-consentimento-e-exclusao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `painel-admin`
 - **Blockers**: nenhum
-- **Uncommitted files**: os da T10 listados acima
-- **Branch**: fix/lgpd-dados-pessoais-consentimento-e-exclusao (backend e frontend; o frontend ainda sem commits)
-- **Lembretes**: commits no padrão da padraogitglobal (`tipo: descrição`, sem co-autoria); banco de dev já migrado até a 0016; `FIELD_ENCRYPTION_KEY` precisa estar no Render antes do deploy; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`
+- **Uncommitted files**: nenhum
+- **Branch**: fix/lgpd-dados-pessoais-consentimento-e-exclusao (backend e frontend)

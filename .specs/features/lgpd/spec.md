@@ -98,7 +98,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Acceptance Criteria**:
 1. **LGPD-10** WHEN a data da exclusão definitiva chega THEN a rotina diária SHALL apagar a conta e todos os dados dela: contas, cartões, faturas, transações e séries, categorias, tags, orçamentos, metas e aportes, monitores de foco, imagens no Cloudinary, tokens, registros de pagamento, aceites dos termos, consentimentos, correções de categoria, os dados das demais features, como classes, planos de divisão e vínculos, e os registros de log do usuário, menos os de ações de administradores, que ficam só com o identificador interno (AD-030).
 2. **LGPD-11** WHEN uma exclusão definitiva termina THEN o sistema SHALL guardar apenas um registro com o identificador interno da conta, a data do pedido, a data da exclusão e quem a executou (o usuário, a rotina ou um administrador), sem nenhum dado pessoal.
-3. **LGPD-12** IF a remoção das imagens no Cloudinary ou qualquer outra etapa da exclusão definitiva falhar THEN o sistema SHALL manter a conta desativada e marcada para exclusão, sem apagar parte dos dados, e tentar de novo na execução seguinte da rotina.
+3. **LGPD-12** IF a remoção das imagens no Cloudinary ou qualquer outra etapa da exclusão definitiva falhar THEN o sistema SHALL manter a conta desativada e marcada para exclusão, sem apagar parte dos dados do banco, e tentar de novo na execução seguinte da rotina; as imagens já removidas do Cloudinary contam como removidas na nova tentativa.
 4. **LGPD-13** WHEN um administrador exclui uma conta definitivamente THEN o sistema SHALL apagar, na hora, os mesmos dados de LGPD-10 e guardar o registro de LGPD-11.
 5. **LGPD-14** WHEN uma exclusão definitiva termina THEN o sistema SHALL deixar o e-mail da conta livre para um novo cadastro.
 
@@ -149,7 +149,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. **LGPD-26** WHEN o usuário se cadastra THEN o sistema SHALL exigir o aceite da versão vigente dos termos e da política de privacidade e guardar a versão aceita, com a data e a hora.
 2. **LGPD-27** IF o cadastro chegar sem o aceite ou com o aceite recusado THEN o sistema SHALL recusar com HTTP 400 e o erro no campo do aceite.
 3. **LGPD-28** WHEN uma nova versão dos termos ou da política passa a valer THEN a interface SHALL mostrar o que mudou e pedir o novo aceite no próximo acesso, antes de liberar as outras telas.
-4. **LGPD-29** WHILE o usuário não tiver aceitado a versão vigente, o sistema SHALL recusar as rotas com HTTP 403 e o código `terms_acceptance_required`, menos login, renovação, `/auth/me`, logout, o próprio aceite, o download dos dados de LGPD-02, o pedido de exclusão da conta e `/api/health/`.
+4. **LGPD-29** WHILE o usuário não tiver aceitado a versão vigente, o sistema SHALL recusar as rotas com HTTP 403 e o código `terms_acceptance_required`, menos login, renovação, `/auth/me`, logout, o próprio aceite, o download dos dados de LGPD-02, o pedido de exclusão da conta, o cancelamento da exclusão de LGPD-08, a leitura dos termos vigentes (`GET /api/terms/`), a rotina diária e `/api/health/`.
 5. **LGPD-30** WHEN o usuário aceita uma versão THEN o sistema SHALL guardar esse aceite sem apagar os anteriores.
 6. **LGPD-31** WHEN a política de privacidade é exibida THEN o sistema SHALL mostrar as finalidades de uso dos dados, inclusive o uso opcional de dados anonimizados para melhorar o produto e treinar modelos de previsão e de categorização, e os serviços que tratam os dados: hospedagem da API e do banco, hospedagem do site, envio de e-mail e guarda de imagens.
 7. **LGPD-32** WHEN os termos, a política, o cadastro ou a página Sobre descrevem a segurança dos dados THEN o sistema SHALL descrever só o que o app faz, a conexão criptografada e os dados pessoais criptografados no banco (AD-020), sem prometer criptografia de ponta a ponta.
@@ -215,45 +215,45 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| LGPD-01 | P1: Pedido de exclusão da própria conta | T17 | Implemented |
-| LGPD-02 | P1: Pedido de exclusão da própria conta | T10, T17 | Implemented |
-| LGPD-03 | P1: Pedido de exclusão da própria conta | T8, T17 | Implemented |
-| LGPD-04 | P1: Pedido de exclusão da própria conta | T8, T17 | Implemented |
-| LGPD-05 | P1: Pedido de exclusão da própria conta | T8 | Implemented |
-| LGPD-06 | P1: Pedido de exclusão da própria conta | T8 | Implemented |
-| LGPD-07 | P1: Pedido de exclusão da própria conta | T9, T18 | Implemented |
-| LGPD-08 | P1: Pedido de exclusão da própria conta | T9, T18 | Implemented |
-| LGPD-09 | P1: Pedido de exclusão da própria conta | T8 | Implemented |
-| LGPD-10 | P1: Exclusão definitiva | T11, T12 | Implemented |
-| LGPD-11 | P1: Exclusão definitiva | T11 | Implemented |
-| LGPD-12 | P1: Exclusão definitiva | T11, T12 | Implemented |
-| LGPD-13 | P1: Exclusão definitiva | T11 | Implemented |
-| LGPD-14 | P1: Exclusão definitiva | T11 | Implemented |
-| LGPD-15 | P1: Guarda dos dados pessoais | T1, T2 | Implemented |
-| LGPD-16 | P1: Guarda dos dados pessoais | T1 | Implemented |
-| LGPD-17 | P1: Guarda dos dados pessoais | T3 | Implemented |
-| LGPD-18 | P1: Guarda dos dados pessoais | T2, T3 | Implemented |
-| LGPD-19 | P1: Guarda dos dados pessoais | T4, T23 | Implemented |
-| LGPD-20 | P1: Guarda dos dados pessoais | T5, T23 | Implemented |
-| LGPD-21 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
-| LGPD-22 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
-| LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Implemented |
-| LGPD-24 | P2: Dados já gravados | T2 | Implemented |
-| LGPD-25 | P2: Dados já gravados | T7 | Implemented |
-| LGPD-26 | P1: Termos, finalidades e consentimento | T13, T19 | Implemented |
-| LGPD-27 | P1: Termos, finalidades e consentimento | T13 | Implemented |
-| LGPD-28 | P1: Termos, finalidades e consentimento | T14, T21 | Implemented |
-| LGPD-29 | P1: Termos, finalidades e consentimento | T14, T21 | Implemented |
-| LGPD-30 | P1: Termos, finalidades e consentimento | T13, T14 | Implemented |
-| LGPD-31 | P1: Termos, finalidades e consentimento | T20 | Implemented |
-| LGPD-32 | P1: Termos, finalidades e consentimento | T19, T20 | Implemented |
-| LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | Implemented |
-| LGPD-34 | P1: Termos, finalidades e consentimento | T15, T22 | Implemented |
-| LGPD-35 | P1: Termos, finalidades e consentimento | T15 | Implemented |
-| LGPD-36 | P1: Termos, finalidades e consentimento | T16 | Implemented |
-| LGPD-37 | P1: Termos, finalidades e consentimento | T16 | Implemented |
-| LGPD-38 | P1: Termos, finalidades e consentimento | T16 | Implemented |
-| LGPD-39 | P2: Dados já gravados | T13 | Implemented |
+| LGPD-01 | P1: Pedido de exclusão da própria conta | T17 | Verified |
+| LGPD-02 | P1: Pedido de exclusão da própria conta | T10, T17 | Verified |
+| LGPD-03 | P1: Pedido de exclusão da própria conta | T8, T17 | Verified |
+| LGPD-04 | P1: Pedido de exclusão da própria conta | T8, T17 | Verified |
+| LGPD-05 | P1: Pedido de exclusão da própria conta | T8 | Verified |
+| LGPD-06 | P1: Pedido de exclusão da própria conta | T8 | Verified |
+| LGPD-07 | P1: Pedido de exclusão da própria conta | T9, T18 | Verified |
+| LGPD-08 | P1: Pedido de exclusão da própria conta | T9, T18 | Verified |
+| LGPD-09 | P1: Pedido de exclusão da própria conta | T8 | Verified |
+| LGPD-10 | P1: Exclusão definitiva | T11, T12 | Verified |
+| LGPD-11 | P1: Exclusão definitiva | T11 | Verified |
+| LGPD-12 | P1: Exclusão definitiva | T11, T12 | Verified |
+| LGPD-13 | P1: Exclusão definitiva | T11 | Verified |
+| LGPD-14 | P1: Exclusão definitiva | T11 | Verified |
+| LGPD-15 | P1: Guarda dos dados pessoais | T1, T2 | Verified |
+| LGPD-16 | P1: Guarda dos dados pessoais | T1 | Verified |
+| LGPD-17 | P1: Guarda dos dados pessoais | T3 | Verified |
+| LGPD-18 | P1: Guarda dos dados pessoais | T2, T3 | Verified |
+| LGPD-19 | P1: Guarda dos dados pessoais | T4, T23 | Verified |
+| LGPD-20 | P1: Guarda dos dados pessoais | T5, T23 | Verified |
+| LGPD-21 | P1: Dados pessoais fora dos logs | T6, T7 | Verified |
+| LGPD-22 | P1: Dados pessoais fora dos logs | T6, T7 | Verified |
+| LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Verified |
+| LGPD-24 | P2: Dados já gravados | T2 | Verified |
+| LGPD-25 | P2: Dados já gravados | T7 | Verified |
+| LGPD-26 | P1: Termos, finalidades e consentimento | T13, T19 | Verified |
+| LGPD-27 | P1: Termos, finalidades e consentimento | T13 | Verified |
+| LGPD-28 | P1: Termos, finalidades e consentimento | T14, T21 | Verified |
+| LGPD-29 | P1: Termos, finalidades e consentimento | T14, T21 | Verified |
+| LGPD-30 | P1: Termos, finalidades e consentimento | T13, T14 | Verified |
+| LGPD-31 | P1: Termos, finalidades e consentimento | T20 | Verified |
+| LGPD-32 | P1: Termos, finalidades e consentimento | T19, T20 | Verified |
+| LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | Verified |
+| LGPD-34 | P1: Termos, finalidades e consentimento | T15, T22 | Verified |
+| LGPD-35 | P1: Termos, finalidades e consentimento | T15 | Verified |
+| LGPD-36 | P1: Termos, finalidades e consentimento | T16 | Verified |
+| LGPD-37 | P1: Termos, finalidades e consentimento | T16 | Verified |
+| LGPD-38 | P1: Termos, finalidades e consentimento | T16 | Verified |
+| LGPD-39 | P2: Dados já gravados | T13 | Verified |
 
 **Coverage:** 39 total, 39 mapped to tasks, 0 unmapped ✅
 

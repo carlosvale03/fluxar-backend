@@ -1,7 +1,7 @@
 # Lgpd Design
 
 **Spec**: `.specs/features/lgpd/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 
