@@ -192,14 +192,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] O detalhe do usuário no admin traz `***.***.***-12` e o telefone com só os 4 últimos dígitos
-- [ ] A resposta do admin não tem `date_of_birth` nem `monthly_income`
-- [ ] O próprio usuário continua vendo os dados completos em `/auth/me`
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O detalhe do usuário no admin traz `***.***.***-12` e o telefone com só os 4 últimos dígitos
+- [x] A resposta do admin não tem `date_of_birth` nem `monthly_income`
+- [x] O próprio usuário continua vendo os dados completos em `/auth/me`
+- [x] Quick gate passa
+- [x] Test count: 3 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: mascara CPF e telefone e esconde renda e nascimento no painel admin`
 

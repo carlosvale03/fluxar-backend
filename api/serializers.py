@@ -218,8 +218,40 @@ class AdminUserSerializer(UserProfileSerializer):
     Serializer para uso exclusivo do admin. 
     Permite alterar planos e roles que são read_only para o usuário comum.
     """
+    # O painel não vê a data de nascimento nem a renda (LGPD-19)
+    date_of_birth = None
+    monthly_income = None
+
     class Meta(UserProfileSerializer.Meta):
-        read_only_fields = ('id', 'email', 'last_login', 'created_at')
+        fields = tuple(
+            campo for campo in UserProfileSerializer.Meta.fields
+            if campo not in ('date_of_birth', 'monthly_income')
+        )
+        # CPF e telefone chegam mascarados e não são editados pelo painel
+        read_only_fields = ('id', 'email', 'last_login', 'created_at', 'cpf', 'phone_number')
+
+    def to_representation(self, instance):
+        # CPF e telefone com só os últimos dígitos à vista (LGPD-19)
+        ret = super().to_representation(instance)
+        if ret.get('cpf'):
+            ret['cpf'] = f"***.***.***-{ret['cpf'][-2:]}"
+        if ret.get('phone_number'):
+            ret['phone_number'] = mascarar_telefone(ret['phone_number'])
+        return ret
+
+
+def mascarar_telefone(telefone):
+    """Troca por * cada dígito do telefone, menos os 4 últimos (LGPD-19)."""
+    total = sum(caractere.isdigit() for caractere in telefone)
+    vistos = 0
+    mascarado = []
+    for caractere in telefone:
+        if caractere.isdigit():
+            vistos += 1
+            mascarado.append(caractere if vistos > total - 4 else '*')
+        else:
+            mascarado.append(caractere)
+    return ''.join(mascarado)
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
