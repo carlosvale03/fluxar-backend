@@ -62,7 +62,9 @@ class ExportService:
             type_ = tx.get_type_display()
             conta = _do_dono(tx, tx.account)
             categoria = _do_dono(tx, tx.category)
-            account = conta.name[:15] if conta else "-"
+            # Sem conta, ou com a conta de outro usuário (ISOL-15), a conta fica
+            # em branco e o arquivo é gerado (REL-25, FIN-24)
+            account = conta.name[:15] if conta else ""
             category = categoria.name if categoria else "-"
             amount = f"R$ {tx.amount:,.2f}"
             

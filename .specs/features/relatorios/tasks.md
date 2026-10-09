@@ -331,13 +331,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Exportar um período com uma transação sem conta gera o PDF com status 200
-- [ ] A linha dessa transação tem a conta em branco
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Exportar um período com uma transação sem conta gera o PDF com status 200
+- [x] A linha dessa transação tem a conta em branco
+- [x] Quick gate passa
+- [x] Test count: 2 testes (mínimo 2)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: gera o PDF com transações sem conta`
 

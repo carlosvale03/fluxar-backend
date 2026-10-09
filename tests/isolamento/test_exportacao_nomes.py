@@ -71,7 +71,8 @@ class ExportacaoSemNomesDeBTests(DoisUsuariosTestCase):
 
         for nome in NOMES_DE_B:
             self.assertNotIn(nome, texto)
-        # A linha forjada sai com "-" na conta e na categoria
-        self.assertEqual(texto.count('(-) Tj'), 2)
+        # A linha forjada sai com a conta em branco (REL-25) e "-" na categoria
+        self.assertEqual(texto.count('Tm  T* ET'), 1)
+        self.assertEqual(texto.count('(-) Tj'), 1)
         for nome in ('(Conta A)', '(Pendurada A)', '(Feira A)'):
             self.assertIn(nome, texto)
