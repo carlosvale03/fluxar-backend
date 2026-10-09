@@ -583,14 +583,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] As configurações mostram "Excluir minha conta"
-- [ ] O botão de download chama `/users/me/export/` antes da confirmação
-- [ ] Senha errada mostra o erro no campo; senha certa mostra a data e encerra a sessão
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] As configurações mostram "Excluir minha conta"
+- [x] O botão de download chama `/users/me/export/` antes da confirmação
+- [x] Senha errada mostra o erro no campo; senha certa mostra a data e encerra a sessão
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite excluir a própria conta pelas configurações`
 
