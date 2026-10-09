@@ -168,9 +168,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Transações que entram nos relatórios | - | Pending |
-| REL-02 | P1: Transações que entram nos relatórios | - | Pending |
-| REL-03 | P1: Transações que entram nos relatórios | - | Pending |
+| REL-01 | P1: Transações que entram nos relatórios | T1 | In Progress |
+| REL-02 | P1: Transações que entram nos relatórios | T1 | In Progress |
+| REL-03 | P1: Transações que entram nos relatórios | T1 | In Progress |
 | REL-04 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-05 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-06 | P1: Transações que entram nos relatórios | - | Pending |
@@ -178,7 +178,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-08 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-09 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-10 | P1: Transações que entram nos relatórios | - | Pending |
-| REL-11 | P1: Transações que entram nos relatórios | - | Pending |
+| REL-11 | P1: Transações que entram nos relatórios | T1 | In Progress |
 | REL-12 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-13 | P1: Patrimônio, liquidez e reservas | - | Pending |
 | REL-14 | P1: Patrimônio, liquidez e reservas | - | Pending |
@@ -194,7 +194,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-24 | P1: Telas e exportação | - | Pending |
 | REL-25 | P1: Telas e exportação | - | Pending |
 
-**Coverage:** 25 total, 0 mapped to tasks, 25 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 25 total, 25 mapped to tasks, 0 unmapped
 
 ---
 

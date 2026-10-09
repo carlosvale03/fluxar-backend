@@ -86,16 +86,17 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Compra no cartão em 10/03 tem `report_date` 10/03 mesmo com vencimento em abril
-- [ ] TV de R$ 1.200,00 em 12x comprada em 31/01/2026: parcelas em 31/01, 28/02, 31/03, 30/04 e assim por diante
-- [ ] Editar a data da compra recalcula a `report_date` das parcelas; o restante de um pagamento parcial mantém a da compra
-- [ ] Compra antiga sem `purchase_date` fica com a `date`; demais tipos, com a `date`
-- [ ] O ajuste de saldo grava `is_balance_adjustment`; a migração marca os antigos pela descrição; os trocos ignoram ajustes pelo campo
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Compra no cartão em 10/03 tem `report_date` 10/03 mesmo com vencimento em abril
+- [x] TV de R$ 1.200,00 em 12x comprada em 31/01/2026: parcelas em 31/01, 28/02, 31/03, 30/04 e assim por diante
+- [x] Editar a data da compra recalcula a `report_date` das parcelas; o restante de um pagamento parcial mantém a da compra
+- [x] Compra antiga sem `purchase_date` fica com a `date`; demais tipos, com a `date`
+- [x] O ajuste de saldo grava `is_balance_adjustment`; a migração marca os antigos pela descrição; os trocos ignoram ajustes pelo campo
+- [x] Build gate passa
+- [x] Test count: 11 testes (mínimo 8)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: guarda a data de cada transação nos relatórios e marca os ajustes de saldo`
 

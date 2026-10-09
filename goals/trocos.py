@@ -18,8 +18,6 @@ from core.valores import dinheiro
 
 from .models import ConfiguracaoDeTrocos, Troco
 
-# Descrição da despesa do ajuste de saldo (`accounts/views.py`, `adjust_balance`)
-AJUSTE_DE_SALDO = 'Ajuste de saldo'
 TROCOS_PAUSADOS = 'Os trocos estão pausados. Escolha outra meta.'
 DESCRICAO_DO_DEPOSITO = 'Depósito dos trocos'
 
@@ -73,7 +71,8 @@ def _valor_do_troco(despesa):
     """
     if despesa.type != 'EXPENSE' or despesa.status != 'COMPLETED' or despesa.account_id is None:
         return None
-    if despesa.description == AJUSTE_DE_SALDO or despesa.account.type == 'PIGGY_BANK':
+    # O ajuste de saldo é reconhecido pelo campo, não pela descrição (AD-046)
+    if despesa.is_balance_adjustment or despesa.account.type == 'PIGGY_BANK':
         return None
     troco = despesa.amount.to_integral_value(rounding=ROUND_CEILING) - despesa.amount
     return troco if troco > 0 else None

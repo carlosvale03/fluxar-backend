@@ -58,12 +58,16 @@ class ContratosTestCase(APITestCase):
         )
 
     def lancar_varias(self, quantidade, **extra):
-        """Grava `quantidade` despesas de uma vez, sem disparar os signals."""
+        """
+        Grava `quantidade` despesas de uma vez, sem disparar os signals. Sem o
+        `save()`, a `report_date` vai preenchida aqui (AD-046).
+        """
+        dia = extra.get('date', date(2026, 9, 15))
         return Transaction.objects.bulk_create([
             Transaction(
                 user=self.a.usuario, account=self.a.conta, type='EXPENSE',
                 status='COMPLETED', description=f'Lançamento {i}',
-                amount=Decimal('1.00'), date=extra.get('date', date(2026, 9, 15)),
+                amount=Decimal('1.00'), date=dia, report_date=dia,
             )
             for i in range(quantidade)
         ])
