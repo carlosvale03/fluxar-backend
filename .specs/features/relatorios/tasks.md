@@ -359,12 +359,13 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Despesas, "A pagar", patrimônio e dinheiro guardado batem entre as rotas
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Despesas, "A pagar", patrimônio e dinheiro guardado batem entre as rotas
+- [x] Build gate passa
+- [x] Test count: 2 testes (mínimo 2)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test: confere os mesmos números em todos os relatórios`
 
