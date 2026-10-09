@@ -182,14 +182,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O cenário de despesas do Independent Test de REL-01 mostra R$ 180,00 de despesas e `payable` R$ 50,00
-- [ ] O cenário de patrimônio de REL-13 mostra `net_worth` 5350.00 e `net_worth_breakdown` com 3000.00, 800.00, 2000.00 e 450.00
-- [ ] `total_current_invoices` soma só as faturas não pagas que vencem no mês atual
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] O cenário de despesas do Independent Test de REL-01 mostra R$ 180,00 de despesas e `payable` R$ 50,00
+- [x] O cenário de patrimônio de REL-13 mostra `net_worth` 5350.00 e `net_worth_breakdown` com 3000.00, 800.00, 2000.00 e 450.00
+- [x] `total_current_invoices` soma só as faturas não pagas que vencem no mês atual
+- [x] Quick gate passa
+- [x] Test count: 6 testes (mínimo 5)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: calcula o dashboard pelas regras comuns dos relatórios`
 

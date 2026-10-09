@@ -8,6 +8,7 @@ from accounts.faturas import fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
 from core.valores import dinheiro
+from . import regras
 from .models import FocusedMonitorItem
 from transactions.filtros import TIPOS_DE_DESPESA
 from transactions.models import Transaction, Category, Tag
@@ -35,8 +36,9 @@ class ReportService:
     def _get_date_range(period_days=None, month=None, year=None):
         """
         Helper para determinar start_date e end_date baseados em period_days ou mes/ano.
+        Hoje e o mês atual são os do calendário de Brasília (REL-08).
         """
-        today = date.today()
+        today = hoje()
         
         if period_days:
             # Normalização de strings de período vindas do frontend
@@ -90,35 +92,13 @@ class ReportService:
         accounts = Account.objects.filter(user=user, is_active=True)
         total_balance = sum((acc.balance for acc in accounts), Decimal('0.00'))
 
-        # Fluxo do Período/Mês Selecionado
-        # Se for range de dias, usamos apenas a data da transação para simplificar (sem competência de cartão por enquanto no range livre)
-        # TODO: Refinar competência de cartão em ranges livres se necessário.
-        
-        if period_days:
-            # Filtro por range de data direto
-            expense_q = Q(type__in=TIPOS_DE_DESPESA, date__gte=start_date, date__lte=end_date)
-            income_base_q = Q(type='INCOME', date__gte=start_date, date__lte=end_date)
-            # Para range livre, ignoramos a regra de 'mês da fatura' para cartões para ser mais intuitivo
-        else:
-            # Lógica tradicional de mês/ano com competência de fatura
-            expense_q = (
-                Q(type='CREDIT_CARD', invoice__year=start_date.year, invoice__month=start_date.month) |
-                Q(type='EXPENSE', date__year=start_date.year, date__month=start_date.month)
-            )
-            income_base_q = Q(type='INCOME', date__year=start_date.year, date__month=start_date.month)
+        # Fluxo do período pelas regras comuns, no mês ou no intervalo de dias:
+        # despesas efetivadas e compras no cartão na data da compra, receitas
+        # efetivadas e as despesas pendentes à parte (REL-01 a REL-05)
+        month_income = regras.total(regras.receitas(user, start_date, end_date))
+        month_expense = regras.total(regras.despesas(user, start_date, end_date))
+        payable = regras.total(regras.a_pagar(user, start_date, end_date))
 
-        expense_q &= ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN'])
-        
-        month_income = Transaction.objects.filter(
-            user=user
-        ).filter(income_base_q).exclude(
-            account__type='INVESTMENT'
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        month_expense = Transaction.objects.filter(
-            user=user
-        ).filter(expense_q).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-        
         net_result = month_income - month_expense
         
         # 3. Resumo de Orçamentos (Sempre mês atual para o Dashboard padrão, ou proporcional se period)
@@ -134,19 +114,16 @@ class ReportService:
         # 4. Resumo de Cartões de Crédito (Status atual)
         credit_cards = CreditCard.objects.filter(user=user, is_active=True)
         total_credit_limit = Decimal('0.00')
-        total_current_invoices = Decimal('0.00')
+        # Em aberto nas faturas que vencem no mês atual de Brasília (REL-18)
+        total_current_invoices = regras.faturas_do_mes(user)
         card_details = []
 
         from accounts.services import AccountService
 
         for card in credit_cards:
             total_credit_limit += card.limit
-            
-            # 1. Dados para o KPI (Respeitam o Período selecionado no dashboard)
-            invoice_period = card.invoices.filter(month=end_date.month, year=end_date.year).first()
-            total_current_invoices += invoice_period.total_amount if invoice_period else Decimal('0.00')
 
-            # 2. Dados para Gestão de Crédito (Sempre Real-time/Hoje)
+            # Dados para Gestão de Crédito (Sempre Real-time/Hoje)
             # Encontramos a fatura onde um gasto feito HOJE seria alocado, sem
             # criá-la e sem quebrar em meses curtos (FIN-05, FATURA-01)
             mes_now, ano_now = fatura_da_compra(card, hoje())
@@ -168,6 +145,8 @@ class ReportService:
             })
 
                 
+        patrimonio = regras.patrimonio(user)
+
         # 5. Métricas de Saúde Financeira (Agora sincronizadas com o range)
         health_metrics = ReportService.get_financial_health_metrics(
             user, month_income, month_expense, 
@@ -183,7 +162,15 @@ class ReportService:
                 'net_result': dinheiro(net_result),
                 'total_credit_limit': dinheiro(total_credit_limit),
                 'total_current_invoices': dinheiro(total_current_invoices),
-                'net_worth': dinheiro(total_balance - total_current_invoices),
+                'payable': dinheiro(payable),
+                # Contas ativas menos as compras não pagas dos cartões (REL-13, REL-15)
+                'net_worth': dinheiro(patrimonio['total']),
+                'net_worth_breakdown': {
+                    'available': dinheiro(patrimonio['disponivel']),
+                    'reserves': dinheiro(patrimonio['reservas']),
+                    'investments': dinheiro(patrimonio['investimentos']),
+                    'open_invoices': dinheiro(patrimonio['faturas_em_aberto']),
+                },
                 'savings_rate': health_metrics['savings_rate'],
                 'total_liquid_balance': health_metrics['total_liquid_balance'],
                 'total_investment_balance': health_metrics['total_investment_balance'],

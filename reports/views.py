@@ -4,7 +4,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
-from datetime import date
+from core.datas import hoje
 from core.filtros import ParametrosConhecidosMixin
 from .services import ReportService
 from core.travas import RecursoLiberado
@@ -52,8 +52,9 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
             year = request.query_params.get('year')
             days = request.query_params.get('days') # Novo parâmetro para range fixo
             
-            month = int(month) if month else date.today().month
-            year = int(year) if year else date.today().year
+            # Mês atual de Brasília quando não vem (REL-08)
+            month = int(month) if month else hoje().month
+            year = int(year) if year else hoje().year
         except ValueError:
             # Erros no formato do DRF, em português (CONTRATO-29)
             raise ValidationError({'detail': 'Mês/Ano inválidos.'})
