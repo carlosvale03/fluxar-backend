@@ -370,6 +370,22 @@
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-047
+- **Decision**: Dados pessoais criptografados no banco usam o campo próprio `CampoCriptografado` (`core/criptografia.py`) sobre `cryptography.fernet.MultiFernet`, com a chave em `FIELD_ENCRYPTION_KEY` (obrigatória com DEBUG desligado) e uma lista de chaves para rotação: a primeira grava, todas leem.
+- **Reason**: AD-020 pede os dados pessoais criptografados com chave própria; os pacotes prontos de campos criptografados são pouco mantidos e presos a versões do Django.
+- **Trade-off**: um campo a manter e uma dependência nova; perder a chave torna os dados ilegíveis, então ela fica guardada também fora do Render.
+- **Scope**: lgpd e qualquer dado pessoal novo.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-048
+- **Decision**: A rotina diária do backend roda pelo comando `rotina_diaria`, exposto em `POST /api/rotina-diaria/` com o token `ROTINA_DIARIA_TOKEN` e chamado por um workflow agendado do GitHub Actions; o comando também roda à mão no Render Shell.
+- **Reason**: a exclusão definitiva precisa de agendamento (AD-018); o Cron Job do Render é pago à parte, e um agendador dentro do processo web dormiria com o serviço gratuito e duplicaria entre workers.
+- **Trade-off**: depende do GitHub Actions e de dois segredos no repositório.
+- **Scope**: lgpd e futuras tarefas diárias do backend.
+- **Date**: 2026-10-09
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `relatorios` concluída, nos dois repositórios
