@@ -416,13 +416,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] `savings_rate: null` mostra "Indisponível", sem "Infinity" nem "NaN"
-- [ ] Monitor com `average_month` 0.00 mostra "Sem histórico para comparar"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `savings_rate: null` mostra "Indisponível", sem "Infinity" nem "NaN"
+- [x] Monitor com `average_month` 0.00 mostra "Sem histórico para comparar"
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra a taxa indisponível e a falta de histórico em vez de Infinity`
 

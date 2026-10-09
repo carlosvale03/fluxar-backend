@@ -189,8 +189,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-19 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |
 | REL-20 | P1: Score financeiro e dinheiro guardado | T2, T10 | Implemented |
 | REL-21 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |
-| REL-22 | P1: Score financeiro e dinheiro guardado | T5 | In Progress |
-| REL-23 | P1: Telas e exportação | - | Pending |
+| REL-22 | P1: Score financeiro e dinheiro guardado | T5, T12 | Implemented |
+| REL-23 | P1: Telas e exportação | T12 | Implemented |
 | REL-24 | P1: Telas e exportação | - | Pending |
 | REL-25 | P1: Telas e exportação | T9 | Implemented |
 
