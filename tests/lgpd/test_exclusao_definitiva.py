@@ -27,6 +27,7 @@ from api.models import (
 )
 from api.sessoes import criar_sessao
 from budgets.models import Budget
+from core import termos
 from goals.models import ConfiguracaoDeTrocos, Goal, GoalDeposit, Troco
 from reports.models import FocusedMonitorItem
 from transactions.models import Category, CorrecaoDeCategoria, RecurringTransaction, Tag, Transaction
@@ -83,6 +84,8 @@ def criar_conta_completa(email='ana@teste.fluxar'):
     criar_sessao(usuario)
     EmailVerificationToken.objects.create(user=usuario, expires_at=timezone.now() + timedelta(hours=1))
     PasswordResetToken.objects.create(user=usuario, expires_at=timezone.now() + timedelta(hours=1))
+    termos.registrar_aceite(usuario)
+    termos.registrar_decisao(usuario, True)
     return usuario
 
 

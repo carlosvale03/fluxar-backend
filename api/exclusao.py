@@ -38,6 +38,8 @@ MODELOS_DO_USUARIO = (
     ('api.Sessao', 'user'),
     ('api.EmailVerificationToken', 'user'),
     ('api.PasswordResetToken', 'user'),
+    ('api.AceiteDosTermos', 'user'),
+    ('api.DecisaoDeConsentimento', 'user'),
     ('admin.LogEntry', 'user'),
 )
 

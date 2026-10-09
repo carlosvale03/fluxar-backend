@@ -240,20 +240,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Implemented |
 | LGPD-24 | P2: Dados já gravados | T2 | Implemented |
 | LGPD-25 | P2: Dados já gravados | T7 | Implemented |
-| LGPD-26 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-27 | P1: Termos, finalidades e consentimento | - | Pending |
+| LGPD-26 | P1: Termos, finalidades e consentimento | T13, T19 | In Progress |
+| LGPD-27 | P1: Termos, finalidades e consentimento | T13 | Implemented |
 | LGPD-28 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-29 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-30 | P1: Termos, finalidades e consentimento | - | Pending |
+| LGPD-30 | P1: Termos, finalidades e consentimento | T13, T14 | In Progress |
 | LGPD-31 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-32 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-33 | P1: Termos, finalidades e consentimento | - | Pending |
+| LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | In Progress |
 | LGPD-34 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-35 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-36 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-37 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-38 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-39 | P2: Dados já gravados | - | Pending |
+| LGPD-39 | P2: Dados já gravados | T13 | Implemented |
 
 **Coverage:** 39 total, 0 mapped to tasks, 39 unmapped ⚠️ (design e tasks ainda não iniciados)
 

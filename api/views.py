@@ -65,7 +65,7 @@ from .utils.email_service import (
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
-from core import travas
+from core import termos, travas
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
 from core.uploads import com_nome_aleatorio
@@ -1128,6 +1128,20 @@ class AdminHardDeleteView(APIView):
         # O mesmo caminho da rotina diária, na hora, e sem o nome na resposta
         # (LGPD-13, LGPD-21)
         return excluir_pelo_admin(user, chave="message")
+
+# --- Termos e consentimento ---
+
+class TermosView(ParametrosConhecidosMixin, APIView):
+    """
+    A versão vigente dos termos e da política, com a data, o que mudou e os
+    serviços que tratam os dados (LGPD-28, LGPD-31). Pública.
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+
+    def get(self, request):
+        return Response(termos.termos_vigentes())
 
 # --- System Views ---
 

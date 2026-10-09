@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
-from core import travas
+from core import termos, travas
 from core.throttles import LoginFalhasEmailThrottle
 
 from .sessoes import criar_sessao
@@ -41,10 +41,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         required=True,
         error_messages={'required': TERMOS_OBRIGATORIOS, 'null': TERMOS_OBRIGATORIOS},
     )
+    # Consentimento opcional e desligado por padrão (LGPD-33)
+    product_improvement_consent = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted')
+        fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted', 'product_improvement_consent')
 
     def validate_email(self, value):
         email = User.objects.normalize_email(value)
@@ -83,7 +85,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         # Cria o usuário usando o manager customizado (faz hash da senha)
         from django.utils import timezone
-        
+
         user = User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
@@ -91,6 +93,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             terms_accepted=validated_data.get('terms_accepted', False),
             terms_accepted_at=timezone.now() if validated_data.get('terms_accepted') else None
         )
+        # O aceite da versão vigente, com data e hora (LGPD-26), e a decisão
+        # sobre o consentimento só quando ele é dado (LGPD-33)
+        termos.registrar_aceite(user)
+        if validated_data.get('product_improvement_consent') is True:
+            termos.registrar_decisao(user, True)
         return user
 
 class UserAvatarSerializer(serializers.ModelSerializer):

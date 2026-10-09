@@ -16,6 +16,7 @@ from .views import (
     ResetPasswordView,
     health_check,
     RotinaDiariaView,
+    TermosView,
     UserAvatarView,
     AdminUserListView,
     AdminUserDetailView,
@@ -58,6 +59,9 @@ urlpatterns = [
     path('users/me/delete/', PedidoDeExclusaoView.as_view(), name='users_me_delete'),
     # Download dos dados financeiros, em qualquer plano (LGPD-02)
     path('users/me/export/', ExportarMeusDadosView.as_view(), name='users_me_export'),
+
+    # Versão vigente dos termos e da política, pública (LGPD-28, LGPD-31)
+    path('terms/', TermosView.as_view(), name='terms'),
 
     # System
     path('health/', health_check, name='health_check'),

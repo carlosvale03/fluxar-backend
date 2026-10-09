@@ -464,15 +464,16 @@ T22 → T23
 
 **Done when**:
 
-- [ ] `GET /api/terms/` devolve versão, data, mudanças e serviços sem login
-- [ ] Cadastro sem o aceite ou com `false` recebe 400 no campo `terms_accepted`
-- [ ] Cadastro aceito grava o aceite da versão vigente com data e hora; com `product_improvement_consent: true`, grava a decisão; sem o campo, o consentimento fica desligado
-- [ ] Depois da migração, todo usuário existente tem `versao_dos_termos_aceita` nulo e o consentimento desligado
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] `GET /api/terms/` devolve versão, data, mudanças e serviços sem login
+- [x] Cadastro sem o aceite ou com `false` recebe 400 no campo `terms_accepted`
+- [x] Cadastro aceito grava o aceite da versão vigente com data e hora; com `product_improvement_consent: true`, grava a decisão; sem o campo, o consentimento fica desligado
+- [x] Depois da migração, todo usuário existente tem `versao_dos_termos_aceita` nulo e o consentimento desligado
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: registra o aceite dos termos por versão e o consentimento no cadastro`
 

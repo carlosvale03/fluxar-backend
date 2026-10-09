@@ -91,6 +91,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     exclusao_pedida_em = models.DateTimeField(null=True, blank=True)
     exclusao_agendada_para = models.DateTimeField(null=True, blank=True, db_index=True)
 
+    # 7. Caches do último aceite dos termos e da decisão sobre o consentimento
+    # de melhoria do produto; o histórico fica em AceiteDosTermos e
+    # DecisaoDeConsentimento (LGPD-29, LGPD-35, AD-031). Os campos
+    # terms_accepted e terms_accepted_at ficam só como histórico.
+    versao_dos_termos_aceita = models.CharField(max_length=20, null=True, blank=True)
+    consentimento_melhoria = models.BooleanField(default=False)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -154,6 +161,36 @@ class SystemLog(models.Model):
 
     def __str__(self):
         return f"{self.action} - {self.usuario_ref or 'Sistema'} - {self.timestamp}"
+
+class AceiteDosTermos(models.Model):
+    """Um aceite dos termos e da política, por versão; só acumula (LGPD-26, LGPD-30)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='aceites_dos_termos')
+    versao = models.CharField(max_length=20)
+    aceito_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-aceito_em']
+
+    def __str__(self):
+        return f"Aceite {self.versao} - {self.user_id}"
+
+class DecisaoDeConsentimento(models.Model):
+    """
+    Uma decisão sobre o uso de dados anonimizados para melhorar o produto,
+    com a versão da política vigente; só acumula (LGPD-33, LGPD-35).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='decisoes_de_consentimento')
+    consentiu = models.BooleanField()
+    versao_da_politica = models.CharField(max_length=20)
+    decidido_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-decidido_em']
+
+    def __str__(self):
+        return f"Consentimento {self.consentiu} ({self.versao_da_politica}) - {self.user_id}"
 
 class RegistroDeExclusao(models.Model):
     """
