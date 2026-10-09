@@ -109,8 +109,10 @@ class ResultadoTests(GravacaoTestCase):
 
         self.assert_resumo(resp, 6, 5, 0, [(5, 'Erro ao gravar a linha')])
         self.assertNotIn('division', json.dumps(resp.data))
-        # A exceção vai só para o log
-        self.assertIn('division by zero', str(logs.records[0].exc_info[1]))
+        # O log registra só a classe da exceção, sem a mensagem nem o
+        # traceback, que podem trazer dados da linha (LGPD-21)
+        self.assertIn('(DataError)', logs.records[0].getMessage())
+        self.assertIsNone(logs.records[0].exc_info)
         self.assertEqual(
             sorted(self.do_lote(resp).values_list('description', flat=True)),
             ['Linha 2', 'Linha 3', 'Linha 4', 'Linha 6', 'Linha 7'],

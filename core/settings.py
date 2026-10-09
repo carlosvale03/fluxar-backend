@@ -243,23 +243,42 @@ CACHES = {
     }
 }
 
-# Logs no console, para os registros de e-mail aparecerem no Render
+# Logs no console, para os registros de e-mail aparecerem no Render. Todo
+# handler passa pelo filtro que mascara e-mails e CPFs (LGPD-21, LGPD-22),
+# inclusive o do logger raiz, que recebe o que os outros módulos registram.
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'dados_pessoais': {
+            '()': 'core.logs.FiltroDeDadosPessoais',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'filters': ['dados_pessoais'],
         },
     },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
     'loggers': {
+        # Sem propagar, para não sair duas vezes pelo console do raiz
         'api': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
         },
         'core': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        # Com o raiz no console, cada 4xx viraria uma linha; ficam só os 5xx
+        'django.request': {
+            'level': 'ERROR',
         },
     },
 }

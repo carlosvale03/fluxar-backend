@@ -71,8 +71,13 @@ class Gravacao:
                         novas = {'categorias': {}, 'tags': {}}
                         with transaction.atomic():
                             sugerida = self.gravar(linha, novas)
-                    except Exception:  # noqa: BLE001 - qualquer falha rejeita só a linha (IMPORT-28)
-                        logger.exception('Falha ao gravar a linha %s da importação %s', linha.numero, self.lote)
+                    except Exception as erro:  # noqa: BLE001 - qualquer falha rejeita só a linha (IMPORT-28)
+                        # Só a classe do erro: a mensagem e o traceback podem
+                        # trazer descrição e valor da linha (LGPD-21)
+                        logger.error(
+                            'Falha ao gravar a linha %s da importação %s (%s).',
+                            linha.numero, self.lote, type(erro).__name__,
+                        )
                         rejeitadas.append(Rejeicao(linha.numero, ERRO_AO_GRAVAR))
                         continue
                     # O cache só recebe as categorias e tags novas depois que o savepoint confirma

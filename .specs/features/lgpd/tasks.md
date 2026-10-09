@@ -251,16 +251,17 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Busca no código de produção (fora de tests, migrations e scratch) não acha `print(`
-- [ ] Criar uma categoria não escreve o payload em nenhum log
-- [ ] O filtro troca um e-mail e um CPF numa mensagem de log pela forma mascarada
-- [ ] Erro simulado no Cloudinary loga só a classe do erro
-- [ ] Os comandos `audit_accounts` e `init_balances` não escrevem e-mail completo, nome de conta nem saldo junto do nome
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Busca no código de produção (fora de tests, migrations e scratch) não acha `print(`
+- [x] Criar uma categoria não escreve o payload em nenhum log
+- [x] O filtro troca um e-mail e um CPF numa mensagem de log pela forma mascarada
+- [x] Erro simulado no Cloudinary loga só a classe do erro
+- [x] Os comandos `audit_accounts` e `init_balances` não escrevem e-mail completo, nome de conta nem saldo junto do nome
+- [x] Full gate passa
+- [x] Test count: 10 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: tira dados pessoais e financeiros dos logs`
 

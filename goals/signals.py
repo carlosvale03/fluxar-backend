@@ -5,6 +5,8 @@ import cloudinary.uploader
 
 from . import trocos, vinculo
 
+logger = logging.getLogger(__name__)
+
 @receiver(pre_delete, sender='transactions.Transaction')
 def remover_registros_da_transacao_excluida(sender, instance, origin=None, **kwargs):
     """
@@ -49,8 +51,12 @@ def delete_image_on_goal_delete(sender, instance, **kwargs):
         try:
             # O CloudinaryField retorna um objeto que tem o public_id
             cloudinary.uploader.destroy(instance.image.public_id)
-        except Exception as e:
-            logging.error(f"Erro ao deletar imagem do Cloudinary (Goal Delete): {e}")
+        except Exception as erro:
+            # Só a classe do erro e o id: a mensagem pode trazer dados (LGPD-21)
+            logger.error(
+                "Erro ao remover a imagem da meta excluída do Cloudinary meta=%s (%s).",
+                instance.pk, type(erro).__name__,
+            )
 
 @receiver(pre_save, sender='goals.Goal')
 def delete_old_image_on_goal_update(sender, instance, **kwargs):
@@ -72,5 +78,9 @@ def delete_old_image_on_goal_update(sender, instance, **kwargs):
         if old_id and old_id != new_id:
             try:
                 cloudinary.uploader.destroy(old_id)
-            except Exception as e:
-                logging.error(f"Erro ao deletar imagem antiga do Cloudinary (Goal Update): {e}")
+            except Exception as erro:
+                # Só a classe do erro e o id: a mensagem pode trazer dados (LGPD-21)
+                logger.error(
+                    "Erro ao remover a imagem antiga da meta do Cloudinary meta=%s (%s).",
+                    instance.pk, type(erro).__name__,
+                )

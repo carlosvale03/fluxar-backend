@@ -18,7 +18,8 @@ class Command(BaseCommand):
                 current_balance = AccountService.get_balance(account)
                 account.balance = current_balance
                 account.save(update_fields=['balance'])
-                self.stdout.write(f"Conta '{account.name}': Saldo atualizado para {current_balance}")
+                # Só o id da conta, sem nome nem saldo (LGPD-21)
+                self.stdout.write(f"Conta {account.id}: saldo atualizado.")
                 count += 1
                 
         self.stdout.write(self.style.SUCCESS(f"Sucesso! {count} contas atualizadas."))

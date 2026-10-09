@@ -48,16 +48,6 @@ class CategoryViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mod
         instance.is_active = False
         instance.save()
 
-    def create(self, request, *args, **kwargs):
-        print(f"DEBUG CREATE CATEGORY PAYLOAD: {request.data}")
-        try:
-            return super().create(request, *args, **kwargs)
-        except Exception as e:
-            print(f"DEBUG CREATE CATEGORY ERROR: {e}")
-            if hasattr(e, 'detail'):
-                print(f"DEBUG ERROR DETAIL: {e.detail}")
-            raise e
-
 class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer

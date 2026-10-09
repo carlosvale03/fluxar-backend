@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 import cloudinary.uploader
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender=User)
 def delete_old_avatar_on_update(sender, instance, **kwargs):
@@ -26,5 +27,9 @@ def delete_old_avatar_on_update(sender, instance, **kwargs):
         if old_id and old_id != new_id:
             try:
                 cloudinary.uploader.destroy(old_id)
-            except Exception as e:
-                logging.error(f"Erro ao deletar avatar antigo do Cloudinary: {e}")
+            except Exception as erro:
+                # Só a classe do erro e o id: a mensagem pode trazer dados (LGPD-21)
+                logger.error(
+                    "Erro ao remover o avatar antigo do Cloudinary usuario=%s (%s).",
+                    instance.pk, type(erro).__name__,
+                )
