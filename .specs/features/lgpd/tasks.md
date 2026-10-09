@@ -612,13 +612,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] `deletion_pending` mostra a data da exclusão e o botão
-- [ ] "Cancelar exclusão" envia o `cancel_token` e leva ao dashboard com a sessão aberta
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] `deletion_pending` mostra a data da exclusão e o botão
+- [x] "Cancelar exclusão" envia o `cancel_token` e leva ao dashboard com a sessão aberta
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: oferece cancelar a exclusão na tela de login`
 
