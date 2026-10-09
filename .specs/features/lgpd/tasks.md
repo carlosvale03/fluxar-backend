@@ -669,15 +669,16 @@ T22 → T23
 
 **Done when**:
 
-- [ ] A página mostra a versão e a data da API
-- [ ] As finalidades citam a melhoria do produto e o treino de modelos, opcionais
-- [ ] Os serviços de hospedagem da API e do banco, do site, de e-mail e de imagens aparecem
-- [ ] Não aparece "ponta a ponta"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] A página mostra a versão e a data da API
+- [x] As finalidades citam a melhoria do produto e o treino de modelos, opcionais
+- [x] Os serviços de hospedagem da API e do banco, do site, de e-mail e de imagens aparecem
+- [x] Não aparece "ponta a ponta"
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `docs: atualiza os termos com versão, finalidades e serviços`
 
