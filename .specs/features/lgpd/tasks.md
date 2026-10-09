@@ -552,14 +552,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Usuário sem consentimento não aparece no conjunto
-- [ ] Depois de retirar o consentimento, o usuário sai do próximo conjunto
-- [ ] Nenhuma linha traz id de usuário, conta ou transação, nome de conta ou cartão, dia, e-mail, CPF ou dígito na descrição
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Usuário sem consentimento não aparece no conjunto
+- [x] Depois de retirar o consentimento, o usuário sai do próximo conjunto
+- [x] Nenhuma linha traz id de usuário, conta ou transação, nome de conta ou cartão, dia, e-mail, CPF ou dígito na descrição
+- [x] Build gate passa
+- [x] Test count: 4 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: gera o conjunto anonimizado só com os dados de quem consentiu`
 

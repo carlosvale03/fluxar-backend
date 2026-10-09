@@ -76,6 +76,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     # Nossos apps
+    # O core não tem modelos; entra para os comandos de core/management
+    'core',
     'api',
     'accounts',
     'transactions',
