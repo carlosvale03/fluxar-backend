@@ -756,13 +756,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] O detalhe do usuário mostra o CPF mascarado e não mostra renda nem nascimento
-- [ ] A imagem da meta vai no `FormData` com nome genérico
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] O detalhe do usuário mostra o CPF mascarado e não mostra renda nem nascimento
+- [x] A imagem da meta vai no `FormData` com nome genérico
+- [x] Build gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra os dados pessoais mascarados no painel e envia a imagem da meta sem o nome original`
 

@@ -233,8 +233,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-16 | P1: Guarda dos dados pessoais | T1 | Implemented |
 | LGPD-17 | P1: Guarda dos dados pessoais | T3 | Implemented |
 | LGPD-18 | P1: Guarda dos dados pessoais | T2, T3 | Implemented |
-| LGPD-19 | P1: Guarda dos dados pessoais | T4 | In Progress |
-| LGPD-20 | P1: Guarda dos dados pessoais | T5 | In Progress |
+| LGPD-19 | P1: Guarda dos dados pessoais | T4, T23 | Implemented |
+| LGPD-20 | P1: Guarda dos dados pessoais | T5, T23 | Implemented |
 | LGPD-21 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
 | LGPD-22 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
 | LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Implemented |
@@ -255,7 +255,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-38 | P1: Termos, finalidades e consentimento | T16 | Implemented |
 | LGPD-39 | P2: Dados já gravados | T13 | Implemented |
 
-**Coverage:** 39 total, 0 mapped to tasks, 39 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 39 total, 39 mapped to tasks, 0 unmapped ✅
 
 ---
 
