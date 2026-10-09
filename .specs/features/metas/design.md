@@ -1,7 +1,7 @@
 # Metas Design
 
 **Spec**: `.specs/features/metas/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

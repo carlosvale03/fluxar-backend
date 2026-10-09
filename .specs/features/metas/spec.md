@@ -192,51 +192,51 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| META-01 | P1: Valor das metas e saldo livre do cofrinho | T1 | Implemented |
-| META-02 | P1: Valor das metas e saldo livre do cofrinho | T1, T5 | Implemented |
-| META-03 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-04 | P1: Valor das metas e saldo livre do cofrinho | T5, T11 | Implemented |
-| META-05 | P1: Valor das metas e saldo livre do cofrinho | T11 | Implemented |
-| META-06 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-07 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-08 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-09 | P1: Valor das metas e saldo livre do cofrinho | T2 | Implemented |
-| META-10 | P1: Valor das metas e saldo livre do cofrinho | T3 | Implemented |
-| META-11 | P1: Valor das metas e saldo livre do cofrinho | T3, T14 | Implemented |
-| META-12 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-13 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-14 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-15 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-16 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-17 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-18 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-19 | P1: Aportes e resgates | T4 | Implemented |
-| META-20 | P1: Aportes e resgates | T4 | Implemented |
-| META-21 | P1: Aportes e resgates | T4, T12 | Implemented |
-| META-22 | P1: Aportes e resgates | T4 | Implemented |
-| META-23 | P1: Aportes e resgates | T5 | Implemented |
-| META-24 | P1: Aportes e resgates | T5 | Implemented |
-| META-25 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-26 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-27 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-28 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-29 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-30 | P1: Cadastro e consulta das metas | T6, T13 | Implemented |
-| META-31 | P1: Cadastro e consulta das metas | T6 | Implemented |
-| META-32 | P1: Cadastro e consulta das metas | T7, T14 | Implemented |
-| META-33 | P1: Cadastro e consulta das metas | T7 | Implemented |
-| META-34 | P1: Cadastro e consulta das metas | T7 | Implemented |
-| META-35 | P1: Cofrinho de trocos | T8, T15 | Implemented |
-| META-36 | P1: Cofrinho de trocos | T9 | Implemented |
-| META-37 | P1: Cofrinho de trocos | T15 | Implemented |
-| META-38 | P1: Cofrinho de trocos | T10 | Implemented |
-| META-39 | P1: Cofrinho de trocos | T10 | Implemented |
-| META-40 | P1: Cofrinho de trocos | T10 | Implemented |
-| META-41 | P1: Cofrinho de trocos | T9 | Implemented |
-| META-42 | P1: Cofrinho de trocos | T9 | Implemented |
-| META-43 | P1: Cofrinho de trocos | T10, T15 | Implemented |
-| META-44 | P1: Cofrinho de trocos | T8, T15 | Implemented |
-| META-45 | P1: Cofrinho de trocos | T8, T15 | Implemented |
+| META-01 | P1: Valor das metas e saldo livre do cofrinho | T1 | Verified |
+| META-02 | P1: Valor das metas e saldo livre do cofrinho | T1, T5 | Verified |
+| META-03 | P1: Valor das metas e saldo livre do cofrinho | T2 | Verified |
+| META-04 | P1: Valor das metas e saldo livre do cofrinho | T5, T11 | Verified |
+| META-05 | P1: Valor das metas e saldo livre do cofrinho | T11 | Verified |
+| META-06 | P1: Valor das metas e saldo livre do cofrinho | T2 | Verified |
+| META-07 | P1: Valor das metas e saldo livre do cofrinho | T2 | Verified |
+| META-08 | P1: Valor das metas e saldo livre do cofrinho | T2 | Verified |
+| META-09 | P1: Valor das metas e saldo livre do cofrinho | T2 | Verified |
+| META-10 | P1: Valor das metas e saldo livre do cofrinho | T3 | Verified |
+| META-11 | P1: Valor das metas e saldo livre do cofrinho | T3, T14 | Verified |
+| META-12 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-13 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-14 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-15 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-16 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-17 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-18 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-19 | P1: Aportes e resgates | T4 | Verified |
+| META-20 | P1: Aportes e resgates | T4 | Verified |
+| META-21 | P1: Aportes e resgates | T4, T12 | Verified |
+| META-22 | P1: Aportes e resgates | T4 | Verified |
+| META-23 | P1: Aportes e resgates | T5 | Verified |
+| META-24 | P1: Aportes e resgates | T5 | Verified |
+| META-25 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-26 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-27 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-28 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-29 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-30 | P1: Cadastro e consulta das metas | T6, T13 | Verified |
+| META-31 | P1: Cadastro e consulta das metas | T6 | Verified |
+| META-32 | P1: Cadastro e consulta das metas | T7, T14 | Verified |
+| META-33 | P1: Cadastro e consulta das metas | T7 | Verified |
+| META-34 | P1: Cadastro e consulta das metas | T7 | Verified |
+| META-35 | P1: Cofrinho de trocos | T8, T15 | Verified |
+| META-36 | P1: Cofrinho de trocos | T9 | Verified |
+| META-37 | P1: Cofrinho de trocos | T15 | Verified |
+| META-38 | P1: Cofrinho de trocos | T10 | Verified |
+| META-39 | P1: Cofrinho de trocos | T10 | Verified |
+| META-40 | P1: Cofrinho de trocos | T10 | Verified |
+| META-41 | P1: Cofrinho de trocos | T9 | Verified |
+| META-42 | P1: Cofrinho de trocos | T9 | Verified |
+| META-43 | P1: Cofrinho de trocos | T10, T15 | Verified |
+| META-44 | P1: Cofrinho de trocos | T8, T15 | Verified |
+| META-45 | P1: Cofrinho de trocos | T8, T15 | Verified |
 
 **Coverage:** 45 total, 45 mapped to tasks, 0 unmapped
 

@@ -364,12 +364,14 @@
 
 ## Handoff
 
-- **Feature**: `metas`, em andamento nos dois repositórios
-- **Phase / Task**: Execute pausado pelo usuário em 2026-10-08, dentro da T15 (cofrinho de trocos na tela); T1 a T14 concluídas e commitadas
-- **Completed**: backend T1 a T10 (valor derivado e saldo livre, vínculo com transferências, correção dos valores gravados, aporte e resgate com saldo livre, cofrinhos, cadastro, histórico paginado, configuração, geração e depósito dos trocos) e os ajustes de ordem das travas e do recálculo em `core/isolation.py`; frontend T11 a T14 (metas por cofrinho, aporte e resgate pelo saldo livre, formulário e exclusão, histórico paginado e aviso de correção)
-- **In-progress** (file:line): T15 no frontend, sem commit: `src/components/goals/SpareChangeBank.tsx` (reescrito para as rotas de trocos), `src/services/goals.ts`, `src/types/goals.ts`, `src/app/(app)/metas/page.tsx`, `tests/contratos/dinheiro-nos-formularios.test.tsx` e o novo `tests/metas/cofrinho-de-trocos.test.tsx`
-- **Next step**: conferir e terminar a T15 (testes, build gate do frontend), marcar a T15 no tasks.md, rodar o verificador leve e fechar a feature; depois, o usuário faz o push das branches `fix/metas-aportes-resgates-e-cofrinho`
+- **Feature**: `metas` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T15, mais os ajustes de ordem das travas e do recálculo no isolamento) e verificado: `validation.md` com PASS, 45 de 45 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: valor da meta derivado dos aportes e resgates sob trava (AD-045), saldo livre por cofrinho com aviso, fim do rateio automático, vínculo com as transferências, correção dos valores gravados com aviso único, aporte e resgate pelo saldo livre, cadastro só com cofrinhos, exclusão com o cofrinho vazio, histórico paginado e cofrinho de trocos no backend; backend com 959 testes e frontend com 299
+- **In-progress** (file:line): nenhum
+- **Deploy**: migrações de `goals` (campos novos, recálculo das metas e trocos) rodam no Pre-Deploy; metas com valor negativo viram zero com aviso único na tela
+- **Observações do verificador**: docstring de `get_progress` ainda cita o rateio; sem teste dedicado de transferência entre dois cofrinhos; troca de cofrinho sem teste no frontend; divisão do salário numa meta depende da `gestao-do-salario`
+- **Fora do escopo, anotado**: pasta `goals/management/` só com `__pycache__`; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `print` de depuração em `CategoryViewSet.create`
+- **Next step**: o usuário faz o push das duas branches `fix/metas-aportes-resgates-e-cofrinho` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `relatorios`
 - **Blockers**: nenhum
-- **Uncommitted files**: só os da T15 no frontend, listados acima
+- **Uncommitted files**: nenhum
 - **Branch**: fix/metas-aportes-resgates-e-cofrinho (backend e frontend)
-- **Lembretes**: commits no padrão da padraogitglobal (`tipo: descrição`, sem co-autoria); pasta `goals/management/` só com `__pycache__`, pode ser apagada à mão; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`
