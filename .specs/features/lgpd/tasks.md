@@ -640,14 +640,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] A caixa de consentimento começa desmarcada e o cadastro passa sem ela
-- [ ] Marcada, envia `product_improvement_consent: true`
-- [ ] Nenhum texto do cadastro e da página Sobre fala em ponta a ponta nem em padrões bancários
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] A caixa de consentimento começa desmarcada e o cadastro passa sem ela
+- [x] Marcada, envia `product_improvement_consent: true`
+- [x] Nenhum texto do cadastro e da página Sobre fala em ponta a ponta nem em padrões bancários
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: oferece o consentimento opcional no cadastro`
 

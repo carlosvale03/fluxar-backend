@@ -240,14 +240,14 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Implemented |
 | LGPD-24 | P2: Dados já gravados | T2 | Implemented |
 | LGPD-25 | P2: Dados já gravados | T7 | Implemented |
-| LGPD-26 | P1: Termos, finalidades e consentimento | T13, T19 | In Progress |
+| LGPD-26 | P1: Termos, finalidades e consentimento | T13, T19 | Implemented |
 | LGPD-27 | P1: Termos, finalidades e consentimento | T13 | Implemented |
 | LGPD-28 | P1: Termos, finalidades e consentimento | T14, T21 | In Progress |
 | LGPD-29 | P1: Termos, finalidades e consentimento | T14, T21 | In Progress |
 | LGPD-30 | P1: Termos, finalidades e consentimento | T13, T14 | Implemented |
 | LGPD-31 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-32 | P1: Termos, finalidades e consentimento | - | Pending |
-| LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | In Progress |
+| LGPD-32 | P1: Termos, finalidades e consentimento | T19, T20 | In Progress |
+| LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | Implemented |
 | LGPD-34 | P1: Termos, finalidades e consentimento | T15, T22 | In Progress |
 | LGPD-35 | P1: Termos, finalidades e consentimento | T15 | Implemented |
 | LGPD-36 | P1: Termos, finalidades e consentimento | T16 | Implemented |
