@@ -728,13 +728,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] O interruptor mostra o estado de `product_improvement_consent`
-- [ ] Ligar e desligar chama `PUT /users/me/consent/`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] O interruptor mostra o estado de `product_improvement_consent`
+- [x] Ligar e desligar chama `PUT /users/me/consent/`
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite dar e retirar o consentimento nas configurações`
 

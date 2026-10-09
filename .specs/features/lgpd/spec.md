@@ -248,7 +248,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-31 | P1: Termos, finalidades e consentimento | T20 | Implemented |
 | LGPD-32 | P1: Termos, finalidades e consentimento | T19, T20 | Implemented |
 | LGPD-33 | P1: Termos, finalidades e consentimento | T13, T19 | Implemented |
-| LGPD-34 | P1: Termos, finalidades e consentimento | T15, T22 | In Progress |
+| LGPD-34 | P1: Termos, finalidades e consentimento | T15, T22 | Implemented |
 | LGPD-35 | P1: Termos, finalidades e consentimento | T15 | Implemented |
 | LGPD-36 | P1: Termos, finalidades e consentimento | T16 | Implemented |
 | LGPD-37 | P1: Termos, finalidades e consentimento | T16 | Implemented |
