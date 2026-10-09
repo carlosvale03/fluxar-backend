@@ -28,7 +28,15 @@ from .serializers import (
     AlteracaoDePlanoSerializer,
     conta_do_token_de_cancelamento,
 )
-from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting, TravaDePlano
+from .models import (
+    EmailVerificationToken,
+    GlobalSetting,
+    PasswordResetToken,
+    RegistroDeExclusao,
+    SystemLog,
+    TravaDePlano,
+)
+from .exclusao import ExclusaoFalhou, excluir_definitivamente
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -628,6 +636,24 @@ def recusar_remocao_de_admin(request, afetados):
     garantir_admin_restante(afetados)
     recusar_a_propria_conta(request, afetados)
 
+EXCLUSAO_FALHOU = {
+    "detail": "Não foi possível concluir a exclusão agora. Nada foi apagado; tente de novo mais tarde.",
+    "code": "deletion_failed",
+}
+
+
+def excluir_pelo_admin(usuario, chave="detail"):
+    """
+    Exclusão definitiva pelo painel, inclusive de conta com exclusão já
+    pendente (LGPD-13). Com o Cloudinary falhando, nada é apagado (LGPD-12).
+    """
+    try:
+        excluir_definitivamente(usuario, RegistroDeExclusao.ADMIN)
+    except ExclusaoFalhou:
+        return Response(EXCLUSAO_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response({chave: "Usuário excluído permanentemente."}, status=status.HTTP_200_OK)
+
+
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
     Lista todos os usuários cadastrados na plataforma.
@@ -757,14 +783,8 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
         recusar_remocao_de_admin(request, [instance])
 
         if permanent:
-            user_email = instance.email
-            instance.delete()
-            # Log global or related? If deleted, user FK might fail if not null. 
-            # But SystemLog user is ForeignKey, so we can't link to deleted user.
-            # Maybe use a global log or just skip if hard delete. 
-            # For now, let's just log it before delete or use a string if possible.
-            # Actually, let's log as "USER_DELETED" with the email in description.
-            return Response({"detail": "Usuário excluído permanentemente com sucesso."}, status=status.HTTP_200_OK)
+            # O mesmo caminho da rotina diária, na hora (LGPD-13)
+            return excluir_pelo_admin(instance)
         else:
             instance.is_active = False
             instance.save()
@@ -1103,18 +1123,9 @@ class AdminHardDeleteView(APIView):
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         recusar_remocao_de_admin(request, [user])
 
-        user_name = user.name
-        # Delete user
-        user.delete()
-
-        # O user foi excluído, então não podemos referenciá-lo no SystemLog.
-        # Vamos usar um campo de texto para registrar o alvo, ou apenas não usar o ForeignKey 'user'
-        # ou, se quisermos registrar, precisamos garantir que o SystemLog permita user nulo
-        # Mas para o Hard Delete, o mais seguro é não tentar registrar com ForeignKey ou registrar em uma tabela geral.
-        # A atual SystemLog tem ForeignKey on_delete=CASCADE, então ao excluir o usuário, seus logs também são excluídos.
-        # Portanto, não precisamos (ou não podemos) salvar um log vinculado ao usuário excluído.
-
-        return Response({"message": f"Usuário {user_name} excluído permanentemente."}, status=status.HTTP_200_OK)
+        # O mesmo caminho da rotina diária, na hora, e sem o nome na resposta
+        # (LGPD-13, LGPD-21)
+        return excluir_pelo_admin(user, chave="message")
 
 # --- System Views ---
 

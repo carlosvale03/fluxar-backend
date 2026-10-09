@@ -401,17 +401,18 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Excluir um usuário com contas, cartões, faturas pagas, transações, metas com imagem, trocos, correções, orçamentos, monitores, sessões e aceites apaga tudo e destrói o avatar e as imagens das metas
-- [ ] Fica só o `RegistroDeExclusao` com id, datas e quem executou; os logs de ações de admin ficam com `usuario_ref` e `user` nulo; os demais logs do usuário saem
-- [ ] Com o Cloudinary falhando, nada é apagado e a conta continua desativada e marcada
-- [ ] Um teste falha se existir modelo com FK para `User` fora de `MODELOS_DO_USUARIO` e das exceções
-- [ ] O admin exclui na hora, inclusive conta com exclusão pendente, com o mesmo registro e sem o nome na resposta
-- [ ] Depois da exclusão, o mesmo e-mail se cadastra de novo
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Excluir um usuário com contas, cartões, faturas pagas, transações, metas com imagem, trocos, correções, orçamentos, monitores, sessões e aceites apaga tudo e destrói o avatar e as imagens das metas
+- [x] Fica só o `RegistroDeExclusao` com id, datas e quem executou; os logs de ações de admin ficam com `usuario_ref` e `user` nulo; os demais logs do usuário saem
+- [x] Com o Cloudinary falhando, nada é apagado e a conta continua desativada e marcada
+- [x] Um teste falha se existir modelo com FK para `User` fora de `MODELOS_DO_USUARIO` e das exceções
+- [x] O admin exclui na hora, inclusive conta com exclusão pendente, com o mesmo registro e sem o nome na resposta
+- [x] Depois da exclusão, o mesmo e-mail se cadastra de novo
+- [x] Full gate passa
+- [x] Test count: 10 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: apaga todos os dados da conta e guarda só o registro da exclusão`
 

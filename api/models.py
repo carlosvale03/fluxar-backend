@@ -155,6 +155,26 @@ class SystemLog(models.Model):
     def __str__(self):
         return f"{self.action} - {self.usuario_ref or 'Sistema'} - {self.timestamp}"
 
+class RegistroDeExclusao(models.Model):
+    """
+    O que fica de uma conta excluída definitivamente (LGPD-11): o id interno,
+    as datas do pedido e da exclusão e quem a executou, sem dado pessoal.
+    O `usuario_id` único torna a repetição da exclusão idempotente (LGPD-12).
+    """
+    USUARIO = 'USUARIO'
+    ROTINA = 'ROTINA'
+    ADMIN = 'ADMIN'
+    EXECUTORES = [(USUARIO, 'Usuário'), (ROTINA, 'Rotina diária'), (ADMIN, 'Administrador')]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario_id = models.UUIDField(unique=True)
+    pedida_em = models.DateTimeField(null=True, blank=True)
+    excluida_em = models.DateTimeField()
+    executada_por = models.CharField(max_length=10, choices=EXECUTORES)
+
+    def __str__(self):
+        return f"Exclusão {self.usuario_id} ({self.executada_por})"
+
 class Sessao(models.Model):
     """
     Uma sessão de login (AD-037). Os tokens levam o `id` dela no claim `sid`;
