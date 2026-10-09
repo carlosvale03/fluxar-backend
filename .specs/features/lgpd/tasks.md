@@ -221,13 +221,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Com o uploader simulado, o envio do avatar "joao-silva.jpg" não leva "joao-silva" no nome nem nas opções
-- [ ] O mesmo vale para a imagem de uma meta
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Com o uploader simulado, o envio do avatar "joao-silva.jpg" não leva "joao-silva" no nome nem nas opções
+- [x] O mesmo vale para a imagem de uma meta
+- [x] Build gate passa
+- [x] Test count: 2 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: envia as imagens com nome aleatório`
 

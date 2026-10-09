@@ -3,6 +3,7 @@ from .models import Goal, GoalDeposit
 from .services import GoalService
 from accounts.models import Account
 from core.fields import OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA
+from core.uploads import com_nome_aleatorio
 from core.valores import dinheiro, validar_valor_positivo
 
 class GoalDepositSerializer(serializers.ModelSerializer):
@@ -55,6 +56,10 @@ class GoalSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'current_amount', 'created_at', 'updated_at']
         # Alvo de pelo menos R$ 0,01 (META-27)
         extra_kwargs = {'target_amount': {'validators': [validar_valor_positivo]}}
+
+    def validate_image(self, value):
+        # Vai ao Cloudinary com nome aleatório, sem o nome original (LGPD-20)
+        return com_nome_aleatorio(value)
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)

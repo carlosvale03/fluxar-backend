@@ -234,7 +234,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-17 | P1: Guarda dos dados pessoais | T3 | Implemented |
 | LGPD-18 | P1: Guarda dos dados pessoais | T2, T3 | Implemented |
 | LGPD-19 | P1: Guarda dos dados pessoais | T4 | In Progress |
-| LGPD-20 | P1: Guarda dos dados pessoais | - | Pending |
+| LGPD-20 | P1: Guarda dos dados pessoais | T5 | In Progress |
 | LGPD-21 | P1: Dados pessoais fora dos logs | - | Pending |
 | LGPD-22 | P1: Dados pessoais fora dos logs | - | Pending |
 | LGPD-23 | P1: Dados pessoais fora dos logs | - | Pending |

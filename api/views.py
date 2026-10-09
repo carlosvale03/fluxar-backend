@@ -51,6 +51,7 @@ from core.permissions import EhAdministrador
 from core import travas
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
+from core.uploads import com_nome_aleatorio
 import logging
 
 User = get_user_model()
@@ -432,7 +433,9 @@ class UserAvatarView(APIView):
             data = {'avatar': request.FILES['file']}
         else:
             data = request.data
-            
+        # Vai ao Cloudinary com nome aleatório, sem o nome original (LGPD-20)
+        com_nome_aleatorio(data.get('avatar'))
+
         serializer = UserAvatarSerializer(user, data=data)
         
         if serializer.is_valid():

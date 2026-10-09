@@ -58,7 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verified = models.BooleanField(default=False)
     
     # 1. Dados Pessoais
-    avatar = CloudinaryField('image', folder='avatars', resource_type='image', blank=True, null=True)
+    avatar = CloudinaryField('image', folder='avatars', resource_type='image', use_filename=False, blank=True, null=True)
     # Criptografados no banco, sem busca por eles; o CPF deixa de ser único
     # (LGPD-15, LGPD-18, AD-020)
     cpf = TextoCriptografado(max_length=14, blank=True, null=True)

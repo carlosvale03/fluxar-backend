@@ -10,7 +10,7 @@ class Goal(models.Model):
     current_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='goals')
     target_date = models.DateField(null=True, blank=True)
-    image = CloudinaryField('image', folder='goals', resource_type='image', null=True, blank=True)
+    image = CloudinaryField('image', folder='goals', resource_type='image', use_filename=False, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     # Valor antes da correção da META-11; mostrado uma vez, até o usuário confirmar
