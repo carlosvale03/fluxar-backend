@@ -117,20 +117,21 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Despesa efetivada de R$ 100,00, pendente de R$ 50,00 e compra no cartão de R$ 80,00 com fatura aberta: despesas R$ 180,00 e "A pagar" R$ 50,00
-- [ ] Transferências, pagamento de fatura e ajustes ficam fora das despesas e receitas; receita pendente fica fora
-- [ ] Despesa efetivada de conta excluída conta no período
-- [ ] Patrimônio com R$ 3.000,00 em corrente, R$ 800,00 em cofrinho, R$ 2.000,00 em investimento e R$ 450,00 de compras não pagas: total R$ 5.350,00, com as quatro partes
-- [ ] Patrimônio no fim de um mês passado conta só o efetivado até aquele dia e as compras não pagas nele
-- [ ] Seis meses a partir de 31/03/2026: outubro a março, um de cada
-- [ ] Dinheiro guardado com aporte de R$ 500,00, transferência de R$ 300,00 para investimento e resgate de R$ 100,00: R$ 700,00; cofrinho → investimento não conta; aporte do saldo livre não conta
-- [ ] Faturas do mês: valor em aberto das faturas que vencem no mês de Brasília
-- [ ] Com o relógio às 23h de Brasília do último dia do mês, o mês atual ainda é o de Brasília
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 14 testes
+- [x] Despesa efetivada de R$ 100,00, pendente de R$ 50,00 e compra no cartão de R$ 80,00 com fatura aberta: despesas R$ 180,00 e "A pagar" R$ 50,00
+- [x] Transferências, pagamento de fatura e ajustes ficam fora das despesas e receitas; receita pendente fica fora
+- [x] Despesa efetivada de conta excluída conta no período
+- [x] Patrimônio com R$ 3.000,00 em corrente, R$ 800,00 em cofrinho, R$ 2.000,00 em investimento e R$ 450,00 de compras não pagas: total R$ 5.350,00, com as quatro partes
+- [x] Patrimônio no fim de um mês passado conta só o efetivado até aquele dia e as compras não pagas nele
+- [x] Seis meses a partir de 31/03/2026: outubro a março, um de cada
+- [x] Dinheiro guardado com aporte de R$ 500,00, transferência de R$ 300,00 para investimento e resgate de R$ 100,00: R$ 700,00; cofrinho → investimento não conta; aporte do saldo livre não conta
+- [x] Faturas do mês: valor em aberto das faturas que vencem no mês de Brasília
+- [x] Com o relógio às 23h de Brasília do último dia do mês, o mês atual ainda é o de Brasília
+- [x] Quick gate passa
+- [x] Test count: 16 testes (mínimo 14)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: concentra as regras dos relatórios num módulo só`
 
