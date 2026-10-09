@@ -362,6 +362,14 @@
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-046
+- **Decision**: Os relatórios contam cada transação pela `report_date`, mantida no `Transaction.save()`: na compra no cartão, a data da compra mais N-1 meses na parcela N (último dia do mês quando o dia não existe, AD-006); nos demais tipos, a `date`. O ajuste de saldo é marcado por `is_balance_adjustment`. As regras de despesas, receitas, "A pagar", patrimônio, dinheiro guardado e meses do calendário ficam em `reports/regras.py`, usado por todos os relatórios e pelo gasto dos orçamentos.
+- **Reason**: cada relatório escolhia as transações de um jeito (mês da fatura, pendentes somadas, UTC), e os números não batiam entre as telas; a `date` da compra no cartão é o vencimento (AD-039).
+- **Trade-off**: um campo derivado a manter; caminhos com `QuerySet.update()` que mudem `date` ou `purchase_date` precisam recalcular a `report_date`.
+- **Scope**: relatorios, orçamentos, metas (trocos), faturas e classes-de-despesa.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `metas` concluída, nos dois repositórios
