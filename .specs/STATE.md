@@ -388,14 +388,12 @@
 
 ## Handoff
 
-- **Feature**: `relatorios` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 25 de 25 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: `report_date` e `is_balance_adjustment` na transação (AD-046), regras comuns em `reports/regras.py`, `months` de 1 a 24, dashboard com "A pagar", faturas do mês e patrimônio dividido, saúde financeira com dinheiro guardado e score pelos estourados, orçamentos pelas mesmas despesas, calendário, gráficos, comparações e avançados pelas regras, PDF sem conta, e na tela taxa indisponível, "Sem histórico para comparar" e erro por bloco; backend com 1025 testes e frontend com 313
-- **In-progress** (file:line): nenhum
-- **Deploy**: migrações `transactions/0011_relatorios` e `0012_report_date_obrigatoria` preenchem a data no relatório e marcam os ajustes antigos; os números do dashboard mudam pela regra nova
-- **Observações do verificador**: transferência entre cofrinho e investimento não muda o total guardado com ou sem o filtro (coberta pelo histórico de investimentos); projeção "volta ao dia 31" sem teste próprio
-- **Fora do escopo, anotado**: `Promise.all` no dashboard derruba a tela inteira numa falha; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas; média dos insights de tag ainda inclui o mês atual
-- **Next step**: o usuário faz o push das duas branches `fix/relatorios-calculos-periodos-e-exportacao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `lgpd`
+- **Feature**: `lgpd`, em andamento (só o backend até aqui)
+- **Phase / Task**: Execute pausado pelo usuário em 2026-10-09, dentro da T10 (download dos dados financeiros); T1 a T9 concluídas e commitadas
+- **Completed**: T1 a T7 (campo criptografado com `cryptography`, dados pessoais criptografados com a migração 0014, CPF pelos dígitos verificadores, máscaras no admin, nome aleatório nas imagens, logs sem dados pessoais com filtro, log de auditoria sem nomes com as migrações 0015 e 0016); T8 (pedido de exclusão, `f515c6c`); T9 (login com `deletion_pending` e cancelamento, `5e30bfb`)
+- **In-progress** (file:line): T10 sem commit no backend: `api/urls.py`, `api/views.py`, `data_exchange/services.py` (refatoração de `generate_xls` para o XLSX com cinco abas) e o novo `tests/lgpd/test_meus_dados.py`
+- **Next step**: conferir e terminar a T10, depois T11 a T16 (exclusão definitiva, rotina diária, termos, bloqueio, consentimento e conjunto anonimizado) e o lote 3 de frontend (T17 a T23); no T14, dar aos usuários criados nos testes o aceite da versão vigente por padrão, para o bloqueio dos termos não quebrar a suíte; no T12, atualizar `DEPLOY.md` e `.env.example` com `FIELD_ENCRYPTION_KEY` e `ROTINA_DIARIA_TOKEN`
 - **Blockers**: nenhum
-- **Uncommitted files**: nenhum
-- **Branch**: fix/relatorios-calculos-periodos-e-exportacao (backend e frontend)
+- **Uncommitted files**: os da T10 listados acima
+- **Branch**: fix/lgpd-dados-pessoais-consentimento-e-exclusao (backend e frontend; o frontend ainda sem commits)
+- **Lembretes**: commits no padrão da padraogitglobal (`tipo: descrição`, sem co-autoria); banco de dev já migrado até a 0016; `FIELD_ENCRYPTION_KEY` precisa estar no Render antes do deploy; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`
