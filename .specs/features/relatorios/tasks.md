@@ -211,15 +211,16 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Quatro orçamentos dentro do limite valem 20 pontos; com um estourado, 15; com cinco, 0
-- [ ] Com R$ 5.000,00 de receitas e R$ 700,00 guardados, a taxa é 14,0
-- [ ] Sem receitas no mês, `savings_rate` é `null`
-- [ ] A liquidez não soma cofrinhos nem investimentos
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Quatro orçamentos dentro do limite valem 20 pontos; com um estourado, 15; com cinco, 0
+- [x] Com R$ 5.000,00 de receitas e R$ 700,00 guardados, a taxa é 14,0
+- [x] Sem receitas no mês, `savings_rate` é `null`
+- [x] A liquidez não soma cofrinhos nem investimentos
+- [x] Quick gate passa
+- [x] Test count: 6 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: calcula o score e a taxa de poupança pelo dinheiro guardado`
 

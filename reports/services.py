@@ -172,6 +172,7 @@ class ReportService:
                     'open_invoices': dinheiro(patrimonio['faturas_em_aberto']),
                 },
                 'savings_rate': health_metrics['savings_rate'],
+                'saved_this_month': health_metrics['saved_this_month'],
                 'total_liquid_balance': health_metrics['total_liquid_balance'],
                 'total_investment_balance': health_metrics['total_investment_balance'],
                 'liquidity_ratio': health_metrics['liquidity_ratio'],
@@ -225,7 +226,7 @@ class ReportService:
         Calcula indicadores de saúde financeira baseados em Tipos de Conta e Período.
         """
         if not start_date or not end_date:
-            today = date.today()
+            today = hoje()
             target_month = month or today.month
             target_year = year or today.year
             start_date = date(target_year, target_month, 1)
@@ -238,42 +239,21 @@ class ReportService:
                 else:
                     end_date = date(target_year, target_month + 1, 1) - timedelta(days=1)
 
-        # 1. Separação de Balanços (Líquido vs Investimento)
-        # Saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-29, SALDO-31)
-        accounts = Account.objects.filter(user=user, is_active=True)
-        
-        liquid_accounts = accounts.filter(type__in=['CHECKING', 'SAVINGS', 'WALLET'])
-        investment_accounts = accounts.filter(type='INVESTMENT')
-        
-        total_liquid_balance = sum((acc.balance for acc in liquid_accounts), Decimal('0.00'))
-        total_investment_balance = sum((acc.balance for acc in investment_accounts), Decimal('0.00'))
+        # 1. Separação de Balanços: a liquidez soma só o disponível (contas
+        # correntes, poupanças e carteiras ativas), sem cofrinhos nem
+        # investimentos (REL-14, SALDO-28, SALDO-29, SALDO-31)
+        partes = regras.patrimonio(user)
+        total_liquid_balance = partes['disponivel']
+        total_investment_balance = partes['investimentos']
 
-        # 2. Poder de Aporte (Savings Rate) - DINHEIRO NOVO (Capital Injection)
-        # Consideramos apenas TRANSFER_IN para contas de investimento.
-        # Excluímos INCOME (seriam dividendos/rendimentos, não 'aporte' de capital novo).
-        # Excluímos também transferências internas entre contas de investimento (realaocação).
-        
-        internal_transfer_ids = Transaction.objects.filter(
-            user=user, account__type='INVESTMENT', type='TRANSFER_OUT'
-        ).values_list('transfer_id', flat=True)
+        # 2. Taxa de poupança: o dinheiro guardado no período (aportes em
+        # cofrinhos e investimentos menos resgates) sobre as receitas dele;
+        # sem receitas, indisponível (REL-20 a REL-22)
+        saved_this_month = regras.dinheiro_guardado(user, start_date, end_date)
+        savings_rate = None
+        if monthly_income and monthly_income > 0:
+            savings_rate = (saved_this_month / monthly_income) * 100
 
-        investment_inflows = Transaction.objects.filter(
-            user=user,
-            account__type='INVESTMENT',
-            type='TRANSFER_IN',
-            date__gte=start_date,
-            date__lte=end_date
-        ).exclude(
-            transfer_id__in=internal_transfer_ids
-        ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        savings_rate = Decimal('0.00')
-        # Se não há renda no período, usamos a renda esperada (média histórica mensal)
-        income_for_calc = monthly_income if monthly_income and monthly_income > 0 else ReportService._get_expected_income(user, start_date.month, start_date.year, end_date=end_date)
-        
-        if income_for_calc > 0:
-            savings_rate = (investment_inflows / income_for_calc) * 100
-        
         # 3. Liquidity Ratio (Meses de reserva baseados em liquidez imediata)
         liquidity_ratio = Decimal('0.00')
         if monthly_expense > 0:
@@ -292,24 +272,26 @@ class ReportService:
         # - Orçamentos estourados (20%): 0 é ideal
         
         score = 0
-        # Savings Rate component (max 40)
-        score += min(max(savings_rate * 2, Decimal('0')), Decimal('40'))
+        # Savings Rate component (max 40); taxa indisponível vale zero
+        if savings_rate is not None:
+            score += min(max(savings_rate * 2, Decimal('0')), Decimal('40'))
         
         # Liquidity component (max 40)
         score += min(liquidity_ratio * 6, Decimal('40')) # 6.6 meses = 40 pontos
         
-        # Budget component (max 20)
-        today = date.today()
-        over_limit_budgets = Budget.objects.filter(
-            user=user, 
-            month=today.month, 
-            year=today.year
-        ).count() # TODO: Improve count by checking usage status
+        # Budget component (max 20): menos 5 pontos por orçamento do mês do
+        # período que passou do limite, pela mesma regra do resumo de
+        # orçamentos do dashboard (REL-19, FIN-26)
+        over_limit_budgets = sum(
+            1 for budget in Budget.objects.filter(user=user, month=start_date.month, year=start_date.year)
+            if BudgetService.get_budget_usage(budget)['status'] == 'OVER_LIMIT'
+        )
         
         score += max(Decimal('20') - (Decimal(str(over_limit_budgets)) * 5), Decimal('0'))
 
         return {
-            'savings_rate': float(savings_rate.quantize(Decimal('0.01'))),
+            'savings_rate': float(savings_rate.quantize(Decimal('0.01'))) if savings_rate is not None else None,
+            'saved_this_month': dinheiro(saved_this_month),
             'total_liquid_balance': dinheiro(total_liquid_balance),
             'total_investment_balance': dinheiro(total_investment_balance),
             'liquidity_ratio': float(liquidity_ratio.quantize(Decimal('0.01'))),
