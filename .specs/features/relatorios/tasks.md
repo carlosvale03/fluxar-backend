@@ -444,13 +444,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Com a comparação mensal falhando, só esse bloco mostra o erro e os demais carregam
-- [ ] "Tentar de novo" chama só a rota do bloco
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Com a comparação mensal falhando, só esse bloco mostra o erro e os demais carregam
+- [x] "Tentar de novo" chama só a rota do bloco
+- [x] Build gate (frontend) passa
+- [x] Test count: 5 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra o erro só no bloco do relatório que falhou`
 
