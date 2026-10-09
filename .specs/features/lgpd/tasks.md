@@ -282,13 +282,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Arquivar, redefinir senha e limpar dados gravam descrição sem nome e `admin_name` mascarado
-- [ ] A migração troca "joao@x.com" por "jo***@x.com" nas descrições antigas e preenche `usuario_ref`
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Arquivar, redefinir senha e limpar dados gravam descrição sem nome e `admin_name` mascarado
+- [x] A migração troca "joao@x.com" por "jo***@x.com" nas descrições antigas e preenche `usuario_ref`
+- [x] Build gate passa
+- [x] Test count: 6 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: identifica pessoas no log de auditoria só pelo id e pelo e-mail mascarado`
 

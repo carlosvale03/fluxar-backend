@@ -627,7 +627,7 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
                     user=new_user,
                     action="UPDATE_PROFILE",
                     description="; ".join(changes),
-                    admin_name=request.user.name
+                    admin_name=_mask_email(request.user.email)
                 )
         
         return response
@@ -671,8 +671,8 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             SystemLog.objects.create(
                 user=instance,
                 action="ARCHIVE_ACCOUNT",
-                description=f"Conta arquivada pelo administrador {request.user.name}",
-                admin_name=request.user.name
+                description="Conta arquivada pelo administrador.",
+                admin_name=_mask_email(request.user.email)
             )
             
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
@@ -784,7 +784,7 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
             SystemLog.objects.create(
                 action="UPDATE_SETTING",
                 description=f"Configuração '{key}' atualizada para '{value}'.",
-                admin_name=request.user.name
+                admin_name=_mask_email(request.user.email)
             )
 
         invalidar_manutencao()
@@ -842,7 +842,7 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
         SystemLog.objects.create(
             action="UPDATE_TESTING_UNLOCK",
             description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
-            admin_name=request.user.name,
+            admin_name=_mask_email(request.user.email),
         )
 
     def gravar_trava(self, request, dados):
@@ -871,7 +871,7 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
                 f"Trava '{chave}' no plano {plano}: "
                 f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
             ),
-            admin_name=request.user.name,
+            admin_name=_mask_email(request.user.email),
         )
 
 
@@ -911,7 +911,8 @@ class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
-        return SystemLog.objects.filter(user_id=user_id).order_by('-timestamp')
+        # Pelo id interno, que continua no registro depois da exclusão (AD-030)
+        return SystemLog.objects.filter(usuario_ref=user_id).order_by('-timestamp')
 
 class AdminResetPasswordView(APIView):
     """
@@ -938,8 +939,8 @@ class AdminResetPasswordView(APIView):
             SystemLog.objects.create(
                 user=user,
                 action="RESET_PASSWORD",
-                description=f"Senha redefinida pelo administrador {request.user.name}",
-                admin_name=request.user.name
+                description="Senha redefinida pelo administrador.",
+                admin_name=_mask_email(request.user.email)
             )
             
             return Response({"message": "Senha do usuário redefinida com sucesso."}, status=status.HTTP_200_OK)
@@ -976,8 +977,8 @@ class AdminClearUserDataView(APIView):
         SystemLog.objects.create(
             user=user,
             action="CLEAR_DATA",
-            description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
-            admin_name=request.user.name
+            description="Todos os dados financeiros e configurações foram limpos pelo administrador.",
+            admin_name=_mask_email(request.user.email)
         )
 
         return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)

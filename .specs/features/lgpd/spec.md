@@ -235,11 +235,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-18 | P1: Guarda dos dados pessoais | T2, T3 | Implemented |
 | LGPD-19 | P1: Guarda dos dados pessoais | T4 | In Progress |
 | LGPD-20 | P1: Guarda dos dados pessoais | T5 | In Progress |
-| LGPD-21 | P1: Dados pessoais fora dos logs | T6 | In Progress |
-| LGPD-22 | P1: Dados pessoais fora dos logs | T6 | In Progress |
+| LGPD-21 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
+| LGPD-22 | P1: Dados pessoais fora dos logs | T6, T7 | Implemented |
 | LGPD-23 | P1: Dados pessoais fora dos logs | T6 | Implemented |
 | LGPD-24 | P2: Dados já gravados | T2 | Implemented |
-| LGPD-25 | P2: Dados já gravados | - | Pending |
+| LGPD-25 | P2: Dados já gravados | T7 | Implemented |
 | LGPD-26 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-27 | P1: Termos, finalidades e consentimento | - | Pending |
 | LGPD-28 | P1: Termos, finalidades e consentimento | - | Pending |

@@ -128,18 +128,27 @@ class PasswordResetToken(models.Model):
 
 class SystemLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='system_logs', null=True, blank=True)
+    # O registro identifica o usuário pelo id interno, que fica em
+    # `usuario_ref` mesmo depois de a conta sair (LGPD-22, AD-030)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='system_logs', null=True, blank=True)
+    usuario_ref = models.UUIDField(null=True, blank=True, db_index=True)
     action = models.CharField(max_length=100)
+    # Sem nomes nem e-mails completos (LGPD-21)
     description = models.TextField()
+    # E-mail mascarado do administrador, ou "Sistema" (LGPD-22)
     admin_name = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-timestamp']
 
+    def save(self, *args, **kwargs):
+        if self.user_id and not self.usuario_ref:
+            self.usuario_ref = self.user_id
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        user_email = self.user.email if self.user else "System"
-        return f"{self.action} - {user_email} - {self.timestamp}"
+        return f"{self.action} - {self.usuario_ref or 'Sistema'} - {self.timestamp}"
 
 class Sessao(models.Model):
     """
