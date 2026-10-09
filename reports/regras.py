@@ -181,6 +181,21 @@ def _tipo_da_conta_parceira():
     )
 
 
+def transferencias_de_fora(usuario, tipos, inicio, fim):
+    """
+    As pernas efetivadas no período, nas contas de `tipos`, das
+    transferências com contas de outros tipos: `TRANSFER_IN` é o que entrou
+    nelas e `TRANSFER_OUT`, o que saiu. Movimento entre duas contas de
+    `tipos` fica de fora.
+    """
+    return Transaction.objects.filter(
+        user=usuario, status='COMPLETED', account__type__in=tipos,
+        date__gte=inicio, date__lte=fim, transfer_id__isnull=False,
+    ).annotate(tipo_da_parceira=_tipo_da_conta_parceira()).filter(
+        Q(tipo_da_parceira__isnull=True) | ~Q(tipo_da_parceira__in=tipos),
+    )
+
+
 def dinheiro_guardado(usuario, inicio, fim):
     """
     O que entrou nos cofrinhos e nas contas de investimento vindo das outras
@@ -189,12 +204,7 @@ def dinheiro_guardado(usuario, inicio, fim):
     investimento não conta, e o aporte do saldo livre, que não tem
     transferência, também não.
     """
-    transferencias = Transaction.objects.filter(
-        user=usuario, status='COMPLETED', account__type__in=GUARDADO,
-        date__gte=inicio, date__lte=fim, transfer_id__isnull=False,
-    ).annotate(tipo_da_parceira=_tipo_da_conta_parceira()).filter(
-        Q(tipo_da_parceira__isnull=True) | ~Q(tipo_da_parceira__in=GUARDADO),
-    )
+    transferencias = transferencias_de_fora(usuario, GUARDADO, inicio, fim)
     return total(transferencias.filter(type='TRANSFER_IN')) - total(transferencias.filter(type='TRANSFER_OUT'))
 
 

@@ -3,8 +3,8 @@ from datetime import date, datetime, timedelta
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Sum, Q, Count, Avg, F, Case, When
-from django.db.models.functions import Coalesce, TruncDate, TruncMonth, ExtractHour, ExtractWeekDay
-from accounts.faturas import fatura_da_compra, limite_disponivel
+from django.db.models.functions import Coalesce, TruncMonth, ExtractWeekDay
+from accounts.faturas import dia_no_mes, fatura_da_compra, limite_disponivel
 from accounts.models import Account, CreditCard
 from core.datas import hoje
 from core.valores import dinheiro
@@ -190,33 +190,22 @@ class ReportService:
     @staticmethod
     def _get_expected_income(user, target_month, target_year, end_date=None):
         """
-        Retorna a renda esperada: Renda do mês atual ou média dos últimos 3 meses.
+        Retorna a renda esperada: as receitas do mês (REL-05) ou, sem elas, a
+        média dos meses com receita entre os 3 meses do calendário anteriores.
         """
-        if not end_date:
-            end_date = date(target_year, target_month, 1) # Simplificação para retrocompatibilidade
-            # Se for o mês atual real, usamos a data de hoje para o range de média
-            if target_month == date.today().month and target_year == date.today().year:
-                end_date = date.today()
-
-        current_income = Transaction.objects.filter(
-            user=user, type='INCOME'
-        ).exclude(
-            Q(type__in=['TRANSFER_IN', 'TRANSFER_OUT']) | Q(account__type='INVESTMENT')
-        ).filter(date__year=target_year, date__month=target_month).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
+        inicio, fim = regras.limites_do_mes(target_year, target_month)
+        current_income = regras.total(regras.receitas(user, inicio, fim))
         if current_income > 0:
             return current_income
 
-        # Se não teve renda este mês ainda, pegamos a média dos últimos 3 meses
-        income_avgs = Transaction.objects.filter(
-            user=user, type='INCOME', 
-            date__gt=end_date - timedelta(days=90)
-        ).exclude(
-            account__type='INVESTMENT'
+        # Se não teve renda este mês ainda, pegamos a média dos 3 meses anteriores
+        meses = regras.meses_do_calendario(inicio - timedelta(days=1), 3)
+        income_avgs = regras.receitas(
+            user, regras.limites_do_mes(*meses[0])[0], inicio - timedelta(days=1),
         ).annotate(m=TruncMonth('date')).values('m').annotate(total=Sum('amount'))
-        
-        if income_avgs:
-            return sum(m['total'] for m in income_avgs) / len(income_avgs)
+        totais = [m['total'] for m in income_avgs]
+        if totais:
+            return sum(totais, Decimal('0.00')) / len(totais)
         
         return Decimal('0.00')
 
@@ -408,136 +397,83 @@ class ReportService:
     def get_advanced_charts(user, period_days=None):
         """
         Premium: Evolução Patrimonial, Inteligência de Investimentos, Heatmap e Monitoramento.
-        """
-        from django.db.models.functions import ExtractHour, ExtractWeekDay
-        
-        start_date, end_date = ReportService._get_date_range(period_days)
-        
-        # 1. Evolução Patrimonial (Net Worth)
-        summary_res = ReportService.get_dashboard_summary(user)
-        current_balance = Decimal(summary_res['summary']['total_balance'])
-        
-        transactions = Transaction.objects.filter(
-            user=user,
-            date__gt=start_date,
-            date__lte=end_date
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).order_by('-date', '-created_at')
-        
-        daily_diffs = {}
-        for t in transactions:
-            d = t.date
-            if t.type in TIPOS_DE_DESPESA:
-                 daily_diffs[d] = daily_diffs.get(d, 0) + t.amount
-            elif t.type == 'INCOME':
-                 daily_diffs[d] = daily_diffs.get(d, 0) - t.amount
-        
-        evolution = []
-        simulated_balance = current_balance
-        curr = end_date
-        while curr >= start_date:
-            evolution.append({'date': curr.strftime('%Y-%m-%d'), 'balance': dinheiro(simulated_balance)})
-            diff = daily_diffs.get(curr, 0)
-            simulated_balance += diff
-            curr -= timedelta(days=1)
-        evolution.reverse()
 
-        # 2. Frequência de Gastos (Heatmap)
-        # Extraímos dia da semana (1=Dom, 2=Seg...) e hora do created_at
-        frequency_qs = Transaction.objects.filter(
-            user=user,
-            type__in=TIPOS_DE_DESPESA,
-            date__gt=start_date
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).annotate(
-            hour=ExtractHour('created_at'),
-            day_of_week=ExtractWeekDay('date') # Use compentency date for day of week
+        Todos os blocos usam as despesas e as receitas de `reports/regras.py`,
+        os meses do calendário e os valores em `Decimal`; o dinheiro sai como
+        texto só no fim (REL-10, AD-041).
+        """
+        start_date, end_date = ReportService._get_date_range(period_days)
+        todas_as_datas = (date.min, date.max)
+
+        # 1. Evolução Patrimonial (Net Worth): o patrimônio no fim de cada mês
+        # do calendário, pelas regras de REL-13, com a dívida do cartão ainda
+        # não paga naquele dia (REL-16, REL-17). Pelo menos 6 meses, no máximo 24.
+        meses_no_periodo = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month + 1
+        evolution = []
+        for ano, mes in regras.meses_do_calendario(end_date, min(max(6, meses_no_periodo), 24)):
+            fim_do_mes = min(regras.limites_do_mes(ano, mes)[1], end_date)
+            evolution.append({
+                'date': fim_do_mes.strftime('%Y-%m-%d'),
+                'balance': dinheiro(regras.patrimonio(user, em=fim_do_mes)['total']),
+            })
+
+        # 2. Frequência de Gastos (Heatmap): dia da semana (1=Dom ... 7=Sáb) e
+        # hora em que a despesa foi lançada, no fuso de Brasília (REL-09)
+        frequency_qs = regras.despesas(user, start_date, end_date).annotate(
+            hour=regras.hora_em_brasilia('created_at'),
+            day_of_week=regras.dia_da_semana_em_brasilia('created_at'),
         ).values('day_of_week', 'hour').annotate(count=Count('id')).order_by('day_of_week', 'hour')
 
-        spending_frequency = []
-        for item in frequency_qs:
-            # Recharts espera day_of_week 0-6 (Seg-Dom) ou 1-7
-            # ExtractWeekDay: 1 (Sunday) to 7 (Saturday)
-            # Vamos converter 1->6 (Dom), 2->0 (Seg)... para ficar intuitivo no gráfico se necessário
-            # Mas vamos manter o valor puro e o front decide ou rotulamos:
-            spending_frequency.append({
-                'day_of_week': item['day_of_week'],
-                'hour_of_day': item['hour'],
-                'count': item['count']
-            })
+        spending_frequency = [
+            {'day_of_week': item['day_of_week'], 'hour_of_day': item['hour'], 'count': item['count']}
+            for item in frequency_qs
+        ]
 
         # 3. Inteligência de Investimentos (Baseada em Tipo de Conta)
         investment_accounts = Account.objects.filter(user=user, type='INVESTMENT', is_active=True)
         has_investments = investment_accounts.exists()
-        
-        investment_data = {
-            'has_investments_account': has_investments,
-            'total_invested': 0.0,
-            'monthly_history': [],
-            'asset_allocation': []
-        }
+        total_invested = sum((acc.balance for acc in investment_accounts), Decimal('0.00'))
+        monthly_history = []
+        asset_allocation = []
 
         if has_investments:
-            # 1. Patrimônio em Investimentos
-            total_invested = sum((acc.balance for acc in investment_accounts), Decimal('0.00'))
-            
-            # 2. Histórico Mensal (Últimos 6 meses)
-            monthly_history = []
-            for i in range(5, -1, -1):
-                target_date = end_date - timedelta(days=i*30)
-                m_start = target_date.replace(day=1)
-                if m_start.month == 12:
-                    m_end = m_start.replace(year=m_start.year + 1, month=1, day=1) - timedelta(days=1)
-                else:
-                    m_end = m_start.replace(month=m_start.month + 1, day=1) - timedelta(days=1)
-                
-                # Aportes (Transfers IN para investimentos, excluindo rebalanceamento interno)
-                internal_ids = Transaction.objects.filter(
-                    user=user, account__type='INVESTMENT', type='TRANSFER_OUT'
-                ).values_list('transfer_id', flat=True)
+            # Histórico dos últimos 6 meses do calendário, um item por mês
+            # (REL-17): aportes vindos das outras contas e resgates para
+            # elas, sem as transferências entre contas de investimento
+            meses = regras.meses_do_calendario(end_date, 6)
+            inicio_do_historico = regras.limites_do_mes(*meses[0])[0]
+            fim_do_historico = regras.limites_do_mes(*meses[-1])[1]
+            movimentos = {}
+            for item in regras.transferencias_de_fora(
+                user, regras.INVESTIMENTOS, inicio_do_historico, fim_do_historico,
+            ).annotate(m=TruncMonth('date')).values('m', 'type').annotate(total=Sum('amount')):
+                movimentos[(item['m'].year, item['m'].month, item['type'])] = item['total']
 
-                m_aportes = Transaction.objects.filter(
-                    user=user, account__type='INVESTMENT', type='TRANSFER_IN',
-                    date__gte=m_start, date__lte=m_end
-                ).exclude(
-                    transfer_id__in=internal_ids
-                ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-                # Resgates (Transfers OUT de investimentos)
-                m_resgates = Transaction.objects.filter(
-                    user=user, account__type='INVESTMENT', type='TRANSFER_OUT',
-                    date__gte=m_start, date__lte=m_end
-                ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
+            for ano, mes in meses:
                 monthly_history.append({
-                    'month': m_start.strftime('%b/%y'),
-                    'contribution': float(m_aportes),
-                    'returns': float(m_resgates),
+                    'month': date(ano, mes, 1).strftime('%b/%y'),
+                    'contribution': movimentos.get((ano, mes, 'TRANSFER_IN'), Decimal('0.00')),
+                    'returns': movimentos.get((ano, mes, 'TRANSFER_OUT'), Decimal('0.00')),
                 })
 
             # Alocação (Saldos por Conta de Investimento)
-            asset_allocation = []
             colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
             for i, acc in enumerate(investment_accounts):
-                balance = acc.balance
-                if balance > 0:
+                if acc.balance > 0:
                     asset_allocation.append({
                         'name': acc.name,
-                        'value': float(balance),
+                        'value': dinheiro(acc.balance),
                         'color': colors[i % len(colors)]
                     })
 
-            investment_data.update({
-                'total_invested': float(total_invested),
-                'monthly_history': monthly_history,
-                'asset_allocation': asset_allocation
-            })
+        # 4. Monitoramento Customizado (Foco Manual): o mês de `end_date` contra
+        # a média dos 6 meses do calendário anteriores que tiveram movimento
+        inicio_do_mes, fim_do_mes = regras.limites_do_mes(end_date.year, end_date.month)
+        meses_anteriores = regras.meses_do_calendario(inicio_do_mes - timedelta(days=1), 6)
+        inicio_da_media = regras.limites_do_mes(*meses_anteriores[0])[0]
+        fim_da_media = inicio_do_mes - timedelta(days=1)
 
-        # 4. Monitoramento Customizado (Foco Manual)
         items = FocusedMonitorItem.objects.filter(user=user)
-        
         custom_monitoring = []
         for item in items:
             # Monitor ligado a categoria ou tag de outro usuário fica de fora (ISOL-15)
@@ -545,7 +481,7 @@ class ReportService:
             if alvo.user_id != user.id:
                 continue
             name = item.category.name if item.category else item.tag.name
-            
+
             # Se for categoria, buscamos ela e todas as subcategorias recursivamente
             if item.category:
                 def get_all_child_categories(cat_id):
@@ -555,56 +491,33 @@ class ReportService:
                     for child_id in children:
                         all_ids.extend(get_all_child_categories(child_id))
                     return all_ids
-                
+
                 category_ids = get_all_child_categories(item.category_id)
                 target_filter = Q(category_id__in=category_ids)
             else:
                 target_filter = Q(tags__id=item.tag_id)
-            
-            # Base de transações - Excluindo transações técnicas (Transferências/Pagamentos)
-            base_qs = Transaction.objects.filter(user=user).filter(target_filter).exclude(
-                type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-            ).distinct()
-            
-            # Filtro de Consumo + Reembolsos (Income na mesma categoria)
-            # Cartão -> Competência da Fatura | Resto (Despesa/Receita) -> Competência da Data
-            consumption_q = (
-                Q(type='CREDIT_CARD', invoice__year=end_date.year, invoice__month=end_date.month) |
-                Q(type='EXPENSE', date__year=end_date.year, date__month=end_date.month) |
-                Q(type='INCOME', date__year=end_date.year, date__month=end_date.month)
-            )
 
-            # Gasto mês atual (Líquido: Despesas - Receitas/Reembolsos)
-            current_month_total = base_qs.filter(consumption_q).aggregate(
-                total=Sum(
-                    Case(
-                        When(type='INCOME', then=-F('amount')),
-                        default=F('amount'),
-                        output_field=models.DecimalField()
-                    )
+            # Consumo líquido pelas regras comuns: despesas menos as receitas
+            # (reembolsos) do alvo
+            def consumo(inicio, fim):
+                return (
+                    regras.total(regras.despesas(user, inicio, fim).filter(target_filter))
+                    - regras.total(regras.receitas(user, inicio, fim).filter(target_filter))
                 )
-            )['total'] or Decimal('0.00')
-            
-            # Gasto total nos últimos 6 meses (Líquido)
-            six_months_ago = end_date - timedelta(days=180)
-            history_qs = base_qs.filter(date__gt=six_months_ago)
-            
-            total_6_months = history_qs.aggregate(
-                total=Sum(
-                    Case(
-                        When(type='INCOME', then=-F('amount')),
-                        default=F('amount'),
-                        output_field=models.DecimalField()
-                    )
-                )
-            )['total'] or Decimal('0.00')
-            
-            # Calculamos a média baseada apenas nos meses que tiveram movimentação (máx 6)
-            months_count = history_qs.annotate(m=TruncMonth('date')).values('m').distinct().count()
-            
-            divisor = max(1, months_count)
-            average = total_6_months / divisor
-            
+
+            current_month_total = consumo(inicio_do_mes, fim_do_mes)
+
+            # Média só dos meses anteriores que tiveram movimentação (máx 6)
+            meses_com_movimento = set()
+            for qs, campo in (
+                (regras.despesas(user, inicio_da_media, fim_da_media), 'report_date'),
+                (regras.receitas(user, inicio_da_media, fim_da_media), 'date'),
+            ):
+                meses_com_movimento |= {
+                    (m.year, m.month) for m in qs.filter(target_filter).annotate(m=TruncMonth(campo)).values_list('m', flat=True)
+                }
+            average = consumo(inicio_da_media, fim_da_media) / max(1, len(meses_com_movimento))
+
             # Ajuste de status: 'success' | 'warning' | 'error'
             status = 'success'
             if average > 0:
@@ -626,37 +539,16 @@ class ReportService:
             })
 
         # 5. Próximo Grande Gasto (Predição Inteligente)
-        # A. Média Inteligente (apenas meses com movimentação)
-        six_months_ago = end_date - timedelta(days=180)
-        # Query de meses com gasto (agrupado por mês)
-        month_totals = Transaction.objects.filter(
-            user=user, type__in=TIPOS_DE_DESPESA,
-            date__gt=six_months_ago, date__lte=end_date
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).annotate(m=TruncMonth('date')).values('m').annotate(total=Sum('amount'))
-        
-        non_zero_months = [m['total'] for m in month_totals if m['total'] > 0]
-        avg_monthly_exp = sum(non_zero_months) / len(non_zero_months) if non_zero_months else Decimal('0.00')
-        
         # Média por transação (para definir o que é "grande")
-        avg_txn = Transaction.objects.filter(
-            user=user, type__in=TIPOS_DE_DESPESA
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).aggregate(Avg('amount'))['amount__avg'] or Decimal('0.00')
-        avg_txn = Decimal(str(avg_txn))
+        avg_txn = regras.despesas(user, *todas_as_datas).aggregate(Avg('amount'))['amount__avg'] or Decimal('0.00')
 
         # Pool de Candidatos (Data de Projeção -> {amount, items})
         candidates = {} # d_str -> {'amount': Decimal, 'desc': [str]}
 
-        # B. Transações Agendadas no Futuro (Próximos 45 dias)
-        future_txns = Transaction.objects.filter(
-            user=user, date__gt=end_date,
-            date__lte=end_date + timedelta(days=45),
-            status='PENDING',
-            amount__gt=avg_txn * Decimal('1.2')
-        ).select_related('category')
+        # B. Despesas pendentes agendadas nos próximos 45 dias ("A pagar", REL-04)
+        future_txns = regras.a_pagar(
+            user, end_date + timedelta(days=1), end_date + timedelta(days=45),
+        ).filter(amount__gt=avg_txn * Decimal('1.2')).select_related('category')
 
         for t in future_txns:
             d_str = t.date.strftime('%Y-%m-%d')
@@ -666,92 +558,82 @@ class ReportService:
             proprio = t.category and t.category.user_id == user.id
             candidates[d_str]['desc'].append(t.category.name if proprio else 'Geral')
 
-        # C. Detecção de Padrões (Recorrência de 3 meses / Janela 5 dias)
-        three_months_ago = end_date - timedelta(days=90)
-        history = Transaction.objects.filter(
-            user=user, type__in=TIPOS_DE_DESPESA,
-            date__gt=three_months_ago, date__lte=end_date
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).select_related('category')
+        # C. Detecção de Padrões (Recorrência nos 3 meses do calendário até
+        # `end_date`, janela de 5 dias), pela data das despesas no relatório
+        inicio_do_padrao = regras.limites_do_mes(*regras.meses_do_calendario(end_date, 3)[0])[0]
+        history = regras.despesas(user, inicio_do_padrao, end_date).select_related('category')
 
         # Agrupar por categoria -> { (year, month) -> [ (day, amount) ] }
         cat_months = {}
         for h in history:
             cat_id = h.category_id or "root"
-            m_key = (h.date.year, h.date.month)
+            m_key = (h.report_date.year, h.report_date.month)
             if cat_id not in cat_months: cat_months[cat_id] = {}
             if m_key not in cat_months[cat_id]: cat_months[cat_id][m_key] = []
-            cat_months[cat_id][m_key].append({'day': h.date.day, 'amount': h.amount})
+            cat_months[cat_id][m_key].append({'day': h.report_date.day, 'amount': h.amount})
+
+        # Mês seguinte ao de `end_date`, para a projeção
+        target_month = end_date.month + 1 if end_date.month < 12 else 1
+        target_year = end_date.year if end_date.month < 12 else end_date.year + 1
 
         # Analisar padrões em cada categoria
         for cat_id, months in cat_months.items():
             if len(months) < 2: continue # Precisa de pelo menos 2 meses de dados
-            
-            # Pegar o dia médio e valor médio de cada mês
-            month_pikes = []
-            for m_key, txns in months.items():
-                # Em um mês, pegamos o maior gasto dessa categoria (como "Aluguel" ou "Escola")
-                peak = max(txns, key=lambda x: x['amount'])
-                month_pikes.append(peak)
+
+            # Em cada mês, o maior gasto dessa categoria (como "Aluguel" ou "Escola")
+            month_pikes = [max(txns, key=lambda x: x['amount']) for txns in months.values()]
 
             days = [p['day'] for p in month_pikes]
-            avg_val = sum(p['amount'] for p in month_pikes) / len(month_pikes)
-            
+            avg_val = sum((p['amount'] for p in month_pikes), Decimal('0.00')) / len(month_pikes)
+
             # Se a variação entre os dias for pequena (janela de 5 dias)
             if max(days) - min(days) <= 5 and avg_val > avg_txn * Decimal('1.2'):
-                # Projetar para o próximo mês (mesma data média)
-                proj_day = int(sum(days) / len(days))
-                
-                # Gerar data no próximo mês
-                target_month = end_date.month + 1 if end_date.month < 12 else 1
-                target_year = end_date.year if end_date.month < 12 else end_date.year + 1
-                try:
-                    proj_date = date(target_year, target_month, min(proj_day, 28)) # Seguro contra fev
-                    if proj_date > end_date:
-                        d_str = proj_date.strftime('%Y-%m-%d')
-                        if d_str not in candidates: candidates[d_str] = {'amount': Decimal('0'), 'desc': []}
-                        
-                        # Evitar duplicar se já houver agendado
-                        if not any(cat_id == t.category_id for t in future_txns if t.date == proj_date):
-                            candidates[d_str]['amount'] += avg_val
-                            # Só categoria do usuário (ISOL-15)
-                            cat_obj = Category.objects.filter(id=cat_id, user=user).first() if cat_id != "root" else None
-                            candidates[d_str]['desc'].append(cat_obj.name if cat_obj else 'Geral')
-                except ValueError: pass
+                # Projeta no próximo mês, no dia médio, ou no último dia do mês
+                # quando ele não existe (REL-11, AD-006)
+                proj_date = dia_no_mes(target_year, target_month, sum(days) // len(days))
+                if proj_date > end_date:
+                    d_str = proj_date.strftime('%Y-%m-%d')
+                    if d_str not in candidates: candidates[d_str] = {'amount': Decimal('0'), 'desc': []}
+
+                    # Evitar duplicar se já houver agendado
+                    if not any(cat_id == t.category_id for t in future_txns if t.date == proj_date):
+                        candidates[d_str]['amount'] += avg_val
+                        # Só categoria do usuário (ISOL-15)
+                        cat_obj = Category.objects.filter(id=cat_id, user=user).first() if cat_id != "root" else None
+                        candidates[d_str]['desc'].append(cat_obj.name if cat_obj else 'Geral')
 
         # D. Faturas de Cartão - Desativado para evitar duplicidade com transações manuais agendadas
         # logic removed as per user feedback
 
         # E. Selecionar o dia com Maior Pico Agregado
         next_expense_data = None
+        future_committed = Decimal('0.00')
         if candidates:
             # Ordenar por maior montante e pegar o top 1
             sorted_candidates = sorted(candidates.items(), key=lambda x: x[1]['amount'], reverse=True)
             peak_date_str, peak_info = sorted_candidates[0]
-            
+
             unique_desc = list(set(peak_info['desc']))
             desc_str = ", ".join(unique_desc[:3])
             if len(unique_desc) > 3: desc_str += "..."
-            
+
+            future_committed = peak_info['amount']
             next_expense_data = {
                 'description': f"Pico Previsto: {desc_str}" if len(unique_desc) > 1 else unique_desc[0],
-                'amount': float(peak_info['amount']),
+                'amount': dinheiro(peak_info['amount']),
                 'date': peak_date_str,
                 'category': "Multiples" if len(unique_desc) > 1 else unique_desc[0]
             }
 
-        # 6. Simulador de Liberdade Financeira (Projeção)
-        avg_pmt = Decimal(str(investment_data['total_invested'] / 6)) if investment_data['total_invested'] > 0 else Decimal('0.00')
-        # Tentar pegar média real dos últimos 3 meses de aportes
-        recent_aportes = [h['contribution'] for h in investment_data['monthly_history'][-3:]]
-        if recent_aportes:
-            avg_pmt = Decimal(str(sum(recent_aportes) / len(recent_aportes)))
+        # 6. Simulador de Liberdade Financeira (Projeção): aporte mensal médio
+        # dos últimos 3 meses do histórico de investimentos
+        recent_aportes = [h['contribution'] for h in monthly_history[-3:]]
+        avg_pmt = sum(recent_aportes, Decimal('0.00')) / len(recent_aportes) if recent_aportes else Decimal('0.00')
 
         annual_rate = Decimal('0.08') # 8% ao ano
         monthly_rate = (Decimal('1') + annual_rate) ** (Decimal('1') / Decimal('12')) - Decimal('1')
-        
-        pv = Decimal(str(investment_data['total_invested']))
+
+        pv = total_invested
         projections = []
         for years in [1, 5, 10, 20]:
             months = years * 12
@@ -760,7 +642,7 @@ class ReportService:
                 fv = pv * (1 + monthly_rate)**months + avg_pmt * (((1 + monthly_rate)**months - 1) / monthly_rate)
             else:
                 fv = pv + (avg_pmt * months)
-            
+
             projections.append({
                 'years': years,
                 'label': f"{years} {'Ano' if years == 1 else 'Anos'}",
@@ -768,88 +650,53 @@ class ReportService:
             })
 
         # 7. Análise de Gastos Fixos vs Variáveis
-        # Filtro de Período Respeitando a seleção do usuário
-        period_filter = Q(date__gte=start_date, date__lte=end_date)
-        
         # Palavras-chave expandidas para detecção inteligente
         fixed_keywords = [
-            'aluguel', 'condomínio', 'assinatura', 'internet', 'luz', 'água', 
+            'aluguel', 'condomínio', 'assinatura', 'internet', 'luz', 'água',
             'seguro', 'escola', 'faculdade', 'academia', 'telefone', 'celular',
             'netflix', 'spotify', 'saúde', 'plano', 'cursinho', 'aluguel', 'mensalidade'
         ]
-        
+
         fixed_q = Q(recurring_source__isnull=False)
         for kw in fixed_keywords:
             # Nome de categoria de outro usuário não classifica o gasto (ISOL-15)
             fixed_q |= Q(category__user=user, category__name__icontains=kw) | Q(description__icontains=kw)
 
-        fixed_expenses_qs = Transaction.objects.filter(
-            user=user,
-            type__in=TIPOS_DE_DESPESA
-        ).filter(period_filter).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).filter(fixed_q)
-        
-        fixed_expenses = fixed_expenses_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-        total_period_exp = Transaction.objects.filter(
-            user=user,
-            type__in=TIPOS_DE_DESPESA
-        ).filter(period_filter).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        # Despesas do período escolhido pelo usuário, pelas regras comuns
+        period_expenses = regras.despesas(user, start_date, end_date)
+        fixed_expenses = regras.total(period_expenses.filter(fixed_q))
+        total_period_exp = regras.total(period_expenses)
 
         # Se o período selecionado for pequeno e estiver vazio (ex: início do mês), buscamos média histórica
         if total_period_exp == 0 and (end_date - start_date).days <= 31:
             # Fallback histórico (últimos 90 dias)
-            lookback_days = 90
-            hist_start = end_date - timedelta(days=lookback_days)
-            
-            hist_fixed = Transaction.objects.filter(
-                user=user, type__in=TIPOS_DE_DESPESA,
-                date__gte=hist_start, date__lte=end_date
-            ).filter(fixed_q).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            hist_total = Transaction.objects.filter(
-                user=user, type__in=TIPOS_DE_DESPESA,
-                date__gte=hist_start, date__lte=end_date
-            ).exclude(
-                type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            fixed_expenses = hist_fixed / 3
-            total_period_exp = hist_total / 3
+            hist_expenses = regras.despesas(user, end_date - timedelta(days=90), end_date)
+            fixed_expenses = regras.total(hist_expenses.filter(fixed_q)) / 3
+            total_period_exp = regras.total(hist_expenses) / 3
 
         variable_expenses = max(Decimal('0.00'), total_period_exp - fixed_expenses)
 
         # 8. Gasto Diário Seguro
         expected_income = ReportService._get_expected_income(user, end_date.month, end_date.year, end_date=end_date)
 
-        future_committed = Decimal('0.00')
-        if next_expense_data:
-            future_committed = Decimal(str(next_expense_data['amount']))
-
         available_for_month = max(Decimal('0.00'), expected_income - total_period_exp - future_committed)
-        
+
         import calendar
         _, last_day = calendar.monthrange(end_date.year, end_date.month)
         remaining_days = max(1, last_day - end_date.day)
-        
-        safe_daily_spend = available_for_month / Decimal(str(remaining_days))
+
+        safe_daily_spend = available_for_month / remaining_days
 
         # 9. Análise de Risco (Perfil de Volatilidade)
-        # Buscamos os gastos dos últimos 6 meses para calcular desvio padrão
-        six_months_data = Transaction.objects.filter(
-            user=user, type__in=TIPOS_DE_DESPESA,
-            date__gt=end_date - timedelta(days=180)
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).annotate(m=TruncMonth('date')).values('m').annotate(total=Sum('amount'))
+        # Gastos dos 6 meses do calendário até `end_date`, para o desvio padrão
+        inicio_do_risco = regras.limites_do_mes(*regras.meses_do_calendario(end_date, 6)[0])[0]
+        despesas_do_risco = regras.despesas(user, inicio_do_risco, end_date)
+        expense_history = [
+            m['total'] for m in despesas_do_risco.annotate(m=TruncMonth('report_date')).values('m').annotate(total=Sum('amount'))
+        ]
 
-        expense_history = [float(m['total']) for m in six_months_data]
-        
         risk_level = 'Baixa'
-        volatility_score = 0
+        volatility_score = Decimal('0')
         recommendation = "Sua reserva de 6 meses é adequada para seu perfil estável."
         sensitive_category = None
 
@@ -857,41 +704,31 @@ class ReportService:
             import statistics
             mean_exp = statistics.mean(expense_history)
             stdev_exp = statistics.stdev(expense_history)
-            volatility_score = (stdev_exp / mean_exp) if mean_exp > 0 else 0
-            
-            if volatility_score > 0.25:
+            volatility_score = (stdev_exp / mean_exp) if mean_exp > 0 else Decimal('0')
+
+            if volatility_score > Decimal('0.25'):
                 risk_level = 'Alta'
                 recommendation = "Devido à alta volatilidade nos seus gastos, recomendamos elevar sua reserva para 10-12 meses."
-            elif volatility_score > 0.15:
+            elif volatility_score > Decimal('0.15'):
                 risk_level = 'Média'
                 recommendation = "Seu perfil apresenta oscilações moderadas. Uma reserva de 8 meses traria mais segurança."
-            
+
             # Detecção de Sazonalidade (Categoriacom maior desvio)
-            cat_variance = Transaction.objects.filter(
-                user=user, type__in=TIPOS_DE_DESPESA,
-                date__gt=end_date - timedelta(days=180)
-            ).exclude(
-                type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-            ).annotate(
+            cat_variance = despesas_do_risco.annotate(
                 # Categoria de outro usuário conta como ausente (ISOL-15)
                 category_name=Case(When(category__user=user, then=F('category__name')))
             ).values('category_name').annotate(
                 avg=Avg('amount'),
                 count=Count('id')
             ).filter(count__gt=2)
-            
+
             if cat_variance:
                 # Simplificação: pegar a categoria com maior volume que não seja fixa
                 sensitive_category = cat_variance.order_by('-avg').first()['category_name']
 
         # 10. Gastos por Dia da Semana (Migrado para Premium) - Agora como Média
-        # Buscamos a data da primeira transação de gasto para ajustar o período de média se necessário
-        first_txn_date = Transaction.objects.filter(
-            user=user, 
-            type__in=TIPOS_DE_DESPESA
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).aggregate(models.Min('date'))['date__min']
+        # Buscamos a data da primeira despesa para ajustar o período de média se necessário
+        first_txn_date = regras.despesas(user, *todas_as_datas).aggregate(models.Min('report_date'))['report_date__min']
 
         # O período de cálculo da média começa no máximo entre a start_date e a primeira transação
         calculation_start_date = start_date
@@ -908,45 +745,39 @@ class ReportService:
             weekday_counts[django_wd] += 1
             curr += timedelta(days=1)
 
-        spend_by_weekday_qs = Transaction.objects.filter(
-            user=user,
-            date__gte=start_date,
-            date__lte=end_date,
-            type__in=TIPOS_DE_DESPESA
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).annotate(weekday=ExtractWeekDay('date')).values('weekday').annotate(total=Sum('amount')).order_by('weekday')
-        
+        spend_by_weekday_qs = period_expenses.annotate(
+            weekday=ExtractWeekDay('report_date'),
+        ).values('weekday').annotate(total=Sum('amount')).order_by('weekday')
+
         weekday_map = {
             1: 'Dom', 2: 'Seg', 3: 'Ter', 4: 'Qua', 5: 'Qui', 6: 'Sex', 7: 'Sáb'
         }
-        spend_by_weekday = []
-        data_by_weekday = {i: 0.0 for i in range(1, 8)}
+        data_by_weekday = {i: Decimal('0.00') for i in range(1, 8)}
         for item in spend_by_weekday_qs:
             wd = item['weekday']
-            total = float(item['total'])
             count = weekday_counts.get(wd, 1)
-            data_by_weekday[wd] = total / count if count > 0 else total
-            
-        for i in range(1, 8):
-            spend_by_weekday.append({
-                'label': weekday_map[i],
-                'amount': dinheiro(data_by_weekday[i])
-            })
+            data_by_weekday[wd] = item['total'] / count if count > 0 else item['total']
+
+        spend_by_weekday = [
+            {'label': weekday_map[i], 'amount': dinheiro(data_by_weekday[i])}
+            for i in range(1, 8)
+        ]
 
         # Dinheiro como texto na saída (CONTRATO-16)
-        investment_data['total_invested'] = dinheiro(investment_data['total_invested'])
-        for mes in investment_data['monthly_history']:
-            mes['contribution'] = dinheiro(mes['contribution'])
-            mes['returns'] = dinheiro(mes['returns'])
-        for ativo in investment_data['asset_allocation']:
-            ativo['value'] = dinheiro(ativo['value'])
-        if next_expense_data:
-            next_expense_data['amount'] = dinheiro(next_expense_data['amount'])
+        investment_data = {
+            'has_investments_account': has_investments,
+            'total_invested': dinheiro(total_invested),
+            'monthly_history': [
+                {**mes, 'contribution': dinheiro(mes['contribution']), 'returns': dinheiro(mes['returns'])}
+                for mes in monthly_history
+            ],
+            'asset_allocation': asset_allocation,
+        }
 
         risk_analysis = {
             'level': risk_level,
-            'volatility_score': round(volatility_score * 100, 1),
+            # Percentual, número com uma casa (CONTRATO-16)
+            'volatility_score': float(round(volatility_score * 100, 1)),
             'recommendation': recommendation,
             'sensitive_category': sensitive_category
         }

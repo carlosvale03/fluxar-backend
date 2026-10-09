@@ -300,16 +300,17 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Despesa lançada às 22h de Brasília aparece às 22h no mapa de calor
-- [ ] A evolução do patrimônio traz um ponto por mês do calendário, pela regra do fim do mês, com a dívida do cartão
-- [ ] O histórico de investimentos tem um mês do calendário por item
-- [ ] Projeção para o dia 31 em fevereiro vira 28 ou 29
-- [ ] Nenhum `float(` em valor de dinheiro em `get_advanced_charts`
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Despesa lançada às 22h de Brasília aparece às 22h no mapa de calor
+- [x] A evolução do patrimônio traz um ponto por mês do calendário, pela regra do fim do mês, com a dívida do cartão
+- [x] O histórico de investimentos tem um mês do calendário por item
+- [x] Projeção para o dia 31 em fevereiro vira 28 ou 29
+- [x] Nenhum `float(` em valor de dinheiro em `get_advanced_charts`
+- [x] Full gate passa
+- [x] Test count: 8 testes (mínimo 7)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: corrige patrimônio, mapa de calor e projeções dos relatórios avançados`
 
