@@ -173,7 +173,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-03 | P1: Transações que entram nos relatórios | T1, T2 | In Progress |
 | REL-04 | P1: Transações que entram nos relatórios | T2, T4 | In Progress |
 | REL-05 | P1: Transações que entram nos relatórios | T2 | In Progress |
-| REL-06 | P1: Transações que entram nos relatórios | - | Pending |
+| REL-06 | P1: Transações que entram nos relatórios | T6 | In Progress |
 | REL-07 | P1: Transações que entram nos relatórios | T2 | In Progress |
 | REL-08 | P1: Transações que entram nos relatórios | T2, T4 | Implemented |
 | REL-09 | P1: Transações que entram nos relatórios | - | Pending |

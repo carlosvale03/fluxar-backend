@@ -241,14 +241,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Compra parcelada em 3x na categoria do orçamento conta só a parcela de cada mês
-- [ ] Despesa pendente não entra no gasto; compra no cartão com fatura aberta entra
-- [ ] O score e o dashboard contam o mesmo orçamento como estourado
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Compra parcelada em 3x na categoria do orçamento conta só a parcela de cada mês
+- [x] Despesa pendente não entra no gasto; compra no cartão com fatura aberta entra
+- [x] O score e o dashboard contam o mesmo orçamento como estourado
+- [x] Full gate passa
+- [x] Test count: 4 testes (mínimo 4)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: calcula o gasto dos orçamentos pelas mesmas despesas dos relatórios`
 
