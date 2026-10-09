@@ -270,15 +270,16 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O cenário de REL-01 dá R$ 180,00 de despesas no calendário, na pizza e na comparação mensal
-- [ ] A comparação de 6 meses a partir de março mostra outubro a março, sem repetir
-- [ ] Receitas pendentes, transferências e ajustes ficam fora dos gráficos
-- [ ] Nenhum `float(` em valor de dinheiro nessas funções
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] O cenário de REL-01 dá R$ 180,00 de despesas no calendário, na pizza e na comparação mensal
+- [x] A comparação de 6 meses a partir de março mostra outubro a março, sem repetir
+- [x] Receitas pendentes, transferências e ajustes ficam fora dos gráficos
+- [x] Nenhum `float(` em valor de dinheiro nessas funções
+- [x] Full gate passa
+- [x] Test count: 8 testes (mínimo 6)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: soma as mesmas despesas no calendário, nos gráficos e nas comparações`
 

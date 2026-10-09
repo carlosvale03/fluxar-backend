@@ -304,31 +304,26 @@ class ReportService:
         Retorna lista diária de receitas e despesas. Respeita o período se fornecido.
         """
         start_date, end_date = ReportService._get_date_range(period_days, month, year)
-        
-        qs = Transaction.objects.filter(
-            user=user,
-            date__gte=start_date,
-            date__lte=end_date
-        ).annotate(day=TruncDate('date')).values('day', 'type').annotate(total=Sum('amount')).order_by('day')
-        
-        # 1. Agrupar por dia e tipo
+
+        # 1. Receitas e despesas de cada dia pelas regras comuns: a compra no
+        # cartão no dia da compra, sem pendentes, transferências e ajustes
+        # (REL-01 a REL-05)
         raw_days = {}
-        for item in qs:
-            d_str = item['day'].strftime('%Y-%m-%d')
-            if d_str not in raw_days:
-                raw_days[d_str] = {'income': Decimal('0.00'), 'expense': Decimal('0.00')}
-            
-            if item['type'] == 'INCOME':
-                raw_days[d_str]['income'] += item['total']
-            elif item['type'] in TIPOS_DE_DESPESA:
-                raw_days[d_str]['expense'] += item['total']
-        
+
+        def dia(d):
+            return raw_days.setdefault(d.strftime('%Y-%m-%d'), {'income': Decimal('0.00'), 'expense': Decimal('0.00')})
+
+        for item in regras.receitas(user, start_date, end_date).values('date').annotate(total=Sum('amount')):
+            dia(item['date'])['income'] += item['total']
+        for item in regras.despesas(user, start_date, end_date).values('report_date').annotate(total=Sum('amount')):
+            dia(item['report_date'])['expense'] += item['total']
+
         # 2. Transformar em formato esperado pelo Frontend
         days_list = []
         total_period_income = Decimal('0.00')
         total_period_expense = Decimal('0.00')
 
-        for d_str, data in raw_days.items():
+        for d_str, data in sorted(raw_days.items()):
             income = data['income']
             expense = data['expense']
             net = income - expense
@@ -359,12 +354,6 @@ class ReportService:
         """
         start_date, end_date = ReportService._get_date_range(period_days, month, year)
         
-        # 1. Pizza de Categorias
-        expense_q = Q(date__gte=start_date, date__lte=end_date)
-        expense_q &= ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN'])
-        # Inclui Despesas e Cartão de Crédito
-        expense_q &= Q(type__in=TIPOS_DE_DESPESA)
-        
         # 2. Barras (Receita vs Despesa) - SEMPRE DIÁRIO conforme pedido do usuário
         # Agrupamento diário padrão (via get_calendar_data) para manter o Fluxo de Caixa Diário detalhado
         bar_data = ReportService.get_calendar_data(user, month, year, period_days)
@@ -377,13 +366,9 @@ class ReportService:
                 'expense': d['total_expenses']
             })
             
-        from django.db.models import F
-
-        # 1. Agregação de Despesas
+        # 1. Agregação de Despesas, pelas regras comuns (REL-01 a REL-03)
         expense_by_category = []
-        full_cat_expenses = Transaction.objects.filter(
-            user=user
-        ).filter(expense_q).annotate(
+        full_cat_expenses = regras.despesas(user, start_date, end_date).annotate(
             effective_name=_categoria_do_usuario(user, 'name'),
             effective_color=_categoria_do_usuario(user, 'color')
         ).values('effective_name', 'effective_color').annotate(total=Sum('amount')).order_by('-total')
@@ -395,13 +380,9 @@ class ReportService:
                 'color': item['effective_color'] or '#CBD5E1'
             })
 
-        # 2. Agregação de Receitas
-        income_q = Q(type='INCOME', date__gte=start_date, date__lte=end_date)
-        
+        # 2. Agregação de Receitas, só as efetivadas (REL-05)
         income_by_category = []
-        full_cat_incomes = Transaction.objects.filter(
-            user=user
-        ).filter(income_q).annotate(
+        full_cat_incomes = regras.receitas(user, start_date, end_date).annotate(
             effective_name=_categoria_do_usuario(user, 'name'),
             effective_color=_categoria_do_usuario(user, 'color')
         ).values('effective_name', 'effective_color').annotate(total=Sum('amount')).order_by('-total')
@@ -1001,77 +982,46 @@ class ReportService:
         """
         Retorna comparação de receitas vs despesas agrupadas por mês.
         Ideal para gráficos de barras históricas e linhas de saldo.
+
+        Os `months` meses do calendário que terminam no mês escolhido (ou no
+        mês atual de Brasília), cada um uma vez só (REL-17), com as receitas
+        e as despesas das regras comuns (REL-01 a REL-05).
         """
-        today = date.today()
-        
-        # Determinar a data final (pode ser o mês selecionado no dashboard)
-        if month and year:
-            # Último dia do mês/ano fornecido
-            if int(month) == 12:
-                target_end = date(int(year) + 1, 1, 1) - timedelta(days=1)
-            else:
-                target_end = date(int(year), int(month) + 1, 1) - timedelta(days=1)
-        else:
-            target_end = today
+        fim_do_periodo = date(int(year), int(month), 1) if month and year else hoje()
+        meses = regras.meses_do_calendario(fim_do_periodo, months)
+        start_date = regras.limites_do_mes(*meses[0])[0]
+        target_end = regras.limites_do_mes(*meses[-1])[1]
 
-        # Primeiro dia do mês da data final
-        base_start = target_end.replace(day=1)
-        
-        # Vamos calcular X meses atrás
-        start_date = base_start
-        for _ in range(months - 1):
-            start_date = (start_date - timedelta(days=1)).replace(day=1)
-        
         # 1. Agregação de Receitas
-        income_qs = Transaction.objects.filter(
-            user=user,
-            type='INCOME',
-            date__gte=start_date,
-            date__lte=target_end
-        ).annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('amount')).order_by('month')
+        income_qs = regras.receitas(user, start_date, target_end).annotate(
+            month=TruncMonth('date'),
+        ).values('month').annotate(total=Sum('amount'))
 
-        # 2. Agregação de Despesas
-        expense_qs = Transaction.objects.filter(
-            user=user,
-            type__in=TIPOS_DE_DESPESA,
-            date__gte=start_date,
-            date__lte=target_end
-        ).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('amount')).order_by('month')
+        # 2. Agregação de Despesas, pela data no relatório
+        expense_qs = regras.despesas(user, start_date, target_end).annotate(
+            month=TruncMonth('report_date'),
+        ).values('month').annotate(total=Sum('amount'))
 
-        # Mapear resultados
-        data_map = {}
-        
-        # Gerar os meses no range
-        curr = start_date
-        while curr <= target_end:
-            m_key = curr.strftime('%Y-%m')
-            data_map[m_key] = {
-                'month': curr.strftime('%b/%y'),
+        # Mapear resultados, um item por mês do calendário
+        data_map = {
+            (ano, mes): {
+                'month': date(ano, mes, 1).strftime('%b/%y'),
                 'income': Decimal('0.00'),
                 'expense': Decimal('0.00'),
                 'balance': Decimal('0.00')
             }
-            # Avançar para o próximo mês
-            if curr.month == 12:
-                curr = curr.replace(year=curr.year + 1, month=1)
-            else:
-                curr = curr.replace(month=curr.month + 1)
+            for ano, mes in meses
+        }
 
         for item in income_qs:
-            m_key = item['month'].strftime('%Y-%m')
-            if m_key in data_map:
-                data_map[m_key]['income'] = item['total']
+            data_map[(item['month'].year, item['month'].month)]['income'] = item['total']
 
         for item in expense_qs:
-            m_key = item['month'].strftime('%Y-%m')
-            if m_key in data_map:
-                data_map[m_key]['expense'] = item['total']
+            data_map[(item['month'].year, item['month'].month)]['expense'] = item['total']
 
         # Calcular saldo
         comparison_list = []
-        for key in sorted(data_map.keys()):
+        for key in meses:
             val = data_map[key]
             val['balance'] = val['income'] - val['expense']
             # Dinheiro como texto (CONTRATO-16)
@@ -1151,47 +1101,38 @@ class ReportService:
         if not tag:
             return None
 
-        today = date.today()
-        # Início do histórico baseado no parâmetro months
-        start_history = (today.replace(day=1) - timedelta(days=30 * (months - 1))).replace(day=1)
-        
-        # 1. Base de Transações da Tag
-        base_qs = Transaction.objects.filter(user=user, tags__id=tag_id).exclude(
-            type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT', 'TRANSFER_IN']
-        ).distinct()
+        # Mês atual e meses do histórico pelo calendário de Brasília, cada mês
+        # uma vez só (REL-08, REL-17)
+        meses = regras.meses_do_calendario(hoje(), months)
+        inicio_do_historico = regras.limites_do_mes(*meses[0])[0]
+        inicio_do_mes, fim_do_mes = regras.limites_do_mes(*meses[-1])
 
-        # 2. Monitor de Foco (Mês Atual)
-        current_month_q = (
-            Q(type='CREDIT_CARD', invoice__year=today.year, invoice__month=today.month) |
-            Q(type='EXPENSE', date__year=today.year, date__month=today.month) |
-            Q(type='INCOME', date__year=today.year, date__month=today.month)
+        # 1. Despesas e receitas da tag pelas regras comuns (REL-01 a REL-05)
+        def despesas_da_tag(inicio, fim):
+            return regras.despesas(user, inicio, fim).filter(tags__id=tag.id)
+
+        def receitas_da_tag(inicio, fim):
+            return regras.receitas(user, inicio, fim).filter(tags__id=tag.id)
+
+        # 2. Monitor de Foco (Mês Atual), líquido: despesas menos reembolsos
+        current_total = (
+            regras.total(despesas_da_tag(inicio_do_mes, fim_do_mes))
+            - regras.total(receitas_da_tag(inicio_do_mes, fim_do_mes))
         )
-        
-        current_total = base_qs.filter(current_month_q).aggregate(
-            total=Sum(
-                Case(
-                    When(type='INCOME', then=-F('amount')),
-                    default=F('amount'),
-                    output_field=models.DecimalField()
-                )
-            )
-        )['total'] or Decimal('0.00')
 
-        # 3. Média Histórica (Baseada no período selecionado)
-        history_start_date = today - timedelta(days=30 * months)
-        history_qs = base_qs.filter(date__gt=history_start_date)
-        
-        total_historical = history_qs.aggregate(
-            total=Sum(
-                Case(
-                    When(type='INCOME', then=-F('amount')),
-                    default=F('amount'),
-                    output_field=models.DecimalField()
-                )
-            )
-        )['total'] or Decimal('0.00')
-        
-        months_count = history_qs.annotate(m=TruncMonth('date')).values('m').distinct().count()
+        # 3. Média Histórica dos meses do período que tiveram movimentação
+        despesas_por_mes = {
+            (item['m'].year, item['m'].month): item['total']
+            for item in despesas_da_tag(inicio_do_historico, fim_do_mes)
+            .annotate(m=TruncMonth('report_date')).values('m').annotate(total=Sum('amount'))
+        }
+        receitas_por_mes = {
+            (item['m'].year, item['m'].month): item['total']
+            for item in receitas_da_tag(inicio_do_historico, fim_do_mes)
+            .annotate(m=TruncMonth('date')).values('m').annotate(total=Sum('amount'))
+        }
+        total_historical = sum(despesas_por_mes.values(), Decimal('0.00')) - sum(receitas_por_mes.values(), Decimal('0.00'))
+        months_count = len(set(despesas_por_mes) | set(receitas_por_mes))
         average = total_historical / max(1, months_count)
 
         status = 'success'
@@ -1201,27 +1142,15 @@ class ReportService:
         elif current_total > 0:
             status = 'warning'
 
-        # 4. Gráfico de Histórico (Dinamizado por months)
-        history_chart = []
-        curr = start_history
-        while curr <= today:
-            # Ganhos e Gastos mensais para o LineChart
-            m_data = base_qs.filter(date__year=curr.year, date__month=curr.month).aggregate(
-                income=Sum(Case(When(type='INCOME', then=F('amount')), default=0, output_field=models.DecimalField())),
-                expense=Sum(Case(When(type__in=TIPOS_DE_DESPESA, then=F('amount')), default=0, output_field=models.DecimalField()))
-            )
-            
-            history_chart.append({
-                'month': curr.strftime('%b/%y'),
-                'income': dinheiro(m_data['income']),
-                'expense': dinheiro(m_data['expense'])
-            })
-            
-            # Próximo mês
-            if curr.month == 12:
-                curr = curr.replace(year=curr.year+1, month=1)
-            else:
-                curr = curr.replace(month=curr.month+1)
+        # 4. Gráfico de Histórico, um item por mês do calendário
+        history_chart = [
+            {
+                'month': date(ano, mes, 1).strftime('%b/%y'),
+                'income': dinheiro(receitas_por_mes.get((ano, mes))),
+                'expense': dinheiro(despesas_por_mes.get((ano, mes))),
+            }
+            for ano, mes in meses
+        ]
 
         return {
             'tag_name': tag.name,
@@ -1239,17 +1168,10 @@ class ReportService:
         """
         Distribuição de Gastos e Ganhos por Tags. Inclui 'Outros' para transações sem tags.
         """
-        from transactions.models import Transaction
-        from django.db.models import Sum, Q
-        
         start_date, end_date = ReportService._get_date_range(period_days, month, year)
-        
-        # Base querysets
-        base_transactions = Transaction.objects.filter(user=user, date__gte=start_date, date__lte=end_date)
-        
-        # 1. Gastos (Despesa + Cartão)
-        expense_q = Q(type__in=TIPOS_DE_DESPESA) & ~Q(type__in=['INVOICE_PAYMENT', 'TRANSFER_OUT'])
-        expenses = base_transactions.filter(expense_q)
+
+        # 1. Gastos pelas regras comuns (REL-01 a REL-03)
+        expenses = regras.despesas(user, start_date, end_date)
         
         # Sem tags (tag de outro usuário conta como ausente, ISOL-15)
         others_expenses = expenses.exclude(tags__user=user).aggregate(total=Sum('amount'))['total'] or 0
@@ -1274,9 +1196,8 @@ class ReportService:
                 'color': '#94a3b8'
             })
 
-        # 2. Ganhos (Income)
-        income_q = Q(type='INCOME')
-        incomes = base_transactions.filter(income_q)
+        # 2. Ganhos, só os efetivados (REL-05)
+        incomes = regras.receitas(user, start_date, end_date)
         
         # Sem tags (tag de outro usuário conta como ausente, ISOL-15)
         others_incomes = incomes.exclude(tags__user=user).aggregate(total=Sum('amount'))['total'] or 0
