@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from rest_framework.exceptions import AuthenticationFailed
 
 from core.authentication import SessaoJWTAuthentication
+from core import termos
 from core.manutencao import manutencao_ligada
 
 # Rotas que respondem a todos durante a manutenção (SESSAO-19), comparadas
@@ -36,6 +37,65 @@ def _corpo_do_erro(erro):
     if isinstance(detalhe, dict):
         return {'detail': str(detalhe.get('detail', '')), 'code': str(detalhe.get('code', ''))}
     return {'detail': str(detalhe), 'code': getattr(detalhe, 'code', erro.default_code)}
+
+
+# Rotas que respondem sem o aceite da versão vigente dos termos (LGPD-29,
+# AD-031): o usuário nunca perde o acesso aos direitos da LGPD. Comparadas
+# pelo caminho exato, como na manutenção.
+ROTAS_SEM_ACEITE = frozenset({
+    '/api/auth/login/',
+    '/api/auth/refresh/',
+    '/api/auth/me/',
+    '/api/auth/logout/',
+    '/api/terms/',
+    '/api/terms/accept/',
+    '/api/users/me/export/',
+    '/api/users/me/delete/',
+    '/api/auth/cancel-deletion/',
+    '/api/rotina-diaria/',
+    '/api/health/',
+})
+
+
+def termos_pendentes():
+    """O corpo do 403 de quem não aceitou a versão vigente (LGPD-29)."""
+    return {
+        "detail": "Os termos de uso e a política de privacidade mudaram. Aceite a nova versão para continuar.",
+        "code": "terms_acceptance_required",
+        "version": termos.VERSAO_VIGENTE,
+    }
+
+
+class TermosMiddleware:
+    """
+    Sem o aceite da versão vigente dos termos, o usuário autenticado recebe
+    403 `terms_acceptance_required` fora das rotas liberadas (LGPD-28,
+    LGPD-29), no mesmo padrão da manutenção.
+
+    O usuário vem do token de acesso, com a sessão aberta; o aceite vem do
+    cache `versao_dos_termos_aceita`, lido junto com o usuário. Token
+    recusado ou ausente segue para a rota, que responde como sempre.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.autenticacao = SessaoJWTAuthentication()
+
+    def __call__(self, request):
+        if request.path in ROTAS_SEM_ACEITE or request.path.startswith(PREFIXOS_LIBERADOS):
+            return self.get_response(request)
+        if not request.META.get('HTTP_AUTHORIZATION'):
+            return self.get_response(request)
+
+        try:
+            resultado = self.autenticacao.authenticate(request)
+        except AuthenticationFailed:
+            # A rota responde o 401 de sempre, e a tela renova a sessão
+            return self.get_response(request)
+
+        if resultado is not None and not termos.aceitou_a_vigente(resultado[0]):
+            return JsonResponse(termos_pendentes(), status=403)
+        return self.get_response(request)
 
 
 class MaintenanceModeMiddleware:

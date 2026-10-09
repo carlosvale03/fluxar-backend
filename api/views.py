@@ -1143,6 +1143,33 @@ class TermosView(ParametrosConhecidosMixin, APIView):
     def get(self, request):
         return Response(termos.termos_vigentes())
 
+
+VERSAO_NAO_VIGENTE = "Esta não é a versão vigente dos termos. Recarregue a página para ver a atual."
+
+
+class AceiteDosTermosView(APIView):
+    """
+    O usuário aceita a versão vigente dos termos (LGPD-28, LGPD-30). Outra
+    versão recebe 400 no campo `version`. Os aceites anteriores continuam
+    gravados; repetir o aceite da vigente não grava outro.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        versao = request.data.get('version')
+        if not isinstance(versao, str) or not versao:
+            return Response({"version": [SENHA_OBRIGATORIA]}, status=status.HTTP_400_BAD_REQUEST)
+        if versao != termos.VERSAO_VIGENTE:
+            return Response({"version": [VERSAO_NAO_VIGENTE]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not termos.aceitou_a_vigente(user):
+            termos.registrar_aceite(user)
+        return Response({
+            "accepted_version": user.versao_dos_termos_aceita,
+            "current_version": termos.VERSAO_VIGENTE,
+        }, status=status.HTTP_200_OK)
+
 # --- System Views ---
 
 class RotinaDiariaView(APIView):

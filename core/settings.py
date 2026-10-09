@@ -94,11 +94,16 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware.MaintenanceModeMiddleware',
+    'api.middleware.TermosMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+# Nos testes, os usuários criados já aceitaram a versão vigente dos termos
+# (LGPD-29); os testes do bloqueio criam o usuário sem o aceite
+TEST_RUNNER = 'tests.executor.ExecutorDeTestes'
 
 TEMPLATES = [
     {

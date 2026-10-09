@@ -205,6 +205,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # O acesso do próprio usuário, só no /auth/me (PERM-17)
         if self.context.get('com_acesso'):
             ret['access'] = travas.acesso_na_api(instance)
+            # A versão aceita e a vigente, para a tela pedir o novo aceite
+            # (LGPD-28), e o consentimento de melhoria do produto (LGPD-34)
+            ret['terms'] = {
+                'accepted_version': instance.versao_dos_termos_aceita,
+                'current_version': termos.VERSAO_VIGENTE,
+            }
+            ret['product_improvement_consent'] = instance.consentimento_melhoria
         return ret
     
     def update(self, instance, validated_data):

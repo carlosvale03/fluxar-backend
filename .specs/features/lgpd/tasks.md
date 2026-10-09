@@ -494,15 +494,16 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Sem o aceite da versão vigente, `/api/accounts/` recebe 403 `{code: "terms_acceptance_required"}`
-- [ ] Login, renovação, `/auth/me`, logout, termos, aceite, download dos dados, pedido de exclusão, cancelamento e health continuam funcionando
-- [ ] Aceitar a versão vigente libera as rotas; aceitar outra versão recebe 400; aceites anteriores continuam gravados
-- [ ] Mudar `VERSAO_VIGENTE` faz o próximo pedido de quem aceitou a anterior receber 403
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Sem o aceite da versão vigente, `/api/accounts/` recebe 403 `{code: "terms_acceptance_required"}`
+- [x] Login, renovação, `/auth/me`, logout, termos, aceite, download dos dados, pedido de exclusão, cancelamento e health continuam funcionando
+- [x] Aceitar a versão vigente libera as rotas; aceitar outra versão recebe 400; aceites anteriores continuam gravados
+- [x] Mudar `VERSAO_VIGENTE` faz o próximo pedido de quem aceitou a anterior receber 403
+- [x] Full gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: pede o aceite da versão nova dos termos antes de liberar o app`
 

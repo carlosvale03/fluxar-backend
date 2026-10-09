@@ -17,6 +17,7 @@ from .views import (
     health_check,
     RotinaDiariaView,
     TermosView,
+    AceiteDosTermosView,
     UserAvatarView,
     AdminUserListView,
     AdminUserDetailView,
@@ -62,6 +63,8 @@ urlpatterns = [
 
     # Versão vigente dos termos e da política, pública (LGPD-28, LGPD-31)
     path('terms/', TermosView.as_view(), name='terms'),
+    # Aceite da versão vigente (LGPD-28, LGPD-30)
+    path('terms/accept/', AceiteDosTermosView.as_view(), name='terms_accept'),
 
     # System
     path('health/', health_check, name='health_check'),
