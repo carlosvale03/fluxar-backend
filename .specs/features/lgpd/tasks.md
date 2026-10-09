@@ -342,16 +342,17 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Login com a senha certa responde 400 `{code: "deletion_pending", deletion_scheduled_for, cancel_token}` sem criar sessão
-- [ ] Senha errada continua `invalid_credentials`
-- [ ] O cancelamento com o token reativa a conta com todos os dados, limpa as datas e devolve o access com o refresh no cookie
-- [ ] Token vencido ou adulterado recebe 400
-- [ ] "Esqueci a senha" durante o prazo funciona e não cancela a exclusão
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Login com a senha certa responde 400 `{code: "deletion_pending", deletion_scheduled_for, cancel_token}` sem criar sessão
+- [x] Senha errada continua `invalid_credentials`
+- [x] O cancelamento com o token reativa a conta com todos os dados, limpa as datas e devolve o access com o refresh no cookie
+- [x] Token vencido ou adulterado recebe 400
+- [x] "Esqueci a senha" durante o prazo funciona e não cancela a exclusão
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: oferece cancelar a exclusão ao entrar durante o prazo`
 

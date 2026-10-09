@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import update_last_login
 from django.shortcuts import get_object_or_404
 from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
@@ -25,6 +26,7 @@ from .serializers import (
     AdminResetPasswordSerializer,
     GlobalSettingSerializer,
     AlteracaoDePlanoSerializer,
+    conta_do_token_de_cancelamento,
 )
 from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting, TravaDePlano
 from .cookies import (
@@ -136,6 +138,37 @@ class CustomLoginView(SemTransacaoPorRequisicao, TokenObtainPairView):
         # O acesso fica no corpo e a renovação só no cookie httpOnly (SESSAO-01)
         response = super().post(request, *args, **kwargs)
         gravar_cookie_de_renovacao(response, response.data.pop('refresh'))
+        return response
+
+class CancelarExclusaoView(APIView):
+    """
+    Cancela a exclusão marcada com o token que o login devolveu, reativa a
+    conta com todos os dados e abre a sessão como o login: o acesso no corpo
+    e a renovação no cookie httpOnly (LGPD-08, SESSAO-01).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Rota pública: quem vale é o token de cancelamento (AUTH-40)
+    authentication_classes = ()
+
+    TOKEN_INVALIDO = {
+        "detail": "O prazo para cancelar a exclusão por aqui terminou. Entre de novo.",
+        "code": "invalid_cancel_token",
+    }
+
+    def post(self, request):
+        user = conta_do_token_de_cancelamento(request.data.get('cancel_token'))
+        if user is None:
+            return Response(self.TOKEN_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = True
+        user.exclusao_pedida_em = None
+        user.exclusao_agendada_para = None
+        user.save(update_fields=['is_active', 'exclusao_pedida_em', 'exclusao_agendada_para'])
+
+        access, refresh = criar_sessao(user)
+        update_last_login(None, user)
+        response = Response({"access": access}, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
         return response
 
 ORIGEM_RECUSADA = {"detail": "Origem não permitida.", "code": "origin_not_allowed"}

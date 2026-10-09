@@ -6,6 +6,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import password_validation
 from django.contrib.auth.password_validation import validate_password
+from django.core import signing
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
@@ -260,12 +261,45 @@ class ChangePasswordSerializer(serializers.Serializer):
 class LoginRecusado(exceptions.APIException):
     """
     HTTP 400 com `detail` e `code` no corpo (AD-024). Um ValidationError do
-    serializer poria cada valor numa lista.
+    serializer poria cada valor numa lista. `extras` entram no corpo ao lado
+    dos dois.
     """
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, detail, code):
-        super().__init__({"detail": detail, "code": code})
+    def __init__(self, detail, code, **extras):
+        super().__init__({"detail": detail, "code": code, **extras})
+
+
+# O token de cancelamento da exclusão vale 15 minutos e só para o pedido em
+# que foi emitido (LGPD-07, LGPD-08)
+SALT_DO_CANCELAMENTO = 'fluxar.lgpd.cancelar-exclusao'
+VALIDADE_DO_CANCELAMENTO = 15 * 60
+
+
+def token_de_cancelamento(user):
+    """Token assinado que permite cancelar a exclusão marcada da conta."""
+    return signing.dumps(
+        {'u': str(user.pk), 'p': user.exclusao_pedida_em.isoformat()}, salt=SALT_DO_CANCELAMENTO,
+    )
+
+
+def conta_do_token_de_cancelamento(token):
+    """
+    A conta com exclusão marcada a que o token se refere, ou None se o token
+    for inválido, tiver vencido ou o pedido já não for o mesmo.
+    """
+    if not isinstance(token, str) or not token:
+        return None
+    try:
+        dados = signing.loads(token, salt=SALT_DO_CANCELAMENTO, max_age=VALIDADE_DO_CANCELAMENTO)
+        user = User.objects.get(pk=dados['u'])
+    except (signing.BadSignature, User.DoesNotExist, KeyError, TypeError, DjangoValidationError):
+        return None
+    if user.exclusao_agendada_para is None or user.exclusao_pedida_em is None:
+        return None
+    if user.exclusao_pedida_em.isoformat() != dados.get('p'):
+        return None
+    return user
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -296,6 +330,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             LoginFalhasEmailThrottle().registrar_falha(email)
             raise LoginRecusado("E-mail ou senha incorretos.", "invalid_credentials")
 
+        # A conta com exclusão marcada recebe a data e a opção de cancelar,
+        # sem abrir a sessão; vem antes do aviso de conta desativada (LGPD-07)
+        if user.exclusao_agendada_para is not None:
+            raise LoginRecusado(
+                "A exclusão desta conta está marcada. Cancele a exclusão para voltar a usar o Fluxar.",
+                "deletion_pending",
+                deletion_scheduled_for=serializers.DateTimeField().to_representation(user.exclusao_agendada_para),
+                cancel_token=token_de_cancelamento(user),
+            )
         if not user.is_active:
             raise LoginRecusado("Esta conta está desativada.", "account_disabled")
         if not user.email_verified:

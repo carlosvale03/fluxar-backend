@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     RegisterView,
     CustomLoginView,
+    CancelarExclusaoView,
     RenovarSessaoView,
     LogoutView,
     MeView,
@@ -37,6 +38,8 @@ urlpatterns = [
     path('auth/resend-verification/', ResendVerificationView.as_view(), name='auth_resend_verification'),
     path('auth/forgot-password/', ForgotPasswordView.as_view(), name='auth_forgot_password'),
     path('auth/reset-password/', ResetPasswordView.as_view(), name='auth_reset_password'),
+    # Cancelamento da exclusão marcada, com o token do login (LGPD-08)
+    path('auth/cancel-deletion/', CancelarExclusaoView.as_view(), name='auth_cancel_deletion'),
 
     # Auth Protected Endpoints
     path('auth/me/', MeView.as_view(), name='auth_me'),
