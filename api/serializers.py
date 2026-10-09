@@ -121,6 +121,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
     # Escrita no mesmo formato da leitura (CONTRATO-26)
     preferences = PreferenciasSerializer(write_only=True, required=False)
+    # Os campos criptografados são texto no banco; a API mantém a data e o
+    # valor com o formato de antes (LGPD-15)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    monthly_income = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
 
     class Meta:
         model = User

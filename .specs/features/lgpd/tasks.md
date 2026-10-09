@@ -134,14 +134,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Depois de salvar o perfil, a coluna do CPF no banco não contém os dígitos, e o perfil devolve o CPF completo
-- [ ] A migração criptografa CPF, telefone, nascimento e renda já gravados, e os perfis devolvem os mesmos valores de antes
-- [ ] Dois usuários salvam o mesmo CPF válido sem erro
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Depois de salvar o perfil, a coluna do CPF no banco não contém os dígitos, e o perfil devolve o CPF completo
+- [x] A migração criptografa CPF, telefone, nascimento e renda já gravados, e os perfis devolvem os mesmos valores de antes
+- [x] Dois usuários salvam o mesmo CPF válido sem erro
+- [x] Build gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: guarda CPF, telefone, nascimento e renda criptografados`
 

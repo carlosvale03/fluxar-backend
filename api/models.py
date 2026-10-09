@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
+from core.criptografia import DataCriptografada, DecimalCriptografado, TextoCriptografado
+
 class UserManager(BaseUserManager):
     @classmethod
     def normalize_email(cls, email):
@@ -57,9 +59,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     # 1. Dados Pessoais
     avatar = CloudinaryField('image', folder='avatars', resource_type='image', blank=True, null=True)
-    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
+    # Criptografados no banco, sem busca por eles; o CPF deixa de ser único
+    # (LGPD-15, LGPD-18, AD-020)
+    cpf = TextoCriptografado(max_length=14, blank=True, null=True)
+    phone_number = TextoCriptografado(max_length=20, blank=True, null=True)
+    date_of_birth = DataCriptografada(blank=True, null=True)
     
     # 2. Preferências
     currency = models.CharField(max_length=3, default='BRL')
@@ -67,7 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     language = models.CharField(max_length=10, default='pt-BR')
     
     # 3. Perfil Financeiro
-    monthly_income = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    monthly_income = DecimalCriptografado(blank=True, null=True)
     
     # 4. Configurações (JSON)
     notification_settings = models.JSONField(default=dict, blank=True)
