@@ -9,8 +9,10 @@ from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, JsonResponse
+from django.conf import settings as django_settings
 from datetime import timedelta
 from decimal import Decimal
+import hmac
 import uuid
 from .serializers import (
     EMAIL_JA_CADASTRADO,
@@ -36,7 +38,7 @@ from .models import (
     SystemLog,
     TravaDePlano,
 )
-from .exclusao import ExclusaoFalhou, excluir_definitivamente
+from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -1128,6 +1130,39 @@ class AdminHardDeleteView(APIView):
         return excluir_pelo_admin(user, chave="message")
 
 # --- System Views ---
+
+class RotinaDiariaView(APIView):
+    """
+    Roda a rotina diária, chamada pelo workflow agendado do GitHub (AD-048).
+
+    Exige `Authorization: Bearer <ROTINA_DIARIA_TOKEN>`, comparado em tempo
+    constante. Sem o token configurado, a rota não existe (404). Fica fora
+    da transação por requisição: cada conta é apagada na própria transação,
+    e a falha de uma não desfaz as outras (LGPD-12).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Quem vale é o token da rotina, não o JWT de um usuário
+    authentication_classes = ()
+
+    NAO_ENCONTRADA = {"detail": "Não encontrado.", "code": "not_found"}
+    TOKEN_RECUSADO = {"detail": "Token da rotina inválido.", "code": "invalid_token"}
+
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        esperado = django_settings.ROTINA_DIARIA_TOKEN
+        if not esperado:
+            return Response(self.NAO_ENCONTRADA, status=status.HTTP_404_NOT_FOUND)
+        cabecalho = request.META.get('HTTP_AUTHORIZATION', '')
+        prefixo = 'Bearer '
+        enviado = cabecalho[len(prefixo):] if cabecalho.startswith(prefixo) else ''
+        if not enviado or not hmac.compare_digest(enviado.encode(), esperado.encode()):
+            return Response(self.TOKEN_RECUSADO, status=status.HTTP_401_UNAUTHORIZED)
+
+        excluidas, falhas = excluir_contas_vencidas()
+        return Response({"excluidas": excluidas, "falhas": falhas}, status=status.HTTP_200_OK)
 
 # Sem transação de banco por requisição: o health responde mesmo sem acesso
 # ao banco (SESSAO-23), e o ATOMIC_REQUESTS abriria a conexão antes da view

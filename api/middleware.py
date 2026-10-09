@@ -12,6 +12,8 @@ ROTAS_LIBERADAS = frozenset({
     '/api/auth/me/',
     '/api/auth/logout/',
     '/api/health/',
+    # A rotina diária tem o próprio token e precisa rodar na manutenção (AD-048)
+    '/api/rotina-diaria/',
 })
 
 # O admin do Django tem o próprio login, só para staff, e os arquivos

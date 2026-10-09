@@ -50,6 +50,11 @@ FIELD_ENCRYPTION_KEYS = [
     if chave.strip()
 ]
 
+# Token da rotina diária, chamada pelo workflow agendado do GitHub (AD-048).
+# Sem ele, a rota da rotina responde 404 e a rotina roda só pelo comando
+# `rotina_diaria` no Render Shell.
+ROTINA_DIARIA_TOKEN = os.getenv('ROTINA_DIARIA_TOKEN', '').strip()
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
 AUTH_USER_MODEL = 'api.User'

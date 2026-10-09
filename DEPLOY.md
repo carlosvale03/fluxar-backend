@@ -36,6 +36,19 @@ Configure estas chaves no painel do Render:
 - `WEB_CONCURRENCY`: quantos workers do gunicorn (padrão `2`). Se a memória do plano não der, use `1`; as threads continuam atendendo outras requisições durante uma importação.
 - `GUNICORN_THREADS`: threads por worker (padrão `4`).
 - E-mail: `RESEND_API_KEY`, `DEFAULT_FROM_EMAIL` e, para o fallback SMTP, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER` e `EMAIL_HOST_PASSWORD`.
+- `FIELD_ENCRYPTION_KEY`: chave Fernet que criptografa CPF, telefone, data de nascimento e renda no banco (LGPD-15, AD-047). Obrigatória: sem ela o backend não sobe.
+  - **Configure antes do deploy que traz a criptografia**: a migração `api/0014` criptografa os dados já gravados no Pre-Deploy e precisa da chave definitiva.
+  - Gere com `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+  - Guarde uma cópia fora do Render (num gerenciador de senhas): sem a chave, os dados criptografados ficam ilegíveis.
+  - Para trocar a chave, coloque a nova na frente, separada por vírgula (`nova,antiga`): a primeira grava e todas leem. Só retire a antiga depois de regravar os dados.
+- `ROTINA_DIARIA_TOKEN`: token longo e aleatório que protege `POST /api/rotina-diaria/` (AD-048). Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Sem ele, a rota responde 404 e a rotina só roda pelo comando.
+
+### Rotina diária (GitHub Actions)
+O workflow `.github/workflows/rotina-diaria.yml` roda todo dia às 6h UTC (3h de Brasília) e chama `POST /api/rotina-diaria/`, que apaga as contas cuja exclusão definitiva venceu (30 dias depois do pedido). Em **Settings → Secrets and variables → Actions** do repositório, crie:
+- `API_URL`: URL do Render, sem `/api` no fim (ex.: `https://fluxar-api.onrender.com`).
+- `ROTINA_DIARIA_TOKEN`: o mesmo valor da variável do Render.
+
+A resposta traz `{excluidas, falhas}`. Uma conta que falha (por exemplo, com o Cloudinary fora do ar) continua desativada e marcada, e é apagada na execução seguinte. Para rodar à mão, use **Run workflow** na aba Actions ou `python manage.py rotina_diaria` no Render Shell.
 
 ### Frontend na Vercel (proxy da API)
 O frontend chama a API por `/api` na própria origem, e o Next.js repassa para o Render (AD-036). Na Vercel:

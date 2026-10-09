@@ -433,14 +433,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Com a data vencida simulada, a rotina apaga a conta e grava `executada_por` = ROTINA; conta com prazo futuro fica
-- [ ] Uma conta que falha não impede a próxima e é apagada na execução seguinte, sem registro duplicado
-- [ ] A rota sem token recebe 401, com token certo roda e responde `{excluidas, falhas}`; sem a variável configurada, 404
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Com a data vencida simulada, a rotina apaga a conta e grava `executada_por` = ROTINA; conta com prazo futuro fica
+- [x] Uma conta que falha não impede a próxima e é apagada na execução seguinte, sem registro duplicado
+- [x] A rota sem token recebe 401, com token certo roda e responde `{excluidas, falhas}`; sem a variável configurada, 404
+- [x] Build gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: agenda a exclusão definitiva das contas vencidas`
 

@@ -224,9 +224,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-07 | P1: Pedido de exclusão da própria conta | T9, T18 | In Progress |
 | LGPD-08 | P1: Pedido de exclusão da própria conta | T9, T18 | In Progress |
 | LGPD-09 | P1: Pedido de exclusão da própria conta | T8 | Implemented |
-| LGPD-10 | P1: Exclusão definitiva | T11, T12 | In Progress |
+| LGPD-10 | P1: Exclusão definitiva | T11, T12 | Implemented |
 | LGPD-11 | P1: Exclusão definitiva | T11 | Implemented |
-| LGPD-12 | P1: Exclusão definitiva | T11, T12 | In Progress |
+| LGPD-12 | P1: Exclusão definitiva | T11, T12 | Implemented |
 | LGPD-13 | P1: Exclusão definitiva | T11 | Implemented |
 | LGPD-14 | P1: Exclusão definitiva | T11 | Implemented |
 | LGPD-15 | P1: Guarda dos dados pessoais | T1, T2 | Implemented |

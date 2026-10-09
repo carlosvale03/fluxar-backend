@@ -114,6 +114,34 @@ def excluir_definitivamente(usuario, executor):
         )
 
 
+def excluir_contas_vencidas():
+    """
+    A rotina diária (AD-048): apaga, uma a uma, as contas desativadas com a
+    exclusão marcada para agora ou antes (LGPD-10). Cada conta é
+    independente: a que falhar fica desativada e marcada para a próxima
+    execução, e as outras seguem (LGPD-12). Devolve `(excluidas, falhas)`.
+    """
+    vencidas = list(
+        User.objects.filter(is_active=False, exclusao_agendada_para__lte=timezone.now())
+        .order_by('exclusao_agendada_para')
+        .values_list('pk', flat=True)
+    )
+    excluidas = falhas = 0
+    for usuario_id in vencidas:
+        usuario = User.objects.filter(pk=usuario_id).first()
+        if usuario is None:
+            continue
+        try:
+            excluir_definitivamente(usuario, RegistroDeExclusao.ROTINA)
+        except Exception as erro:
+            # Só a classe do erro e o id interno (LGPD-21)
+            logger.error("Exclusão definitiva adiada usuario=%s (%s).", usuario_id, type(erro).__name__)
+            falhas += 1
+        else:
+            excluidas += 1
+    return excluidas, falhas
+
+
 def modelos_do_usuario():
     """Os modelos de `MODELOS_DO_USUARIO`, resolvidos."""
     return [(apps.get_model(rotulo), campo) for rotulo, campo in MODELOS_DO_USUARIO]

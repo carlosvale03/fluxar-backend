@@ -15,6 +15,7 @@ from .views import (
     ForgotPasswordView,
     ResetPasswordView,
     health_check,
+    RotinaDiariaView,
     UserAvatarView,
     AdminUserListView,
     AdminUserDetailView,
@@ -60,6 +61,8 @@ urlpatterns = [
 
     # System
     path('health/', health_check, name='health_check'),
+    # Rotina diária, chamada pelo workflow agendado do GitHub (AD-048)
+    path('rotina-diaria/', RotinaDiariaView.as_view(), name='rotina_diaria'),
     
     # Admin Backoffice
     path('admin/users/', AdminUserListView.as_view(), name='admin_users_list'),

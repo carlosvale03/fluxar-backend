@@ -1,0 +1,37 @@
+name: Rotina diária
+
+# Chama a rotina diária do backend (AD-048): apaga as contas cuja exclusão
+# definitiva venceu (LGPD-10). Os segredos do repositório API_URL (endereço
+# do Render, sem /api no fim) e ROTINA_DIARIA_TOKEN (o mesmo valor da
+# variável no Render) são configurados como explica o DEPLOY.md.
+
+on:
+  schedule:
+    # 6h UTC, 3h no horário de Brasília
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rotina:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Chama a rotina diária da API
+      env:
+        API_URL: ${{ secrets.API_URL }}
+        ROTINA_DIARIA_TOKEN: ${{ secrets.ROTINA_DIARIA_TOKEN }}
+      run: |
+        if [ -z "$API_URL" ] || [ -z "$ROTINA_DIARIA_TOKEN" ]; then
+          echo "::error::Configure os segredos API_URL e ROTINA_DIARIA_TOKEN do repositório."
+          exit 1
+        fi
+        # O plano gratuito do Render dorme sem tráfego: as tentativas dão
+        # tempo de o serviço acordar. Repetir é seguro, a rotina é idempotente.
+        curl --fail-with-body --silent --show-error \
+          --max-time 300 --retry 4 --retry-delay 30 --retry-all-errors \
+          -X POST \
+          -H "Authorization: Bearer ${ROTINA_DIARIA_TOKEN}" \
+          "${API_URL%/}/api/rotina-diaria/"
