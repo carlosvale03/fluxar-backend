@@ -163,14 +163,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] CPF com dígito verificador errado e sequência repetida (111.111.111-11) recebem 400 com "CPF inválido."
-- [ ] CPF válido com ou sem pontuação é aceito e guardado com 11 dígitos
-- [ ] CPF já usado por outra conta é aceito, sem nenhuma consulta à outra conta
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] CPF com dígito verificador errado e sequência repetida (111.111.111-11) recebem 400 com "CPF inválido."
+- [x] CPF válido com ou sem pontuação é aceito e guardado com 11 dígitos
+- [x] CPF já usado por outra conta é aceito, sem nenhuma consulta à outra conta
+- [x] Quick gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: valida o CPF pelos dígitos verificadores`
 

@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import exceptions, serializers, status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
@@ -116,6 +118,23 @@ class PreferenciasSerializer(serializers.Serializer):
     notifications = serializers.DictField(child=serializers.BooleanField(), required=False)
 
 
+CPF_INVALIDO = 'CPF inválido.'
+# 11 dígitos, com ou sem os pontos e o hífen
+FORMATO_DO_CPF = re.compile(r'\d{3}\.?\d{3}\.?\d{3}-?\d{2}')
+
+
+def cpf_valido(digitos):
+    """Confere os dois dígitos verificadores de um CPF com 11 dígitos (LGPD-17)."""
+    if len(digitos) != 11 or len(set(digitos)) == 1:
+        return False
+    for tamanho in (9, 10):
+        soma = sum(int(digito) * peso for digito, peso in zip(digitos, range(tamanho + 1, 1, -1)))
+        verificador = soma * 10 % 11 % 10
+        if verificador != int(digitos[tamanho]):
+            return False
+    return True
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
@@ -145,14 +164,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
     def validate_cpf(self, value):
+        # Confere só os dígitos verificadores, sem consultar outras contas, e
+        # guarda só os 11 dígitos (LGPD-17, LGPD-18)
         if not value: return value
-        # Validação simples de formato (melhorar com lib depois)
-        # Manter apenas números
-        clean_cpf = ''.join(filter(str.isdigit, value))
-        if len(clean_cpf) != 11:
-            raise serializers.ValidationError("CPF inválido. Deve conter 11 dígitos.")
-        # TODO: Implementar algoritmo real de dígito verificador
-        return value
+        if not FORMATO_DO_CPF.fullmatch(value.strip()):
+            raise serializers.ValidationError(CPF_INVALIDO)
+        digitos = ''.join(filter(str.isdigit, value))
+        if not cpf_valido(digitos):
+            raise serializers.ValidationError(CPF_INVALIDO)
+        return digitos
 
     def validate_phone_number(self, value):
         if not value: return value
