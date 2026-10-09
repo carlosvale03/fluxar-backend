@@ -171,7 +171,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-01 | P1: Transações que entram nos relatórios | T1, T2, T7, T10 | Implemented |
 | REL-02 | P1: Transações que entram nos relatórios | T1, T2, T7 | Implemented |
 | REL-03 | P1: Transações que entram nos relatórios | T1, T2, T7 | Implemented |
-| REL-04 | P1: Transações que entram nos relatórios | T2, T4 | In Progress |
+| REL-04 | P1: Transações que entram nos relatórios | T2, T4, T11 | Implemented |
 | REL-05 | P1: Transações que entram nos relatórios | T2, T7 | Implemented |
 | REL-06 | P1: Transações que entram nos relatórios | T6, T10 | Implemented |
 | REL-07 | P1: Transações que entram nos relatórios | T2, T7 | Implemented |
@@ -182,10 +182,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-12 | P1: Transações que entram nos relatórios | T3 | Implemented |
 | REL-13 | P1: Patrimônio, liquidez e reservas | T2, T4, T10 | Implemented |
 | REL-14 | P1: Patrimônio, liquidez e reservas | T2, T5 | Implemented |
-| REL-15 | P1: Patrimônio, liquidez e reservas | T4 | In Progress |
+| REL-15 | P1: Patrimônio, liquidez e reservas | T4, T11 | Implemented |
 | REL-16 | P1: Patrimônio, liquidez e reservas | T2, T8 | Implemented |
 | REL-17 | P1: Patrimônio, liquidez e reservas | T2, T7, T8 | Implemented |
-| REL-18 | P1: Patrimônio, liquidez e reservas | T2, T4 | In Progress |
+| REL-18 | P1: Patrimônio, liquidez e reservas | T2, T4, T11 | Implemented |
 | REL-19 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |
 | REL-20 | P1: Score financeiro e dinheiro guardado | T2, T10 | Implemented |
 | REL-21 | P1: Score financeiro e dinheiro guardado | T5 | Implemented |

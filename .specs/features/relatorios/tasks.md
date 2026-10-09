@@ -388,13 +388,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Com `payable` 50.00, o dashboard mostra "A pagar" R$ 50,00
-- [ ] O patrimônio mostra as quatro partes de `net_worth_breakdown`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Com `payable` 50.00, o dashboard mostra "A pagar" R$ 50,00
+- [x] O patrimônio mostra as quatro partes de `net_worth_breakdown`
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes (mínimo 3)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o que falta pagar e o patrimônio dividido no dashboard`
 
