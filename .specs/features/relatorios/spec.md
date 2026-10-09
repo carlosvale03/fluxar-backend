@@ -179,7 +179,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | REL-09 | P1: Transações que entram nos relatórios | - | Pending |
 | REL-10 | P1: Transações que entram nos relatórios | T2 | In Progress |
 | REL-11 | P1: Transações que entram nos relatórios | T1 | In Progress |
-| REL-12 | P1: Transações que entram nos relatórios | - | Pending |
+| REL-12 | P1: Transações que entram nos relatórios | T3 | Implemented |
 | REL-13 | P1: Patrimônio, liquidez e reservas | T2 | In Progress |
 | REL-14 | P1: Patrimônio, liquidez e reservas | T2 | In Progress |
 | REL-15 | P1: Patrimônio, liquidez e reservas | - | Pending |

@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
@@ -8,6 +10,21 @@ from .services import ReportService
 from core.travas import RecursoLiberado
 from .models import FocusedMonitorItem
 from .serializers import FocusedMonitorItemSerializer
+
+MESES_FORA_DO_LIMITE = 'O parâmetro months aceita de 1 a 24.'
+
+
+def ler_meses(request, padrao=6):
+    """
+    O parâmetro `months`: inteiro de 1 a 24, ou `padrao` quando não vem;
+    qualquer outro valor recebe 400 (REL-12, PERF-05).
+    """
+    texto = request.query_params.get('months')
+    if texto is None:
+        return padrao
+    if not re.fullmatch(r'[0-9]+', texto) or not 1 <= int(texto) <= 24:
+        raise ValidationError({'detail': MESES_FORA_DO_LIMITE})
+    return int(texto)
 
 class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
     """
@@ -69,7 +86,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         return Response(data)
     @action(detail=False, methods=['get'], url_path='charts/monthly-comparison', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('comparacao_mensal')])
     def monthly_comparison(self, request):
-        months = int(request.query_params.get('months', 6))
+        months = ler_meses(request)
         month = request.query_params.get('month')
         year = request.query_params.get('year')
         data = ReportService.get_monthly_comparison(request.user, months=months, month=month, year=year)
@@ -78,7 +95,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='charts/tag-insights', permission_classes=[permissions.IsAuthenticated, RecursoLiberado('analise_por_tag')])
     def tag_insights(self, request):
         tag_id = request.query_params.get('tag_id')
-        months = int(request.query_params.get('months', 6))
+        months = ler_meses(request)
         
         if not tag_id:
             raise ValidationError({'tag_id': ['Este campo é obrigatório.']})

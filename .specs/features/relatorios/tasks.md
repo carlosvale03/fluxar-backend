@@ -152,13 +152,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] `months=1000`, `months=0`, `months=abc` e `months=2.5` recebem 400 com "O parâmetro months aceita de 1 a 24."
-- [ ] `months=24` e a ausência do parâmetro funcionam
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] `months=1000`, `months=0`, `months=abc` e `months=2.5` recebem 400 com "O parâmetro months aceita de 1 a 24."
+- [x] `months=24` e a ausência do parâmetro funcionam
+- [x] Quick gate passa
+- [x] Test count: 3 testes (mínimo 3)
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: limita o parâmetro months dos relatórios de 1 a 24`
 
