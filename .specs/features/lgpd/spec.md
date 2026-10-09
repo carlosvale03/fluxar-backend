@@ -216,7 +216,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | LGPD-01 | P1: Pedido de exclusão da própria conta | - | Pending |
-| LGPD-02 | P1: Pedido de exclusão da própria conta | - | Pending |
+| LGPD-02 | P1: Pedido de exclusão da própria conta | T10, T17 | In Progress |
 | LGPD-03 | P1: Pedido de exclusão da própria conta | T8, T17 | In Progress |
 | LGPD-04 | P1: Pedido de exclusão da própria conta | T8, T17 | In Progress |
 | LGPD-05 | P1: Pedido de exclusão da própria conta | T8 | Implemented |

@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from datetime import timedelta
 from decimal import Decimal
 import uuid
@@ -561,6 +561,25 @@ class PedidoDeExclusaoView(APIView):
             "deletion_scheduled_for": _data_na_api(user.exclusao_agendada_para),
             "email_sent": email_sent,
         }, status=status.HTTP_200_OK)
+
+class ExportarMeusDadosView(ParametrosConhecidosMixin, APIView):
+    """
+    Download dos dados financeiros do usuário em XLSX, antes de pedir a
+    exclusão da conta (LGPD-02). Liberado em todos os planos: fica fora da
+    trava `exportacao_xlsx`, que vale só para a exportação de transações
+    (AD-018, AD-044).
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        from data_exchange.services import ExportService
+
+        buffer = ExportService.generate_dados_da_conta(request.user)
+        response = HttpResponse(
+            buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="meus_dados_fluxar.xlsx"'
+        return response
 
 # --- Admin Views ---
 

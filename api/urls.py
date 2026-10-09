@@ -9,6 +9,7 @@ from .views import (
     PlansView,
     ChangePasswordView,
     PedidoDeExclusaoView,
+    ExportarMeusDadosView,
     VerifyEmailView,
     ResendVerificationView,
     ForgotPasswordView,
@@ -54,6 +55,8 @@ urlpatterns = [
     path('users/me/password/', ChangePasswordView.as_view(), name='users_me_password'),
     # Pedido de exclusão da própria conta (LGPD-03 a LGPD-06)
     path('users/me/delete/', PedidoDeExclusaoView.as_view(), name='users_me_delete'),
+    # Download dos dados financeiros, em qualquer plano (LGPD-02)
+    path('users/me/export/', ExportarMeusDadosView.as_view(), name='users_me_export'),
 
     # System
     path('health/', health_check, name='health_check'),

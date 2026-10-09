@@ -373,13 +373,14 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Um usuário Comum com `exportacao_xlsx` travada baixa o XLSX com status 200
-- [ ] O arquivo tem as cinco abas, só com os dados do próprio usuário
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Um usuário Comum com `exportacao_xlsx` travada baixa o XLSX com status 200
+- [x] O arquivo tem as cinco abas, só com os dados do próprio usuário
+- [x] Quick gate passa
+- [x] Test count: 3 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite baixar os dados financeiros em qualquer plano`
 
