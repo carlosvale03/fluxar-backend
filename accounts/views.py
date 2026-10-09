@@ -75,7 +75,7 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
             user=request.user, account=conta,
             type='INCOME' if diferenca > 0 else 'EXPENSE',
             amount=abs(diferenca), status='COMPLETED', date=hoje(),
-            description='Ajuste de saldo',
+            description='Ajuste de saldo', is_balance_adjustment=True,  # Fora de receitas e despesas (REL-03, REL-05)
         )
         conta.refresh_from_db()
         return Response(self.get_serializer(conta).data, status=status.HTTP_201_CREATED)

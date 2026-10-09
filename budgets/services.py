@@ -1,12 +1,13 @@
 from decimal import Decimal
-from django.db.models import Sum
-from transactions.models import Transaction
+from reports import regras
 
 class BudgetService:
     @staticmethod
     def get_budget_usage(budget):
         """
-        Calcula o uso do orçamento somando transações de Despesa e Cartão.
+        Calcula o uso do orçamento com as mesmas despesas dos relatórios, no
+        mês do orçamento: as efetivadas na data delas e as compras no cartão
+        na data da compra, cada parcela no mês dela (REL-06, AD-029).
         """
         # Filtrar transações
         # Consideramos data da competência (date)
@@ -25,22 +26,10 @@ class BudgetService:
             budget.category.subcategories.filter(user_id=budget.user_id).values_list('id', flat=True)
         )
 
-        from django.db.models import Q
-        
-        # Filtro dual:
-        # 1. Para CREDIT_CARD, usamos o mês/ano da FATURA vinculada
-        # 2. Para EXPENSE (Dinheiro/PIX), usamos o mês/ano da DATA da transação
-        filter_q = (
-            Q(type='CREDIT_CARD', invoice__year=budget.year, invoice__month=budget.month) |
-            Q(type='EXPENSE', date__year=budget.year, date__month=budget.month)
+        inicio, fim = regras.limites_do_mes(budget.year, budget.month)
+        total_spent = regras.total(
+            regras.despesas(budget.user_id, inicio, fim).filter(category__id__in=relevant_categories)
         )
-
-        queryset = Transaction.objects.filter(
-            user=budget.user,
-            category__id__in=relevant_categories
-        ).filter(filter_q)
-        
-        total_spent = queryset.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
         
         percentage = Decimal('0.00')
         if budget.amount_limit > 0:

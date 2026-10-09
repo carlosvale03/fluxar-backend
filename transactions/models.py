@@ -105,6 +105,13 @@ class Transaction(models.Model):
     # Data real da compra no cartão; o `date` dela é o vencimento da fatura (AD-039, FATURA-16)
     purchase_date = models.DateField(null=True, blank=True)
 
+    # Data em que a transação conta nos relatórios, recalculada no `save()`
+    # (AD-046, REL-01, REL-02); veja `data_no_relatorio`
+    report_date = models.DateField(db_index=True)
+    # Lançamento criado pelo ajuste de saldo: fica fora de receitas e
+    # despesas (REL-03, REL-05)
+    is_balance_adjustment = models.BooleanField(default=False)
+
     # Importação: o lote de cada importação, o identificador da transação no
     # OFX e se a categoria veio das correções do usuário (IMPORT-34, IMPORT-44)
     import_batch = models.UUIDField(null=True, blank=True, db_index=True)
@@ -123,8 +130,37 @@ class Transaction(models.Model):
             ),
         ]
 
+    def save(self, *args, **kwargs):
+        # A `report_date` acompanha sempre o tipo, as datas e a parcela (AD-046)
+        self.report_date = data_no_relatorio(
+            self.type, self.date, self.purchase_date, self.installment_number,
+        )
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            kwargs['update_fields'] = {*update_fields, 'report_date'}
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.date} - {self.description} ({self.amount})"
+
+
+def data_no_relatorio(tipo, data, data_da_compra, numero_da_parcela):
+    """
+    A data em que a transação conta nos relatórios (AD-046):
+    - compra no cartão com `purchase_date`: a data da compra mais N-1 meses na
+      parcela N, no mesmo dia, ou no último dia do mês quando ele não existe
+      (REL-01, REL-02, AD-006);
+    - compra no cartão antiga, sem `purchase_date`: a `date`, porque cada
+      parcela antiga já tem o próprio vencimento;
+    - demais tipos: a `date`.
+    A migração `0011_relatorios` repete esta regra.
+    """
+    from accounts.faturas import dia_no_mes
+
+    if tipo != 'CREDIT_CARD' or data_da_compra is None:
+        return data
+    meses = data_da_compra.month - 1 + (numero_da_parcela or 1) - 1
+    return dia_no_mes(data_da_compra.year + meses // 12, meses % 12 + 1, data_da_compra.day)
 
 
 class CorrecaoDeCategoria(models.Model):

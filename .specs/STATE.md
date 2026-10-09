@@ -362,16 +362,24 @@
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-046
+- **Decision**: Os relatórios contam cada transação pela `report_date`, mantida no `Transaction.save()`: na compra no cartão, a data da compra mais N-1 meses na parcela N (último dia do mês quando o dia não existe, AD-006); nos demais tipos, a `date`. O ajuste de saldo é marcado por `is_balance_adjustment`. As regras de despesas, receitas, "A pagar", patrimônio, dinheiro guardado e meses do calendário ficam em `reports/regras.py`, usado por todos os relatórios e pelo gasto dos orçamentos.
+- **Reason**: cada relatório escolhia as transações de um jeito (mês da fatura, pendentes somadas, UTC), e os números não batiam entre as telas; a `date` da compra no cartão é o vencimento (AD-039).
+- **Trade-off**: um campo derivado a manter; caminhos com `QuerySet.update()` que mudem `date` ou `purchase_date` precisam recalcular a `report_date`.
+- **Scope**: relatorios, orçamentos, metas (trocos), faturas e classes-de-despesa.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `metas` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T15, mais os ajustes de ordem das travas e do recálculo no isolamento) e verificado: `validation.md` com PASS, 45 de 45 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: valor da meta derivado dos aportes e resgates sob trava (AD-045), saldo livre por cofrinho com aviso, fim do rateio automático, vínculo com as transferências, correção dos valores gravados com aviso único, aporte e resgate pelo saldo livre, cadastro só com cofrinhos, exclusão com o cofrinho vazio, histórico paginado e cofrinho de trocos no backend; backend com 959 testes e frontend com 299
+- **Feature**: `relatorios` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 25 de 25 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: `report_date` e `is_balance_adjustment` na transação (AD-046), regras comuns em `reports/regras.py`, `months` de 1 a 24, dashboard com "A pagar", faturas do mês e patrimônio dividido, saúde financeira com dinheiro guardado e score pelos estourados, orçamentos pelas mesmas despesas, calendário, gráficos, comparações e avançados pelas regras, PDF sem conta, e na tela taxa indisponível, "Sem histórico para comparar" e erro por bloco; backend com 1025 testes e frontend com 313
 - **In-progress** (file:line): nenhum
-- **Deploy**: migrações de `goals` (campos novos, recálculo das metas e trocos) rodam no Pre-Deploy; metas com valor negativo viram zero com aviso único na tela
-- **Observações do verificador**: docstring de `get_progress` ainda cita o rateio; sem teste dedicado de transferência entre dois cofrinhos; troca de cofrinho sem teste no frontend; divisão do salário numa meta depende da `gestao-do-salario`
-- **Fora do escopo, anotado**: pasta `goals/management/` só com `__pycache__`; teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `print` de depuração em `CategoryViewSet.create`
-- **Next step**: o usuário faz o push das duas branches `fix/metas-aportes-resgates-e-cofrinho` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `relatorios`
+- **Deploy**: migrações `transactions/0011_relatorios` e `0012_report_date_obrigatoria` preenchem a data no relatório e marcam os ajustes antigos; os números do dashboard mudam pela regra nova
+- **Observações do verificador**: transferência entre cofrinho e investimento não muda o total guardado com ou sem o filtro (coberta pelo histórico de investimentos); projeção "volta ao dia 31" sem teste próprio
+- **Fora do escopo, anotado**: `Promise.all` no dashboard derruba a tela inteira numa falha; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas; média dos insights de tag ainda inclui o mês atual
+- **Next step**: o usuário faz o push das duas branches `fix/relatorios-calculos-periodos-e-exportacao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `lgpd`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/metas-aportes-resgates-e-cofrinho (backend e frontend)
+- **Branch**: fix/relatorios-calculos-periodos-e-exportacao (backend e frontend)

@@ -69,6 +69,8 @@ class TotaisTests(SaldoTestCase):
         Transaction.objects.bulk_create([Transaction(
             user=self.a.usuario, account=self.a.conta, type='EXPENSE', status='COMPLETED',
             description='Gravada sem signal', amount=Decimal('100.00'), date='2026-09-15',
+            # Sem o `save()`, a `report_date` vai preenchida aqui (AD-046)
+            report_date='2026-09-15',
         )])
         lista = self.lista_de_contas()
         self.assertEqual(lista[str(self.a.conta.id)][1], Decimal('1000.00'))
