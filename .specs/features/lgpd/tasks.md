@@ -699,14 +699,15 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Um 403 `terms_acceptance_required` leva à tela de aceite
-- [ ] A tela mostra as mudanças da versão e, ao aceitar, volta ao app
-- [ ] Ao carregar o usuário com `terms.accepted_version` diferente de `current_version`, a tela de aceite aparece antes das outras
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Um 403 `terms_acceptance_required` leva à tela de aceite
+- [x] A tela mostra as mudanças da versão e, ao aceitar, volta ao app
+- [x] Ao carregar o usuário com `terms.accepted_version` diferente de `current_version`, a tela de aceite aparece antes das outras
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: pede o aceite da versão nova dos termos ao entrar`
 
