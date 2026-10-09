@@ -104,15 +104,16 @@ T22 → T23
 
 **Done when**:
 
-- [ ] Texto, data e decimal gravados voltam iguais na leitura, e o valor no banco não contém o texto em claro
-- [ ] Com DEBUG desligado e sem a variável, carregar as settings levanta `ImproperlyConfigured` com `FIELD_ENCRYPTION_KEY` na mensagem
-- [ ] Com duas chaves na lista, um valor gravado com a segunda ainda é lido
-- [ ] `None` continua `None`
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Texto, data e decimal gravados voltam iguais na leitura, e o valor no banco não contém o texto em claro
+- [x] Com DEBUG desligado e sem a variável, carregar as settings levanta `ImproperlyConfigured` com `FIELD_ENCRYPTION_KEY` na mensagem
+- [x] Com duas chaves na lista, um valor gravado com a segunda ainda é lido
+- [x] `None` continua `None`
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria o campo criptografado para dados pessoais`
 

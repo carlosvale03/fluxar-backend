@@ -69,6 +69,8 @@ PRODUCAO = {
     'DEBUG': '0',
     'SECRET_KEY': CHAVE_DE_TESTE,
     'FRONTEND_URL': FRONTEND_DE_TESTE,
+    # Obrigatória com DEBUG desligado desde a LGPD-16; chave só de teste
+    'FIELD_ENCRYPTION_KEY': 'Vv1ZbNWw5ZbHn7Y5pQ0xq3C0m0eO6m3D2YbQ4Q5yQ1M=',
     'CORS_ALLOWED_ORIGINS': None,
 }
 

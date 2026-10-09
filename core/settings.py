@@ -37,6 +37,19 @@ def obrigatoria_em_producao(nome, valor_de_desenvolvimento):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = obrigatoria_em_producao('SECRET_KEY', 'django-insecure-fallback-key')
 
+# Chaves dos dados pessoais criptografados no banco (LGPD-15, LGPD-16, AD-047).
+# FIELD_ENCRYPTION_KEY traz uma chave Fernet ou uma lista separada por
+# vírgula: a primeira grava e todas leem, para a troca de chave. A chave de
+# desenvolvimento é fixa e serve só ao ambiente local.
+CHAVE_DE_CRIPTOGRAFIA_DE_DESENVOLVIMENTO = '73E4j_Rn4J2LAPPG8TeC55v6zaVhUtVdr7psKXNJs3U='
+FIELD_ENCRYPTION_KEYS = [
+    chave.strip()
+    for chave in obrigatoria_em_producao(
+        'FIELD_ENCRYPTION_KEY', CHAVE_DE_CRIPTOGRAFIA_DE_DESENVOLVIMENTO,
+    ).split(',')
+    if chave.strip()
+]
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
 AUTH_USER_MODEL = 'api.User'

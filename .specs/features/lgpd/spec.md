@@ -229,8 +229,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | LGPD-12 | P1: Exclusão definitiva | - | Pending |
 | LGPD-13 | P1: Exclusão definitiva | - | Pending |
 | LGPD-14 | P1: Exclusão definitiva | - | Pending |
-| LGPD-15 | P1: Guarda dos dados pessoais | - | Pending |
-| LGPD-16 | P1: Guarda dos dados pessoais | - | Pending |
+| LGPD-15 | P1: Guarda dos dados pessoais | T1 | In Progress |
+| LGPD-16 | P1: Guarda dos dados pessoais | T1 | Implemented |
 | LGPD-17 | P1: Guarda dos dados pessoais | - | Pending |
 | LGPD-18 | P1: Guarda dos dados pessoais | - | Pending |
 | LGPD-19 | P1: Guarda dos dados pessoais | - | Pending |
