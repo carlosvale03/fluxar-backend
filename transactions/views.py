@@ -12,6 +12,7 @@ from .serializers import (
 )
 from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
+from .vinculos import desfazer_vinculos
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.travas import RecursoLiberado, conferir_limite, exigir_recurso
@@ -373,7 +374,11 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             user=request.user, recurring_source=serie, status='PENDING',
         )
         contas = set(pendentes.values_list('account_id', flat=True))
+        ids = list(pendentes.values_list('pk', flat=True))
         updated_count = pendentes.update(**update_data)
+        # As ocorrências que viram receita perdem os vínculos (VINCULO-16)
+        if update_data.get('type') == 'INCOME':
+            desfazer_vinculos(ids, request.user.pk)
 
         for campo, valor in update_data.items():
             setattr(serie, campo, valor)

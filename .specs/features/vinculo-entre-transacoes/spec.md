@@ -177,45 +177,45 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VINCULO-01 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-02 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-03 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-04 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-05 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-06 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-07 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-08 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-09 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-10 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-11 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-12 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-13 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-14 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-15 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-16 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-17 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-18 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-19 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-20 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-21 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-22 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-23 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-24 | P1: Custo total na principal | - | Pending |
-| VINCULO-25 | P1: Custo total na principal | - | Pending |
-| VINCULO-26 | P1: Custo total na principal | - | Pending |
-| VINCULO-27 | P1: Custo total na principal | - | Pending |
-| VINCULO-28 | P1: Custo total na principal | - | Pending |
-| VINCULO-29 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-30 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-31 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-32 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-33 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-34 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-35 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-36 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-37 | P1: Relatório de gastos puxados | - | Pending |
+| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Pending |
+| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | Pending |
+| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Pending |
+| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | In Progress |
+| VINCULO-05 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-06 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-07 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-08 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-09 | P1: Criar e desfazer vínculos | T1, T2 | In Progress |
+| VINCULO-10 | P1: Criar e desfazer vínculos | T1, T2 | In Progress |
+| VINCULO-11 | P1: Criar e desfazer vínculos | T2 | Pending |
+| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | In Progress |
+| VINCULO-13 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-14 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-15 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-16 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Pending |
+| VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | Pending |
+| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | Pending |
+| VINCULO-22 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-23 | P1: Criar e desfazer vínculos | T1 | Implemented |
+| VINCULO-24 | P1: Custo total na principal | T7 | Pending |
+| VINCULO-25 | P1: Custo total na principal | T7 | Pending |
+| VINCULO-26 | P1: Custo total na principal | T4 | Pending |
+| VINCULO-27 | P1: Custo total na principal | T4 | Pending |
+| VINCULO-28 | P1: Custo total na principal | T4 | Pending |
+| VINCULO-29 | P1: Filtro de vinculadas | T5 | Pending |
+| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | Pending |
+| VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Pending |
+| VINCULO-32 | P1: Filtro de vinculadas | T5 | Pending |
+| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | Pending |
+| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Pending |
+| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Pending |
+| VINCULO-36 | P1: Relatório de gastos puxados | T10 | Pending |
+| VINCULO-37 | P1: Relatório de gastos puxados | T10 | Pending |
 
-**Coverage:** 37 total, 0 mapped to tasks, 37 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 12 implemented, 4 in progress, 21 pending
 
 ---
 

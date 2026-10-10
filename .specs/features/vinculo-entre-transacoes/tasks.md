@@ -83,18 +83,19 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Receita, transferência e pagamento de fatura recebem "Só despesas e compras no cartão podem ser vinculadas."
-- [ ] Dependente como principal, principal como dependente e ela mesma recebem as mensagens da spec
-- [ ] Ligar a outra principal troca; ligar à mesma não muda nada
-- [ ] A parcela 3 de 10 liga a compra inteira pela raiz; uma ocorrência recorrente liga só ela
-- [ ] Excluir a principal mantém as dependentes sem vínculo; despesa que vira receita perde os vínculos
-- [ ] Saldos, faturas e orçamentos iguais antes e depois de vincular, trocar e desfazer
-- [ ] Pedidos simultâneos de A em B e de B em A: só um passa
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 14 testes
+- [x] Receita, transferência e pagamento de fatura recebem "Só despesas e compras no cartão podem ser vinculadas."
+- [x] Dependente como principal, principal como dependente e ela mesma recebem as mensagens da spec
+- [x] Ligar a outra principal troca; ligar à mesma não muda nada
+- [x] A parcela 3 de 10 liga a compra inteira pela raiz; uma ocorrência recorrente liga só ela
+- [x] Excluir a principal mantém as dependentes sem vínculo; despesa que vira receita perde os vínculos
+- [x] Saldos, faturas e orçamentos iguais antes e depois de vincular, trocar e desfazer
+- [x] Pedidos simultâneos de A em B e de B em A: só um passa
+- [x] Build gate passa
+- [x] Test count: 24 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria o vínculo entre uma transação principal e as dependentes`
 

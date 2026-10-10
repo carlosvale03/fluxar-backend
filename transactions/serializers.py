@@ -5,6 +5,7 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from accounts.models import Account, CreditCard
 from .services import TransactionService
 from .classes import classes_efetivas
+from .vinculos import desfazer_vinculos
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA,
@@ -460,9 +461,14 @@ class TransactionSerializer(serializers.ModelSerializer):
         correcao = self._correcao_de_categoria(instance, validated_data)
         if correcao is not None:
             validated_data['categoria_sugerida'] = False
+        virou_receita = instance.type != 'INCOME' and validated_data.get('type') == 'INCOME'
         t = super().update(instance, validated_data)
         if correcao is not None:
             correcao.save()
+        # Receita não se vincula: a despesa que vira receita perde os vínculos (VINCULO-16)
+        if virou_receita:
+            desfazer_vinculos([t.pk], t.user_id)
+            t.principal = None
         
         if tags is not None:
             t.tags.set(tags)
