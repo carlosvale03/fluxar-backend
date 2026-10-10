@@ -271,14 +271,15 @@ T9 → T10
 
 **Done when**:
 
-- [ ] O cinema mostra "Custo total R$ 95,00" e 1 dependente
-- [ ] O transporte mostra "Por causa de: Cinema, 12/09/2026"
-- [ ] Clicar no custo abre a lista filtrada pela principal, com descrição, categoria e valor das dependentes
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] O cinema mostra "Custo total R$ 95,00" e 1 dependente
+- [x] O transporte mostra "Por causa de: Cinema, 12/09/2026"
+- [x] Clicar no custo abre a lista filtrada pela principal, com descrição, categoria e valor das dependentes
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o custo total e a principal das transações vinculadas`
 
