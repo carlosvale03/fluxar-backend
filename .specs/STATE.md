@@ -428,14 +428,14 @@
 
 ## Handoff
 
-- **Feature**: `classes-de-despesa` concluída, nos dois repositórios (design e tasks aprovados no automático, a pedido do usuário)
-- **Phase / Task**: Execute concluído (T1 a T11, mais as correções do verificador) e verificado: `validation.md` com PASS, 40 de 40 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: modelo `ClasseDeDespesa` com implantação para os usuários existentes, Essencial e Dispensável no cadastro novo e na limpeza, API das classes com limite de 5 e nome único, classe das categorias com herança (AD-052), divisão por classe nos gráficos simples, filtro `classId` na lista e nas exportações, coluna Classe no XLSX, e nas telas o gerenciamento de classes, a classe nas categorias, o gráfico por classe e o filtro; backend com 1265 testes e frontend com 413
+- **Feature**: `gestao-do-salario` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T12, mais as correções do verificador) e verificado: `validation.md` com PASS depois da reverificação (a primeira deu FAIL por falta de desfazer depois de fechar o resultado, corrigido com a lista de divisões recentes)
+- **Completed**: app `salario` (AD-053) com plano, modelos da literatura, cálculo com arredondamento para baixo e redução a partir da última parte, simulação, salários a dividir, revisão com ajustes, geração tudo ou nada e idempotente, desfazer em até 7 dias com a lista de divisões recentes e referências do mês; nas telas, a página `/salario`, a escolha do modelo, o editor, a revisão com confirmação, o desfazer e o aviso ao lançar ou efetivar o salário; backend com 1363 testes e frontend com 454
 - **In-progress** (file:line): nenhum
-- **Deploy**: migração `transactions/0013_classes_de_despesa` cria as classes de todos os usuários e classifica as categorias principais com nome padrão
-- **Observações do verificador**: o filtro `sem_classe` tem uma cláusula de nulo redundante, mantida como documentação; o teste de desempenho da importação pode falhar com a máquina carregada
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; a exclusão de categoria não desativa as subcategorias; o frontend lê `is_default` das categorias, que o backend não envia
-- **Next step**: o usuário revisa, faz o push das duas branches `feat/classes-de-despesa-nas-categorias-e-relatorios` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `gestao-do-salario`
+- **Deploy**: migrações `transactions/0014_divisao_do_salario` e `salario/0001_initial`; o recurso `gestao_do_salario` fica liberado para todos até o administrador travar
+- **Observações do verificador**: efetivar pela edição não acontece pela interface atual (o formulário não tem status); o teste de desempenho da importação e um teste do painel admin estouram o tempo com a máquina carregada
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; exclusão de categoria não desativa as subcategorias
+- **Next step**: o usuário faz o push das duas branches `feat/gestao-do-salario-plano-e-divisao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `vinculo-entre-transacoes`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: feat/classes-de-despesa-nas-categorias-e-relatorios (backend e frontend)
+- **Branch**: feat/gestao-do-salario-plano-e-divisao (backend e frontend)

@@ -1,7 +1,7 @@
 # Gestão do salário Design
 
 **Spec**: `.specs/features/gestao-do-salario/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 
