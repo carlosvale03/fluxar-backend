@@ -14,7 +14,7 @@ from tests.permissoes.base import fechar, liberacao_de_testes
 from transactions.models import Category, Transaction
 
 from .base import (
-    URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20,
+    URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita,
 )
 
 SOMA_ACIMA = {'detail': 'A soma dos percentuais passa de 100%.', 'code': 'invalid'}
@@ -220,6 +220,64 @@ class CategoriasDeSalarioTests(SalarioTestCase):
                 self.assertEqual(resposta.data, {'salary_categories': ['Categoria não encontrada.']})
 
 
+
+URL_CATEGORIAS = '/api/salary/categories/'
+
+
+class SoAsCategoriasDeSalarioTests(SalarioTestCase):
+    """O usuário escolhe quais receitas são salário antes de montar o plano (SALARIO-14)."""
+
+    def test_grava_as_categorias_sem_salvar_o_plano(self):
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['salary_categories'], [str(investimento.pk)])
+        self.assertFalse(resposta.data['has_plan'])
+        self.assertEqual(resposta.data['parts'], [])
+
+    def test_mantem_as_partes_do_plano_salvo(self):
+        self.salvar_plano(plano_50_30_20())
+        antes = self.client.get(URL_PLANO).data['parts']
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+        self.assertTrue(resposta.data['has_plan'])
+        self.assertEqual(resumo(resposta.data['parts']), resumo(antes))
+
+    def test_a_categoria_escolhida_passa_a_trazer_os_salarios_a_dividir(self):
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+        rendimento = receita(self.a, '900.00', categoria=investimento, description='Rendimento')
+        with hoje_em(2026, 10, 10):
+            self.assertNotIn(str(rendimento.pk), [r['id'] for r in self.client.get('/api/salary/pending/').data])
+
+            self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+            self.assertIn(str(rendimento.pk), [r['id'] for r in self.client.get('/api/salary/pending/').data])
+
+    def test_lista_vazia_tira_todas_as_categorias(self):
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': []}, format='json')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['salary_categories'], [])
+
+    def test_so_aceita_categorias_de_receita_do_usuario(self):
+        despesa = Category.objects.filter(user=self.a.usuario, type='EXPENSE').first()
+        for categoria in (despesa, self.b.salario):
+            with self.subTest(categoria=categoria.name):
+                resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(categoria.pk)]}, format='json')
+
+                self.assertEqual(resposta.status_code, 400)
+                self.assertEqual(resposta.data, {'salary_categories': ['Categoria não encontrada.']})
+
+    def test_sem_o_campo_recebe_400(self):
+        resposta = self.client.put(URL_CATEGORIAS, {}, format='json')
+
+        self.assertEqual(resposta.status_code, 400)
+        self.assertIn('salary_categories', resposta.data)
+
 class SimulacaoTests(SalarioTestCase):
 
     def test_simula_pelo_plano_salvo_sem_criar_transacao(self):
@@ -279,6 +337,7 @@ class TravaELogsTests(SalarioTestCase):
                 lambda: self.client.get(URL_MODELOS),
                 lambda: self.client.get(URL_PLANO),
                 lambda: self.client.put(URL_PLANO, {'parts': []}, format='json'),
+                lambda: self.client.put(URL_CATEGORIAS, {'salary_categories': []}, format='json'),
                 lambda: self.client.post(URL_SIMULAR, {'amount': '10.00'}, format='json'),
             )
             for chamar in chamadas:

@@ -107,6 +107,14 @@ class PlanSerializer(serializers.Serializer):
     )
 
 
+
+class SalaryCategoriesSerializer(serializers.Serializer):
+    """Só as categorias de salário, sem o plano (SALARIO-14)."""
+    salary_categories = OwnedPrimaryKeyRelatedField(
+        many=True, queryset=Category.objects.filter(type='INCOME', is_active=True),
+        not_found_message=CATEGORIA_NAO_ENCONTRADA,
+    )
+
 class SimulateSerializer(serializers.Serializer):
     """Simulação: o valor e, opcionalmente, as partes ainda não salvas (SALARIO-13)."""
     amount = serializers.DecimalField(max_digits=12, decimal_places=2, validators=[validar_valor_positivo])

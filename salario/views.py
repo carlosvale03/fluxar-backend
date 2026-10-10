@@ -21,7 +21,8 @@ from .models import DivisaoDoSalario
 from .modelos import MODELOS, REGRA_DOS_MODELOS
 from .referencias import referencias
 from .serializers import (
-    DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma,
+    DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SalaryCategoriesSerializer,
+    SimulateSerializer, conferir_soma,
 )
 
 PERMISSOES = [permissions.IsAuthenticated, RecursoLiberado('gestao_do_salario')]
@@ -95,6 +96,19 @@ class SalaryPlanView(APIView):
         plano.salvar_plano(request.user, dados['parts'], dados.get('salary_categories'))
         return Response(plano.plano_em_json(request.user))
 
+
+
+class SalaryCategoriesView(APIView):
+    """
+    `PUT /salary/categories/`: grava só as categorias de salário, sem mexer no
+    plano (SALARIO-14). Devolve o plano, como o `GET /salary/plan/`.
+    """
+    permission_classes = PERMISSOES
+
+    def put(self, request):
+        dados = validar(SalaryCategoriesSerializer, request)
+        plano.salvar_categorias(request.user, dados['salary_categories'])
+        return Response(plano.plano_em_json(request.user))
 
 class SalarySimulateView(APIView):
     """
