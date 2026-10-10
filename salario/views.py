@@ -18,6 +18,7 @@ from . import divisao, plano
 from .calculo import dividir
 from .models import DivisaoDoSalario
 from .modelos import MODELOS, REGRA_DOS_MODELOS
+from .referencias import referencias
 from .serializers import (
     DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma,
 )
@@ -169,6 +170,14 @@ class SalaryDivisionDetailView(APIView):
     def get(self, request, pk):
         registro = get_object_or_404(DivisaoDoSalario, pk=pk, user=request.user)
         return Response(divisao.divisao_em_json(registro))
+
+
+class SalaryReferencesView(APIView):
+    """`GET /salary/references/`: o comprometido no mês e as médias do histórico (SALARIO-52, SALARIO-53, SALARIO-56)."""
+    permission_classes = PERMISSOES
+
+    def get(self, request):
+        return Response(referencias(request.user))
 
 
 class SalaryDivisionUndoView(APIView):

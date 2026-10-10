@@ -274,14 +274,15 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Aluguel recorrente pendente de R$ 1.200,00 e fatura de R$ 450,00 no mês dão R$ 1.650,00 comprometidos
-- [ ] Essenciais de R$ 1.860,00 em média sobre salário médio de R$ 3.000,00 aparecem na classe Essencial com `reference` ESSENCIAL
-- [ ] Com um mês completo de histórico, `months_used` é 1
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Aluguel recorrente pendente de R$ 1.200,00 e fatura de R$ 450,00 no mês dão R$ 1.650,00 comprometidos
+- [x] Essenciais de R$ 1.860,00 em média sobre salário médio de R$ 3.000,00 aparecem na classe Essencial com `reference` ESSENCIAL
+- [x] Com um mês completo de histórico, `months_used` é 1
+- [x] Build gate passa
+- [x] Test count: 6 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o comprometido no mês e as médias do histórico na gestão do salário`
 
