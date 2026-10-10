@@ -512,14 +512,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Com a API devolvendo 500, a tela mostra o erro, nenhum dado de usuário e nenhum botão de ação habilitado
-- [ ] "Tentar de novo" chama a API de novo
-- [ ] Não existe aba "Assinatura", nem "#TRX-9902" ou "R$ 29,90"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Com a API devolvendo 500, a tela mostra o erro, nenhum dado de usuário e nenhum botão de ação habilitado
+- [x] "Tentar de novo" chama a API de novo
+- [x] Não existe aba "Assinatura", nem "#TRX-9902" ou "R$ 29,90"
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra o erro no detalhe do usuário e tira a aba de assinatura simulada`
 
