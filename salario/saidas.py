@@ -4,11 +4,17 @@ Saídas desde o salário (SALARIO-64 a SALARIO-69, AD-057).
 - `elegiveis`: as saídas efetivadas da conta do recebimento (despesas,
   transferências, aportes em metas, que são transferências, e pagamentos de
   fatura) com data entre a do recebimento e hoje, no calendário de Brasília,
-  menos as geradas por divisões do salário, os ajustes de saldo e as já
-  descontadas numa divisão ativa (SALARIO-64).
-- `sugestoes`: a parte sugerida para cada saída (SALARIO-65). Despesa: a
-  primeira parte cuja referência é a classe efetiva da categoria (as classes
-  padrão Essencial e Dispensável, AD-052). Transferência: a primeira parte
+  e as compras no cartão pagas pela conta do recebimento com data de
+  pagamento nesse intervalo, uma linha por parcela, menos as geradas por
+  divisões do salário, os ajustes de saldo e as já descontadas numa divisão
+  ativa (SALARIO-64). O pagamento de fatura não cria transação: as compras
+  pagas ficam `COMPLETED`, na conta que pagou e com `payment_date`; o
+  estorno as devolve a pendentes, na conta do cartão e sem data de
+  pagamento, e elas saem da lista.
+- `sugestoes`: a parte sugerida para cada saída (SALARIO-65). Despesa e
+  compra no cartão: a primeira parte cuja referência é a classe efetiva da
+  categoria (as classes padrão Essencial e Dispensável, AD-052); o destino
+  da compra é o nome do cartão. Transferência: a primeira parte
   com destino na meta do aporte ligado a ela ou na conta da perna de
   entrada. Nos demais casos, nenhuma.
 - `escolhidas`: confere o `outflows` da requisição, `{id da saída: id da
@@ -18,7 +24,7 @@ Saídas desde o salário (SALARIO-64 a SALARIO-69, AD-057).
 """
 from decimal import Decimal
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Case, DateField, Exists, F, OuterRef, Q, When
 from rest_framework.exceptions import ValidationError
 
 from core.datas import hoje
@@ -31,6 +37,8 @@ from .models import CONTA, META, SaidaDescontada
 from .referencias import referencia_da_classe
 
 TIPOS_DE_SAIDA = ('EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT')
+COMPRA_NO_CARTAO = 'CREDIT_CARD'
+TIPOS_COM_CLASSE = ('EXPENSE', COMPRA_NO_CARTAO)
 SAIDA_NAO_ENCONTRADA = 'Saída não encontrada.'
 PARTE_NAO_ENCONTRADA = 'Parte não encontrada.'
 ZERO = Decimal('0.00')
@@ -39,16 +47,28 @@ ZERO = Decimal('0.00')
 def elegiveis(usuario, recebimento):
     """As saídas que podem ser descontadas na divisão do recebimento (SALARIO-64), da mais antiga para a mais recente."""
     descontada = SaidaDescontada.objects.filter(transacao_ref=OuterRef('pk'), ativa=True)
+    inicio, fim = recebimento.date, hoje()
     return (
         Transaction.objects.filter(
-            user=usuario, account_id=recebimento.account_id, status='COMPLETED', type__in=TIPOS_DE_SAIDA,
-            date__gte=recebimento.date, date__lte=hoje(), divisao_do_salario__isnull=True,
-            is_balance_adjustment=False,
+            Q(type__in=TIPOS_DE_SAIDA, date__gte=inicio, date__lte=fim)
+            | Q(type=COMPRA_NO_CARTAO, payment_date__gte=inicio, payment_date__lte=fim),
+            user=usuario, account_id=recebimento.account_id, status='COMPLETED',
+            divisao_do_salario__isnull=True, is_balance_adjustment=False,
         )
         .exclude(Exists(descontada))
+        .annotate(data_da_saida=Case(
+            When(type=COMPRA_NO_CARTAO, then=F('payment_date')), default=F('date'), output_field=DateField(),
+        ))
         .select_related('category', 'credit_card')
-        .order_by('date', 'created_at', 'pk')
+        .order_by('data_da_saida', 'created_at', 'pk')
     )
+
+
+def data_da_saida(saida):
+    """A data da saída: a do pagamento para a compra no cartão paga, a da transação nos demais casos."""
+    if saida.type == COMPRA_NO_CARTAO and saida.payment_date is not None:
+        return saida.payment_date
+    return saida.date
 
 
 def _destinos_das_transferencias(usuario, saidas):
@@ -88,14 +108,16 @@ def _primeira(partes, condicao):
 def sugestoes(usuario, saidas, partes):
     """`{id da saída: (parte sugerida | None, nome do destino | None)}` (SALARIO-65)."""
     contas, metas = _destinos_das_transferencias(usuario, saidas)
-    classes = mapa_de_classes(usuario) if any(s.type == 'EXPENSE' for s in saidas) else {}
+    classes = mapa_de_classes(usuario) if any(s.type in TIPOS_COM_CLASSE for s in saidas) else {}
     resultado = {}
     for saida in saidas:
         sugerida = destino = None
-        if saida.type == 'EXPENSE':
+        if saida.type in TIPOS_COM_CLASSE:
             referencia = referencia_da_classe(classes.get(saida.category_id))
             if referencia:
                 sugerida = _primeira(partes, lambda p: p.referencia == referencia)
+            if saida.credit_card_id is not None:
+                destino = saida.credit_card.name
         elif saida.type == 'TRANSFER_OUT':
             meta = metas.get(saida.pk)
             conta = contas.get(saida.pk)
@@ -144,7 +166,7 @@ def saida_em_json(saida, sugerida, destino, escolhida):
     """Uma saída na revisão (SALARIO-64, SALARIO-65, SALARIO-71)."""
     return {
         'id': str(saida.pk),
-        'date': saida.date.isoformat(),
+        'date': data_da_saida(saida).isoformat(),
         'description': saida.description,
         'amount': dinheiro(saida.amount),
         'type': saida.type,

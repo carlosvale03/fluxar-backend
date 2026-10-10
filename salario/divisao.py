@@ -518,7 +518,7 @@ def divisao_em_json(divisao):
         saida = registro.transacao
         return {
             'id': str(registro.transacao_ref),
-            'date': saida.date.isoformat() if saida is not None else None,
+            'date': saidas.data_da_saida(saida).isoformat() if saida is not None else None,
             'description': saida.description if saida is not None else None,
             'amount': dinheiro(registro.valor),
             'type': saida.type if saida is not None else None,

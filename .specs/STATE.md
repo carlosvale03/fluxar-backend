@@ -443,7 +443,7 @@
 - **Status**: active
 
 ### AD-057
-- **Decision**: A divisão do salário desconta das partes as saídas efetivadas da conta do recebimento desde a data dele (despesas, transferências, aportes e pagamentos de fatura, menos as geradas por divisões e os ajustes de saldo). O usuário atribui cada saída a uma parte na revisão, com sugestão pela classe da despesa ou pelo destino da transferência; a transação da parte é o valor dela menos as saídas atribuídas, sem ficar negativa. As saídas descontadas ficam registradas na divisão (`SaidaDescontada`) e só podem estar numa divisão ativa.
+- **Decision**: A divisão do salário desconta das partes as saídas efetivadas da conta do recebimento desde a data dele (despesas, compras no cartão pagas por ela, pela data do pagamento, transferências, aportes e pagamentos de fatura, menos as geradas por divisões e os ajustes de saldo). O usuário atribui cada saída a uma parte na revisão, com sugestão pela classe da despesa ou da compra ou pelo destino da transferência; a transação da parte é o valor dela menos as saídas atribuídas, sem ficar negativa. As saídas descontadas ficam registradas na divisão (`SaidaDescontada`) e só podem estar numa divisão ativa.
 - **Reason**: quem divide o salário dias depois já gastou parte dele; transferir o valor cheio deixaria a conta do salário negativa.
 - **Trade-off**: a revisão ganha uma etapa e a divisão um modelo a mais; uma saída paga com outro dinheiro precisa ser marcada como "Não descontar".
 - **Scope**: gestao-do-salario.

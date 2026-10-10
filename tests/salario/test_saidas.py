@@ -4,14 +4,18 @@ Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, AD-057).
 O salário de R$ 3.000,00 cai na corrente em 05/10 e a divisão acontece em
 10/10. O plano tem Necessidades (R$ 200,00 para a poupança, referência
 Essencial), Diversão (R$ 100,00 na conta do salário, referência Dispensável)
-e Guardar (R$ 300,00 para a meta Viagem).
+e Guardar (R$ 300,00 para a meta Viagem). O cartão "Cartão A" é pago pela
+corrente e vence no dia 15, depois de hoje: a compra paga entra pela data do
+pagamento, não pela do vencimento.
 """
 import uuid
 from datetime import date
 from decimal import Decimal
 from unittest import mock
 
-from accounts.models import Account
+from accounts import faturas
+from accounts.faturas import obter_fatura
+from accounts.models import Account, CreditCard
 from goals.services import GoalService
 from salario.models import DivisaoDoSalario, SaidaDescontada
 from transactions.models import Category, Transaction
@@ -421,3 +425,97 @@ class DesfazerComSaidasTests(SaidasTestCase):
         )
         nova = self.gerar(dia=(2026, 10, 11), outflows={str(despesa.pk): self.necessidades})
         self.assertEqual(nova.status_code, 201, nova.data)
+
+
+class ComprasNoCartaoTests(SaidasTestCase):
+    """SALARIO-64, SALARIO-65 e SALARIO-70 para as compras no cartão pagas pela conta do salário."""
+
+    def setUp(self):
+        super().setUp()
+        self.cartao = CreditCard.objects.create(
+            user=self.a.usuario, name='Cartão A', limit=Decimal('5000.00'), closing_day=8, due_day=15,
+            account=self.a.conta,
+        )
+
+    def compra_paga(self, valor='130.00', pagamento=date(2026, 10, 7), conta=None, mes=10, categoria=None):
+        """Uma compra pendente na fatura de `mes`/2026, paga inteira em `pagamento` pela `conta`."""
+        fatura = obter_fatura(self.cartao, mes, 2026)
+        compra = Transaction.objects.create(
+            user=self.a.usuario, type='CREDIT_CARD', status='PENDING', account=self.a.conta,
+            credit_card=self.cartao, invoice=fatura, category=categoria or self.comida,
+            description='Farmácia', amount=Decimal(valor), date=fatura.due_date,
+            purchase_date=date(2026, mes - 1, 20),
+        )
+        faturas.pagar(self.a.usuario, fatura, conta or self.a.conta, Decimal(valor), pagamento)
+        compra.refresh_from_db()
+        return compra
+
+    def test_compra_paga_pela_conta_do_salario_entra_pela_data_do_pagamento_com_sugestao_da_classe(self):
+        antes = self.despesa(data=date(2026, 10, 6))
+        compra = self.compra_paga()
+        depois = self.despesa(valor='20.00', data=date(2026, 10, 8))
+        self.assertEqual((compra.date, compra.status), (date(2026, 10, 15), 'COMPLETED'))
+
+        resposta = self.revisar()
+
+        self.assertEqual(self.listadas(resposta), [str(antes.pk), str(compra.pk), str(depois.pk)])
+        self.assertEqual(resposta.data['outflows'][1], {
+            'id': str(compra.pk), 'date': '2026-10-07', 'description': 'Farmácia', 'amount': '130.00',
+            'type': 'CREDIT_CARD', 'destination_name': 'Cartão A', 'category_name': 'Comida',
+            'suggested_part_id': self.necessidades, 'part_id': None,
+        })
+
+    def test_compra_dispensavel_sugere_a_parte_da_classe(self):
+        compra = self.compra_paga(categoria=self.lazer)
+
+        [listada] = self.revisar().data['outflows']
+
+        self.assertEqual((listada['id'], listada['suggested_part_id']), (str(compra.pk), self.diversao))
+
+    def test_compra_paga_por_outra_conta_antes_do_recebimento_ou_depois_de_hoje_fica_fora(self):
+        self.compra_paga(conta=self.a.poupanca)                       # outra conta
+        self.compra_paga(mes=11, pagamento=date(2026, 10, 4))         # antes do recebimento
+        self.compra_paga(mes=12, pagamento=date(2026, 10, 11))        # depois de hoje
+        Transaction.objects.create(                                   # não paga
+            user=self.a.usuario, type='CREDIT_CARD', status='PENDING', account=self.a.conta,
+            credit_card=self.cartao, invoice=obter_fatura(self.cartao, 1, 2027), category=self.comida,
+            description='Pendente', amount=Decimal('10.00'), date=date(2026, 10, 6),
+        )
+
+        self.assertEqual(self.listadas(self.revisar()), [])
+
+    def test_compra_de_pagamento_estornado_sai_da_lista(self):
+        compra = self.compra_paga()
+        self.assertEqual(self.listadas(self.revisar()), [str(compra.pk)])
+
+        faturas.estornar(self.a.usuario, compra.invoice)
+
+        compra.refresh_from_db()
+        self.assertEqual((compra.status, compra.payment_date), ('PENDING', None))
+        self.assertEqual(self.listadas(self.revisar()), [])
+
+    def test_compra_descontada_na_geracao_e_liberada_ao_desfazer(self):
+        compra = self.compra_paga()
+
+        gerada = self.gerar(outflows={str(compra.pk): self.necessidades})
+
+        self.assertEqual(gerada.status_code, 201, gerada.data)
+        self.assertEqual(
+            [(t['part_name'], t['amount']) for t in gerada.data['transactions']],
+            [('Necessidades', '70.00'), ('Guardar', '300.00')],
+        )
+        self.assertEqual(gerada.data['outflows'], [{
+            'id': str(compra.pk), 'date': '2026-10-07', 'description': 'Farmácia', 'amount': '130.00',
+            'type': 'CREDIT_CARD', 'part_name': 'Necessidades',
+        }])
+        [registro] = SaidaDescontada.objects.filter(ativa=True)
+        self.assertEqual((registro.transacao_id, registro.valor), (compra.pk, Decimal('130.00')))
+        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 1))
+        self.assertEqual(self.listadas(self.revisar(outro_salario)), [])
+
+        with hoje_em(2026, 10, 11):
+            desfeita = self.client.post(url_do_desfazer(gerada.data['id']), format='json')
+
+        self.assertEqual(desfeita.status_code, 200, desfeita.data)
+        self.assertFalse(SaidaDescontada.objects.filter(ativa=True).exists())
+        self.assertEqual(self.listadas(self.revisar(dia=(2026, 10, 11))), [str(compra.pk)])

@@ -190,7 +190,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Why P1**: sem o desconto, a divisão transfere dinheiro que já foi gasto, e a conta do salário fica negativa.
 
 **Acceptance Criteria**:
-1. **SALARIO-64** WHEN o sistema monta a revisão de um recebimento THEN o sistema SHALL listar as saídas efetivadas da conta do recebimento (despesas, transferências, aportes em metas e pagamentos de fatura) com data entre a data do recebimento e hoje, menos as geradas por divisões do salário, os ajustes de saldo e as já descontadas numa divisão ativa.
+1. **SALARIO-64** WHEN o sistema monta a revisão de um recebimento THEN o sistema SHALL listar as saídas efetivadas da conta do recebimento (despesas, compras no cartão pagas pela conta do recebimento (pela data do pagamento), transferências, aportes em metas e pagamentos de fatura) com data entre a data do recebimento e hoje, menos as geradas por divisões do salário, os ajustes de saldo e as já descontadas numa divisão ativa.
 2. **SALARIO-65** WHEN o sistema lista uma saída THEN o sistema SHALL sugerir a parte: para uma despesa, a primeira parte cuja referência é a classe efetiva da categoria dela (Essencial ou Dispensável); para uma transferência ou um aporte, a primeira parte cujo destino é a conta ou a meta de destino; nos demais casos, nenhuma parte.
 3. **SALARIO-66** WHEN o usuário atribui saídas a uma parte THEN o sistema SHALL calcular a transação dessa parte como o valor dela pela regra de SALARIO-26 menos a soma das saídas atribuídas, sem ficar abaixo de zero.
 4. **SALARIO-67** IF as saídas atribuídas a uma parte passarem do valor dela THEN o sistema SHALL deixar a parte sem transação, informar quanto ela passou e manter as outras partes como estão.
