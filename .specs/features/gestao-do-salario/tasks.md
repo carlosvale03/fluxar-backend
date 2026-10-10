@@ -425,15 +425,16 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Lançar R$ 3.000,00 em Salário efetivada abre o aviso com o valor e os três benefícios
-- [ ] Efetivar uma receita pendente de Salário abre o aviso
-- [ ] Receita de outra categoria ou pendente não abre; com o recurso travado, não abre
-- [ ] "Dividir agora" leva a `/salario?dividir=<id>`; "Agora não" fecha
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Lançar R$ 3.000,00 em Salário efetivada abre o aviso com o valor e os três benefícios
+- [x] Efetivar uma receita pendente de Salário abre o aviso
+- [x] Receita de outra categoria ou pendente não abre; com o recurso travado, não abre
+- [x] "Dividir agora" leva a `/salario?dividir=<id>`; "Agora não" fecha
+- [x] Build gate (frontend) passa
+- [x] Test count: 7 testes
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: oferece dividir o salário assim que ele é lançado`
 

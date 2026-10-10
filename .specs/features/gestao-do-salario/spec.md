@@ -234,13 +234,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-16 | P1: Plano de divisão | T3, T8 | Implemented |
 | SALARIO-17 | P1: Plano de divisão | T1 | Implemented |
 | SALARIO-18 | P1: Plano de divisão | T3 | Implemented |
-| SALARIO-19 | P1: Aviso ao receber o salário | T12 | Pending |
-| SALARIO-20 | P1: Aviso ao receber o salário | T12 | Pending |
-| SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | In Progress |
+| SALARIO-19 | P1: Aviso ao receber o salário | T12 | Implemented |
+| SALARIO-20 | P1: Aviso ao receber o salário | T12 | Implemented |
+| SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | Implemented |
 | SALARIO-22 | P1: Aviso ao receber o salário | T10 | Implemented |
-| SALARIO-23 | P1: Aviso ao receber o salário | T12 | Pending |
+| SALARIO-23 | P1: Aviso ao receber o salário | T12 | Implemented |
 | SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | Implemented |
-| SALARIO-25 | P1: Aviso ao receber o salário | T12 | Pending |
+| SALARIO-25 | P1: Aviso ao receber o salário | T12 | Implemented |
 | SALARIO-26 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-27 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-28 | P1: Geração das transações | T2 | Implemented |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Implemented |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 51 implemented, 1 in progress, 4 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 56 implemented, 0 in progress, 0 pending
 
 ---
 
