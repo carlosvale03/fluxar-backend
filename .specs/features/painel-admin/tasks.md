@@ -155,14 +155,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Ligar o modo manutenção grava `UPDATE_MAINTENANCE` com `before` falso e `after` verdadeiro
-- [ ] Gravar o mesmo valor do modo manutenção não gera registro
-- [ ] Liberação para testes, travas e limites gravam o antes e o depois nos campos novos
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Ligar o modo manutenção grava `UPDATE_MAINTENANCE` com `before` falso e `after` verdadeiro
+- [x] Gravar o mesmo valor do modo manutenção não gera registro
+- [x] Liberação para testes, travas e limites gravam o antes e o depois nos campos novos
+- [x] Full gate passa
+- [x] Test count: 6 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: registra no log as mudanças das configurações com o valor de antes`
 

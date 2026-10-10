@@ -926,20 +926,39 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
 
         for key, value in settings_to_update.items():
             str_value = str(value).lower() if isinstance(value, bool) else str(value)
-            setting, created = GlobalSetting.objects.update_or_create(
-                key=key,
-                defaults={'value': str_value}
-            )
-            
-            # Log da ação
-            SystemLog.objects.create(
-                action="UPDATE_SETTING",
-                description=f"Configuração '{key}' atualizada para '{value}'.",
-                admin_name=_mask_email(request.user.email)
-            )
+            self.gravar(request, key, str_value)
 
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
+
+    def gravar(self, request, key, valor):
+        """
+        Grava uma configuração e registra no log só quando o valor muda, com
+        o antes e o depois (ADMIN-09). A linha fica travada até o fim da
+        requisição, para duas mudanças simultâneas gravarem o antes certo.
+        """
+        setting = GlobalSetting.objects.select_for_update().filter(key=key).first()
+        anterior = setting.value if setting is not None else None
+        if setting is None:
+            GlobalSetting.objects.create(key=key, value=valor)
+        elif anterior != valor:
+            setting.value = valor
+            setting.save(update_fields=['value', 'updated_at'])
+
+        if key == 'maintenance_mode':
+            # Sem a linha, a manutenção está desligada (SESSAO-24)
+            antes, depois = (anterior or '').lower() == 'true', valor.lower() == 'true'
+            if antes != depois:
+                texto = {True: 'ligado', False: 'desligado'}
+                registrar(
+                    request.user, Acoes.UPDATE_MAINTENANCE, antes=antes, depois=depois,
+                    descricao=f"Modo manutenção: {texto[antes]} -> {texto[depois]}.",
+                )
+        elif anterior != valor:
+            registrar(
+                request.user, Acoes.UPDATE_SETTING, antes=anterior, depois=valor,
+                descricao=f"Configuração '{key}' alterada.",
+            )
 
 def _texto_da_trava(chave, valor):
     """O valor de uma trava como aparece no log."""
@@ -990,10 +1009,9 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
         setting.value = 'true' if ligada else 'false'
         setting.save(update_fields=['value', 'updated_at'])
         texto = {True: 'ligada', False: 'desligada'}
-        SystemLog.objects.create(
-            action="UPDATE_TESTING_UNLOCK",
-            description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
-            admin_name=_mask_email(request.user.email),
+        registrar(
+            request.user, Acoes.UPDATE_TESTING_UNLOCK, antes=antes, depois=ligada,
+            descricao=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
         )
 
     def gravar_trava(self, request, dados):
@@ -1016,13 +1034,15 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
             linha.limite = depois
         linha.atualizada_por = request.user
         linha.save()
-        SystemLog.objects.create(
-            action="UPDATE_PLAN_LOCK",
-            description=(
+        # Recurso: liberado (true) ou bloqueado (false); limite: o número, ou
+        # nulo para sem limite (ADMIN-09)
+        registrar(
+            request.user, Acoes.UPDATE_PLAN_LOCK if recurso else Acoes.UPDATE_PLAN_LIMIT,
+            antes=antes, depois=depois,
+            descricao=(
                 f"Trava '{chave}' no plano {plano}: "
                 f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
             ),
-            admin_name=_mask_email(request.user.email),
         )
 
 
