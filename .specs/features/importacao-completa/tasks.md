@@ -309,14 +309,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Escolher o arquivo chama a análise sem botão de avançar
-- [ ] O resumo mostra válidas, rejeitadas, repetidas, excluídas, contas novas e os totais por tipo
-- [ ] Um 400 da análise aparece pelo `tratarErro`
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Escolher o arquivo chama a análise sem botão de avançar
+- [x] O resumo mostra válidas, rejeitadas, repetidas, excluídas, contas novas e os totais por tipo
+- [x] Um 400 da análise aparece pelo `tratarErro`
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes (`tests/importacao/assistente-arquivo-e-resumo.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: analisa a planilha assim que o arquivo é escolhido`
 
