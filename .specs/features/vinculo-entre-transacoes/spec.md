@@ -74,7 +74,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 8. **VINCULO-08** IF o usuário tentar ligar uma transação a ela mesma THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Uma transação não pode ser vinculada a ela mesma."
 9. **VINCULO-09** WHEN o usuário liga a outra principal uma transação que já é dependente THEN o sistema SHALL trocar a principal dela, que continua com uma principal só.
 10. **VINCULO-10** WHEN o usuário liga uma dependente à principal que ela já tem THEN o sistema SHALL manter o vínculo como está, sem erro.
-11. **VINCULO-11** IF a principal ou a dependente for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 400 com o erro no campo e a mesma mensagem de um ID inexistente (AD-010).
+11. **VINCULO-11** IF a principal for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 400 com o erro no campo `principal` e a mesma mensagem de um ID inexistente; IF a dependente, que vem na URL, for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 404, como as outras rotas de detalhe (AD-010).
 12. **VINCULO-12** WHEN o usuário escolhe uma parcela como principal ou dependente THEN o sistema SHALL vincular a compra inteira, representada pela primeira parcela.
 13. **VINCULO-13** WHEN o usuário vincula uma ocorrência de série recorrente THEN o sistema SHALL ligar só essa ocorrência, sem estender o vínculo às outras da série.
 14. **VINCULO-14** WHEN a transação principal é excluída THEN o sistema SHALL desfazer os vínculos das dependentes, sem excluí-las.
@@ -99,7 +99,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Why P1**: é o que a ideia pede: saber que o passeio custou R$ 95,00, e não R$ 50,00.
 
 **Acceptance Criteria**:
-1. **VINCULO-24** WHEN a interface mostra uma transação principal THEN a interface SHALL mostrar o custo total, que é o valor dela mais o das dependentes, e a lista das dependentes com descrição, categoria e valor.
+1. **VINCULO-24** WHEN a interface mostra uma transação principal THEN a interface SHALL mostrar o custo total, que é o valor dela mais o das dependentes, e a quantidade de dependentes; WHEN o usuário abre a principal THEN a interface SHALL mostrar a lista das dependentes com descrição, categoria e valor, que é a lista filtrada da VINCULO-31.
 2. **VINCULO-25** WHEN a interface mostra uma dependente THEN a interface SHALL indicar a principal dela, com a descrição e a data.
 3. **VINCULO-26** WHEN a API devolve uma transação THEN o sistema SHALL incluir a principal dela, se for dependente, e, se for principal, a quantidade de dependentes e o custo total.
 4. **VINCULO-27** WHEN a principal ou uma dependente é uma compra parcelada THEN o sistema SHALL usar no custo total a soma de todas as parcelas da compra.
