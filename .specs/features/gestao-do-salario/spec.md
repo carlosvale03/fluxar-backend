@@ -46,6 +46,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Um plano por usuário | Um plano salvo, aplicado a qualquer recebimento de salário | Quem tem dois salários ajusta os valores na revisão | sim |
 | Valor fixo e percentual no mesmo plano | Os valores fixos saem primeiro do recebido; os percentuais valem sobre o que sobra | Alterado em 2026-10-10 a pedido do usuário: com o percentual sobre o recebido inteiro, um plano com 100% em percentuais e uma parte fixa reduzia as últimas partes a quase nada (AD-056) | sim |
 | Salário menor que o plano | Quando os valores fixos passam do recebido, a última parte fixa da ordem é reduzida até zero, depois a anterior, a revisão marca cada parte reduzida, e as percentuais ficam com zero | A ordem é a prioridade que o usuário definiu | sim |
+| Saídas antes da divisão | Entram todas as saídas efetivadas da conta do recebimento (despesas, transferências, aportes em metas e pagamentos de fatura) da data do recebimento até hoje, menos as geradas por divisões do salário e os ajustes de saldo | Decisão do usuário em 2026-10-10: quem divide no fim de semana já gastou parte do salário, e só o dinheiro que saiu dessa conta saiu do salário (AD-057) | sim |
+| Saída maior que a parte | A parte fica sem transação, a revisão mostra quanto ela passou, e as outras partes não mudam | Decisão do usuário em 2026-10-10 | sim |
 | Travas dos percentuais na edição | Só na tela, durante a edição; não são salvas no plano | Servem para montar o plano, não mudam a divisão | sim |
 | Centavos | Cada parte percentual é arredondada para baixo no centavo; a diferença fica livre | A divisão nunca passa do valor recebido | sim |
 | Ajuste na revisão | Vale só para aquela divisão, sem mudar o plano | Salários que variam não obrigam a mexer no plano | sim |
@@ -181,6 +183,27 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Saídas desde o salário
+
+**User Story**: Como usuário que divide o salário dias depois de recebê-lo, quero descontar das partes o que já saiu da conta do salário, para que as transações criadas levem só o que ainda falta separar.
+
+**Why P1**: sem o desconto, a divisão transfere dinheiro que já foi gasto, e a conta do salário fica negativa.
+
+**Acceptance Criteria**:
+1. **SALARIO-64** WHEN o sistema monta a revisão de um recebimento THEN o sistema SHALL listar as saídas efetivadas da conta do recebimento (despesas, transferências, aportes em metas e pagamentos de fatura) com data entre a data do recebimento e hoje, menos as geradas por divisões do salário, os ajustes de saldo e as já descontadas numa divisão ativa.
+2. **SALARIO-65** WHEN o sistema lista uma saída THEN o sistema SHALL sugerir a parte: para uma despesa, a primeira parte cuja referência é a classe efetiva da categoria dela (Essencial ou Dispensável); para uma transferência ou um aporte, a primeira parte cujo destino é a conta ou a meta de destino; nos demais casos, nenhuma parte.
+3. **SALARIO-66** WHEN o usuário atribui saídas a uma parte THEN o sistema SHALL calcular a transação dessa parte como o valor dela pela regra de SALARIO-26 menos a soma das saídas atribuídas, sem ficar abaixo de zero.
+4. **SALARIO-67** IF as saídas atribuídas a uma parte passarem do valor dela THEN o sistema SHALL deixar a parte sem transação, informar quanto ela passou e manter as outras partes como estão.
+5. **SALARIO-68** WHEN a divisão é gerada THEN o sistema SHALL registrar quais saídas foram descontadas e em qual parte.
+6. **SALARIO-69** IF uma saída enviada não estiver na lista de SALARIO-64 THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Saída não encontrada." no campo das saídas.
+7. **SALARIO-70** WHEN uma divisão é desfeita THEN o sistema SHALL liberar as saídas descontadas nela para uma nova divisão.
+8. **SALARIO-71** WHEN a interface mostra a revisão THEN a interface SHALL listar as saídas com a data, a descrição, o valor e a parte escolhida, já com a sugestão de SALARIO-65 e a opção "Não descontar", e mostrar em cada parte o valor calculado, o já gasto e o que será transferido.
+9. **SALARIO-72** WHEN o sistema calcula o que fica livre THEN o sistema SHALL subtrair do recebido as transações da divisão e as saídas descontadas.
+
+**Independent Test**: com R$ 200,00 calculados para Necessidades, com destino numa conta, e uma despesa Essencial de R$ 130,00 na conta do salário depois do recebimento, a revisão sugere a despesa em Necessidades e mostra transferência de R$ 70,00; com R$ 250,00 em saídas, a parte fica sem transação e mostra "passou R$ 50,00"; desfazer a divisão libera a despesa para a próxima.
+
+---
+
 ### P2: Ajuda para montar o plano
 
 **User Story**: Como usuário, quero entender cada modelo e cada parte e montar os percentuais sem fazer conta, para chegar a um plano que fecha.
@@ -294,6 +317,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Verified |
+| SALARIO-64 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-65 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-66 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-67 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-68 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-69 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-70 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-71 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-72 | P1: Saídas desde o salário | refactor | Pending |
 | SALARIO-57 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-58 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-59 | P2: Ajuda para montar o plano | refactor | Pending |
