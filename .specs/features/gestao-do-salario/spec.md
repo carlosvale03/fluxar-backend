@@ -153,7 +153,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. **SALARIO-45** WHEN o usuário pede para desfazer uma divisão THEN a interface SHALL mostrar as transações que serão removidas e pedir confirmação.
 2. **SALARIO-46** WHEN o usuário confirma o desfazer THEN o sistema SHALL remover de uma vez todas as transações da divisão e devolver os saldos das contas e os valores das metas ao que eram antes dela.
 3. **SALARIO-47** WHEN uma divisão é desfeita THEN o sistema SHALL liberar o recebimento para uma nova divisão.
-4. **SALARIO-48** IF alguma transação da divisão tiver sido editada ou excluída, ou uma meta não tiver mais o valor aportado pela divisão, THEN o sistema SHALL recusar o desfazer com HTTP 400 e uma mensagem que diga qual transação ou meta impede.
+4. **SALARIO-48** IF alguma transação da divisão tiver sido editada no valor, na data, no status ou na conta, ou excluída, ou uma meta não tiver mais o valor aportado pela divisão, THEN o sistema SHALL recusar o desfazer com HTTP 400 e uma mensagem que diga qual transação ou meta impede.
 5. **SALARIO-49** IF o pedido de desfazer chegar mais de 7 dias depois da geração THEN o sistema SHALL recusar com HTTP 400 e a mensagem "O prazo para desfazer esta divisão acabou."
 6. **SALARIO-50** IF o desfazer falhar no meio THEN o sistema SHALL manter a divisão inteira como estava.
 7. **SALARIO-51** WHEN um pedido de desfazer chega para uma divisão já desfeita THEN o sistema SHALL responder que ela já foi desfeita, sem remover mais nada.

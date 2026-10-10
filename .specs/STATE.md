@@ -419,8 +419,8 @@
 - **Status**: active
 
 ### AD-053
-- **Decision**: A gestão do salário fica no app `salario`. Cada divisão é um registro com itens; as transações geradas levam o UUID `divisao_do_salario`; a geração é idempotente por `(user, chave)` com a resposta remontada da divisão, e um recebimento só tem uma divisão ativa por restrição única parcial; o desfazer confere cada item e apaga as transações uma a uma.
-- **Reason**: tudo ou nada, nada em dobro e um desfazer que confere o que foi gerado; a exclusão uma a uma passa pelos sinais das metas, que recusam meta negativa, e o UUID evita dependência circular entre `transactions` e `salario`.
+- **Decision**: A gestão do salário fica no app `salario`. Cada divisão é um registro com itens; as transações geradas levam o UUID `divisao_do_salario`; a geração é idempotente por `(user, chave)` com a resposta remontada da divisão, e um recebimento só tem uma divisão ativa por restrição única parcial; o desfazer confere cada item e apaga as transações uma a uma. `GET /api/salary/divisions/?undoable=true` lista as divisões não desfeitas e ainda no prazo, da mais recente para a mais antiga, para a tela oferecer o desfazer depois de fechado o resultado da geração.
+- **Reason**: tudo ou nada, nada em dobro e um desfazer que confere o que foi gerado; o UUID evita dependência circular entre `transactions` e `salario`. A garantia do "já dividido" vem das restrições únicas parciais (`(user, chave)` e o recebimento com a divisão ativa) e do savepoint que trata o `IntegrityError`; a trava do recebimento com `select_for_update` é defesa a mais, e o sensor da verificação mostrou que tirá-la não muda as respostas. A exclusão uma a uma passa pelos sinais das metas como uma exclusão avulsa; como o desfazer já recusa antes uma meta sem o valor aportado, a recusa de meta negativa pelos sinais não é alcançável por comportamento, e a escolha é de clareza e de defesa a mais.
 - **Trade-off**: dois modelos a mais por divisão e um campo a mais em `Transaction`.
 - **Scope**: gestao-do-salario.
 - **Date**: 2026-10-10

@@ -189,6 +189,7 @@ graph TD
   - Depois das conferências, apaga as transações uma a uma, o que recalcula saldos e metas pelos sinais, e grava `desfeita_em` (SALARIO-46, SALARIO-47).
   - Uma falha no meio desfaz tudo (SALARIO-50).
   - A tela mostra antes as transações da divisão pelo `GET` (SALARIO-45).
+  - `GET /api/salary/divisions/?undoable=true`, com a mesma trava, lista as divisões do usuário não desfeitas e ainda no prazo (`hoje() <= can_undo_until`), da mais recente para a mais antiga, no formato do detalhe. Sem `undoable=true` responde 400; outro parâmetro recebe o 400 de filtro desconhecido. A seção "Divisões recentes" da página usa essa lista para oferecer o desfazer depois de fechado o resultado da geração (SALARIO-45, SALARIO-49).
 
 ### Referências do mês
 
