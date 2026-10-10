@@ -541,15 +541,16 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Com o e-mail errado, o botão de confirmar limpar e excluir fica desabilitado
-- [ ] Mudar o plano envia a requisição sem `admin_password`
-- [ ] O 403 `admin_password` aparece no campo da senha
-- [ ] Mudar o papel e arquivar pedem a senha
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Com o e-mail errado, o botão de confirmar limpar e excluir fica desabilitado
+- [x] Mudar o plano envia a requisição sem `admin_password`
+- [x] O 403 `admin_password` aparece no campo da senha
+- [x] Mudar o papel e arquivar pedem a senha
+- [x] Quick gate (frontend) passa
+- [x] Test count: 11 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: confirma limpar e excluir pelo e-mail do usuário e não pede senha para trocar o plano`
 
