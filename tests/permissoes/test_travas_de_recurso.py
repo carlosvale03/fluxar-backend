@@ -3,12 +3,13 @@ Travas de recurso nas rotas (PERM-15, PERM-22 e PERM-26).
 
 Com a liberação para testes desligada, cada rota de um recurso fechado no
 plano do usuário responde 403 `{detail, code: "plan_locked", feature}`; com
-a trava aberta, a rota responde normalmente. `personalizar_dashboard` e
-`vinculos` ainda não têm rota no backend. O dinheiro já
+a trava aberta, a rota responde normalmente. `personalizar_dashboard` ainda
+não tem rota no backend. O dinheiro já
 lançado continua movimentável: o cofrinho de uma meta e o pagamento e o
 estorno de faturas existentes seguem liberados (PERM-22).
 """
 import json
+from datetime import date
 from decimal import Decimal
 
 from rest_framework import status
@@ -23,7 +24,7 @@ from transactions.models import RecurringTransaction, Tag, Transaction
 from .base import RECURSOS, PermissoesTestCase, criar_admin, fechar, liberacao_de_testes
 
 BLOQUEADO = 'Este recurso não está disponível no seu plano.'
-SEM_ROTA = {'personalizar_dashboard', 'vinculos'}
+SEM_ROTA = {'personalizar_dashboard'}
 
 
 class TravasTestCase(PermissoesTestCase):
@@ -42,6 +43,17 @@ class TravasTestCase(PermissoesTestCase):
         ), format='json')
         self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
         return RecurringTransaction.objects.get(user=self.d.usuario)
+
+    def despesa_avulsa(self, descricao):
+        """Uma despesa fora da série, criada uma vez só pelo ORM (vínculos)."""
+        despesa, _ = Transaction.objects.get_or_create(
+            user=self.d.usuario, description=descricao, recurring_source=None,
+            defaults={
+                'type': 'EXPENSE', 'status': 'COMPLETED', 'amount': Decimal('10.00'),
+                'date': date(2026, 9, 10), 'account': self.d.conta,
+            },
+        )
+        return despesa
 
     def corpo_transacao(self, **extra):
         corpo = {
@@ -196,15 +208,22 @@ def chamadas_do_catalogo(t):
             ('divisão', lambda: c.get('/api/salary/divisions/00000000-0000-0000-0000-000000000000/'), 404),
             ('desfazer', lambda: c.post('/api/salary/divisions/00000000-0000-0000-0000-000000000000/undo/'), 404),
         ],
+        'vinculos': [
+            ('vincular', lambda: c.post(
+                f'/api/transactions/{t.despesa_avulsa("Transporte").pk}/link/',
+                {'principal': str(t.despesa_avulsa("Cinema").pk)},
+                format='json',
+            ), 200),
+        ],
     }
 
 
 class UmaRotaPorTravaTests(TravasTestCase):
     """Uma verificação por chave do catálogo com rota (PERM-15, PERM-26)."""
 
-    def test_o_catalogo_com_rota_tem_16_chaves(self):
+    def test_o_catalogo_com_rota_tem_17_chaves(self):
         self.assertEqual(set(chamadas_do_catalogo(self)), set(RECURSOS) - SEM_ROTA)
-        self.assertEqual(len(chamadas_do_catalogo(self)), 16)
+        self.assertEqual(len(chamadas_do_catalogo(self)), 17)
 
     def test_relatorios_avancados(self):
         self.conferir('relatorios_avancados', chamadas_do_catalogo(self)['relatorios_avancados'])
@@ -253,6 +272,9 @@ class UmaRotaPorTravaTests(TravasTestCase):
 
     def test_gestao_do_salario(self):
         self.conferir('gestao_do_salario', chamadas_do_catalogo(self)['gestao_do_salario'])
+
+    def test_vinculos(self):
+        self.conferir('vinculos', chamadas_do_catalogo(self)['vinculos'])
 
 
 class LiberacaoLigadaTests(TravasTestCase):

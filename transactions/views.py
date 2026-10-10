@@ -7,12 +7,12 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from .serializers import (
     TransactionSerializer, CategorySerializer, TagSerializer, ClasseDeDespesaSerializer,
     CLASSE_PADRAO_FIXA, LIMITE_DE_CLASSES, LIMITE_DE_CLASSES_ATINGIDO, NOME_DE_CLASSE_REPETIDO,
-    TransferSerializer, CreditCardExpenseSerializer,
+    TransferSerializer, CreditCardExpenseSerializer, VinculoSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
 from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
-from .vinculos import desfazer_vinculos
+from .vinculos import desfazer_vinculos, desvincular, vincular
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.travas import RecursoLiberado, conferir_limite, exigir_recurso
@@ -288,6 +288,27 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             TransactionSerializer(txs, many=True).data,
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=['post', 'delete'], url_path='link')
+    def link(self, request, pk=None):
+        """
+        `POST {principal}` liga a transação, ou troca a principal dela
+        (VINCULO-02, VINCULO-09, VINCULO-10), e depende do recurso `vinculos`
+        (VINCULO-20). `DELETE` desfaz o vínculo e fica liberado mesmo com o
+        recurso travado (VINCULO-04, VINCULO-21). As duas devolvem a
+        transação; a de outro usuário recebe 404 (VINCULO-11).
+        """
+        if request.method == 'POST':
+            exigir_recurso(request.user, 'vinculos')
+        transacao = self.get_object()
+        if request.method == 'DELETE':
+            desvincular(transacao)
+        else:
+            corpo = VinculoSerializer(data=request.data, context={'request': request})
+            corpo.is_valid(raise_exception=True)
+            vincular(transacao, corpo.validated_data['principal'])
+        transacao = Transaction.objects.get(pk=transacao.pk)
+        return Response(self.get_serializer(transacao).data)
 
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):

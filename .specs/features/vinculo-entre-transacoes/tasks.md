@@ -116,14 +116,15 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Ligar uma transação existente devolve 200 com a principal
-- [ ] Principal de outro usuário ou inexistente recebe 400 "Transação não encontrada." no campo `principal`; dependente de outro usuário recebe 404
-- [ ] Com o recurso travado, ligar recebe 403 `plan_locked` e desfazer funciona
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Ligar uma transação existente devolve 200 com a principal
+- [x] Principal de outro usuário ou inexistente recebe 400 "Transação não encontrada." no campo `principal`; dependente de outro usuário recebe 404
+- [x] Com o recurso travado, ligar recebe 403 `plan_locked` e desfazer funciona
+- [x] Full gate passa
+- [x] Test count: 9 testes (8 em `tests/vinculos/test_rotas.py` e `test_vinculos` no teste de travas)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite ligar e desfazer o vínculo de uma transação existente`
 

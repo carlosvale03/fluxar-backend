@@ -8,7 +8,7 @@ from .classes import classes_efetivas
 from .vinculos import desfazer_vinculos
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
-    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, TRANSACAO_NAO_ENCONTRADA,
 )
 from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
@@ -216,6 +216,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     recurring_source = serializers.PrimaryKeyRelatedField(read_only=True)
     # Lote da importação e categoria sugerida pelo histórico (IMPORT-45, IMPORT-46)
     category_suggested = serializers.BooleanField(source='categoria_sugerida', read_only=True)
+    # A principal da compra, lida da raiz numa parcela (VINCULO-26)
+    principal = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
@@ -227,7 +229,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'is_installment', 'installment_number', 'installment_total',
             'transfer_id', 'related_transaction', 'target_account_id', 'update_scope',
             'is_recurring', 'frequency', 'recurring_source',
-            'import_batch', 'category_suggested',
+            'import_batch', 'category_suggested', 'principal',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -277,6 +279,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         if obj.type in ['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']:
             return dinheiro(-abs(obj.amount))
         return dinheiro(abs(obj.amount))
+
+    def get_principal(self, obj):
+        if obj.parent_transaction_id:
+            return obj.parent_transaction.principal_id
+        return obj.principal_id
 
     def get_account_detail(self, obj):
         if obj.account:
@@ -507,6 +514,17 @@ class TransferSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=15, decimal_places=2, validators=[validar_valor_positivo])
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
+
+
+class VinculoSerializer(serializers.Serializer):
+    """
+    Corpo de `POST /transactions/{id}/link/`: a principal, só do usuário da
+    requisição; a de outro usuário recebe a mesma mensagem de um id
+    inexistente (VINCULO-11, AD-010).
+    """
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+    )
 
 
 class CreditCardExpenseSerializer(serializers.Serializer):
