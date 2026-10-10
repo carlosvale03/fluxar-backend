@@ -483,14 +483,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Escolher um filtro chama a API com o parâmetro e volta à página 1
-- [ ] Cada registro mostra o antes e o depois
-- [ ] A navegação entre as páginas continua
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Escolher um filtro chama a API com o parâmetro e volta à página 1
+- [x] Cada registro mostra o antes e o depois
+- [x] A navegação entre as páginas continua
+- [x] Quick gate (frontend) passa
+- [x] Test count: 7 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra o log do admin e mostra os valores de antes e depois`
 
