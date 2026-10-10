@@ -44,7 +44,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Destino inicial nas partes dos modelos | Partes de gastar ficam na conta do salário; partes de guardar ficam sem destino até o usuário escolher | Nos três modelos, só o que se guarda costuma sair da conta | sim |
 | Categorias de salário | A categoria padrão Salário e as subcategorias dela, mais as que o usuário marcar | "Salário" já vem em todo cadastro | sim |
 | Um plano por usuário | Um plano salvo, aplicado a qualquer recebimento de salário | Quem tem dois salários ajusta os valores na revisão | sim |
-| Salário menor que o plano | A última parte da ordem é reduzida até zero, depois a anterior, e a revisão marca cada parte reduzida | A ordem é a prioridade que o usuário definiu | sim |
+| Valor fixo e percentual no mesmo plano | Os valores fixos saem primeiro do recebido; os percentuais valem sobre o que sobra | Alterado em 2026-10-10 a pedido do usuário: com o percentual sobre o recebido inteiro, um plano com 100% em percentuais e uma parte fixa reduzia as últimas partes a quase nada (AD-056) | sim |
+| Salário menor que o plano | Quando os valores fixos passam do recebido, a última parte fixa da ordem é reduzida até zero, depois a anterior, a revisão marca cada parte reduzida, e as percentuais ficam com zero | A ordem é a prioridade que o usuário definiu | sim |
+| Travas dos percentuais na edição | Só na tela, durante a edição; não são salvas no plano | Servem para montar o plano, não mudam a divisão | sim |
 | Centavos | Cada parte percentual é arredondada para baixo no centavo; a diferença fica livre | A divisão nunca passa do valor recebido | sim |
 | Ajuste na revisão | Vale só para aquela divisão, sem mudar o plano | Salários que variam não obrigam a mexer no plano | sim |
 | Confirmação forte | Revisão com a lista completa, a marcação "Confirmo que fiz essas transferências no banco" e o botão com a quantidade e o total | As transações nascem efetivadas, então o usuário afirma que fez as transferências | sim |
@@ -119,8 +121,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Why P1**: é o que tira do usuário o trabalho de lançar cada transferência e cada aporte, e é onde um erro cria várias transações indesejadas de uma vez.
 
 **Acceptance Criteria**:
-1. **SALARIO-26** WHEN o sistema calcula a divisão de um recebimento THEN o sistema SHALL atender as partes na ordem do plano, cada uma com o seu valor fixo ou o seu percentual sobre o valor recebido, e deixar livre na conta do salário o que sobrar.
-2. **SALARIO-27** IF o valor recebido não cobrir todas as partes THEN o sistema SHALL reduzir primeiro a última parte da ordem, até zero, e seguir para as anteriores, marcando na revisão cada parte reduzida.
+1. **SALARIO-26** WHEN o sistema calcula a divisão de um recebimento THEN o sistema SHALL atender as partes na ordem do plano, tirando primeiro do valor recebido os valores fixos e aplicando os percentuais sobre o que sobra, e deixar livre na conta do salário o que restar.
+2. **SALARIO-27** IF os valores fixos passarem do valor recebido THEN o sistema SHALL reduzir primeiro a última parte fixa da ordem, até zero, e seguir para as anteriores, marcando na revisão cada parte reduzida, e deixar as partes percentuais com zero.
 3. **SALARIO-28** WHEN o sistema calcula uma parte percentual THEN o sistema SHALL arredondá-la para baixo no centavo, deixando a diferença livre na conta do salário.
 4. **SALARIO-29** WHEN o usuário abre a revisão de uma divisão THEN a interface SHALL mostrar cada transação que será criada, com origem, destino, valor e data, além do total e de quanto fica livre.
 5. **SALARIO-30** WHEN o usuário ajusta o valor de uma parte na revisão THEN o sistema SHALL usar o valor ajustado só nessa divisão, sem mudar o plano salvo.
@@ -179,11 +181,31 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P2: Ajuda para montar o plano
+
+**User Story**: Como usuário, quero entender cada modelo e cada parte e montar os percentuais sem fazer conta, para chegar a um plano que fecha.
+
+**Why P2**: o plano funciona sem essa ajuda, mas quem não conhece os modelos não sabe o que é "Liberdade financeira" nem quanto sobra ao mexer num percentual.
+
+**Acceptance Criteria**:
+1. **SALARIO-57** WHEN a interface mostra um modelo ou uma parte de um modelo THEN a interface SHALL mostrar o que o modelo e a parte significam, com a obra de origem.
+2. **SALARIO-58** WHEN o usuário muda o percentual de uma parte na edição THEN a interface SHALL ajustar as outras partes percentuais não travadas na proporção de cada uma, mantendo a soma dos percentuais de antes.
+3. **SALARIO-59** WHEN o usuário trava uma parte percentual THEN a interface SHALL deixar o percentual dela fora dos ajustes de SALARIO-58.
+4. **SALARIO-60** WHILE a soma dos percentuais passar de 100%, a interface SHALL mostrar o aviso "A soma dos percentuais passa de 100%." e impedir salvar o plano.
+5. **SALARIO-61** WHEN o usuário tem um plano salvo THEN a interface SHALL permitir trocar de modelo a partir do resumo do plano, mantendo o plano salvo até o novo ser salvo.
+6. **SALARIO-62** WHILE as categorias de salário já estiverem configuradas e houver salário a dividir, a interface SHALL mostrar a seção de receitas de salário recolhida, com as categorias escolhidas e a opção de abrir.
+7. **SALARIO-63** WHEN o campo da simulação está preenchido THEN a interface SHALL mostrar o valor de cada parte pela regra de SALARIO-26, inclusive na edição, antes de salvar.
+
+**Independent Test**: no 50/30/20, mudar Essenciais para 60% deixa Dispensáveis com 24% e Guardar com 16%; travar Guardar e mudar Essenciais para 60% deixa Dispensáveis com 20%; uma parte fixa de R$ 500,00 com salário simulado de R$ 3.000,00 mostra as partes percentuais sobre R$ 2.500,00; passar de 100% mostra o aviso e desabilita "Salvar plano".
+
+---
+
 ## Edge Cases
 
 - Dois salários no mês: cada recebimento é dividido pelo plano inteiro, e os valores fixos entram nas duas divisões se o usuário não ajustar na revisão (SALARIO-26, SALARIO-30).
 - Parte com destino na própria conta do recebimento: não gera transação (SALARIO-34).
-- Salário de R$ 1.000,00 com partes fixas que somam R$ 1.200,00: a última parte é reduzida até zero, depois a anterior (SALARIO-27).
+- Salário de R$ 1.000,00 com partes fixas que somam R$ 1.200,00: a última parte fixa é reduzida até zero, depois a anterior (SALARIO-27).
+- Salário de R$ 3.000,00 com uma parte fixa de R$ 500,00 e partes de 50%, 30% e 20%: os percentuais valem sobre R$ 2.500,00 (R$ 1.250,00, R$ 750,00 e R$ 500,00), e nada fica livre (SALARIO-26).
 - Parte de 33,33% sobre R$ 1.000,00: R$ 333,30, e a diferença fica livre (SALARIO-28).
 - Meta concluída ou excluída depois de entrar no plano: a geração é recusada até o usuário trocar o destino (SALARIO-42).
 - Plano só com partes que ficam na conta do salário: a geração é recusada, e a simulação continua mostrando a divisão (SALARIO-13, SALARIO-43).
@@ -272,6 +294,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Verified |
+| SALARIO-57 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-58 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-59 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-60 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-61 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-62 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-63 | P2: Ajuda para montar o plano | refactor | Pending |
 
 **Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 56 implemented, 0 in progress, 0 pending
 

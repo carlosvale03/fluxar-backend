@@ -434,6 +434,14 @@
 - **Date**: 2026-10-10
 - **Status**: active
 
+### AD-056
+- **Decision**: Na divisão do salário, os valores fixos saem primeiro do recebido e os percentuais valem sobre o que sobra; só os valores fixos são reduzidos quando passam do recebido, da última parte para a primeira.
+- **Reason**: com o percentual sobre o recebido inteiro, um plano com 100% em percentuais e uma parte fixa passava do salário, e a redução zerava as últimas partes (a simulação mostrava R$ 0,01 nelas).
+- **Trade-off**: um plano salvo antes da mudança com fixos e percentuais passa a dividir de outro jeito; as divisões já geradas não mudam.
+- **Scope**: gestao-do-salario.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `vinculo-entre-transacoes` concluída, nos dois repositórios; com ela, todas as features da auditoria de 2026-09 estão implementadas
