@@ -5,7 +5,7 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from accounts.models import Account, CreditCard
 from .services import TransactionService
 from .classes import classes_efetivas
-from .vinculos import desfazer_vinculos, vincular
+from .vinculos import ListaComVinculos, dados_dos_vinculos, desfazer_vinculos, raiz_da_compra, vincular
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, TRANSACAO_NAO_ENCONTRADA,
@@ -245,14 +245,15 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
         # Valor maior que zero, com até duas casas (SALDO-09)
         extra_kwargs = {'amount': {'validators': [validar_valor_positivo]}}
+        list_serializer_class = ListaComVinculos
 
     def to_representation(self, instance):
         """
         Injeta is_recurring e frequency no output baseado no recurring_source.
         """
         representation = super().to_representation(instance)
-        if instance.parent_transaction_id:
-            representation['principal'] = instance.parent_transaction.principal_id
+        # Campos do vínculo, os da compra numa parcela (VINCULO-26, VINCULO-27)
+        representation.update(self._vinculo(instance))
 
         # Conta, categoria e tags de outro usuário não aparecem (ISOL-15)
         dono = instance.user_id
@@ -279,6 +280,18 @@ class TransactionSerializer(serializers.ModelSerializer):
             representation['frequency'] = None
             
         return representation
+
+    def _vinculo(self, obj):
+        """
+        `principal`, `principal_detail`, `dependents_count` e `total_cost` da
+        compra de `obj`. A lista calcula os de todas as linhas de uma vez em
+        `ListaComVinculos`; um objeto sozinho calcula só os dele.
+        """
+        dados = self.context.setdefault('_vinculos', {})
+        raiz = raiz_da_compra(obj)
+        if raiz not in dados:
+            dados.update(dados_dos_vinculos([obj]))
+        return dados[raiz]
 
     def get_signed_amount(self, obj):
         # Retorna negativo para saídas e positivo para entradas

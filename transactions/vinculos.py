@@ -12,15 +12,22 @@ antes de conferir as regras, para que pedidos simultâneos não montem um ciclo
 nem um segundo nível (VINCULO-19). Os logs levam só ids (VINCULO-23).
 """
 import logging
+from decimal import Decimal
 
 from django.db import transaction
+from django.db.models import Q, Sum
+from django.db.models.functions import Coalesce
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from core.fields import TRANSACAO_NAO_ENCONTRADA
+from core.valores import dinheiro
 
 from .models import Transaction
 
 logger = logging.getLogger(__name__)
+
+ZERO = Decimal('0.00')
 
 # Só despesas e compras no cartão se vinculam (VINCULO-05)
 TIPOS_VINCULAVEIS = ('EXPENSE', 'CREDIT_CARD')
@@ -97,6 +104,77 @@ def desvincular(dependente):
     ).update(principal=None)
     if alteradas:
         logger.info('Vínculo desfeito: dependente=%s.', raiz)
+
+
+def dados_dos_vinculos(transacoes):
+    """
+    Os campos do vínculo de cada compra das `transacoes`, por id da raiz
+    (VINCULO-26, VINCULO-27): `principal`, `principal_detail` (`{id,
+    description, date}`, com a data da compra no cartão), `dependents_count` e
+    `total_cost`, a soma de todas as parcelas da compra principal e das
+    compras dependentes, nulo sem dependentes. Faz o mesmo número de consultas
+    para qualquer quantidade de transações, para a lista não fazer uma
+    consulta por linha. Só lê transações do dono de cada uma (ISOL-14).
+    """
+    donos = {raiz_da_compra(t): t.user_id for t in transacoes}
+    if not donos:
+        return {}
+    raizes, usuarios = set(donos), set(donos.values())
+    do_dono = Transaction.objects.filter(user_id__in=usuarios)
+
+    principal_da_raiz = dict(do_dono.filter(pk__in=raizes).values_list('pk', 'principal_id'))
+    dependentes = {}
+    for principal_id, pk in do_dono.filter(principal_id__in=raizes).values_list('principal_id', 'pk'):
+        dependentes.setdefault(principal_id, []).append(pk)
+
+    detalhes = {
+        linha['pk']: {
+            'id': str(linha['pk']),
+            'description': linha['description'],
+            'date': (linha['purchase_date'] or linha['date']).isoformat(),
+        }
+        for linha in do_dono.filter(pk__in={p for p in principal_da_raiz.values() if p}).values(
+            'pk', 'description', 'date', 'purchase_date',
+        )
+    }
+
+    compras = set(dependentes) | {pk for pks in dependentes.values() for pk in pks}
+    valores = {}
+    if compras:
+        valores = dict(
+            do_dono.filter(Q(pk__in=compras) | Q(parent_transaction_id__in=compras))
+            .annotate(compra=Coalesce('parent_transaction_id', 'pk'))
+            .order_by().values('compra').annotate(total=Sum('amount'))
+            .values_list('compra', 'total')
+        )
+
+    dados = {}
+    for raiz in raizes:
+        principal = principal_da_raiz.get(raiz)
+        suas = dependentes.get(raiz, [])
+        custo = None
+        if suas:
+            custo = dinheiro(sum((valores.get(pk, ZERO) for pk in [raiz, *suas]), ZERO))
+        dados[raiz] = {
+            'principal': str(principal) if principal else None,
+            'principal_detail': detalhes.get(principal),
+            'dependents_count': len(suas),
+            'total_cost': custo,
+        }
+    return dados
+
+
+class ListaComVinculos(serializers.ListSerializer):
+    """
+    Lista de transações do `TransactionSerializer`: os campos do vínculo de
+    todas as linhas saem de `dados_dos_vinculos` de uma vez, sem uma consulta
+    por linha (VINCULO-26).
+    """
+
+    def to_representation(self, data):
+        itens = list(data.all() if hasattr(data, 'all') else data)
+        self.context.setdefault('_vinculos', {}).update(dados_dos_vinculos(itens))
+        return super().to_representation(itens)
 
 
 def desfazer_vinculos(ids, user_id):

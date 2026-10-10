@@ -175,16 +175,17 @@ T9 → T10
 
 **Done when**:
 
-- [ ] O cinema de R$ 50,00 com o transporte de R$ 45,00 devolve `total_cost` "95.00" e `dependents_count` 1
-- [ ] O transporte devolve `principal_detail` com a descrição e a data do cinema
-- [ ] Um jantar em 3 parcelas de R$ 40,00 ligado ao cinema soma R$ 120,00 no custo
-- [ ] O gráfico por categoria continua com R$ 50,00 em Lazer e R$ 45,00 em Transporte
-- [ ] A lista com 20 transações vinculadas não faz uma consulta por linha
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] O cinema de R$ 50,00 com o transporte de R$ 45,00 devolve `total_cost` "95.00" e `dependents_count` 1
+- [x] O transporte devolve `principal_detail` com a descrição e a data do cinema
+- [x] Um jantar em 3 parcelas de R$ 40,00 ligado ao cinema soma R$ 120,00 no custo
+- [x] O gráfico por categoria continua com R$ 50,00 em Lazer e R$ 45,00 em Transporte
+- [x] A lista com 20 transações vinculadas não faz uma consulta por linha
+- [x] Full gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra na API o custo total da principal e a principal da dependente`
 
