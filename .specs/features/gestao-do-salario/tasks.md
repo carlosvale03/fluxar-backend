@@ -396,14 +396,15 @@ T11 → T12
 
 **Done when**:
 
-- [ ] A confirmação lista as transações da divisão
-- [ ] Confirmar chama o desfazer e atualiza a lista de salários a dividir
-- [ ] O 400 do prazo aparece no toast
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] A confirmação lista as transações da divisão
+- [x] Confirmar chama o desfazer e atualiza a lista de salários a dividir
+- [x] O 400 do prazo aparece no toast
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite desfazer a divisão do salário pela tela`
 

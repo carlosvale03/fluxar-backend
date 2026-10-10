@@ -260,7 +260,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-42 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-43 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-44 | P1: Geração das transações | T10 | Implemented |
-| SALARIO-45 | P1: Desfazer a divisão | T11 | Pending |
+| SALARIO-45 | P1: Desfazer a divisão | T11 | Implemented |
 | SALARIO-46 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-47 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-48 | P1: Desfazer a divisão | T6 | Implemented |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Implemented |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 50 implemented, 1 in progress, 5 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 51 implemented, 1 in progress, 4 pending
 
 ---
 
