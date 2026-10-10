@@ -73,7 +73,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 6. **CLASSE-06** IF o nome da classe estiver vazio ou tiver mais de 30 caracteres THEN o sistema SHALL recusar com HTTP 400 e o erro no campo do nome.
 7. **CLASSE-07** IF o nome repetir o de outra classe do usuário, sem diferença de maiúsculas e acentos, THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Já existe uma classe com esse nome." no campo do nome.
 8. **CLASSE-08** IF o usuário tentar excluir ou renomear Essencial ou Dispensável THEN o sistema SHALL recusar com HTTP 400 e a mensagem "As classes padrão não podem ser excluídas nem renomeadas."
-9. **CLASSE-09** WHEN o usuário pede para excluir uma classe que ele criou THEN a interface SHALL mostrar quantas categorias a usam e só excluir depois da confirmação.
+9. **CLASSE-09** WHEN o usuário pede para excluir uma classe que ele criou THEN a interface SHALL mostrar quantas categorias têm essa classe como classe própria e só excluir depois da confirmação.
 10. **CLASSE-10** WHEN uma classe é excluída THEN o sistema SHALL remover a classe própria das categorias que a usavam, que passam a seguir a herança de CLASSE-16.
 11. **CLASSE-11** IF a exclusão de uma classe falhar no meio THEN o sistema SHALL manter a classe e as categorias como estavam.
 12. **CLASSE-12** WHILE houver pedidos simultâneos de criação de classes do mesmo usuário, o sistema SHALL manter o limite de 5 classes e os nomes sem repetição.
@@ -183,48 +183,48 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CLASSE-01 | P1: Classes do usuário | - | Pending |
-| CLASSE-02 | P1: Classes do usuário | - | Pending |
-| CLASSE-03 | P1: Classes do usuário | - | Pending |
-| CLASSE-04 | P1: Classes do usuário | - | Pending |
-| CLASSE-05 | P1: Classes do usuário | - | Pending |
-| CLASSE-06 | P1: Classes do usuário | - | Pending |
-| CLASSE-07 | P1: Classes do usuário | - | Pending |
-| CLASSE-08 | P1: Classes do usuário | - | Pending |
-| CLASSE-09 | P1: Classes do usuário | - | Pending |
-| CLASSE-10 | P1: Classes do usuário | - | Pending |
-| CLASSE-11 | P1: Classes do usuário | - | Pending |
-| CLASSE-12 | P1: Classes do usuário | - | Pending |
-| CLASSE-13 | P1: Classes do usuário | - | Pending |
-| CLASSE-14 | P1: Classes do usuário | - | Pending |
-| CLASSE-15 | P1: Classes do usuário | - | Pending |
-| CLASSE-16 | P1: Classe das categorias | - | Pending |
-| CLASSE-17 | P1: Classe das categorias | - | Pending |
-| CLASSE-18 | P1: Classe das categorias | - | Pending |
-| CLASSE-19 | P1: Classe das categorias | - | Pending |
-| CLASSE-20 | P1: Classe das categorias | - | Pending |
-| CLASSE-21 | P1: Classe das categorias | - | Pending |
-| CLASSE-22 | P1: Classe das categorias | - | Pending |
-| CLASSE-23 | P1: Classe das categorias | - | Pending |
-| CLASSE-24 | P1: Classe das categorias | - | Pending |
-| CLASSE-25 | P1: Classe das categorias | - | Pending |
-| CLASSE-26 | P1: Classe das categorias | - | Pending |
-| CLASSE-27 | P1: Classe das categorias | - | Pending |
-| CLASSE-28 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-29 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-30 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-31 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-32 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-33 | P1: Divisão das despesas por classe | - | Pending |
-| CLASSE-34 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-35 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-36 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-37 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-38 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-39 | P1: Filtro e exportação por classe | - | Pending |
-| CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
+| CLASSE-01 | P1: Classes do usuário | T2 | Verified |
+| CLASSE-02 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-03 | P1: Classes do usuário | T8 | Verified |
+| CLASSE-04 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-05 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-06 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-07 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-08 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-09 | P1: Classes do usuário | T8 | Verified |
+| CLASSE-10 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-11 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-12 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-13 | P1: Classes do usuário | T3, T5 | Verified |
+| CLASSE-14 | P1: Classes do usuário | T1 | Verified |
+| CLASSE-15 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-16 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-17 | P1: Classe das categorias | T4, T9 | Verified |
+| CLASSE-18 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-19 | P1: Classe das categorias | T9 | Verified |
+| CLASSE-20 | P1: Classe das categorias | T9 | Verified |
+| CLASSE-21 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-22 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-23 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-24 | P1: Classe das categorias | T2 | Verified |
+| CLASSE-25 | P1: Classe das categorias | T1 | Verified |
+| CLASSE-26 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-27 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-28 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-29 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-30 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-31 | P1: Divisão das despesas por classe | T10 | Verified |
+| CLASSE-32 | P1: Divisão das despesas por classe | T10 | Verified |
+| CLASSE-33 | P1: Divisão das despesas por classe | T10, T11 | Verified |
+| CLASSE-34 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-35 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-36 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-37 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-38 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-39 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-40 | P1: Filtro e exportação por classe | T7 | Verified |
 
-**Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped ✓
 
 ---
 

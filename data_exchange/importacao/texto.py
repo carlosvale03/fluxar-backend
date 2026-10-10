@@ -4,8 +4,10 @@ a normalização sem acentos usada em nomes, tipos e status (IMPORT-16,
 IMPORT-23).
 """
 import re
-import unicodedata
 from datetime import date
+
+# A normalização mora em `core/texto.py`; continua exportada daqui
+from core.texto import normalizar  # noqa: F401
 
 DATA_INVALIDA = 'Data inválida'
 
@@ -13,16 +15,6 @@ DATA_INVALIDA = 'Data inválida'
 DATA_COM_BARRA = re.compile(r'(\d{1,2})/(\d{1,2})/(\d{4}|\d{2})')
 DATA_ISO = re.compile(r'(\d{4})-(\d{2})-(\d{2})')
 DIGITOS = re.compile(r'\d')
-
-
-def normalizar(texto):
-    """Minúsculas, sem acentos e sem espaços nas pontas; `None` vira ""."""
-    if texto is None:
-        return ''
-    return ''.join(
-        c for c in unicodedata.normalize('NFKD', str(texto))
-        if not unicodedata.combining(c)
-    ).lower().strip()
 
 
 def normalizar_descricao(texto):

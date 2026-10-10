@@ -1,15 +1,17 @@
 from rest_framework import serializers
 from django.db import transaction
 from dateutil.relativedelta import relativedelta
-from .models import Transaction, Category, Tag, RecurringTransaction, CorrecaoDeCategoria
+from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransaction, CorrecaoDeCategoria
 from accounts.models import Account, CreditCard
 from .services import TransactionService
+from .classes import classes_efetivas
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
-    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA,
 )
 from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
+from core.texto import normalizar
 from data_exchange.importacao.texto import normalizar_descricao
 
 # Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
@@ -20,6 +22,65 @@ TIPO_NAO_CRIAVEL = 'Por aqui só é possível criar receitas e despesas.'
 TIPO_NAO_ALTERAVEL = 'O tipo só pode ser trocado entre receita e despesa.'
 COMPRA_SO_PELA_FATURA = 'Compras no cartão são efetivadas pelo pagamento da fatura.'
 
+# Classes de despesa (CLASSE-04 a CLASSE-08)
+LIMITE_DE_CLASSES = 5
+LIMITE_DE_CLASSES_ATINGIDO = 'Limite de 5 classes atingido.'
+NOME_DE_CLASSE_REPETIDO = 'Já existe uma classe com esse nome.'
+CLASSE_PADRAO_FIXA = 'As classes padrão não podem ser excluídas nem renomeadas.'
+COR_INVALIDA = 'Informe a cor no formato #RRGGBB.'
+
+
+class ClasseDeDespesaSerializer(serializers.ModelSerializer):
+    """
+    `{id, name, color, is_default, categories_count}`. O nome tem de 1 a 30
+    caracteres e é único por usuário sem diferença de maiúsculas e acentos
+    (CLASSE-06, CLASSE-07). `categories_count` são as categorias ativas com
+    essa classe própria (CLASSE-09), anotada pela view.
+    """
+    name = serializers.CharField(source='nome', max_length=30)
+    color = serializers.RegexField(
+        r'^#[0-9A-Fa-f]{6}$', source='cor', error_messages={'invalid': COR_INVALIDA},
+    )
+    is_default = serializers.BooleanField(source='padrao', read_only=True)
+    categories_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClasseDeDespesa
+        fields = ['id', 'name', 'color', 'is_default', 'categories_count']
+        read_only_fields = ['id']
+
+    def get_categories_count(self, obj):
+        contagem = getattr(obj, 'categories_count', None)
+        if contagem is None:
+            contagem = obj.categorias.filter(is_active=True).count()
+        return contagem
+
+    def validate_name(self, valor):
+        repetida = ClasseDeDespesa.objects.filter(
+            user=self.context['request'].user, nome_normalizado=normalizar(valor)[:30],
+        )
+        if self.instance is not None:
+            repetida = repetida.exclude(pk=self.instance.pk)
+        if repetida.exists():
+            raise serializers.ValidationError(NOME_DE_CLASSE_REPETIDO)
+        return valor
+
+    def _com_nome_normalizado(self, validated_data):
+        if 'nome' in validated_data:
+            validated_data['nome_normalizado'] = normalizar(validated_data['nome'])[:30]
+        return validated_data
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(self._com_nome_normalizado(validated_data))
+
+    def update(self, instance, validated_data):
+        return super().update(instance, self._com_nome_normalizado(validated_data))
+
+
+RECEITA_SEM_CLASSE = 'Categorias de receita não têm classe.'
+
+
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
     parent_name = serializers.ReadOnlyField(source='parent.name')
@@ -27,10 +88,21 @@ class CategorySerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
         required=False, allow_null=True,
     )
+    # Classe própria da categoria de despesa (CLASSE-17, CLASSE-23)
+    expense_class = OwnedPrimaryKeyRelatedField(
+        source='classe', queryset=ClasseDeDespesa.objects.all(), not_found_message=CLASSE_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    # Classe efetiva e se ela vem da mãe (CLASSE-16, CLASSE-18)
+    effective_class = serializers.SerializerMethodField()
+    class_inherited = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active']
+        fields = [
+            'id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active',
+            'expense_class', 'effective_class', 'class_inherited',
+        ]
         read_only_fields = ['id', 'subcategories', 'parent_name']
 
     def to_representation(self, instance):
@@ -41,10 +113,41 @@ class CategorySerializer(serializers.ModelSerializer):
             ret['parent_name'] = None
         return ret
 
+    def _classe_efetiva(self, obj):
+        """
+        `(classe, herdada)` pelo mapa do dono da categoria, guardado no
+        contexto para as subcategorias e as demais linhas não repetirem a
+        consulta (AD-052).
+        """
+        mapas = self.context.setdefault('_classes_efetivas', {})
+        if obj.user_id not in mapas:
+            mapas[obj.user_id] = classes_efetivas(obj.user_id) if obj.user_id else {}
+        return mapas[obj.user_id].get(obj.pk, (None, False))
+
+    def get_effective_class(self, obj):
+        classe, _ = self._classe_efetiva(obj)
+        if classe is None:
+            return None
+        return {'id': str(classe.pk), 'name': classe.nome, 'color': classe.cor}
+
+    def get_class_inherited(self, obj):
+        return self._classe_efetiva(obj)[1]
+
     def get_subcategories(self, obj):
         # Retorna subcategorias de 1º nível, só as do dono da categoria (ISOL-14)
         subs = obj.subcategories.filter(is_active=True, user_id=obj.user_id)
-        return CategorySerializer(subs, many=True).data
+        return CategorySerializer(subs, many=True, context=self.context).data
+
+    def validate(self, attrs):
+        tipo = attrs.get('type', self.instance.type if self.instance else 'EXPENSE')
+        if tipo == 'INCOME':
+            # Receita não tem classe (CLASSE-21); a despesa que vira receita
+            # perde a classe própria (CLASSE-22)
+            if attrs.get('classe') is not None:
+                raise serializers.ValidationError({'expense_class': [RECEITA_SEM_CLASSE]})
+            if self.instance is not None and self.instance.classe_id:
+                attrs['classe'] = None
+        return attrs
 
     def create(self, validated_data):
         user = self.context['request'].user

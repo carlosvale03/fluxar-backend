@@ -6,6 +6,10 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
+# Coluna "Classe" das despesas e compras no cartão (CLASSE-40)
+TIPOS_COM_CLASSE = ('EXPENSE', 'CREDIT_CARD')
+SEM_CLASSE = 'Sem classe'
+
 
 def _do_dono(tx, relacionado):
     """
@@ -97,8 +101,13 @@ class ExportService:
         return buffer
 
     @staticmethod
-    def _linhas_de_transacoes(queryset):
-        """As linhas da planilha de transações, uma por transação."""
+    def _linhas_de_transacoes(queryset, mapa):
+        """
+        As linhas da planilha de transações, uma por transação. `mapa` é o
+        `mapa_de_classes` do usuário: a coluna "Classe" traz a classe efetiva
+        das despesas e compras no cartão, "Sem classe" quando não houver, e
+        fica vazia nas demais transações (CLASSE-40).
+        """
         data = []
         for tx in queryset:
             # Format amount with +/- prefix
@@ -124,17 +133,25 @@ class ExportService:
                 'Categoria': category_name,
                 'Subcategoria': subcategory_name,
                 'Tags': ', '.join([t.name for t in tx.tags.all() if _do_dono(tx, t)]),
-                'Tipo': tx.get_type_display()
+                'Tipo': tx.get_type_display(),
+                'Classe': ExportService._classe(tx, mapa),
             })
         return data
 
     @staticmethod
-    def generate_xls(queryset):
+    def _classe(tx, mapa):
+        if tx.type not in TIPOS_COM_CLASSE:
+            return ''
+        classe = mapa.get(tx.category_id) if tx.category_id else None
+        return classe.nome if classe is not None else SEM_CLASSE
+
+    @staticmethod
+    def generate_xls(queryset, mapa):
         """
-        Gera Excel de transações.
+        Gera Excel de transações; `mapa` é o `mapa_de_classes` do usuário.
         Retorna bytes buffer.
         """
-        df = pd.DataFrame(ExportService._linhas_de_transacoes(queryset))
+        df = pd.DataFrame(ExportService._linhas_de_transacoes(queryset, mapa))
         
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
@@ -153,6 +170,7 @@ class ExportService:
         from accounts.models import Account, CreditCard
         from budgets.models import Budget
         from goals.models import Goal
+        from transactions.classes import mapa_de_classes
         from transactions.models import Transaction
 
         def dinheiro(valor):
@@ -201,8 +219,9 @@ class ExportService:
         } for orcamento in Budget.objects.filter(user=user).select_related('category').order_by('year', 'month')]
 
         abas = [
-            ('Transações', ExportService._linhas_de_transacoes(transacoes),
-             ['Data', 'Descrição', 'Valor', 'Conta', 'Situação', 'Categoria', 'Subcategoria', 'Tags', 'Tipo']),
+            ('Transações', ExportService._linhas_de_transacoes(transacoes, mapa_de_classes(user)),
+             ['Data', 'Descrição', 'Valor', 'Conta', 'Situação', 'Categoria', 'Subcategoria', 'Tags', 'Tipo',
+              'Classe']),
             ('Contas', contas, ['Nome', 'Tipo', 'Saldo inicial', 'Saldo', 'Instituição', 'Ativa']),
             ('Cartões', cartoes,
              ['Nome', 'Limite', 'Dia de fechamento', 'Dia de vencimento', 'Conta de pagamento', 'Ativo']),

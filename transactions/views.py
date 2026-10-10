@@ -1,10 +1,12 @@
-from django.db.models import Case, DecimalField, F, Q, Sum, When
+from django.db import IntegrityError, transaction
+from django.db.models import Case, Count, DecimalField, F, Q, Sum, When
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Transaction, Category, Tag, RecurringTransaction
+from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransaction
 from .serializers import (
-    TransactionSerializer, CategorySerializer, TagSerializer,
+    TransactionSerializer, CategorySerializer, TagSerializer, ClasseDeDespesaSerializer,
+    CLASSE_PADRAO_FIXA, LIMITE_DE_CLASSES, LIMITE_DE_CLASSES_ATINGIDO, NOME_DE_CLASSE_REPETIDO,
     TransferSerializer, CreditCardExpenseSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
@@ -47,6 +49,63 @@ class CategoryViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mod
         """
         instance.is_active = False
         instance.save()
+
+class ClasseDeDespesaViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
+    """
+    Classes de despesa do usuário (CLASSE-02 a CLASSE-12), sem paginação e
+    sem trava de plano (CLASSE-13). Nenhum log grava o nome (CLASSE-15).
+    Roda dentro da transação da requisição (`ATOMIC_REQUESTS`): uma falha no
+    meio da exclusão desfaz tudo (CLASSE-11).
+    """
+    queryset = ClasseDeDespesa.objects.all()
+    serializer_class = ClasseDeDespesaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(
+            categories_count=Count('categorias', filter=Q(categorias__is_active=True)),
+        ).order_by('-padrao', 'criada_em', 'nome')
+
+    def create(self, request, *args, **kwargs):
+        usuario = request.user
+        # Trava o usuário até o fim da requisição: duas criações simultâneas
+        # contam uma depois da outra (CLASSE-12)
+        type(usuario).objects.select_for_update().filter(pk=usuario.pk).exists()
+        if ClasseDeDespesa.objects.filter(user=usuario).count() >= LIMITE_DE_CLASSES:
+            raise ValidationError({'detail': LIMITE_DE_CLASSES_ATINGIDO})
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            # A restrição única do banco recusou o nome (CLASSE-07)
+            raise ValidationError({'name': [NOME_DE_CLASSE_REPETIDO]}) from None
+        classe = self.get_queryset().get(pk=serializer.instance.pk)
+        return Response(self.get_serializer(classe).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        classe = self.get_object()
+        if classe.padrao and 'name' in request.data and str(request.data['name']).strip() != classe.nome:
+            raise ValidationError({'detail': CLASSE_PADRAO_FIXA})
+        serializer = self.get_serializer(classe, data=request.data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            raise ValidationError({'name': [NOME_DE_CLASSE_REPETIDO]}) from None
+        return Response(self.get_serializer(self.get_queryset().get(pk=classe.pk)).data)
+
+    def perform_destroy(self, instance):
+        if instance.padrao:
+            raise ValidationError({'detail': CLASSE_PADRAO_FIXA})
+        # As categorias perdem a classe própria e seguem a herança (CLASSE-10)
+        Category.objects.filter(classe=instance).update(classe=None)
+        instance.delete()
+
 
 class TagViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     queryset = Tag.objects.all()
@@ -116,7 +175,7 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
     # Parâmetros conhecidos da lista (CONTRATO-14)
     parametros_permitidos = PAGINACAO | {
         'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
-        'type', 'categoryId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
+        'type', 'categoryId', 'classId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
         'import_batch', 'suggested_category',
     }
 

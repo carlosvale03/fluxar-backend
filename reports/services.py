@@ -10,6 +10,7 @@ from core.datas import hoje
 from core.valores import dinheiro
 from . import regras
 from .models import FocusedMonitorItem
+from transactions.classes import mapa_de_classes
 from transactions.filtros import TIPOS_DE_DESPESA
 from transactions.models import Transaction, Category, Tag
 from budgets.models import Budget
@@ -30,6 +31,45 @@ def _categoria_do_usuario(user, campo):
         )),
         output_field=models.CharField(),
     )
+
+# "Sem classe" na divisão por classe (CLASSE-28)
+SEM_CLASSE_NOME = 'Sem classe'
+SEM_CLASSE_COR = '#94A3B8'
+
+
+def despesas_por_classe(user, start_date, end_date):
+    """
+    `[{class_id, class_name, color, amount}]`: as despesas do período por
+    classe efetiva atual da categoria (CLASSE-28, CLASSE-30), do maior valor
+    para o menor. Soma as mesmas transações da divisão por categoria, por
+    `regras.despesas` (CLASSE-29). Sem classe efetiva ou sem categoria do
+    usuário, a despesa vai para "Sem classe", com `class_id` nulo.
+    """
+    mapa = mapa_de_classes(user)
+    somas = {}
+    por_categoria = (
+        regras.despesas(user, start_date, end_date)
+        .order_by().values('category_id').annotate(total=Sum('amount'))
+    )
+    for item in por_categoria:
+        classe = mapa.get(item['category_id'])
+        chave = classe.pk if classe is not None else None
+        atual = somas.setdefault(chave, {'classe': classe, 'total': Decimal('0.00')})
+        atual['total'] += item['total']
+    linhas = sorted(
+        somas.values(),
+        key=lambda s: (-s['total'], s['classe'] is None, s['classe'].nome if s['classe'] else ''),
+    )
+    return [
+        {
+            'class_id': str(s['classe'].pk) if s['classe'] else None,
+            'class_name': s['classe'].nome if s['classe'] else SEM_CLASSE_NOME,
+            'color': s['classe'].cor if s['classe'] else SEM_CLASSE_COR,
+            'amount': dinheiro(s['total']),
+        }
+        for s in linhas
+    ]
+
 
 class ReportService:
     @staticmethod
@@ -386,6 +426,8 @@ class ReportService:
         return {
             'income_vs_expense': income_vs_expense,
             'expense_by_category': expense_by_category,
+            # Divisão por classe, pelas mesmas transações (CLASSE-28, CLASSE-29)
+            'expense_by_class': despesas_por_classe(user, start_date, end_date),
             'income_by_category': income_by_category,
             'period': {
                 'start_date': start_date.strftime('%Y-%m-%d'),
