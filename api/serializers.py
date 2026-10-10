@@ -236,14 +236,17 @@ class AdminUserSerializer(UserProfileSerializer):
     # O painel não vê a data de nascimento nem a renda (LGPD-19)
     date_of_birth = None
     monthly_income = None
+    # Nem muda as preferências: elas continuam só na leitura (AD-049)
+    preferences = None
 
     class Meta(UserProfileSerializer.Meta):
         fields = tuple(
             campo for campo in UserProfileSerializer.Meta.fields
-            if campo not in ('date_of_birth', 'monthly_income')
+            if campo not in ('date_of_birth', 'monthly_income', 'preferences')
         )
-        # CPF e telefone chegam mascarados e não são editados pelo painel
-        read_only_fields = ('id', 'email', 'last_login', 'created_at', 'cpf', 'phone_number')
+        # O painel muda só o plano, o papel e o status; nome, CPF, telefone,
+        # preferências e notificações enviados são ignorados (ADMIN-17)
+        read_only_fields = tuple(campo for campo in fields if campo not in ('plan', 'role', 'is_active'))
 
     def to_representation(self, instance):
         # CPF e telefone com só os últimos dígitos à vista (LGPD-19)

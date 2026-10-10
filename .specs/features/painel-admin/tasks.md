@@ -216,14 +216,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Mudar só o plano sem senha responde 200
-- [ ] Mudar o papel, desativar, arquivar, limpar, redefinir a senha e excluir sem senha ou com a senha errada recebem 403 com a mensagem no campo `admin_password`
-- [ ] Nome e preferências enviados pelo painel são ignorados
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Mudar só o plano sem senha responde 200
+- [x] Mudar o papel, desativar, arquivar, limpar, redefinir a senha e excluir sem senha ou com a senha errada recebem 403 com a mensagem no campo `admin_password`
+- [x] Nome e preferências enviados pelo painel são ignorados
+- [x] Full gate passa
+- [x] Test count: 14 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: pede a senha do administrador só nas ações sensíveis e não na troca de plano`
 

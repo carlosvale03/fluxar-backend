@@ -608,6 +608,28 @@ class AcaoDeAdminRecusada(exceptions.APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
+SENHA_DO_ADMIN_INCORRETA = "Senha do administrador incorreta."
+
+
+class SenhaDoAdminIncorreta(exceptions.APIException):
+    """HTTP 403 com a mensagem no campo `admin_password` (ADMIN-18)."""
+    status_code = status.HTTP_403_FORBIDDEN
+
+    def __init__(self):
+        super().__init__({"admin_password": [SENHA_DO_ADMIN_INCORRETA]})
+
+
+def conferir_senha_do_admin(request):
+    """
+    As ações sensíveis exigem a senha do administrador (ADMIN-17): excluir,
+    arquivar, limpar os dados, redefinir a senha, mudar o papel e desativar.
+    Sem a senha, ou com a senha errada, recusa com 403 (ADMIN-18).
+    """
+    senha = request.data.get('admin_password')
+    if not isinstance(senha, str) or not senha or not request.user.check_password(senha):
+        raise SenhaDoAdminIncorreta()
+
+
 def garantir_admin_restante(afetados):
     """
     Recusa com 400 quando tirar o papel, arquivar ou excluir os usuários
@@ -725,15 +747,9 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         return queryset
 
     def delete(self, request, *args, **kwargs):
-        """Exclusão em massa"""
-        admin_password = request.data.get('admin_password')
+        """Arquivamento em lote, com a senha do administrador (ADMIN-17)"""
+        conferir_senha_do_admin(request)
         user_ids = request.data.get('user_ids', [])
-
-        if not admin_password:
-            return Response({"detail": "Senha do administrador obrigatória."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador incorreta."}, status=status.HTTP_403_FORBIDDEN)
 
         if not user_ids:
             return Response({"detail": "Nenhum usuário selecionado."}, status=status.HTTP_400_BAD_REQUEST)
@@ -765,46 +781,34 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
     serializer_class = AdminUserSerializer
 
     def update(self, request, *args, **kwargs):
-        admin_password = request.data.get('admin_password')
-        if not admin_password:
-            return Response(
-                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not request.user.check_password(admin_password):
-            return Response(
-                {"detail": "Senha do administrador incorreta."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        old_user = User.objects.get(pk=kwargs.get('pk'))
-        response = super().update(request, *args, **kwargs)
-        
-        if response.status_code == 200:
-            new_user = self.get_object()
-            # A conta desativada perde as sessões abertas (SESSAO-17)
-            if not new_user.is_active:
-                encerrar_todas(new_user)
-            registrar_mudancas(request, old_user, new_user)
+        """
+        O painel muda só o plano, o papel e o status (AD-049). Mudar o papel
+        ou desativar a conta pede a senha do administrador; mudar só o plano
+        e reativar a conta não pedem (ADMIN-17, ADMIN-19).
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        antes = User.objects.get(pk=instance.pk)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        dados = serializer.validated_data
 
-        return response
+        muda_o_papel = dados.get('role', instance.role) != instance.role
+        desativa = instance.is_active and dados.get('is_active', True) is False
+        if muda_o_papel or desativa:
+            conferir_senha_do_admin(request)
+
+        self.perform_update(serializer)
+        # A conta desativada perde as sessões abertas (SESSAO-17)
+        if not instance.is_active:
+            encerrar_todas(instance)
+        registrar_mudancas(request, antes, instance)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        admin_password = request.data.get('admin_password')
+        conferir_senha_do_admin(request)
         permanent = request.data.get('permanent') is True
-        
-        if not admin_password:
-            return Response(
-                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not request.user.check_password(admin_password):
-            return Response(
-                {"detail": "Senha do administrador incorreta."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+
             
         instance = self.get_object()
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
@@ -1124,15 +1128,12 @@ class AdminResetPasswordView(APIView):
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
+        conferir_senha_do_admin(request)
         serializer = AdminResetPasswordSerializer(data=request.data)
-        
+
         if serializer.is_valid():
-            admin_password = serializer.validated_data['admin_password']
             new_password = serializer.validated_data['new_password']
-            
-            if not request.user.check_password(admin_password):
-                return Response({"admin_password": ["Senha do administrador incorreta."]}, status=status.HTTP_403_FORBIDDEN)
-            
+
             user.set_password(new_password)
             user.save()
             # A senha nova derruba todas as sessões do usuário (SESSAO-16)
@@ -1154,10 +1155,7 @@ class AdminClearUserDataView(APIView):
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        admin_password = request.data.get('admin_password')
-
-        if not admin_password or not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+        conferir_senha_do_admin(request)
 
         # Erro inesperado sobe e vira 500, sem o texto da exceção (CONTRATO-29)
         # Apaga dados relacionados explicitamente
@@ -1186,10 +1184,7 @@ class AdminHardDeleteView(APIView):
 
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        admin_password = request.data.get('admin_password')
-
-        if not admin_password or not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+        conferir_senha_do_admin(request)
 
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         recusar_remocao_de_admin(request, [user])
