@@ -418,6 +418,14 @@
 - **Date**: 2026-10-10
 - **Status**: active
 
+### AD-053
+- **Decision**: A gestão do salário fica no app `salario`. Cada divisão é um registro com itens; as transações geradas levam o UUID `divisao_do_salario`; a geração é idempotente por `(user, chave)` com a resposta remontada da divisão, e um recebimento só tem uma divisão ativa por restrição única parcial; o desfazer confere cada item e apaga as transações uma a uma.
+- **Reason**: tudo ou nada, nada em dobro e um desfazer que confere o que foi gerado; a exclusão uma a uma passa pelos sinais das metas, que recusam meta negativa, e o UUID evita dependência circular entre `transactions` e `salario`.
+- **Trade-off**: dois modelos a mais por divisão e um campo a mais em `Transaction`.
+- **Scope**: gestao-do-salario.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `classes-de-despesa` concluída, nos dois repositórios (design e tasks aprovados no automático, a pedido do usuário)
