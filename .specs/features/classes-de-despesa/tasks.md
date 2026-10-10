@@ -142,18 +142,19 @@ T10 → T11
 
 **Done when**:
 
-- [ ] A lista vem completa, sem paginação, com `is_default` e `categories_count`
-- [ ] A sexta classe recebe 400 "Limite de 5 classes atingido."
-- [ ] Nome vazio ou com 31 caracteres recebe 400 no campo `name`; "dividas" depois de "Dívidas" recebe "Já existe uma classe com esse nome."
-- [ ] Renomear ou excluir Essencial recebe 400 com a mensagem das classes padrão; mudar a cor dela funciona
-- [ ] Excluir uma classe usada por duas categorias as deixa sem classe própria; com uma falha forçada no meio, nada muda
-- [ ] Duas criações simultâneas com 4 classes terminam com 5; duas com o mesmo nome terminam com uma
-- [ ] Nenhum log grava o nome da classe; nenhum plano trava a rota
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 10 testes
+- [x] A lista vem completa, sem paginação, com `is_default` e `categories_count`
+- [x] A sexta classe recebe 400 "Limite de 5 classes atingido."
+- [x] Nome vazio ou com 31 caracteres recebe 400 no campo `name`; "dividas" depois de "Dívidas" recebe "Já existe uma classe com esse nome."
+- [x] Renomear ou excluir Essencial recebe 400 com a mensagem das classes padrão; mudar a cor dela funciona
+- [x] Excluir uma classe usada por duas categorias as deixa sem classe própria; com uma falha forçada no meio, nada muda
+- [x] Duas criações simultâneas com 4 classes terminam com 5; duas com o mesmo nome terminam com uma
+- [x] Nenhum log grava o nome da classe; nenhum plano trava a rota
+- [x] Full gate passa
+- [x] Test count: 18 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite criar, editar e excluir classes de despesa até o limite de 5`
 

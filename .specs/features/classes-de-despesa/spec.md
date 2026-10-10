@@ -184,20 +184,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | CLASSE-01 | P1: Classes do usuário | T2 | Implemented |
-| CLASSE-02 | P1: Classes do usuário | - | Pending |
+| CLASSE-02 | P1: Classes do usuário | T3 | Implemented |
 | CLASSE-03 | P1: Classes do usuário | - | Pending |
-| CLASSE-04 | P1: Classes do usuário | - | Pending |
-| CLASSE-05 | P1: Classes do usuário | - | Pending |
-| CLASSE-06 | P1: Classes do usuário | - | Pending |
-| CLASSE-07 | P1: Classes do usuário | - | Pending |
-| CLASSE-08 | P1: Classes do usuário | - | Pending |
+| CLASSE-04 | P1: Classes do usuário | T3 | In Progress |
+| CLASSE-05 | P1: Classes do usuário | T3 | In Progress |
+| CLASSE-06 | P1: Classes do usuário | T3 | Implemented |
+| CLASSE-07 | P1: Classes do usuário | T3 | In Progress |
+| CLASSE-08 | P1: Classes do usuário | T3 | In Progress |
 | CLASSE-09 | P1: Classes do usuário | - | Pending |
-| CLASSE-10 | P1: Classes do usuário | - | Pending |
-| CLASSE-11 | P1: Classes do usuário | - | Pending |
-| CLASSE-12 | P1: Classes do usuário | - | Pending |
-| CLASSE-13 | P1: Classes do usuário | - | Pending |
+| CLASSE-10 | P1: Classes do usuário | T3 | Implemented |
+| CLASSE-11 | P1: Classes do usuário | T3 | Implemented |
+| CLASSE-12 | P1: Classes do usuário | T3 | Implemented |
+| CLASSE-13 | P1: Classes do usuário | T3 | In Progress |
 | CLASSE-14 | P1: Classes do usuário | T1 | Implemented |
-| CLASSE-15 | P1: Classes do usuário | - | Pending |
+| CLASSE-15 | P1: Classes do usuário | T3 | Implemented |
 | CLASSE-16 | P1: Classe das categorias | - | Pending |
 | CLASSE-17 | P1: Classe das categorias | - | Pending |
 | CLASSE-18 | P1: Classe das categorias | - | Pending |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | - | Pending |
 | CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
 
-**Coverage:** 40 total, 4 mapped to tasks, 36 unmapped ⚠️ (backend em andamento)
+**Coverage:** 40 total, 15 mapped to tasks, 25 unmapped ⚠️ (backend em andamento)
 
 ---
 

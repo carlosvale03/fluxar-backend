@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
 from dateutil.relativedelta import relativedelta
-from .models import Transaction, Category, Tag, RecurringTransaction, CorrecaoDeCategoria
+from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransaction, CorrecaoDeCategoria
 from accounts.models import Account, CreditCard
 from .services import TransactionService
 from core.fields import (
@@ -10,6 +10,7 @@ from core.fields import (
 )
 from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
+from core.texto import normalizar
 from data_exchange.importacao.texto import normalizar_descricao
 
 # Tipos que o endpoint genérico cria e entre os quais troca (SALDO-18, SALDO-19).
@@ -19,6 +20,62 @@ TIPOS_DO_ENDPOINT = ('INCOME', 'EXPENSE')
 TIPO_NAO_CRIAVEL = 'Por aqui só é possível criar receitas e despesas.'
 TIPO_NAO_ALTERAVEL = 'O tipo só pode ser trocado entre receita e despesa.'
 COMPRA_SO_PELA_FATURA = 'Compras no cartão são efetivadas pelo pagamento da fatura.'
+
+# Classes de despesa (CLASSE-04 a CLASSE-08)
+LIMITE_DE_CLASSES = 5
+LIMITE_DE_CLASSES_ATINGIDO = 'Limite de 5 classes atingido.'
+NOME_DE_CLASSE_REPETIDO = 'Já existe uma classe com esse nome.'
+CLASSE_PADRAO_FIXA = 'As classes padrão não podem ser excluídas nem renomeadas.'
+COR_INVALIDA = 'Informe a cor no formato #RRGGBB.'
+
+
+class ClasseDeDespesaSerializer(serializers.ModelSerializer):
+    """
+    `{id, name, color, is_default, categories_count}`. O nome tem de 1 a 30
+    caracteres e é único por usuário sem diferença de maiúsculas e acentos
+    (CLASSE-06, CLASSE-07). `categories_count` são as categorias ativas com
+    essa classe própria (CLASSE-09), anotada pela view.
+    """
+    name = serializers.CharField(source='nome', max_length=30)
+    color = serializers.RegexField(
+        r'^#[0-9A-Fa-f]{6}$', source='cor', error_messages={'invalid': COR_INVALIDA},
+    )
+    is_default = serializers.BooleanField(source='padrao', read_only=True)
+    categories_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClasseDeDespesa
+        fields = ['id', 'name', 'color', 'is_default', 'categories_count']
+        read_only_fields = ['id']
+
+    def get_categories_count(self, obj):
+        contagem = getattr(obj, 'categories_count', None)
+        if contagem is None:
+            contagem = obj.categorias.filter(is_active=True).count()
+        return contagem
+
+    def validate_name(self, valor):
+        repetida = ClasseDeDespesa.objects.filter(
+            user=self.context['request'].user, nome_normalizado=normalizar(valor)[:30],
+        )
+        if self.instance is not None:
+            repetida = repetida.exclude(pk=self.instance.pk)
+        if repetida.exists():
+            raise serializers.ValidationError(NOME_DE_CLASSE_REPETIDO)
+        return valor
+
+    def _com_nome_normalizado(self, validated_data):
+        if 'nome' in validated_data:
+            validated_data['nome_normalizado'] = normalizar(validated_data['nome'])[:30]
+        return validated_data
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(self._com_nome_normalizado(validated_data))
+
+    def update(self, instance, validated_data):
+        return super().update(instance, self._com_nome_normalizado(validated_data))
+
 
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
