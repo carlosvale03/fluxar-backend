@@ -156,35 +156,35 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ADMIN-01 | P1: Telas sem dados falsos | T15 | Implemented |
-| ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | Implemented |
-| ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | Implemented |
-| ADMIN-04 | P1: Telas sem dados falsos | T13 | Implemented |
-| ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | Implemented |
-| ADMIN-06 | P1: Telas sem dados falsos | T15 | Implemented |
-| ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | Implemented |
-| ADMIN-08 | P1: Log de auditoria | T2 | Implemented |
-| ADMIN-09 | P1: Log de auditoria | T3 | Implemented |
-| ADMIN-10 | P1: Log de auditoria | T1 | Implemented |
-| ADMIN-11 | P1: Log de auditoria | T1, T2 | Implemented |
-| ADMIN-12 | P1: Log de auditoria | T4, T14 | Implemented |
-| ADMIN-13 | P1: Log de auditoria | T4, T14 | Implemented |
-| ADMIN-14 | P1: Log de auditoria | T4, T14 | Implemented |
-| ADMIN-15 | P1: Log de auditoria | T4 | Implemented |
-| ADMIN-16 | P1: Operações sobre usuários | T11, T17 | Implemented |
-| ADMIN-17 | P1: Operações sobre usuários | T5, T16 | Implemented |
-| ADMIN-18 | P1: Operações sobre usuários | T5, T16 | Implemented |
-| ADMIN-19 | P1: Operações sobre usuários | T5, T16 | Implemented |
-| ADMIN-20 | P1: Operações sobre usuários | T16 | Implemented |
-| ADMIN-21 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | Implemented |
-| ADMIN-23 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-24 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-25 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-26 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-27 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-28 | P1: Operações sobre usuários | T8 | Implemented |
-| ADMIN-29 | P1: Operações sobre usuários | T10 | Implemented |
+| ADMIN-01 | P1: Telas sem dados falsos | T15 | Verified |
+| ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | Verified |
+| ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | Verified |
+| ADMIN-04 | P1: Telas sem dados falsos | T13 | Verified |
+| ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | Verified |
+| ADMIN-06 | P1: Telas sem dados falsos | T15 | Verified |
+| ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | Verified |
+| ADMIN-08 | P1: Log de auditoria | T2 | Verified |
+| ADMIN-09 | P1: Log de auditoria | T3 | Verified |
+| ADMIN-10 | P1: Log de auditoria | T1 | Verified |
+| ADMIN-11 | P1: Log de auditoria | T1, T2 | Verified |
+| ADMIN-12 | P1: Log de auditoria | T4, T14 | Verified |
+| ADMIN-13 | P1: Log de auditoria | T4, T14 | Verified |
+| ADMIN-14 | P1: Log de auditoria | T4, T14 | Verified |
+| ADMIN-15 | P1: Log de auditoria | T4 | Verified |
+| ADMIN-16 | P1: Operações sobre usuários | T11, T17 | Verified |
+| ADMIN-17 | P1: Operações sobre usuários | T5, T16 | Verified |
+| ADMIN-18 | P1: Operações sobre usuários | T5, T16 | Verified |
+| ADMIN-19 | P1: Operações sobre usuários | T5, T16 | Verified |
+| ADMIN-20 | P1: Operações sobre usuários | T16 | Verified |
+| ADMIN-21 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | Verified |
+| ADMIN-23 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-24 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-25 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-26 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-27 | P1: Operações sobre usuários | T7 | Verified |
+| ADMIN-28 | P1: Operações sobre usuários | T8 | Verified |
+| ADMIN-29 | P1: Operações sobre usuários | T10 | Verified |
 
 **Nota sobre ADMIN-21 e ADMIN-22:** as classes Essencial e Dispensável, o plano da gestão do salário e os vínculos entre transações ainda não existem no código. Eles entram na limpeza quando as specs `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` criarem os seus modelos, pela estrutura da AD-050 (`MODELOS_DO_USUARIO` e a função única do padrão). A `classes-de-despesa` também acrescenta as classes a `criar_padrao_do_cadastro`, com um teste de limpeza.
 

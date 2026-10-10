@@ -1,7 +1,7 @@
 # Painel admin Design
 
 **Spec**: `.specs/features/painel-admin/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 
