@@ -84,14 +84,15 @@ T10 → T11
 
 **Done when**:
 
-- [ ] A migração cria Essencial e Dispensável para cada usuário existente
-- [ ] "comida" em minúsculas recebe Essencial; "Mercado" fica sem classe; subcategorias e categorias de receita ficam sem classe própria
-- [ ] A exclusão definitiva apaga as classes do usuário, e o teste de completude da LGPD passa
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] A migração cria Essencial e Dispensável para cada usuário existente
+- [x] "comida" em minúsculas recebe Essencial; "Mercado" fica sem classe; subcategorias e categorias de receita ficam sem classe própria
+- [x] A exclusão definitiva apaga as classes do usuário, e o teste de completude da LGPD passa
+- [x] Build gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria as classes de despesa e as implanta para quem já usa o app`
 

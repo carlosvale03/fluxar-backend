@@ -196,7 +196,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-11 | P1: Classes do usuário | - | Pending |
 | CLASSE-12 | P1: Classes do usuário | - | Pending |
 | CLASSE-13 | P1: Classes do usuário | - | Pending |
-| CLASSE-14 | P1: Classes do usuário | - | Pending |
+| CLASSE-14 | P1: Classes do usuário | T1 | Implemented |
 | CLASSE-15 | P1: Classes do usuário | - | Pending |
 | CLASSE-16 | P1: Classe das categorias | - | Pending |
 | CLASSE-17 | P1: Classe das categorias | - | Pending |
@@ -207,7 +207,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-22 | P1: Classe das categorias | - | Pending |
 | CLASSE-23 | P1: Classe das categorias | - | Pending |
 | CLASSE-24 | P1: Classe das categorias | - | Pending |
-| CLASSE-25 | P1: Classe das categorias | - | Pending |
+| CLASSE-25 | P1: Classe das categorias | T1 | Implemented |
 | CLASSE-26 | P1: Classe das categorias | - | Pending |
 | CLASSE-27 | P1: Classe das categorias | - | Pending |
 | CLASSE-28 | P1: Divisão das despesas por classe | - | Pending |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | - | Pending |
 | CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
 
-**Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 40 total, 2 mapped to tasks, 38 unmapped ⚠️ (backend em andamento)
 
 ---
 

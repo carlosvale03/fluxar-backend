@@ -2,6 +2,30 @@ from django.db import models
 from api.models import User
 import uuid
 
+
+class ClasseDeDespesa(models.Model):
+    """
+    Classe de despesa do usuário (AD-025, AD-052): Essencial e Dispensável
+    são padrão; o usuário cria outras até o total de 5. O nome é único por
+    usuário sem diferença de maiúsculas e acentos, pela `nome_normalizado`.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='classes_de_despesa')
+    nome = models.CharField(max_length=30)
+    nome_normalizado = models.CharField(max_length=30)
+    cor = models.CharField(max_length=7)
+    padrao = models.BooleanField(default=False)
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'nome_normalizado'], name='classe_nome_unico_por_usuario'),
+        ]
+
+    def __str__(self):
+        return f'Classe {self.pk}'
+
+
 class Category(models.Model):
     TYPE_CHOICES = [
         ('INCOME', 'Receita'),
@@ -18,6 +42,10 @@ class Category(models.Model):
     # Hierarquia e Templates
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories', help_text="Categoria pai (opcional, para subcategorias)")
     is_template = models.BooleanField(default=False, help_text="Se True, serve apenas como molde para novos usuários")
+    # Classe própria da categoria de despesa; sem ela, vale a da mãe (CLASSE-16)
+    classe = models.ForeignKey(
+        ClasseDeDespesa, on_delete=models.SET_NULL, null=True, blank=True, related_name='categorias',
+    )
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

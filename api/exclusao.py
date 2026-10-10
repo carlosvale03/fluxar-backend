@@ -29,6 +29,7 @@ MODELOS_DO_USUARIO = (
     ('transactions.Transaction', 'user'),
     ('transactions.RecurringTransaction', 'user'),
     ('transactions.Category', 'user'),
+    ('transactions.ClasseDeDespesa', 'user'),
     ('transactions.Tag', 'user'),
     ('transactions.CorrecaoDeCategoria', 'user'),
     ('budgets.Budget', 'user'),
