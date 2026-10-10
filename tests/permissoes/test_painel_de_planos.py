@@ -9,6 +9,7 @@ muda e faz a mudança valer na requisição seguinte.
 from rest_framework import status
 
 from api.models import GlobalSetting, SystemLog, TravaDePlano
+from api.utils.email_service import _mask_email
 from core import travas
 
 from .base import (
@@ -147,7 +148,8 @@ class LogTests(PainelDePlanosTestCase):
             ],
         )
         for log in logs:
-            self.assertEqual(log.admin_name, self.admin.name)
+            # O administrador aparece pelo e-mail mascarado, sem o nome (LGPD-22)
+            self.assertEqual(log.admin_name, _mask_email(self.admin.email))
             self.assertIsNotNone(log.timestamp)
 
     def test_gravar_o_mesmo_valor_nao_gera_log(self):

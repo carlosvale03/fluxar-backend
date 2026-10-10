@@ -22,3 +22,4 @@ Pillow>=12.3.0
 resend
 requests>=2.31,<3.0
 soupsieve>=2.9.0
+cryptography>=50.0.2,<51.0

@@ -320,3 +320,64 @@ def send_password_reset_email(user, token):
         emailjs_plain_text=emailjs_plain_text,
         emailjs_html_content=emailjs_html_content,
     )
+
+
+def send_account_deletion_email(user, data_da_exclusao):
+    """
+    Avisa do pedido de exclusão da conta, com a data da exclusão definitiva e
+    como desistir (LGPD-06). Devolve True se algum provedor enviou.
+    """
+    frontend_url = _get_frontend_url()
+    login_url = f"{frontend_url}/auth/login"
+    nome = escape(user.name)
+    data = data_da_exclusao.strftime('%d/%m/%Y')
+
+    subject = "Pedido de exclusão da conta - Fluxar"
+
+    html_content = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #7c3aed; font-size: 28px; font-weight: 800;">Fluxar</h1>
+        </div>
+
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Olá, {nome}.</h2>
+
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+            Recebemos o pedido de exclusão da sua conta no Fluxar. A conta já está desativada,
+            e todos os seus dados serão apagados definitivamente em <strong>{data}</strong>.
+        </p>
+
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+            Mudou de ideia? Até essa data, entre no Fluxar com seu e-mail e sua senha e escolha
+            "Cancelar exclusão". A conta volta com todos os dados.
+        </p>
+
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="{login_url}"
+               style="background-color: #1a1a1a; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">
+                Entrar e cancelar a exclusão
+            </a>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 40px 0;">
+
+        <p style="font-size: 12px; color: #999; text-align: center;">
+            Equipe Fluxar
+        </p>
+    </div>
+    """
+
+    plain_text = (
+        f"Ola {nome}, recebemos o pedido de exclusao da sua conta no Fluxar. "
+        f"Os seus dados serao apagados definitivamente em {data}. "
+        f"Para desistir, entre no Fluxar ate essa data e escolha \"Cancelar exclusao\": {login_url}"
+    )
+
+    return _send_with_fallback_chain(
+        tipo='exclusao',
+        subject=subject,
+        plain_text=plain_text,
+        html_content=html_content,
+        to_email=user.email,
+        to_name=nome,
+    )

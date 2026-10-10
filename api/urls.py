@@ -2,16 +2,23 @@ from django.urls import path
 from .views import (
     RegisterView,
     CustomLoginView,
+    CancelarExclusaoView,
     RenovarSessaoView,
     LogoutView,
     MeView,
     PlansView,
     ChangePasswordView,
+    PedidoDeExclusaoView,
+    ExportarMeusDadosView,
     VerifyEmailView,
     ResendVerificationView,
     ForgotPasswordView,
     ResetPasswordView,
     health_check,
+    RotinaDiariaView,
+    TermosView,
+    AceiteDosTermosView,
+    ConsentimentoView,
     UserAvatarView,
     AdminUserListView,
     AdminUserDetailView,
@@ -36,6 +43,8 @@ urlpatterns = [
     path('auth/resend-verification/', ResendVerificationView.as_view(), name='auth_resend_verification'),
     path('auth/forgot-password/', ForgotPasswordView.as_view(), name='auth_forgot_password'),
     path('auth/reset-password/', ResetPasswordView.as_view(), name='auth_reset_password'),
+    # Cancelamento da exclusão marcada, com o token do login (LGPD-08)
+    path('auth/cancel-deletion/', CancelarExclusaoView.as_view(), name='auth_cancel_deletion'),
 
     # Auth Protected Endpoints
     path('auth/me/', MeView.as_view(), name='auth_me'),
@@ -48,9 +57,22 @@ urlpatterns = [
     path('users/me/', MeView.as_view(), name='users_me'), # Alias comum em REST
     path('users/me/avatar/', UserAvatarView.as_view(), name='users_avatar'),
     path('users/me/password/', ChangePasswordView.as_view(), name='users_me_password'),
+    # Pedido de exclusão da própria conta (LGPD-03 a LGPD-06)
+    path('users/me/delete/', PedidoDeExclusaoView.as_view(), name='users_me_delete'),
+    # Download dos dados financeiros, em qualquer plano (LGPD-02)
+    path('users/me/export/', ExportarMeusDadosView.as_view(), name='users_me_export'),
+    # Consentimento de melhoria do produto (LGPD-34, LGPD-35)
+    path('users/me/consent/', ConsentimentoView.as_view(), name='users_me_consent'),
+
+    # Versão vigente dos termos e da política, pública (LGPD-28, LGPD-31)
+    path('terms/', TermosView.as_view(), name='terms'),
+    # Aceite da versão vigente (LGPD-28, LGPD-30)
+    path('terms/accept/', AceiteDosTermosView.as_view(), name='terms_accept'),
 
     # System
     path('health/', health_check, name='health_check'),
+    # Rotina diária, chamada pelo workflow agendado do GitHub (AD-048)
+    path('rotina-diaria/', RotinaDiariaView.as_view(), name='rotina_diaria'),
     
     # Admin Backoffice
     path('admin/users/', AdminUserListView.as_view(), name='admin_users_list'),

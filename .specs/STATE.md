@@ -370,16 +370,32 @@
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-047
+- **Decision**: Dados pessoais criptografados no banco usam o campo próprio `CampoCriptografado` (`core/criptografia.py`) sobre `cryptography.fernet.MultiFernet`, com a chave em `FIELD_ENCRYPTION_KEY` (obrigatória com DEBUG desligado) e uma lista de chaves para rotação: a primeira grava, todas leem.
+- **Reason**: AD-020 pede os dados pessoais criptografados com chave própria; os pacotes prontos de campos criptografados são pouco mantidos e presos a versões do Django.
+- **Trade-off**: um campo a manter e uma dependência nova; perder a chave torna os dados ilegíveis, então ela fica guardada também fora do Render.
+- **Scope**: lgpd e qualquer dado pessoal novo.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-048
+- **Decision**: A rotina diária do backend roda pelo comando `rotina_diaria`, exposto em `POST /api/rotina-diaria/` com o token `ROTINA_DIARIA_TOKEN` e chamado por um workflow agendado do GitHub Actions; o comando também roda à mão no Render Shell.
+- **Reason**: a exclusão definitiva precisa de agendamento (AD-018); o Cron Job do Render é pago à parte, e um agendador dentro do processo web dormiria com o serviço gratuito e duplicaria entre workers.
+- **Trade-off**: depende do GitHub Actions e de dois segredos no repositório.
+- **Scope**: lgpd e futuras tarefas diárias do backend.
+- **Date**: 2026-10-09
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `relatorios` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 25 de 25 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: `report_date` e `is_balance_adjustment` na transação (AD-046), regras comuns em `reports/regras.py`, `months` de 1 a 24, dashboard com "A pagar", faturas do mês e patrimônio dividido, saúde financeira com dinheiro guardado e score pelos estourados, orçamentos pelas mesmas despesas, calendário, gráficos, comparações e avançados pelas regras, PDF sem conta, e na tela taxa indisponível, "Sem histórico para comparar" e erro por bloco; backend com 1025 testes e frontend com 313
+- **Feature**: `lgpd` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T23, mais o ajuste do toast no 403 dos termos) e verificado: `validation.md` com PASS, sensor leve com 8 de 8 mutações mortas
+- **Completed**: dados pessoais criptografados (AD-047), CPF pelos dígitos verificadores, máscaras no painel admin, imagens com nome aleatório, logs sem dados pessoais, log de auditoria sem nomes, pedido de exclusão com 30 dias e cancelamento no login, download dos dados em qualquer plano, exclusão definitiva com `RegistroDeExclusao`, rotina diária por GitHub Actions (AD-048), termos por versão com bloqueio até o aceite, consentimento no cadastro e nas configurações e conjunto anonimizado; backend com 1123 testes e frontend com 348
 - **In-progress** (file:line): nenhum
-- **Deploy**: migrações `transactions/0011_relatorios` e `0012_report_date_obrigatoria` preenchem a data no relatório e marcam os ajustes antigos; os números do dashboard mudam pela regra nova
-- **Observações do verificador**: transferência entre cofrinho e investimento não muda o total guardado com ou sem o filtro (coberta pelo histórico de investimentos); projeção "volta ao dia 31" sem teste próprio
-- **Fora do escopo, anotado**: `Promise.all` no dashboard derruba a tela inteira numa falha; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas; média dos insights de tag ainda inclui o mês atual
-- **Next step**: o usuário faz o push das duas branches `fix/relatorios-calculos-periodos-e-exportacao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `lgpd`
+- **Deploy**: `FIELD_ENCRYPTION_KEY` precisa estar no Render antes do deploy que roda a migração 0014 (guardar uma cópia fora do Render); `ROTINA_DIARIA_TOKEN` no Render e os secrets `API_URL` e `ROTINA_DIARIA_TOKEN` no GitHub; a migração 0019 deixa todos os usuários sem aceite, então todos veem a tela de aceite no primeiro acesso
+- **Observações do verificador**: o teste independente de LGPD-21 (suíte inteira com captura de logs) não está automatizado; sem teste de que o admin criado por `create_admin.py` fica bloqueado até o aceite; textos novos da página de termos pedem revisão
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas
+- **Next step**: o usuário faz o push das duas branches `fix/lgpd-dados-pessoais-consentimento-e-exclusao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `painel-admin`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/relatorios-calculos-periodos-e-exportacao (backend e frontend)
+- **Branch**: fix/lgpd-dados-pessoais-consentimento-e-exclusao (backend e frontend)

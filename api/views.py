@@ -1,15 +1,18 @@
-from rest_framework import exceptions, generics, status, permissions, filters
+from rest_framework import exceptions, generics, serializers, status, permissions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import update_last_login
 from django.shortcuts import get_object_or_404
 from django.db import DatabaseError, IntegrityError, transaction
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.conf import settings as django_settings
 from datetime import timedelta
 from decimal import Decimal
+import hmac
 import uuid
 from .serializers import (
     EMAIL_JA_CADASTRADO,
@@ -25,8 +28,18 @@ from .serializers import (
     AdminResetPasswordSerializer,
     GlobalSettingSerializer,
     AlteracaoDePlanoSerializer,
+    conta_do_token_de_cancelamento,
 )
-from .models import EmailVerificationToken, PasswordResetToken, SystemLog, GlobalSetting, TravaDePlano
+from .models import (
+    DecisaoDeConsentimento,
+    EmailVerificationToken,
+    GlobalSetting,
+    PasswordResetToken,
+    RegistroDeExclusao,
+    SystemLog,
+    TravaDePlano,
+)
+from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -44,13 +57,19 @@ from core.throttles import (
     ReenvioEmailThrottle,
     ReenvioIPThrottle,
 )
-from .utils.email_service import _mask_email, send_verification_email, send_password_reset_email
+from .utils.email_service import (
+    _mask_email,
+    send_account_deletion_email,
+    send_password_reset_email,
+    send_verification_email,
+)
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
-from core import travas
+from core import termos, travas
 from core.pagination import PaginacaoPadrao
 from core.valores import dinheiro
+from core.uploads import com_nome_aleatorio
 import logging
 
 User = get_user_model()
@@ -130,6 +149,37 @@ class CustomLoginView(SemTransacaoPorRequisicao, TokenObtainPairView):
         # O acesso fica no corpo e a renovação só no cookie httpOnly (SESSAO-01)
         response = super().post(request, *args, **kwargs)
         gravar_cookie_de_renovacao(response, response.data.pop('refresh'))
+        return response
+
+class CancelarExclusaoView(APIView):
+    """
+    Cancela a exclusão marcada com o token que o login devolveu, reativa a
+    conta com todos os dados e abre a sessão como o login: o acesso no corpo
+    e a renovação no cookie httpOnly (LGPD-08, SESSAO-01).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Rota pública: quem vale é o token de cancelamento (AUTH-40)
+    authentication_classes = ()
+
+    TOKEN_INVALIDO = {
+        "detail": "O prazo para cancelar a exclusão por aqui terminou. Entre de novo.",
+        "code": "invalid_cancel_token",
+    }
+
+    def post(self, request):
+        user = conta_do_token_de_cancelamento(request.data.get('cancel_token'))
+        if user is None:
+            return Response(self.TOKEN_INVALIDO, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = True
+        user.exclusao_pedida_em = None
+        user.exclusao_agendada_para = None
+        user.save(update_fields=['is_active', 'exclusao_pedida_em', 'exclusao_agendada_para'])
+
+        access, refresh = criar_sessao(user)
+        update_last_login(None, user)
+        response = Response({"access": access}, status=status.HTTP_200_OK)
+        gravar_cookie_de_renovacao(response, refresh)
         return response
 
 ORIGEM_RECUSADA = {"detail": "Origem não permitida.", "code": "origin_not_allowed"}
@@ -432,7 +482,9 @@ class UserAvatarView(APIView):
             data = {'avatar': request.FILES['file']}
         else:
             data = request.data
-            
+        # Vai ao Cloudinary com nome aleatório, sem o nome original (LGPD-20)
+        com_nome_aleatorio(data.get('avatar'))
+
         serializer = UserAvatarSerializer(user, data=data)
         
         if serializer.is_valid():
@@ -473,6 +525,72 @@ class ChangePasswordView(APIView):
             return Response({"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+PRAZO_PARA_DESISTIR = timedelta(days=30)
+SENHA_OBRIGATORIA = "Este campo é obrigatório."
+
+
+def _data_na_api(valor):
+    """Data e hora no mesmo formato ISO dos serializers."""
+    return serializers.DateTimeField().to_representation(valor)
+
+
+class PedidoDeExclusaoView(APIView):
+    """
+    O usuário pede a exclusão da própria conta, confirmando a senha atual
+    (LGPD-03 a LGPD-06, LGPD-09, AD-018).
+
+    A conta é desativada na hora, perde todas as sessões e fica marcada para
+    a exclusão definitiva 30 dias depois. O e-mail com a data sai na própria
+    requisição, e a falha no envio não desfaz o pedido (AD-011).
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        user = request.user
+        senha = request.data.get('password')
+        if not isinstance(senha, str) or not senha:
+            return Response({"password": [SENHA_OBRIGATORIA]}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(senha):
+            return Response({"password": ["Senha incorreta."]}, status=status.HTTP_400_BAD_REQUEST)
+        # O último administrador ativo não sai (LGPD-09)
+        garantir_admin_restante([user])
+
+        agora = timezone.now()
+        user.is_active = False
+        user.exclusao_pedida_em = agora
+        user.exclusao_agendada_para = agora + PRAZO_PARA_DESISTIR
+        user.save(update_fields=['is_active', 'exclusao_pedida_em', 'exclusao_agendada_para'])
+        # Desconecta todos os aparelhos (LGPD-05, SESSAO-17)
+        encerrar_todas(user)
+
+        email_sent = send_account_deletion_email(user, user.exclusao_agendada_para)
+        if not email_sent:
+            logger.warning("Aviso de exclusão não enviado destinatario=%s", _mask_email(user.email))
+
+        return Response({
+            "deletion_scheduled_for": _data_na_api(user.exclusao_agendada_para),
+            "email_sent": email_sent,
+        }, status=status.HTTP_200_OK)
+
+class ExportarMeusDadosView(ParametrosConhecidosMixin, APIView):
+    """
+    Download dos dados financeiros do usuário em XLSX, antes de pedir a
+    exclusão da conta (LGPD-02). Liberado em todos os planos: fica fora da
+    trava `exportacao_xlsx`, que vale só para a exportação de transações
+    (AD-018, AD-044).
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        from data_exchange.services import ExportService
+
+        buffer = ExportService.generate_dados_da_conta(request.user)
+        response = HttpResponse(
+            buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="meus_dados_fluxar.xlsx"'
+        return response
 
 # --- Admin Views ---
 
@@ -520,6 +638,24 @@ def recusar_remocao_de_admin(request, afetados):
     """As duas regras da remoção de um administrador, na ordem (PERM-05, PERM-06)."""
     garantir_admin_restante(afetados)
     recusar_a_propria_conta(request, afetados)
+
+EXCLUSAO_FALHOU = {
+    "detail": "Não foi possível concluir a exclusão agora. Nada foi apagado; tente de novo mais tarde.",
+    "code": "deletion_failed",
+}
+
+
+def excluir_pelo_admin(usuario, chave="detail"):
+    """
+    Exclusão definitiva pelo painel, inclusive de conta com exclusão já
+    pendente (LGPD-13). Com o Cloudinary falhando, nada é apagado (LGPD-12).
+    """
+    try:
+        excluir_definitivamente(usuario, RegistroDeExclusao.ADMIN)
+    except ExclusaoFalhou:
+        return Response(EXCLUSAO_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response({chave: "Usuário excluído permanentemente."}, status=status.HTTP_200_OK)
+
 
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
@@ -624,7 +760,7 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
                     user=new_user,
                     action="UPDATE_PROFILE",
                     description="; ".join(changes),
-                    admin_name=request.user.name
+                    admin_name=_mask_email(request.user.email)
                 )
         
         return response
@@ -650,14 +786,8 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
         recusar_remocao_de_admin(request, [instance])
 
         if permanent:
-            user_email = instance.email
-            instance.delete()
-            # Log global or related? If deleted, user FK might fail if not null. 
-            # But SystemLog user is ForeignKey, so we can't link to deleted user.
-            # Maybe use a global log or just skip if hard delete. 
-            # For now, let's just log it before delete or use a string if possible.
-            # Actually, let's log as "USER_DELETED" with the email in description.
-            return Response({"detail": "Usuário excluído permanentemente com sucesso."}, status=status.HTTP_200_OK)
+            # O mesmo caminho da rotina diária, na hora (LGPD-13)
+            return excluir_pelo_admin(instance)
         else:
             instance.is_active = False
             instance.save()
@@ -668,8 +798,8 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             SystemLog.objects.create(
                 user=instance,
                 action="ARCHIVE_ACCOUNT",
-                description=f"Conta arquivada pelo administrador {request.user.name}",
-                admin_name=request.user.name
+                description="Conta arquivada pelo administrador.",
+                admin_name=_mask_email(request.user.email)
             )
             
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
@@ -781,7 +911,7 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
             SystemLog.objects.create(
                 action="UPDATE_SETTING",
                 description=f"Configuração '{key}' atualizada para '{value}'.",
-                admin_name=request.user.name
+                admin_name=_mask_email(request.user.email)
             )
 
         invalidar_manutencao()
@@ -839,7 +969,7 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
         SystemLog.objects.create(
             action="UPDATE_TESTING_UNLOCK",
             description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
-            admin_name=request.user.name,
+            admin_name=_mask_email(request.user.email),
         )
 
     def gravar_trava(self, request, dados):
@@ -868,7 +998,7 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
                 f"Trava '{chave}' no plano {plano}: "
                 f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
             ),
-            admin_name=request.user.name,
+            admin_name=_mask_email(request.user.email),
         )
 
 
@@ -908,7 +1038,8 @@ class AdminUserLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('pk')
-        return SystemLog.objects.filter(user_id=user_id).order_by('-timestamp')
+        # Pelo id interno, que continua no registro depois da exclusão (AD-030)
+        return SystemLog.objects.filter(usuario_ref=user_id).order_by('-timestamp')
 
 class AdminResetPasswordView(APIView):
     """
@@ -935,8 +1066,8 @@ class AdminResetPasswordView(APIView):
             SystemLog.objects.create(
                 user=user,
                 action="RESET_PASSWORD",
-                description=f"Senha redefinida pelo administrador {request.user.name}",
-                admin_name=request.user.name
+                description="Senha redefinida pelo administrador.",
+                admin_name=_mask_email(request.user.email)
             )
             
             return Response({"message": "Senha do usuário redefinida com sucesso."}, status=status.HTTP_200_OK)
@@ -973,8 +1104,8 @@ class AdminClearUserDataView(APIView):
         SystemLog.objects.create(
             user=user,
             action="CLEAR_DATA",
-            description=f"Todos os dados financeiros e configurações foram limpos pelo administrador {request.user.name}",
-            admin_name=request.user.name
+            description="Todos os dados financeiros e configurações foram limpos pelo administrador.",
+            admin_name=_mask_email(request.user.email)
         )
 
         return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
@@ -995,20 +1126,115 @@ class AdminHardDeleteView(APIView):
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         recusar_remocao_de_admin(request, [user])
 
-        user_name = user.name
-        # Delete user
-        user.delete()
+        # O mesmo caminho da rotina diária, na hora, e sem o nome na resposta
+        # (LGPD-13, LGPD-21)
+        return excluir_pelo_admin(user, chave="message")
 
-        # O user foi excluído, então não podemos referenciá-lo no SystemLog.
-        # Vamos usar um campo de texto para registrar o alvo, ou apenas não usar o ForeignKey 'user'
-        # ou, se quisermos registrar, precisamos garantir que o SystemLog permita user nulo
-        # Mas para o Hard Delete, o mais seguro é não tentar registrar com ForeignKey ou registrar em uma tabela geral.
-        # A atual SystemLog tem ForeignKey on_delete=CASCADE, então ao excluir o usuário, seus logs também são excluídos.
-        # Portanto, não precisamos (ou não podemos) salvar um log vinculado ao usuário excluído.
+# --- Termos e consentimento ---
 
-        return Response({"message": f"Usuário {user_name} excluído permanentemente."}, status=status.HTTP_200_OK)
+class TermosView(ParametrosConhecidosMixin, APIView):
+    """
+    A versão vigente dos termos e da política, com a data, o que mudou e os
+    serviços que tratam os dados (LGPD-28, LGPD-31). Pública.
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Rota pública: um token vencido ou malformado não gera 401 (AUTH-40)
+    authentication_classes = ()
+
+    def get(self, request):
+        return Response(termos.termos_vigentes())
+
+
+VERSAO_NAO_VIGENTE = "Esta não é a versão vigente dos termos. Recarregue a página para ver a atual."
+
+
+class AceiteDosTermosView(APIView):
+    """
+    O usuário aceita a versão vigente dos termos (LGPD-28, LGPD-30). Outra
+    versão recebe 400 no campo `version`. Os aceites anteriores continuam
+    gravados; repetir o aceite da vigente não grava outro.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        versao = request.data.get('version')
+        if not isinstance(versao, str) or not versao:
+            return Response({"version": [SENHA_OBRIGATORIA]}, status=status.HTTP_400_BAD_REQUEST)
+        if versao != termos.VERSAO_VIGENTE:
+            return Response({"version": [VERSAO_NAO_VIGENTE]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not termos.aceitou_a_vigente(user):
+            termos.registrar_aceite(user)
+        return Response({
+            "accepted_version": user.versao_dos_termos_aceita,
+            "current_version": termos.VERSAO_VIGENTE,
+        }, status=status.HTTP_200_OK)
+
+CONSENTIMENTO_INVALIDO = "Informe true ou false."
+
+
+class ConsentimentoView(APIView):
+    """
+    O consentimento para o uso de dados anonimizados na melhoria do produto
+    (LGPD-34, LGPD-35). GET devolve o estado atual e a última decisão; PUT
+    com `{consent}` grava uma decisão nova, com a data e a versão vigente da
+    política, sem apagar as anteriores, e atualiza o cache do usuário.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def resposta(self, user):
+        ultima = DecisaoDeConsentimento.objects.filter(user=user).order_by('-decidido_em').first()
+        return Response({
+            "consent": user.consentimento_melhoria,
+            "decided_at": _data_na_api(ultima.decidido_em) if ultima else None,
+            "policy_version": ultima.versao_da_politica if ultima else None,
+        }, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        return self.resposta(request.user)
+
+    def put(self, request):
+        consentiu = request.data.get('consent')
+        if not isinstance(consentiu, bool):
+            return Response({"consent": [CONSENTIMENTO_INVALIDO]}, status=status.HTTP_400_BAD_REQUEST)
+        termos.registrar_decisao(request.user, consentiu)
+        return self.resposta(request.user)
 
 # --- System Views ---
+
+class RotinaDiariaView(APIView):
+    """
+    Roda a rotina diária, chamada pelo workflow agendado do GitHub (AD-048).
+
+    Exige `Authorization: Bearer <ROTINA_DIARIA_TOKEN>`, comparado em tempo
+    constante. Sem o token configurado, a rota não existe (404). Fica fora
+    da transação por requisição: cada conta é apagada na própria transação,
+    e a falha de uma não desfaz as outras (LGPD-12).
+    """
+    permission_classes = (permissions.AllowAny,)
+    # Quem vale é o token da rotina, não o JWT de um usuário
+    authentication_classes = ()
+
+    NAO_ENCONTRADA = {"detail": "Não encontrado.", "code": "not_found"}
+    TOKEN_RECUSADO = {"detail": "Token da rotina inválido.", "code": "invalid_token"}
+
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        esperado = django_settings.ROTINA_DIARIA_TOKEN
+        if not esperado:
+            return Response(self.NAO_ENCONTRADA, status=status.HTTP_404_NOT_FOUND)
+        cabecalho = request.META.get('HTTP_AUTHORIZATION', '')
+        prefixo = 'Bearer '
+        enviado = cabecalho[len(prefixo):] if cabecalho.startswith(prefixo) else ''
+        if not enviado or not hmac.compare_digest(enviado.encode(), esperado.encode()):
+            return Response(self.TOKEN_RECUSADO, status=status.HTTP_401_UNAUTHORIZED)
+
+        excluidas, falhas = excluir_contas_vencidas()
+        return Response({"excluidas": excluidas, "falhas": falhas}, status=status.HTTP_200_OK)
 
 # Sem transação de banco por requisição: o health responde mesmo sem acesso
 # ao banco (SESSAO-23), e o ATOMIC_REQUESTS abriria a conexão antes da view

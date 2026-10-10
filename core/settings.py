@@ -37,6 +37,24 @@ def obrigatoria_em_producao(nome, valor_de_desenvolvimento):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = obrigatoria_em_producao('SECRET_KEY', 'django-insecure-fallback-key')
 
+# Chaves dos dados pessoais criptografados no banco (LGPD-15, LGPD-16, AD-047).
+# FIELD_ENCRYPTION_KEY traz uma chave Fernet ou uma lista separada por
+# vírgula: a primeira grava e todas leem, para a troca de chave. A chave de
+# desenvolvimento é fixa e serve só ao ambiente local.
+CHAVE_DE_CRIPTOGRAFIA_DE_DESENVOLVIMENTO = '73E4j_Rn4J2LAPPG8TeC55v6zaVhUtVdr7psKXNJs3U='
+FIELD_ENCRYPTION_KEYS = [
+    chave.strip()
+    for chave in obrigatoria_em_producao(
+        'FIELD_ENCRYPTION_KEY', CHAVE_DE_CRIPTOGRAFIA_DE_DESENVOLVIMENTO,
+    ).split(',')
+    if chave.strip()
+]
+
+# Token da rotina diária, chamada pelo workflow agendado do GitHub (AD-048).
+# Sem ele, a rota da rotina responde 404 e a rotina roda só pelo comando
+# `rotina_diaria` no Render Shell.
+ROTINA_DIARIA_TOKEN = os.getenv('ROTINA_DIARIA_TOKEN', '').strip()
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
 AUTH_USER_MODEL = 'api.User'
@@ -58,6 +76,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     # Nossos apps
+    # O core não tem modelos; entra para os comandos de core/management
+    'core',
     'api',
     'accounts',
     'transactions',
@@ -76,11 +96,16 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware.MaintenanceModeMiddleware',
+    'api.middleware.TermosMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+# Nos testes, os usuários criados já aceitaram a versão vigente dos termos
+# (LGPD-29); os testes do bloqueio criam o usuário sem o aceite
+TEST_RUNNER = 'tests.executor.ExecutorDeTestes'
 
 TEMPLATES = [
     {
@@ -230,23 +255,42 @@ CACHES = {
     }
 }
 
-# Logs no console, para os registros de e-mail aparecerem no Render
+# Logs no console, para os registros de e-mail aparecerem no Render. Todo
+# handler passa pelo filtro que mascara e-mails e CPFs (LGPD-21, LGPD-22),
+# inclusive o do logger raiz, que recebe o que os outros módulos registram.
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'dados_pessoais': {
+            '()': 'core.logs.FiltroDeDadosPessoais',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'filters': ['dados_pessoais'],
         },
     },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
     'loggers': {
+        # Sem propagar, para não sair duas vezes pelo console do raiz
         'api': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
         },
         'core': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        # Com o raiz no console, cada 4xx viraria uma linha; ficam só os 5xx
+        'django.request': {
+            'level': 'ERROR',
         },
     },
 }

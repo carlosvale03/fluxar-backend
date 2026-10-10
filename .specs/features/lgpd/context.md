@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/lgpd/spec.md`
-**Status:** Spec aprovada, com o acréscimo de termos e consentimento (LGPD-26 a LGPD-39) aprovado em 2026-09-26; design não iniciado
+**Status:** Spec aprovada, com o acréscimo de termos e consentimento (LGPD-26 a LGPD-39) aprovado em 2026-09-26; implementada e verificada em 2026-10-09 (validation.md: PASS)
 
 ---
 

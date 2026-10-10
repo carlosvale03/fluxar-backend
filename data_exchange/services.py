@@ -97,11 +97,8 @@ class ExportService:
         return buffer
 
     @staticmethod
-    def generate_xls(queryset):
-        """
-        Gera Excel de transações.
-        Retorna bytes buffer.
-        """
+    def _linhas_de_transacoes(queryset):
+        """As linhas da planilha de transações, uma por transação."""
         data = []
         for tx in queryset:
             # Format amount with +/- prefix
@@ -129,12 +126,93 @@ class ExportService:
                 'Tags': ', '.join([t.name for t in tx.tags.all() if _do_dono(tx, t)]),
                 'Tipo': tx.get_type_display()
             })
-            
-        df = pd.DataFrame(data)
+        return data
+
+    @staticmethod
+    def generate_xls(queryset):
+        """
+        Gera Excel de transações.
+        Retorna bytes buffer.
+        """
+        df = pd.DataFrame(ExportService._linhas_de_transacoes(queryset))
         
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Transações')
             
+        buffer.seek(0)
+        return buffer
+
+    @staticmethod
+    def generate_dados_da_conta(user):
+        """
+        Os dados financeiros do usuário numa planilha, com uma aba por tipo:
+        transações, contas, cartões, metas e orçamentos (LGPD-02).
+        Retorna bytes buffer.
+        """
+        from accounts.models import Account, CreditCard
+        from budgets.models import Budget
+        from goals.models import Goal
+        from transactions.models import Transaction
+
+        def dinheiro(valor):
+            return f"{valor:.2f}" if valor is not None else ''
+
+        def data(valor):
+            return valor.strftime('%d/%m/%Y') if valor else ''
+
+        def sim_ou_nao(valor):
+            return 'Sim' if valor else 'Não'
+
+        transacoes = (
+            Transaction.objects.filter(user=user)
+            .select_related('account', 'category__parent').prefetch_related('tags').order_by('date')
+        )
+        contas = [{
+            'Nome': conta.name,
+            'Tipo': conta.get_type_display(),
+            'Saldo inicial': dinheiro(conta.initial_balance),
+            'Saldo': dinheiro(conta.balance),
+            'Instituição': conta.institution or '',
+            'Ativa': sim_ou_nao(conta.is_active),
+        } for conta in Account.objects.filter(user=user).order_by('name')]
+        cartoes = [{
+            'Nome': cartao.name,
+            'Limite': dinheiro(cartao.limit),
+            'Dia de fechamento': cartao.closing_day,
+            'Dia de vencimento': cartao.due_day,
+            'Conta de pagamento': cartao.account.name if cartao.account and cartao.account.user_id == user.pk else '',
+            'Ativo': sim_ou_nao(cartao.is_active),
+        } for cartao in CreditCard.objects.filter(user=user).select_related('account').order_by('name')]
+        metas = [{
+            'Nome': meta.name,
+            'Valor alvo': dinheiro(meta.target_amount),
+            'Valor atual': dinheiro(meta.current_amount),
+            'Data alvo': data(meta.target_date),
+            'Conta': meta.account.name if meta.account and meta.account.user_id == user.pk else '',
+            'Descrição': meta.description or '',
+            'Ativa': sim_ou_nao(meta.is_active),
+        } for meta in Goal.objects.filter(user=user).select_related('account').order_by('name')]
+        orcamentos = [{
+            'Categoria': orcamento.category.name if orcamento.category.user_id == user.pk else '',
+            'Mês': orcamento.month,
+            'Ano': orcamento.year,
+            'Limite': dinheiro(orcamento.amount_limit),
+        } for orcamento in Budget.objects.filter(user=user).select_related('category').order_by('year', 'month')]
+
+        abas = [
+            ('Transações', ExportService._linhas_de_transacoes(transacoes),
+             ['Data', 'Descrição', 'Valor', 'Conta', 'Situação', 'Categoria', 'Subcategoria', 'Tags', 'Tipo']),
+            ('Contas', contas, ['Nome', 'Tipo', 'Saldo inicial', 'Saldo', 'Instituição', 'Ativa']),
+            ('Cartões', cartoes,
+             ['Nome', 'Limite', 'Dia de fechamento', 'Dia de vencimento', 'Conta de pagamento', 'Ativo']),
+            ('Metas', metas, ['Nome', 'Valor alvo', 'Valor atual', 'Data alvo', 'Conta', 'Descrição', 'Ativa']),
+            ('Orçamentos', orcamentos, ['Categoria', 'Mês', 'Ano', 'Limite']),
+        ]
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            # Com as colunas mesmo sem linhas, para a aba vazia ter o cabeçalho
+            for nome, linhas, colunas in abas:
+                pd.DataFrame(linhas, columns=colunas).to_excel(writer, index=False, sheet_name=nome)
         buffer.seek(0)
         return buffer

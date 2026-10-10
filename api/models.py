@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
+from core.criptografia import DataCriptografada, DecimalCriptografado, TextoCriptografado
+
 class UserManager(BaseUserManager):
     @classmethod
     def normalize_email(cls, email):
@@ -56,10 +58,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verified = models.BooleanField(default=False)
     
     # 1. Dados Pessoais
-    avatar = CloudinaryField('image', folder='avatars', resource_type='image', blank=True, null=True)
-    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
+    avatar = CloudinaryField('image', folder='avatars', resource_type='image', use_filename=False, blank=True, null=True)
+    # Criptografados no banco, sem busca por eles; o CPF deixa de ser único
+    # (LGPD-15, LGPD-18, AD-020)
+    cpf = TextoCriptografado(max_length=14, blank=True, null=True)
+    phone_number = TextoCriptografado(max_length=20, blank=True, null=True)
+    date_of_birth = DataCriptografada(blank=True, null=True)
     
     # 2. Preferências
     currency = models.CharField(max_length=3, default='BRL')
@@ -67,7 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     language = models.CharField(max_length=10, default='pt-BR')
     
     # 3. Perfil Financeiro
-    monthly_income = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    monthly_income = DecimalCriptografado(blank=True, null=True)
     
     # 4. Configurações (JSON)
     notification_settings = models.JSONField(default=dict, blank=True)
@@ -81,6 +85,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 5. Consentimento Legal
     terms_accepted = models.BooleanField(default=False)
     terms_accepted_at = models.DateTimeField(blank=True, null=True)
+
+    # 6. Exclusão pedida pelo usuário: a conta fica desativada até a exclusão
+    # definitiva, 30 dias depois do pedido (LGPD-05, AD-018)
+    exclusao_pedida_em = models.DateTimeField(null=True, blank=True)
+    exclusao_agendada_para = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    # 7. Caches do último aceite dos termos e da decisão sobre o consentimento
+    # de melhoria do produto; o histórico fica em AceiteDosTermos e
+    # DecisaoDeConsentimento (LGPD-29, LGPD-35, AD-031). Os campos
+    # terms_accepted e terms_accepted_at ficam só como histórico.
+    versao_dos_termos_aceita = models.CharField(max_length=20, null=True, blank=True)
+    consentimento_melhoria = models.BooleanField(default=False)
 
     objects = UserManager()
 
@@ -124,18 +140,77 @@ class PasswordResetToken(models.Model):
 
 class SystemLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='system_logs', null=True, blank=True)
+    # O registro identifica o usuário pelo id interno, que fica em
+    # `usuario_ref` mesmo depois de a conta sair (LGPD-22, AD-030)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='system_logs', null=True, blank=True)
+    usuario_ref = models.UUIDField(null=True, blank=True, db_index=True)
     action = models.CharField(max_length=100)
+    # Sem nomes nem e-mails completos (LGPD-21)
     description = models.TextField()
+    # E-mail mascarado do administrador, ou "Sistema" (LGPD-22)
     admin_name = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-timestamp']
 
+    def save(self, *args, **kwargs):
+        if self.user_id and not self.usuario_ref:
+            self.usuario_ref = self.user_id
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        user_email = self.user.email if self.user else "System"
-        return f"{self.action} - {user_email} - {self.timestamp}"
+        return f"{self.action} - {self.usuario_ref or 'Sistema'} - {self.timestamp}"
+
+class AceiteDosTermos(models.Model):
+    """Um aceite dos termos e da política, por versão; só acumula (LGPD-26, LGPD-30)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='aceites_dos_termos')
+    versao = models.CharField(max_length=20)
+    aceito_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-aceito_em']
+
+    def __str__(self):
+        return f"Aceite {self.versao} - {self.user_id}"
+
+class DecisaoDeConsentimento(models.Model):
+    """
+    Uma decisão sobre o uso de dados anonimizados para melhorar o produto,
+    com a versão da política vigente; só acumula (LGPD-33, LGPD-35).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='decisoes_de_consentimento')
+    consentiu = models.BooleanField()
+    versao_da_politica = models.CharField(max_length=20)
+    decidido_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-decidido_em']
+
+    def __str__(self):
+        return f"Consentimento {self.consentiu} ({self.versao_da_politica}) - {self.user_id}"
+
+class RegistroDeExclusao(models.Model):
+    """
+    O que fica de uma conta excluída definitivamente (LGPD-11): o id interno,
+    as datas do pedido e da exclusão e quem a executou, sem dado pessoal.
+    O `usuario_id` único torna a repetição da exclusão idempotente (LGPD-12).
+    """
+    USUARIO = 'USUARIO'
+    ROTINA = 'ROTINA'
+    ADMIN = 'ADMIN'
+    EXECUTORES = [(USUARIO, 'Usuário'), (ROTINA, 'Rotina diária'), (ADMIN, 'Administrador')]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario_id = models.UUIDField(unique=True)
+    pedida_em = models.DateTimeField(null=True, blank=True)
+    excluida_em = models.DateTimeField()
+    executada_por = models.CharField(max_length=10, choices=EXECUTORES)
+
+    def __str__(self):
+        return f"Exclusão {self.usuario_id} ({self.executada_por})"
 
 class Sessao(models.Model):
     """

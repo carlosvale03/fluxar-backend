@@ -1,3 +1,4 @@
+import logging
 import os
 import django
 from django.contrib.auth import get_user_model
@@ -5,6 +6,9 @@ from django.contrib.auth import get_user_model
 # Configura o ambiente Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
+
+# Mensagens só pelo log com nível (LGPD-23); o logger "core" vai ao console
+logger = logging.getLogger('core.create_admin')
 
 def create_admin():
     """
@@ -19,15 +23,15 @@ def create_admin():
     password = os.getenv('DJANGO_SUPERUSER_PASSWORD')
 
     if not email or not password:
-        print("Pulei a criação de admin: DJANGO_SUPERUSER_EMAIL ou DJANGO_SUPERUSER_PASSWORD não configurados.")
+        logger.info("Pulei a criação de admin: DJANGO_SUPERUSER_EMAIL ou DJANGO_SUPERUSER_PASSWORD não configurados.")
         return
 
     if User.objects.filter(role='ADMIN', is_active=True).exists():
-        print("Já existe um administrador ativo; nenhuma conta foi criada ou alterada.")
+        logger.info("Já existe um administrador ativo; nenhuma conta foi criada ou alterada.")
         return
 
     if User.objects.filter(email__iexact=email).exists():
-        print(
+        logger.warning(
             "Não há administrador ativo, e o e-mail configurado já pertence a uma conta. "
             "Nenhuma conta foi alterada: promova um administrador manualmente."
         )
@@ -35,7 +39,7 @@ def create_admin():
 
     # O primeiro administrador também entra no admin do Django
     User.objects.create_superuser(email=email, password=password, name=username)
-    print("Administrador criado com sucesso.")
+    logger.info("Administrador criado com sucesso.")
 
 if __name__ == "__main__":
     create_admin()

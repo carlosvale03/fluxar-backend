@@ -35,6 +35,8 @@ jobs:
       SECRET_KEY: chave-somente-para-o-ci
       DEBUG: '0'
       FRONTEND_URL: http://localhost:3000
+      # Chave Fernet só do CI (LGPD-16)
+      FIELD_ENCRYPTION_KEY: gP5ifsOzGaAaKNNomeP27NxquccMJ7ZN3rb3kVH7dcE=
 
     steps:
     - uses: actions/checkout@v4

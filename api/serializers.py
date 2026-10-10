@@ -1,14 +1,17 @@
+import re
+
 from rest_framework import exceptions, serializers, status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import password_validation
 from django.contrib.auth.password_validation import validate_password
+from django.core import signing
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 
-from core import travas
+from core import termos, travas
 from core.throttles import LoginFalhasEmailThrottle
 
 from .sessoes import criar_sessao
@@ -38,10 +41,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         required=True,
         error_messages={'required': TERMOS_OBRIGATORIOS, 'null': TERMOS_OBRIGATORIOS},
     )
+    # Consentimento opcional e desligado por padrão (LGPD-33)
+    product_improvement_consent = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted')
+        fields = ('name', 'email', 'password', 'password_confirm', 'terms_accepted', 'product_improvement_consent')
 
     def validate_email(self, value):
         email = User.objects.normalize_email(value)
@@ -80,7 +85,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         # Cria o usuário usando o manager customizado (faz hash da senha)
         from django.utils import timezone
-        
+
         user = User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
@@ -88,6 +93,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             terms_accepted=validated_data.get('terms_accepted', False),
             terms_accepted_at=timezone.now() if validated_data.get('terms_accepted') else None
         )
+        # O aceite da versão vigente, com data e hora (LGPD-26), e a decisão
+        # sobre o consentimento só quando ele é dado (LGPD-33)
+        termos.registrar_aceite(user)
+        if validated_data.get('product_improvement_consent') is True:
+            termos.registrar_decisao(user, True)
         return user
 
 class UserAvatarSerializer(serializers.ModelSerializer):
@@ -116,11 +126,32 @@ class PreferenciasSerializer(serializers.Serializer):
     notifications = serializers.DictField(child=serializers.BooleanField(), required=False)
 
 
+CPF_INVALIDO = 'CPF inválido.'
+# 11 dígitos, com ou sem os pontos e o hífen
+FORMATO_DO_CPF = re.compile(r'\d{3}\.?\d{3}\.?\d{3}-?\d{2}')
+
+
+def cpf_valido(digitos):
+    """Confere os dois dígitos verificadores de um CPF com 11 dígitos (LGPD-17)."""
+    if len(digitos) != 11 or len(set(digitos)) == 1:
+        return False
+    for tamanho in (9, 10):
+        soma = sum(int(digito) * peso for digito, peso in zip(digitos, range(tamanho + 1, 1, -1)))
+        verificador = soma * 10 % 11 % 10
+        if verificador != int(digitos[tamanho]):
+            return False
+    return True
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
     # Escrita no mesmo formato da leitura (CONTRATO-26)
     preferences = PreferenciasSerializer(write_only=True, required=False)
+    # Os campos criptografados são texto no banco; a API mantém a data e o
+    # valor com o formato de antes (LGPD-15)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    monthly_income = serializers.DecimalField(max_digits=15, decimal_places=2, required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -141,14 +172,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
     def validate_cpf(self, value):
+        # Confere só os dígitos verificadores, sem consultar outras contas, e
+        # guarda só os 11 dígitos (LGPD-17, LGPD-18)
         if not value: return value
-        # Validação simples de formato (melhorar com lib depois)
-        # Manter apenas números
-        clean_cpf = ''.join(filter(str.isdigit, value))
-        if len(clean_cpf) != 11:
-            raise serializers.ValidationError("CPF inválido. Deve conter 11 dígitos.")
-        # TODO: Implementar algoritmo real de dígito verificador
-        return value
+        if not FORMATO_DO_CPF.fullmatch(value.strip()):
+            raise serializers.ValidationError(CPF_INVALIDO)
+        digitos = ''.join(filter(str.isdigit, value))
+        if not cpf_valido(digitos):
+            raise serializers.ValidationError(CPF_INVALIDO)
+        return digitos
 
     def validate_phone_number(self, value):
         if not value: return value
@@ -173,6 +205,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # O acesso do próprio usuário, só no /auth/me (PERM-17)
         if self.context.get('com_acesso'):
             ret['access'] = travas.acesso_na_api(instance)
+            # A versão aceita e a vigente, para a tela pedir o novo aceite
+            # (LGPD-28), e o consentimento de melhoria do produto (LGPD-34)
+            ret['terms'] = {
+                'accepted_version': instance.versao_dos_termos_aceita,
+                'current_version': termos.VERSAO_VIGENTE,
+            }
+            ret['product_improvement_consent'] = instance.consentimento_melhoria
         return ret
     
     def update(self, instance, validated_data):
@@ -194,8 +233,40 @@ class AdminUserSerializer(UserProfileSerializer):
     Serializer para uso exclusivo do admin. 
     Permite alterar planos e roles que são read_only para o usuário comum.
     """
+    # O painel não vê a data de nascimento nem a renda (LGPD-19)
+    date_of_birth = None
+    monthly_income = None
+
     class Meta(UserProfileSerializer.Meta):
-        read_only_fields = ('id', 'email', 'last_login', 'created_at')
+        fields = tuple(
+            campo for campo in UserProfileSerializer.Meta.fields
+            if campo not in ('date_of_birth', 'monthly_income')
+        )
+        # CPF e telefone chegam mascarados e não são editados pelo painel
+        read_only_fields = ('id', 'email', 'last_login', 'created_at', 'cpf', 'phone_number')
+
+    def to_representation(self, instance):
+        # CPF e telefone com só os últimos dígitos à vista (LGPD-19)
+        ret = super().to_representation(instance)
+        if ret.get('cpf'):
+            ret['cpf'] = f"***.***.***-{ret['cpf'][-2:]}"
+        if ret.get('phone_number'):
+            ret['phone_number'] = mascarar_telefone(ret['phone_number'])
+        return ret
+
+
+def mascarar_telefone(telefone):
+    """Troca por * cada dígito do telefone, menos os 4 últimos (LGPD-19)."""
+    total = sum(caractere.isdigit() for caractere in telefone)
+    vistos = 0
+    mascarado = []
+    for caractere in telefone:
+        if caractere.isdigit():
+            vistos += 1
+            mascarado.append(caractere if vistos > total - 4 else '*')
+        else:
+            mascarado.append(caractere)
+    return ''.join(mascarado)
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
@@ -204,12 +275,45 @@ class ChangePasswordSerializer(serializers.Serializer):
 class LoginRecusado(exceptions.APIException):
     """
     HTTP 400 com `detail` e `code` no corpo (AD-024). Um ValidationError do
-    serializer poria cada valor numa lista.
+    serializer poria cada valor numa lista. `extras` entram no corpo ao lado
+    dos dois.
     """
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, detail, code):
-        super().__init__({"detail": detail, "code": code})
+    def __init__(self, detail, code, **extras):
+        super().__init__({"detail": detail, "code": code, **extras})
+
+
+# O token de cancelamento da exclusão vale 15 minutos e só para o pedido em
+# que foi emitido (LGPD-07, LGPD-08)
+SALT_DO_CANCELAMENTO = 'fluxar.lgpd.cancelar-exclusao'
+VALIDADE_DO_CANCELAMENTO = 15 * 60
+
+
+def token_de_cancelamento(user):
+    """Token assinado que permite cancelar a exclusão marcada da conta."""
+    return signing.dumps(
+        {'u': str(user.pk), 'p': user.exclusao_pedida_em.isoformat()}, salt=SALT_DO_CANCELAMENTO,
+    )
+
+
+def conta_do_token_de_cancelamento(token):
+    """
+    A conta com exclusão marcada a que o token se refere, ou None se o token
+    for inválido, tiver vencido ou o pedido já não for o mesmo.
+    """
+    if not isinstance(token, str) or not token:
+        return None
+    try:
+        dados = signing.loads(token, salt=SALT_DO_CANCELAMENTO, max_age=VALIDADE_DO_CANCELAMENTO)
+        user = User.objects.get(pk=dados['u'])
+    except (signing.BadSignature, User.DoesNotExist, KeyError, TypeError, DjangoValidationError):
+        return None
+    if user.exclusao_agendada_para is None or user.exclusao_pedida_em is None:
+        return None
+    if user.exclusao_pedida_em.isoformat() != dados.get('p'):
+        return None
+    return user
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -240,6 +344,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             LoginFalhasEmailThrottle().registrar_falha(email)
             raise LoginRecusado("E-mail ou senha incorretos.", "invalid_credentials")
 
+        # A conta com exclusão marcada recebe a data e a opção de cancelar,
+        # sem abrir a sessão; vem antes do aviso de conta desativada (LGPD-07)
+        if user.exclusao_agendada_para is not None:
+            raise LoginRecusado(
+                "A exclusão desta conta está marcada. Cancele a exclusão para voltar a usar o Fluxar.",
+                "deletion_pending",
+                deletion_scheduled_for=serializers.DateTimeField().to_representation(user.exclusao_agendada_para),
+                cancel_token=token_de_cancelamento(user),
+            )
         if not user.is_active:
             raise LoginRecusado("Esta conta está desativada.", "account_disabled")
         if not user.email_verified:
