@@ -248,7 +248,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-28 | P1: Contas e saldo | T6 | Pending |
 | IMPCOMP-29 | P1: Contas e saldo | T5 | Pending |
 | IMPCOMP-30 | P1: Contas e saldo | T6 | Pending |
-| IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Pending |
+| IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Implemented |
 | IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Implemented |
 | IMPCOMP-33 | P1: Revisão e correção das linhas | T3 | Implemented |
 | IMPCOMP-34 | P1: Revisão e correção das linhas | T3 | Implemented |
@@ -263,7 +263,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-43 | P1: Revisão e correção das linhas | T8, T13 | Pending |
 | IMPCOMP-44 | P1: Revisão e correção das linhas | T9, T10 | Pending |
 | IMPCOMP-45 | P1: Importação e resultado | T6, T7 | Pending |
-| IMPCOMP-46 | P1: Importação e resultado | T4 | Pending |
+| IMPCOMP-46 | P1: Importação e resultado | T4 | Implemented |
 | IMPCOMP-47 | P1: Importação e resultado | T6 | Pending |
 | IMPCOMP-48 | P1: Importação e resultado | T6 | Pending |
 | IMPCOMP-49 | P1: Importação e resultado | T12 | Pending |
@@ -271,7 +271,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-51 | P1: Importação e resultado | T6 | Pending |
 | IMPCOMP-52 | P1: Importação e resultado | T6 | Pending |
 
-**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 24 implemented, 0 in progress, 28 pending
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 26 implemented, 0 in progress, 26 pending
 
 ---
 

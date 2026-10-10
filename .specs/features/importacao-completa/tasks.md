@@ -187,13 +187,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Num lote com receitas, despesas e transferências já importadas, todas são ignoradas
-- [ ] `marcar` devolve as repetidas sem criar transação
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Num lote com receitas, despesas e transferências já importadas, todas são ignoradas
+- [x] `marcar` devolve as repetidas sem criar transação
+- [x] Quick gate passa
+- [x] Test count: 4 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: confere os repetidos de receitas e de transferências no mesmo envio`
 
