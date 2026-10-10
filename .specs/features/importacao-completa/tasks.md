@@ -120,17 +120,18 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Cabeçalhos "Histórico", "Quantia" e "Banco" viram descrição, valor e conta
-- [ ] Aba com origem e destino é de transferências; com data e valor, de receitas e despesas; sem elas, ignorada com "Colunas não reconhecidas"
-- [ ] O arquivo do Mobills é reconhecido e ignora "Despesas" e "Receitas"
-- [ ] Uma aba repetida dentro de outra, num arquivo que não é do Mobills, é ignorada com "Contida na aba <nome>"
-- [ ] As 11 contas do Mobills vêm com linhas, soma, período e o tipo sugerido; "nubank " vincula à conta "Nubank" existente
-- [ ] O papel e as colunas de um plano editado prevalecem
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 10 testes
+- [x] Cabeçalhos "Histórico", "Quantia" e "Banco" viram descrição, valor e conta
+- [x] Aba com origem e destino é de transferências; com data e valor, de receitas e despesas; sem elas, ignorada com "Colunas não reconhecidas"
+- [x] O arquivo do Mobills é reconhecido e ignora "Despesas" e "Receitas"
+- [x] Uma aba repetida dentro de outra, num arquivo que não é do Mobills, é ignorada com "Contida na aba <nome>"
+- [x] As 11 contas do Mobills vêm com linhas, soma, período e o tipo sugerido; "nubank " vincula à conta "Nubank" existente
+- [x] O papel e as colunas de um plano editado prevalecem
+- [x] Quick gate passa
+- [x] Test count: 17 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: detecta as abas, as colunas e as contas da planilha`
 

@@ -225,6 +225,20 @@ def ler_abas(arquivo):
     return abas
 
 
+COLUNAS_DO_RESUMO = ('description_column', 'account_column', 'source_account_column', 'dest_account_column')
+
+
+def linha_de_resumo(linha, colunas):
+    """
+    A linha é o rodapé de resumo: a primeira célula começa com "Total" e as
+    colunas mapeadas de descrição e de conta estão vazias (IMPCOMP-15). Um
+    lançamento chamado "Total", com conta, é uma linha comum.
+    """
+    return linha.resumo and all(
+        vazio(linha.valores.get(colunas[campo])) for campo in COLUNAS_DO_RESUMO if colunas.get(campo)
+    )
+
+
 def candidata_a_resumo(valores):
     """A primeira célula começa com "Total", como no rodapé das exportações (IMPCOMP-15)."""
     primeira = valores[0] if valores else None

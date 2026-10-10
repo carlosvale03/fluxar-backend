@@ -221,17 +221,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-01 | P1: Leitura e detecção | T1 | Implemented |
 | IMPCOMP-02 | P1: Leitura e detecção | T1 | Implemented |
 | IMPCOMP-03 | P1: Leitura e detecção | T1 | Implemented |
-| IMPCOMP-04 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-05 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-06 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-07 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-08 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-09 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-10 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-11 | P1: Leitura e detecção | T2 | Pending |
-| IMPCOMP-12 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-04 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-05 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-06 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-07 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-08 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-09 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-10 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-11 | P1: Leitura e detecção | T2 | Implemented |
+| IMPCOMP-12 | P1: Leitura e detecção | T2 | Implemented |
 | IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | Pending |
-| IMPCOMP-14 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-14 | P1: Leitura e detecção | T2 | Implemented |
 | IMPCOMP-15 | P1: Interpretação das linhas | T3 | Pending |
 | IMPCOMP-16 | P1: Interpretação das linhas | T3 | Pending |
 | IMPCOMP-17 | P1: Interpretação das linhas | T3 | Pending |
@@ -271,7 +271,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-51 | P1: Importação e resultado | T6 | Pending |
 | IMPCOMP-52 | P1: Importação e resultado | T6 | Pending |
 
-**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 3 implemented, 0 in progress, 49 pending
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 13 implemented, 0 in progress, 39 pending
 
 ---
 
