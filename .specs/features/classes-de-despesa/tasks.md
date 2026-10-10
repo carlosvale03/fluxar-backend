@@ -299,15 +299,16 @@ T10 → T11
 
 **Done when**:
 
-- [ ] As sugestões mostram só Dívidas, Impostos e taxas e Profissional que o usuário ainda não criou
-- [ ] Criar pela sugestão envia o nome e a cor; o erro de nome repetido aparece no campo e o limite no toast
-- [ ] Essencial e Dispensável não têm as ações de renomear e excluir
-- [ ] Excluir mostra quantas categorias usam a classe e só chama a API depois da confirmação
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 5 testes
+- [x] As sugestões mostram só Dívidas, Impostos e taxas e Profissional que o usuário ainda não criou
+- [x] Criar pela sugestão envia o nome e a cor; o erro de nome repetido aparece no campo e o limite no toast
+- [x] Essencial e Dispensável não têm as ações de renomear e excluir
+- [x] Excluir mostra quantas categorias usam a classe e só chama a API depois da confirmação
+- [x] Quick gate (frontend) passa
+- [x] Test count: 8 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite gerenciar as classes de despesa na tela de categorias`
 

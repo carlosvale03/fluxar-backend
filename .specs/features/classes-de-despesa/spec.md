@@ -185,13 +185,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | -------------- | ----- | ----- | ------ |
 | CLASSE-01 | P1: Classes do usuário | T2 | Implemented |
 | CLASSE-02 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-03 | P1: Classes do usuário | - | Pending |
-| CLASSE-04 | P1: Classes do usuário | T3 | In Progress |
-| CLASSE-05 | P1: Classes do usuário | T3 | In Progress |
+| CLASSE-03 | P1: Classes do usuário | T8 | Implemented |
+| CLASSE-04 | P1: Classes do usuário | T3, T8 | Implemented |
+| CLASSE-05 | P1: Classes do usuário | T3, T8 | Implemented |
 | CLASSE-06 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-07 | P1: Classes do usuário | T3 | In Progress |
-| CLASSE-08 | P1: Classes do usuário | T3 | In Progress |
-| CLASSE-09 | P1: Classes do usuário | - | Pending |
+| CLASSE-07 | P1: Classes do usuário | T3, T8 | Implemented |
+| CLASSE-08 | P1: Classes do usuário | T3, T8 | Implemented |
+| CLASSE-09 | P1: Classes do usuário | T8 | Implemented |
 | CLASSE-10 | P1: Classes do usuário | T3 | Implemented |
 | CLASSE-11 | P1: Classes do usuário | T3 | Implemented |
 | CLASSE-12 | P1: Classes do usuário | T3 | Implemented |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | T6 | In Progress |
 | CLASSE-40 | P1: Filtro e exportação por classe | T7 | Implemented |
 
-**Coverage:** 40 total, 33 mapped to tasks, 7 unmapped ⚠️ (backend em andamento)
+**Coverage:** 40 total, 35 mapped to tasks, 5 unmapped ⚠️ (frontend em andamento)
 
 ---
 
