@@ -218,60 +218,60 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| IMPCOMP-01 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-02 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-03 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-04 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-05 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-06 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-07 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-08 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-09 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-10 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-11 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-12 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-13 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-14 | P1: Leitura e detecção | - | Pending |
-| IMPCOMP-15 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-16 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-17 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-18 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-19 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-20 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-21 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-22 | P1: Interpretação das linhas | - | Pending |
-| IMPCOMP-23 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-24 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-25 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-26 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-27 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-28 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-29 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-30 | P1: Contas e saldo | - | Pending |
-| IMPCOMP-31 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-32 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-33 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-34 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-35 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-36 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-37 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-38 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-39 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-40 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-41 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-42 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-43 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-44 | P1: Revisão e correção das linhas | - | Pending |
-| IMPCOMP-45 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-46 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-47 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-48 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-49 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-50 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-51 | P1: Importação e resultado | - | Pending |
-| IMPCOMP-52 | P1: Importação e resultado | - | Pending |
+| IMPCOMP-01 | P1: Leitura e detecção | T1 | Implemented |
+| IMPCOMP-02 | P1: Leitura e detecção | T1 | Implemented |
+| IMPCOMP-03 | P1: Leitura e detecção | T1 | Implemented |
+| IMPCOMP-04 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-05 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-06 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-07 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-08 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-09 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-10 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-11 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-12 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | Pending |
+| IMPCOMP-14 | P1: Leitura e detecção | T2 | Pending |
+| IMPCOMP-15 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-16 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-17 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-18 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-19 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-20 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-21 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-22 | P1: Interpretação das linhas | T3 | Pending |
+| IMPCOMP-23 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-24 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-25 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-26 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-27 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-28 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-29 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-30 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Pending |
+| IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Pending |
+| IMPCOMP-33 | P1: Revisão e correção das linhas | T3 | Pending |
+| IMPCOMP-34 | P1: Revisão e correção das linhas | T3 | Pending |
+| IMPCOMP-35 | P1: Revisão e correção das linhas | T6 | Pending |
+| IMPCOMP-36 | P1: Revisão e correção das linhas | T6 | Pending |
+| IMPCOMP-37 | P1: Revisão e correção das linhas | T8 | Pending |
+| IMPCOMP-38 | P1: Revisão e correção das linhas | T9 | Pending |
+| IMPCOMP-39 | P1: Revisão e correção das linhas | T10 | Pending |
+| IMPCOMP-40 | P1: Revisão e correção das linhas | T10 | Pending |
+| IMPCOMP-41 | P1: Revisão e correção das linhas | T11 | Pending |
+| IMPCOMP-42 | P1: Revisão e correção das linhas | T11 | Pending |
+| IMPCOMP-43 | P1: Revisão e correção das linhas | T8, T13 | Pending |
+| IMPCOMP-44 | P1: Revisão e correção das linhas | T9, T10 | Pending |
+| IMPCOMP-45 | P1: Importação e resultado | T6, T7 | Pending |
+| IMPCOMP-46 | P1: Importação e resultado | T4 | Pending |
+| IMPCOMP-47 | P1: Importação e resultado | T6 | Pending |
+| IMPCOMP-48 | P1: Importação e resultado | T6 | Pending |
+| IMPCOMP-49 | P1: Importação e resultado | T12 | Pending |
+| IMPCOMP-50 | P1: Importação e resultado | T6, T13 | Pending |
+| IMPCOMP-51 | P1: Importação e resultado | T6 | Pending |
+| IMPCOMP-52 | P1: Importação e resultado | T6 | Pending |
 
-**Coverage:** 52 total, 0 mapped to tasks, 52 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 3 implemented, 0 in progress, 49 pending
 
 ---
 

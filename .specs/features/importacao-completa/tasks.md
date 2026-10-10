@@ -90,15 +90,16 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Um XLSX de 4 abas devolve as 4 com nome, cabeçalho e linhas numeradas
-- [ ] Um CSV devolve uma aba com o nome do arquivo
-- [ ] Duas abas com 6.000 linhas cada recebem 400 "O arquivo passa do limite de 10.000 linhas."
-- [ ] As rotas atuais continuam passando nos testes da spec `importacao`
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Um XLSX de 4 abas devolve as 4 com nome, cabeçalho e linhas numeradas
+- [x] Um CSV devolve uma aba com o nome do arquivo
+- [x] Duas abas com 6.000 linhas cada recebem 400 "O arquivo passa do limite de 10.000 linhas."
+- [x] As rotas atuais continuam passando nos testes da spec `importacao`
+- [x] Quick gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: lê todas as abas da planilha na importação`
 
