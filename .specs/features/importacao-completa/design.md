@@ -1,7 +1,7 @@
 # Importação completa Design
 
 **Spec**: `.specs/features/importacao-completa/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

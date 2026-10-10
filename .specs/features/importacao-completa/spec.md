@@ -218,58 +218,58 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| IMPCOMP-01 | P1: Leitura e detecção | T1 | Implemented |
-| IMPCOMP-02 | P1: Leitura e detecção | T1 | Implemented |
-| IMPCOMP-03 | P1: Leitura e detecção | T1 | Implemented |
-| IMPCOMP-04 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-05 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-06 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-07 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-08 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-09 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-10 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-11 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-12 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | Implemented |
-| IMPCOMP-14 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-15 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-16 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-17 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-18 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-19 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-20 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-21 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-22 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-23 | P1: Contas e saldo | T6 | Implemented |
-| IMPCOMP-24 | P1: Contas e saldo | T6 | Implemented |
-| IMPCOMP-25 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-26 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-27 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-28 | P1: Contas e saldo | T6 | Implemented |
-| IMPCOMP-29 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-30 | P1: Contas e saldo | T6 | Implemented |
-| IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Implemented |
-| IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Implemented |
-| IMPCOMP-33 | P1: Revisão e correção das linhas | T3 | Implemented |
-| IMPCOMP-34 | P1: Revisão e correção das linhas | T3 | Implemented |
-| IMPCOMP-35 | P1: Revisão e correção das linhas | T6 | Implemented |
-| IMPCOMP-36 | P1: Revisão e correção das linhas | T6 | Implemented |
-| IMPCOMP-37 | P1: Revisão e correção das linhas | T8 | Implemented |
-| IMPCOMP-38 | P1: Revisão e correção das linhas | T9 | Implemented |
-| IMPCOMP-39 | P1: Revisão e correção das linhas | T10 | Implemented |
-| IMPCOMP-40 | P1: Revisão e correção das linhas | T10 | Implemented |
-| IMPCOMP-41 | P1: Revisão e correção das linhas | T11 | Implemented |
-| IMPCOMP-42 | P1: Revisão e correção das linhas | T11 | Implemented |
-| IMPCOMP-43 | P1: Revisão e correção das linhas | T8, T13 | Implemented |
-| IMPCOMP-44 | P1: Revisão e correção das linhas | T9, T10 | Implemented |
-| IMPCOMP-45 | P1: Importação e resultado | T6, T7 | Implemented |
-| IMPCOMP-46 | P1: Importação e resultado | T4 | Implemented |
-| IMPCOMP-47 | P1: Importação e resultado | T6 | Implemented |
-| IMPCOMP-48 | P1: Importação e resultado | T6 | Implemented |
-| IMPCOMP-49 | P1: Importação e resultado | T12 | Implemented |
-| IMPCOMP-50 | P1: Importação e resultado | T6, T13 | Implemented |
-| IMPCOMP-51 | P1: Importação e resultado | T6 | Implemented |
-| IMPCOMP-52 | P1: Importação e resultado | T6 | Implemented |
+| IMPCOMP-01 | P1: Leitura e detecção | T1 | Verified |
+| IMPCOMP-02 | P1: Leitura e detecção | T1 | Verified |
+| IMPCOMP-03 | P1: Leitura e detecção | T1 | Verified |
+| IMPCOMP-04 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-05 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-06 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-07 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-08 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-09 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-10 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-11 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-12 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | Verified |
+| IMPCOMP-14 | P1: Leitura e detecção | T2 | Verified |
+| IMPCOMP-15 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-16 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-17 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-18 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-19 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-20 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-21 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-22 | P1: Interpretação das linhas | T3 | Verified |
+| IMPCOMP-23 | P1: Contas e saldo | T6 | Verified |
+| IMPCOMP-24 | P1: Contas e saldo | T6 | Verified |
+| IMPCOMP-25 | P1: Contas e saldo | T5 | Verified |
+| IMPCOMP-26 | P1: Contas e saldo | T5 | Verified |
+| IMPCOMP-27 | P1: Contas e saldo | T5 | Verified |
+| IMPCOMP-28 | P1: Contas e saldo | T6 | Verified |
+| IMPCOMP-29 | P1: Contas e saldo | T5 | Verified |
+| IMPCOMP-30 | P1: Contas e saldo | T6 | Verified |
+| IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Verified |
+| IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Verified |
+| IMPCOMP-33 | P1: Revisão e correção das linhas | T3 | Verified |
+| IMPCOMP-34 | P1: Revisão e correção das linhas | T3 | Verified |
+| IMPCOMP-35 | P1: Revisão e correção das linhas | T6 | Verified |
+| IMPCOMP-36 | P1: Revisão e correção das linhas | T6 | Verified |
+| IMPCOMP-37 | P1: Revisão e correção das linhas | T8 | Verified |
+| IMPCOMP-38 | P1: Revisão e correção das linhas | T9 | Verified |
+| IMPCOMP-39 | P1: Revisão e correção das linhas | T10 | Verified |
+| IMPCOMP-40 | P1: Revisão e correção das linhas | T10 | Verified |
+| IMPCOMP-41 | P1: Revisão e correção das linhas | T11 | Verified |
+| IMPCOMP-42 | P1: Revisão e correção das linhas | T11 | Verified |
+| IMPCOMP-43 | P1: Revisão e correção das linhas | T8, T13 | Verified |
+| IMPCOMP-44 | P1: Revisão e correção das linhas | T9, T10 | Verified |
+| IMPCOMP-45 | P1: Importação e resultado | T6, T7 | Verified |
+| IMPCOMP-46 | P1: Importação e resultado | T4 | Verified |
+| IMPCOMP-47 | P1: Importação e resultado | T6 | Verified |
+| IMPCOMP-48 | P1: Importação e resultado | T6 | Verified |
+| IMPCOMP-49 | P1: Importação e resultado | T12 | Verified |
+| IMPCOMP-50 | P1: Importação e resultado | T6, T13 | Verified |
+| IMPCOMP-51 | P1: Importação e resultado | T6 | Verified |
+| IMPCOMP-52 | P1: Importação e resultado | T6 | Verified |
 
 **Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 52 implemented, 0 in progress, 0 pending
 
