@@ -454,13 +454,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O card de planilha abre o assistente
-- [ ] O OFX continua abrindo o diálogo atual
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] O card de planilha abre o assistente
+- [x] O OFX continua abrindo o diálogo atual
+- [x] Build gate (frontend) passa
+- [x] Test count: 3 testes (`tests/importacao/assistente-pagina.test.tsx`); o rótulo do botão da planilha em `tests/permissoes/travas-de-importacao.test.tsx` passou a "Importar Planilha"
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: troca a importação de planilha pelo assistente completo`
 
