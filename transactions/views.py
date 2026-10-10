@@ -177,7 +177,7 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
     parametros_permitidos = PAGINACAO | {
         'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
         'type', 'categoryId', 'classId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
-        'import_batch', 'suggested_category',
+        'import_batch', 'suggested_category', 'principalId', 'linked',
     }
 
     def get_queryset(self):

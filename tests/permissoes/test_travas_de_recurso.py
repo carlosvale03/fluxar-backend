@@ -217,6 +217,10 @@ def chamadas_do_catalogo(t):
             ('lançar gasto relacionado', lambda: c.post('/api/transactions/', t.corpo_transacao(
                 principal=str(t.despesa_avulsa("Cinema").pk),
             ), format='json'), 201),
+            ('filtro pela principal', lambda: c.get(
+                '/api/transactions/', {'principalId': str(t.despesa_avulsa("Cinema").pk)},
+            ), 200),
+            ('filtro com vínculo', lambda: c.get('/api/transactions/', {'linked': 'true'}), 200),
         ],
     }
 

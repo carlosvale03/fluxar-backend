@@ -208,16 +208,17 @@ T9 → T10
 
 **Done when**:
 
-- [ ] `principalId` do cinema traz o cinema e o transporte
-- [ ] `linked=true` traz só principais e dependentes, com as parcelas
-- [ ] Id de outro usuário recebe 400 "Transação inválida no filtro: <valor>."
-- [ ] A exportação com o filtro do cinema traz as mesmas duas linhas, sem coluna de vínculo
-- [ ] Com o recurso travado, os filtros recebem 403
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] `principalId` do cinema traz o cinema e o transporte
+- [x] `linked=true` traz só principais e dependentes, com as parcelas
+- [x] Id de outro usuário recebe 400 "Transação inválida no filtro: <valor>."
+- [x] A exportação com o filtro do cinema traz as mesmas duas linhas, sem coluna de vínculo
+- [x] Com o recurso travado, os filtros recebem 403
+- [x] Full gate passa
+- [x] Test count: 8 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra a lista e a exportação pelas transações vinculadas`
 

@@ -205,17 +205,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-26 | P1: Custo total na principal | T4 | Implemented |
 | VINCULO-27 | P1: Custo total na principal | T4 | Implemented |
 | VINCULO-28 | P1: Custo total na principal | T4 | Implemented |
-| VINCULO-29 | P1: Filtro de vinculadas | T5 | Pending |
-| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | Pending |
+| VINCULO-29 | P1: Filtro de vinculadas | T5 | Implemented |
+| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | In Progress |
 | VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Pending |
-| VINCULO-32 | P1: Filtro de vinculadas | T5 | Pending |
-| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | Pending |
+| VINCULO-32 | P1: Filtro de vinculadas | T5 | Implemented |
+| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | In Progress |
 | VINCULO-34 | P1: Relatório de gastos puxados | T6 | Pending |
 | VINCULO-35 | P1: Relatório de gastos puxados | T6 | Pending |
 | VINCULO-36 | P1: Relatório de gastos puxados | T10 | Pending |
 | VINCULO-37 | P1: Relatório de gastos puxados | T10 | Pending |
 
-**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 20 implemented, 5 in progress, 12 pending
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 22 implemented, 7 in progress, 8 pending
 
 ---
 
