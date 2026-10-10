@@ -85,14 +85,15 @@ T11 → T12
 
 **Done when**:
 
-- [ ] As migrações criam as tabelas e o campo `divisao_do_salario`
-- [ ] A exclusão definitiva apaga a gestão, o plano e as divisões do usuário, e o teste de completude da LGPD passa
-- [ ] A limpeza do painel apaga a gestão e as divisões, e o cadastro novo continua igual
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] As migrações criam as tabelas e o campo `divisao_do_salario`
+- [x] A exclusão definitiva apaga a gestão, o plano e as divisões do usuário, e o teste de completude da LGPD passa
+- [x] A limpeza do painel apaga a gestão e as divisões, e o cadastro novo continua igual
+- [x] Build gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria os modelos do plano e das divisões do salário`
 

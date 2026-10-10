@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     'reports',
     'data_exchange',
     'goals.apps.GoalsConfig',
+    'salario',
 ]
 
 MIDDLEWARE = [

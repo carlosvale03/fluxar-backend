@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/', include('reports.urls')),
     path('api/', include('data_exchange.urls')),
     path('api/', include('goals.urls')),
+    path('api/', include('salario.urls')),
 ]
 
 from django.conf import settings

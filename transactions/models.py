@@ -146,6 +146,10 @@ class Transaction(models.Model):
     fitid = models.CharField(max_length=255, null=True, blank=True)
     categoria_sugerida = models.BooleanField(default=False)
 
+    # Divisão do salário que gerou a transação (SALARIO-35, AD-053); um UUID
+    # sem FK, como o `transfer_id`, para não ligar os apps em círculo
+    divisao_do_salario = models.UUIDField(null=True, blank=True, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -26,6 +26,9 @@ MODELOS_DO_USUARIO = (
     ('accounts.PagamentoDeFatura', 'user'),
     ('accounts.Account', 'user'),
     ('accounts.CreditCard', 'user'),
+    # O plano e as divisões do salário saem antes das transações (SALARIO-17)
+    ('salario.GestaoDoSalario', 'user'),
+    ('salario.DivisaoDoSalario', 'user'),
     ('transactions.Transaction', 'user'),
     ('transactions.RecurringTransaction', 'user'),
     ('transactions.Category', 'user'),
