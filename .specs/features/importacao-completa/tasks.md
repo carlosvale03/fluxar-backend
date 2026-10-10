@@ -338,14 +338,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Os selects vêm preenchidos com o plano detectado
-- [ ] Aparecem o selo "Modelo Mobills reconhecido" e "Contida na aba Receitas e Despesas"
-- [ ] Trocar o papel de uma aba pede nova análise com o plano editado
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Os selects vêm preenchidos com o plano detectado
+- [x] Aparecem o selo "Modelo Mobills reconhecido" e "Contida na aba Receitas e Despesas"
+- [x] Trocar o papel de uma aba pede nova análise com o plano editado
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes (`tests/importacao/assistente-abas-e-colunas.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra e ajusta as abas e as colunas detectadas`
 
