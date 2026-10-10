@@ -138,7 +138,8 @@ class LogTests(PainelDePlanosTestCase):
         self.patch({'key': 'limite_contas', 'plan': 'PREMIUM', 'limit': 2})
         self.patch({'key': 'limite_contas', 'plan': 'PREMIUM', 'limit': None})
 
-        logs = self.logs('UPDATE_PLAN_LOCK')
+        # Recurso e limite gravam ações próprias (ADMIN-09, AD-049)
+        logs = self.logs('UPDATE_PLAN_LOCK') + self.logs('UPDATE_PLAN_LIMIT')
         self.assertEqual(
             [log.description for log in logs],
             [
@@ -159,7 +160,8 @@ class LogTests(PainelDePlanosTestCase):
         self.patch({'key': 'limite_metas', 'plan': 'COMMON', 'limit': 3})
         self.patch({'key': 'limite_metas', 'plan': 'COMMON', 'limit': 3})
 
-        self.assertEqual(len(self.logs('UPDATE_PLAN_LOCK')), 1)
+        self.assertEqual(self.logs('UPDATE_PLAN_LOCK'), [])
+        self.assertEqual(len(self.logs('UPDATE_PLAN_LIMIT')), 1)
         self.assertEqual(self.logs('UPDATE_TESTING_UNLOCK'), [])
 
     def test_ligar_e_desligar_a_liberacao_grava_no_log_e_vale_na_requisicao_seguinte(self):

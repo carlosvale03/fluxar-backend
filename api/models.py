@@ -147,8 +147,16 @@ class SystemLog(models.Model):
     action = models.CharField(max_length=100)
     # Sem nomes nem e-mails completos (LGPD-21)
     description = models.TextField()
+    # E-mail mascarado do usuário afetado; some na exclusão da conta, quando
+    # fica só o `usuario_ref` (ADMIN-10, ADMIN-11)
+    usuario_email = models.CharField(max_length=255, blank=True, default='')
     # E-mail mascarado do administrador, ou "Sistema" (LGPD-22)
     admin_name = models.CharField(max_length=255)
+    # O id interno do administrador, que sobrevive à exclusão da conta dele (AD-049)
+    admin_ref = models.UUIDField(null=True, blank=True, db_index=True)
+    # Os valores de antes e de depois da mudança, quando houver (ADMIN-08, ADMIN-09)
+    antes = models.JSONField(null=True, blank=True)
+    depois = models.JSONField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -50,7 +50,8 @@ class AcoesDoAdminTests(AuditoriaTestCase):
         )
 
         self.assertEqual(resposta.status_code, 200, resposta.data)
-        self.assert_registro('ARCHIVE_ACCOUNT', 'Conta arquivada pelo administrador.')
+        # Arquivar é uma mudança de status, com o antes e o depois (ADMIN-08, AD-049)
+        self.assert_registro('CHANGE_STATUS', 'Conta arquivada pelo administrador.')
 
     def test_redefinir_senha_grava_descricao_sem_nome_e_admin_mascarado(self):
         resposta = self.client.post(

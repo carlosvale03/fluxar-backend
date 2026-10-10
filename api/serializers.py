@@ -236,14 +236,17 @@ class AdminUserSerializer(UserProfileSerializer):
     # O painel não vê a data de nascimento nem a renda (LGPD-19)
     date_of_birth = None
     monthly_income = None
+    # Nem muda as preferências: elas continuam só na leitura (AD-049)
+    preferences = None
 
     class Meta(UserProfileSerializer.Meta):
         fields = tuple(
             campo for campo in UserProfileSerializer.Meta.fields
-            if campo not in ('date_of_birth', 'monthly_income')
+            if campo not in ('date_of_birth', 'monthly_income', 'preferences')
         )
-        # CPF e telefone chegam mascarados e não são editados pelo painel
-        read_only_fields = ('id', 'email', 'last_login', 'created_at', 'cpf', 'phone_number')
+        # O painel muda só o plano, o papel e o status; nome, CPF, telefone,
+        # preferências e notificações enviados são ignorados (ADMIN-17)
+        read_only_fields = tuple(campo for campo in fields if campo not in ('plan', 'role', 'is_active'))
 
     def to_representation(self, instance):
         # CPF e telefone com só os últimos dígitos à vista (LGPD-19)
@@ -387,10 +390,24 @@ class ResetPasswordSerializer(serializers.Serializer):
         return value
 
 class SystemLogSerializer(serializers.ModelSerializer):
+    """
+    Um registro do log de auditoria (AD-049): quem fez e sobre quem, pelo id
+    interno e pelo e-mail mascarado, e os valores de antes e de depois.
+    """
+    admin_id = serializers.UUIDField(source='admin_ref', read_only=True)
+    admin_email = serializers.CharField(source='admin_name', read_only=True)
+    user_id = serializers.UUIDField(source='usuario_ref', read_only=True)
+    user_email = serializers.CharField(source='usuario_email', read_only=True)
+    before = serializers.JSONField(source='antes', read_only=True)
+    after = serializers.JSONField(source='depois', read_only=True)
+
     class Meta:
         from .models import SystemLog
         model = SystemLog
-        fields = ('id', 'action', 'description', 'admin_name', 'timestamp')
+        fields = (
+            'id', 'action', 'description', 'admin_id', 'admin_email', 'user_id', 'user_email',
+            'before', 'after', 'timestamp',
+        )
 
 class GlobalSettingSerializer(serializers.ModelSerializer):
     class Meta:

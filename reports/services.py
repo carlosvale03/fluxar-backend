@@ -864,59 +864,40 @@ class ReportService:
     @staticmethod
     def get_user_financial_stats(user):
         """
-        Retorna métricas financeiras detalhadas para um usuário específico (Admin focus).
-        Calcula saldo total, médias diárias de valor e contagem de transações.
+        Métricas financeiras de um usuário para o painel admin, pelas mesmas
+        regras dos relatórios dele (ADMIN-29, AD-029, AD-046):
+        - receitas e despesas dos últimos 30 dias de Brasília, o mesmo período
+          do dashboard com `days=30`, pela `report_date` e por `regras`;
+        - sem ajustes de saldo nem transações de contas excluídas (SALDO-31);
+        - saldo como a soma das contas ativas, o da lista de contas (SALDO-28).
+        As médias diárias dividem o total do período por 30.
         """
-        today = date.today()
-        # Período de análise: últimos 30 dias para as médias
-        start_date = today - timedelta(days=30)
-        
-        # 1. Total Balance (Status atual de todas as contas)
+        # De hoje menos 30 dias até hoje, em Brasília (REL-08)
+        inicio, fim = ReportService._get_date_range(period_days=30)
+
         # Saldo guardado das contas ativas, o mesmo da lista de contas (SALDO-28, SALDO-31)
-        from accounts.models import Account
         accounts = Account.objects.filter(user=user, is_active=True)
         total_balance = sum((acc.balance for acc in accounts), Decimal('0.00'))
 
-        # 2. Daily Averages (Baseado nos últimos 30 dias)
-        # Receitas
-        income_txs = Transaction.objects.filter(
-            user=user, 
-            type='INCOME', 
-            date__gte=start_date, 
-            date__lte=today
-        )
-        total_income_val = income_txs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-        income_count = income_txs.count()
-        
-        # Despesas (Inclui Credit Card)
-        expense_txs = Transaction.objects.filter(
-            user=user, 
-            type__in=TIPOS_DE_DESPESA, 
-            date__gte=start_date, 
-            date__lte=today
-        )
-        total_expense_val = expense_txs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-        expense_count = expense_txs.count()
-        
-        # Divisor (dias que tiveram transações ou 30?)
-        # O usuário pediu "média baseada na contagem individual".
-        # Vamos usar 30 dias como base de tempo para médias diárias.
-        avg_income_value = total_income_val / Decimal('30')
-        avg_expense_value = total_expense_val / Decimal('30')
-        income_count_per_day = income_count / 30.0
-        expense_count_per_day = expense_count / 30.0
+        def sem_contas_excluidas(queryset):
+            return queryset.exclude(account__is_active=False)
 
-        # Last transaction
-        last_tx = Transaction.objects.filter(user=user).order_by('-date').first()
-        last_transaction_date = last_tx.date.strftime('%Y-%m-%d') if last_tx else None
+        receitas = sem_contas_excluidas(regras.receitas(user, inicio, fim))
+        despesas = sem_contas_excluidas(regras.despesas(user, inicio, fim))
+        dias = Decimal('30')
+
+        ultima = sem_contas_excluidas(
+            Transaction.objects.filter(user=user, is_balance_adjustment=False)
+        ).order_by('-date').first()
 
         return {
+            # Dinheiro como texto; contagens como números (CONTRATO-16)
             "total_balance": dinheiro(total_balance),
-            "avg_income_value": dinheiro(avg_income_value),
-            "avg_expense_value": dinheiro(avg_expense_value),
-            "income_count_per_day": float(income_count_per_day),
-            "expense_count_per_day": float(expense_count_per_day),
-            "last_transaction_date": last_transaction_date
+            "avg_income_value": dinheiro(regras.total(receitas) / dias),
+            "avg_expense_value": dinheiro(regras.total(despesas) / dias),
+            "income_count_per_day": receitas.count() / 30.0,
+            "expense_count_per_day": despesas.count() / 30.0,
+            "last_transaction_date": ultima.date.strftime('%Y-%m-%d') if ultima else None,
         }
 
     @staticmethod

@@ -10,8 +10,9 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings as django_settings
-from datetime import timedelta
-from decimal import Decimal
+from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Count
 import hmac
 import uuid
 from .serializers import (
@@ -39,7 +40,10 @@ from .models import (
     SystemLog,
     TravaDePlano,
 )
+from .auditoria import Acoes, registrar
 from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
+from .limpeza import LimpezaFalhou, limpar_dados
+from .saude import saude
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -64,11 +68,11 @@ from .utils.email_service import (
     send_verification_email,
 )
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
+from core.datas import BRASILIA, ler_data
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
 from core import termos, travas
 from core.pagination import PaginacaoPadrao
-from core.valores import dinheiro
 from core.uploads import com_nome_aleatorio
 import logging
 
@@ -606,6 +610,28 @@ class AcaoDeAdminRecusada(exceptions.APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
+SENHA_DO_ADMIN_INCORRETA = "Senha do administrador incorreta."
+
+
+class SenhaDoAdminIncorreta(exceptions.APIException):
+    """HTTP 403 com a mensagem no campo `admin_password` (ADMIN-18)."""
+    status_code = status.HTTP_403_FORBIDDEN
+
+    def __init__(self):
+        super().__init__({"admin_password": [SENHA_DO_ADMIN_INCORRETA]})
+
+
+def conferir_senha_do_admin(request):
+    """
+    As ações sensíveis exigem a senha do administrador (ADMIN-17): excluir,
+    arquivar, limpar os dados, redefinir a senha, mudar o papel e desativar.
+    Sem a senha, ou com a senha errada, recusa com 403 (ADMIN-18).
+    """
+    senha = request.data.get('admin_password')
+    if not isinstance(senha, str) or not senha or not request.user.check_password(senha):
+        raise SenhaDoAdminIncorreta()
+
+
 def garantir_admin_restante(afetados):
     """
     Recusa com 400 quando tirar o papel, arquivar ou excluir os usuários
@@ -645,16 +671,48 @@ EXCLUSAO_FALHOU = {
 }
 
 
-def excluir_pelo_admin(usuario, chave="detail"):
+def excluir_pelo_admin(request, usuario, chave="detail"):
     """
     Exclusão definitiva pelo painel, inclusive de conta com exclusão já
     pendente (LGPD-13). Com o Cloudinary falhando, nada é apagado (LGPD-12).
+
+    O `DELETE_ACCOUNT` é gravado antes, para a exclusão mantê-lo só com o id
+    interno do usuário (ADMIN-08, ADMIN-11); se a exclusão falhar, ele sai.
     """
+    log = registrar(request.user, Acoes.DELETE_ACCOUNT, usuario, descricao="Conta excluída pelo administrador.")
     try:
         excluir_definitivamente(usuario, RegistroDeExclusao.ADMIN)
     except ExclusaoFalhou:
+        log.delete()
         return Response(EXCLUSAO_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     return Response({chave: "Usuário excluído permanentemente."}, status=status.HTTP_200_OK)
+
+
+# Cada campo que o painel muda vira um registro próprio no log (ADMIN-08, AD-049)
+CAMPOS_AUDITADOS = (
+    ('plan', Acoes.CHANGE_PLAN),
+    ('role', Acoes.CHANGE_ROLE),
+    ('is_active', Acoes.CHANGE_STATUS),
+)
+
+
+def _descricao_da_mudanca(campo, depois):
+    if campo == 'plan':
+        return "Plano alterado pelo administrador."
+    if campo == 'role':
+        return "Papel alterado pelo administrador."
+    return "Conta reativada pelo administrador." if depois else "Conta desativada pelo administrador."
+
+
+def registrar_mudancas(request, antes, depois):
+    """Um registro por campo auditado que mudou; campo sem mudança não gera registro."""
+    for campo, acao in CAMPOS_AUDITADOS:
+        valor_antes, valor_depois = getattr(antes, campo), getattr(depois, campo)
+        if valor_antes != valor_depois:
+            registrar(
+                request.user, acao, depois, antes=valor_antes, depois=valor_depois,
+                descricao=_descricao_da_mudanca(campo, valor_depois),
+            )
 
 
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
@@ -691,15 +749,9 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         return queryset
 
     def delete(self, request, *args, **kwargs):
-        """Exclusão em massa"""
-        admin_password = request.data.get('admin_password')
+        """Arquivamento em lote, com a senha do administrador (ADMIN-17)"""
+        conferir_senha_do_admin(request)
         user_ids = request.data.get('user_ids', [])
-
-        if not admin_password:
-            return Response({"detail": "Senha do administrador obrigatória."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador incorreta."}, status=status.HTTP_403_FORBIDDEN)
 
         if not user_ids:
             return Response({"detail": "Nenhum usuário selecionado."}, status=status.HTTP_400_BAD_REQUEST)
@@ -708,11 +760,17 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         users_to_delete = User.objects.filter(id__in=user_ids)
         recusar_remocao_de_admin(request, users_to_delete)
 
+        alvos = list(users_to_delete)
         users_to_delete.update(is_active=False)
-        # A conta arquivada perde as sessões abertas (SESSAO-17)
-        for user in users_to_delete:
+        for user in alvos:
+            # A conta arquivada perde as sessões abertas (SESSAO-17)
             encerrar_todas(user)
-        return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
+            if user.is_active:
+                registrar(
+                    request.user, Acoes.CHANGE_STATUS, user, antes=True, depois=False,
+                    descricao="Conta arquivada pelo administrador.",
+                )
+        return Response({"detail": f"{len(alvos)} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -725,61 +783,34 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
     serializer_class = AdminUserSerializer
 
     def update(self, request, *args, **kwargs):
-        admin_password = request.data.get('admin_password')
-        if not admin_password:
-            return Response(
-                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not request.user.check_password(admin_password):
-            return Response(
-                {"detail": "Senha do administrador incorreta."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        old_user = User.objects.get(pk=kwargs.get('pk'))
-        response = super().update(request, *args, **kwargs)
-        
-        if response.status_code == 200:
-            new_user = self.get_object()
-            # A conta desativada perde as sessões abertas (SESSAO-17)
-            if not new_user.is_active:
-                encerrar_todas(new_user)
-            changes = []
-            if old_user.plan != new_user.plan:
-                changes.append(f"Plano alterado de {old_user.plan} para {new_user.plan}")
-            if old_user.role != new_user.role:
-                changes.append(f"Cargo alterado de {old_user.role} para {new_user.role}")
-            if old_user.is_active != new_user.is_active:
-                status_str = "Ativado" if new_user.is_active else "Arquivado"
-                changes.append(f"Status alterado para {status_str}")
-            
-            if changes:
-                SystemLog.objects.create(
-                    user=new_user,
-                    action="UPDATE_PROFILE",
-                    description="; ".join(changes),
-                    admin_name=_mask_email(request.user.email)
-                )
-        
-        return response
+        """
+        O painel muda só o plano, o papel e o status (AD-049). Mudar o papel
+        ou desativar a conta pede a senha do administrador; mudar só o plano
+        e reativar a conta não pedem (ADMIN-17, ADMIN-19).
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        antes = User.objects.get(pk=instance.pk)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        dados = serializer.validated_data
+
+        muda_o_papel = dados.get('role', instance.role) != instance.role
+        desativa = instance.is_active and dados.get('is_active', True) is False
+        if muda_o_papel or desativa:
+            conferir_senha_do_admin(request)
+
+        self.perform_update(serializer)
+        # A conta desativada perde as sessões abertas (SESSAO-17)
+        if not instance.is_active:
+            encerrar_todas(instance)
+        registrar_mudancas(request, antes, instance)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        admin_password = request.data.get('admin_password')
+        conferir_senha_do_admin(request)
         permanent = request.data.get('permanent') is True
-        
-        if not admin_password:
-            return Response(
-                {"detail": "A senha do administrador é obrigatória para esta ação."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not request.user.check_password(admin_password):
-            return Response(
-                {"detail": "Senha do administrador incorreta."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+
             
         instance = self.get_object()
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
@@ -787,21 +818,21 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
 
         if permanent:
             # O mesmo caminho da rotina diária, na hora (LGPD-13)
-            return excluir_pelo_admin(instance)
+            return excluir_pelo_admin(request, instance)
         else:
+            estava_ativa = instance.is_active
             instance.is_active = False
             instance.save()
             # A conta arquivada perde as sessões abertas; na exclusão, elas
             # são apagadas em cascata com a conta (SESSAO-17)
             encerrar_todas(instance)
-            
-            SystemLog.objects.create(
-                user=instance,
-                action="ARCHIVE_ACCOUNT",
-                description="Conta arquivada pelo administrador.",
-                admin_name=_mask_email(request.user.email)
-            )
-            
+
+            if estava_ativa:
+                registrar(
+                    request.user, Acoes.CHANGE_STATUS, instance, antes=True, depois=False,
+                    descricao="Conta arquivada pelo administrador.",
+                )
+
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
@@ -822,53 +853,31 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
     permission_classes = (EhAdministrador,)
 
     def get(self, request):
-        total_users = User.objects.count()
-        premium_users = User.objects.filter(plan__in=['PREMIUM', 'PREMIUM_PLUS']).count()
-        
-        # Faturamento estimado (simulado com base nos planos)
-        # TODO: Integrar com Stripe/Gateway real futuramente
-        # Em Decimal e como texto na resposta (CONTRATO-16)
-        estimated_revenue = (
-            User.objects.filter(plan='PREMIUM').count() * Decimal('19.90') +
-            User.objects.filter(plan='PREMIUM_PLUS').count() * Decimal('39.90')
-        )
+        # Todos os cadastros, ativos e arquivados; a porcentagem de planos
+        # pagos usa a mesma base (ADMIN-07)
+        por_plano = dict(User.objects.order_by().values_list('plan').annotate(total=Count('pk')))
+        users_by_plan = {plano: por_plano.get(plano, 0) for plano, _ in User.PLAN_CHOICES}
+        total_users = sum(por_plano.values())
+        pagos = users_by_plan.get('PREMIUM', 0) + users_by_plan.get('PREMIUM_PLUS', 0)
+        porcentagem = (Decimal(pagos) * 100 / total_users) if total_users else Decimal('0')
 
-        # Taxa de conversão
-        conversion_rate = (premium_users / total_users * 100) if total_users > 0 else 0
-
-        # Usuários recentes para o feed de atividade
-        recent_users_query = User.objects.all().order_by('-created_at')[:5]
+        # Cadastros recentes para o feed de atividade
         recent_users = [{
             "id": str(u.id),
             "name": u.name,
             "email": u.email,
             "created_at": u.created_at
-        } for u in recent_users_query]
+        } for u in User.objects.order_by('-created_at')[:5]]
 
-        # Verificação de saúde real
-        import time
-        from django.db import connection
-        
-        db_start = time.time()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-            db_status = "Conectado"
-            db_latency = f"{int((time.time() - db_start) * 1000)}ms"
-        except Exception:
-            db_status = "Erro"
-            db_latency = "N/A"
-
+        # Sem receita nem conversão até existir cobrança (ADMIN-05); saúde
+        # medida na hora (ADMIN-02) e versão do deploy (ADMIN-03, AD-051)
         return Response({
             "total_users": total_users,
-            "premium_users": premium_users,
-            "estimated_revenue": dinheiro(estimated_revenue),
-            "conversion_rate": round(conversion_rate, 2),
+            "users_by_plan": users_by_plan,
+            "paid_users_percentage": str(porcentagem.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)),
             "recent_users": recent_users,
-            "status": "Operacional",
-            "db_status": db_status,
-            "db_latency": db_latency,
-            "api_version": "1.2.5"
+            "health": saude(),
+            "version": django_settings.VERSAO_DO_SISTEMA,
         })
 
 class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
@@ -902,20 +911,39 @@ class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):
 
         for key, value in settings_to_update.items():
             str_value = str(value).lower() if isinstance(value, bool) else str(value)
-            setting, created = GlobalSetting.objects.update_or_create(
-                key=key,
-                defaults={'value': str_value}
-            )
-            
-            # Log da ação
-            SystemLog.objects.create(
-                action="UPDATE_SETTING",
-                description=f"Configuração '{key}' atualizada para '{value}'.",
-                admin_name=_mask_email(request.user.email)
-            )
+            self.gravar(request, key, str_value)
 
         invalidar_manutencao()
         return Response({"message": "Configurações atualizadas com sucesso."})
+
+    def gravar(self, request, key, valor):
+        """
+        Grava uma configuração e registra no log só quando o valor muda, com
+        o antes e o depois (ADMIN-09). A linha fica travada até o fim da
+        requisição, para duas mudanças simultâneas gravarem o antes certo.
+        """
+        setting = GlobalSetting.objects.select_for_update().filter(key=key).first()
+        anterior = setting.value if setting is not None else None
+        if setting is None:
+            GlobalSetting.objects.create(key=key, value=valor)
+        elif anterior != valor:
+            setting.value = valor
+            setting.save(update_fields=['value', 'updated_at'])
+
+        if key == 'maintenance_mode':
+            # Sem a linha, a manutenção está desligada (SESSAO-24)
+            antes, depois = (anterior or '').lower() == 'true', valor.lower() == 'true'
+            if antes != depois:
+                texto = {True: 'ligado', False: 'desligado'}
+                registrar(
+                    request.user, Acoes.UPDATE_MAINTENANCE, antes=antes, depois=depois,
+                    descricao=f"Modo manutenção: {texto[antes]} -> {texto[depois]}.",
+                )
+        elif anterior != valor:
+            registrar(
+                request.user, Acoes.UPDATE_SETTING, antes=anterior, depois=valor,
+                descricao=f"Configuração '{key}' alterada.",
+            )
 
 def _texto_da_trava(chave, valor):
     """O valor de uma trava como aparece no log."""
@@ -966,10 +994,9 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
         setting.value = 'true' if ligada else 'false'
         setting.save(update_fields=['value', 'updated_at'])
         texto = {True: 'ligada', False: 'desligada'}
-        SystemLog.objects.create(
-            action="UPDATE_TESTING_UNLOCK",
-            description=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
-            admin_name=_mask_email(request.user.email),
+        registrar(
+            request.user, Acoes.UPDATE_TESTING_UNLOCK, antes=antes, depois=ligada,
+            descricao=f"Liberação para testes: {texto[antes]} -> {texto[ligada]}.",
         )
 
     def gravar_trava(self, request, dados):
@@ -992,26 +1019,58 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
             linha.limite = depois
         linha.atualizada_por = request.user
         linha.save()
-        SystemLog.objects.create(
-            action="UPDATE_PLAN_LOCK",
-            description=(
+        # Recurso: liberado (true) ou bloqueado (false); limite: o número, ou
+        # nulo para sem limite (ADMIN-09)
+        registrar(
+            request.user, Acoes.UPDATE_PLAN_LOCK if recurso else Acoes.UPDATE_PLAN_LIMIT,
+            antes=antes, depois=depois,
+            descricao=(
                 f"Trava '{chave}' no plano {plano}: "
                 f"{_texto_da_trava(chave, antes)} -> {_texto_da_trava(chave, depois)}."
             ),
-            admin_name=_mask_email(request.user.email),
         )
+
+
+ADMIN_INVALIDO = "Informe o identificador de um administrador."
+
+
+def _inicio_do_dia(dia):
+    """Meia-noite do dia no fuso de Brasília (AD-008)."""
+    return datetime.combine(dia, datetime.min.time(), tzinfo=BRASILIA)
 
 
 class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
-    Retorna todos os logs do sistema para auditoria global.
+    O log de auditoria, do registro mais recente para o mais antigo, filtrado
+    por `action`, `admin` (id do administrador), `inicio` e `fim`
+    (AAAA-MM-DD, dias de Brasília, os dois incluídos). Parâmetro vazio vale
+    como ausente. Somente leitura: escrita recebe 405 (ADMIN-12, ADMIN-13,
+    ADMIN-15).
     """
-    queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
     permission_classes = (EhAdministrador,)
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
-    parametros_permitidos = PAGINACAO
+    parametros_permitidos = PAGINACAO | {'action', 'admin', 'inicio', 'fim'}
+
+    def get_queryset(self):
+        params = self.request.query_params
+        queryset = SystemLog.objects.all()
+        if params.get('action'):
+            queryset = queryset.filter(action=params['action'])
+        if params.get('admin'):
+            try:
+                admin = uuid.UUID(params['admin'])
+            except ValueError:
+                raise exceptions.ValidationError({'admin': [ADMIN_INVALIDO]})
+            queryset = queryset.filter(admin_ref=admin)
+        if params.get('inicio'):
+            inicio = ler_data(params['inicio'], 'inicio')
+            queryset = queryset.filter(timestamp__gte=_inicio_do_dia(inicio))
+        if params.get('fim'):
+            fim = ler_data(params['fim'], 'fim')
+            queryset = queryset.filter(timestamp__lt=_inicio_do_dia(fim + timedelta(days=1)))
+        return queryset.order_by('-timestamp')
 
 class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     """
@@ -1049,66 +1108,62 @@ class AdminResetPasswordView(APIView):
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
+        conferir_senha_do_admin(request)
         serializer = AdminResetPasswordSerializer(data=request.data)
-        
+
         if serializer.is_valid():
-            admin_password = serializer.validated_data['admin_password']
             new_password = serializer.validated_data['new_password']
-            
-            if not request.user.check_password(admin_password):
-                return Response({"admin_password": ["Senha do administrador incorreta."]}, status=status.HTTP_403_FORBIDDEN)
-            
+
             user.set_password(new_password)
             user.save()
             # A senha nova derruba todas as sessões do usuário (SESSAO-16)
             encerrar_todas(user)
             
-            SystemLog.objects.create(
-                user=user,
-                action="RESET_PASSWORD",
-                description="Senha redefinida pelo administrador.",
-                admin_name=_mask_email(request.user.email)
-            )
-            
+            registrar(request.user, Acoes.RESET_PASSWORD, user, descricao="Senha redefinida pelo administrador.")
+
             return Response({"message": "Senha do usuário redefinida com sucesso."}, status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AdminClearUserDataView(APIView):
+LIMPEZA_FALHOU = {
+    "detail": "Não foi possível limpar os dados agora. Nada foi apagado; tente de novo mais tarde.",
+    "code": "clear_failed",
+}
+LIMPAR_OS_PROPRIOS_DADOS = "Você não pode limpar os próprios dados pelo painel."
+
+
+class AdminClearUserDataView(SemTransacaoPorRequisicao, APIView):
     """
-    Limpa todos os dados financeiros e cadastros (contas, transações, etc.) de um usuário,
-    mantendo apenas o seu login, senha e assinatura.
+    Limpa os dados do usuário e o deixa como um cadastro novo, tudo ou nada,
+    mantendo login, senha, perfil, plano e papel (ADMIN-21 a ADMIN-27).
+
+    Fica fora da transação por requisição, como a exclusão: as imagens das
+    metas saem do Cloudinary antes, e a limpeza no banco roda no próprio
+    `atomic`. Responde com as estatísticas novas do usuário.
     """
     permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
+        from reports.services import ReportService
+
         user = get_object_or_404(User, pk=pk)
-        admin_password = request.data.get('admin_password')
+        conferir_senha_do_admin(request)
+        # O administrador não limpa os próprios dados pelo painel (ADMIN-27)
+        if user.pk == request.user.pk:
+            raise AcaoDeAdminRecusada(LIMPAR_OS_PROPRIOS_DADOS, code='own_account')
 
-        if not admin_password or not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+        # Erro inesperado desfaz a limpeza e vira 500, sem o texto da exceção
+        # (ADMIN-25, CONTRATO-29). O CLEAR_DATA é gravado na mesma transação
+        try:
+            limpar_dados(user, request.user)
+        except LimpezaFalhou:
+            return Response(LIMPEZA_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        # Erro inesperado sobe e vira 500, sem o texto da exceção (CONTRATO-29)
-        # Apaga dados relacionados explicitamente
-        user.transactions.all().delete()
-        user.categories.all().delete()
-        user.recurring_transactions.all().delete()
-        user.tags.all().delete()
-        user.focused_monitors.all().delete()
-        user.goals.all().delete()
-        user.budgets.all().delete()
-        user.credit_cards.all().delete()
-        user.accounts.all().delete()
-
-        SystemLog.objects.create(
-            user=user,
-            action="CLEAR_DATA",
-            description="Todos os dados financeiros e configurações foram limpos pelo administrador.",
-            admin_name=_mask_email(request.user.email)
-        )
-
-        return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Dados do usuário limpos com sucesso.",
+            "financial_stats": ReportService.get_user_financial_stats(user),
+        }, status=status.HTTP_200_OK)
 
 class AdminHardDeleteView(APIView):
     """
@@ -1118,17 +1173,14 @@ class AdminHardDeleteView(APIView):
 
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        admin_password = request.data.get('admin_password')
-
-        if not admin_password or not request.user.check_password(admin_password):
-            return Response({"detail": "Senha do administrador inválida ou não fornecida."}, status=status.HTTP_403_FORBIDDEN)
+        conferir_senha_do_admin(request)
 
         # Nem o último administrador ativo nem a própria conta (PERM-05, PERM-06)
         recusar_remocao_de_admin(request, [user])
 
         # O mesmo caminho da rotina diária, na hora, e sem o nome na resposta
         # (LGPD-13, LGPD-21)
-        return excluir_pelo_admin(user, chave="message")
+        return excluir_pelo_admin(request, user, chave="message")
 
 # --- Termos e consentimento ---
 

@@ -386,16 +386,41 @@
 - **Date**: 2026-10-09
 - **Status**: active
 
+### AD-049
+- **Decision**: O log de auditoria grava por uma única função `registrar` (`api/auditoria.py`), com `admin_ref`, `usuario_ref`, os e-mails mascarados do administrador e do usuário, a ação em constantes de `Acoes` e os valores de antes e de depois em campos JSON; um registro por campo alterado.
+- **Reason**: o antes e o depois só existiam num texto livre escrito de um jeito em cada view, sem filtro por administrador e com ações que não deixavam registro.
+- **Trade-off**: uma migração no `SystemLog` e a troca de todas as chamadas diretas; os registros antigos ficam só com o texto.
+- **Scope**: painel-admin e toda ação futura de administrador.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-050
+- **Decision**: A limpeza dos dados apaga `MODELOS_DO_USUARIO` menos `MANTIDOS_NA_LIMPEZA`, com as imagens das metas removidas antes no Cloudinary e o usuário travado, e recria o padrão por `criar_padrao_do_cadastro` (`transactions/padrao.py`), a mesma função do cadastro.
+- **Reason**: o teste de completude da LGPD já obriga todo modelo novo a entrar na lista, então as classes, o plano do salário e os vínculos entram na limpeza sem mudança; o padrão do cadastro fica num só lugar.
+- **Trade-off**: quem cria um modelo ligado ao usuário precisa decidir se ele fica na limpeza; as features que mudam o cadastro novo mudam essa função.
+- **Scope**: painel-admin, classes-de-despesa, gestao-do-salario e vinculo-entre-transacoes.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-051
+- **Decision**: A versão do sistema vem de `APP_VERSION`; sem ela, dos 7 primeiros caracteres de `RENDER_GIT_COMMIT`; sem as duas, "desenvolvimento".
+- **Reason**: a versão estava fixa no código ("1.2.5") e ninguém a atualizava; o Render preenche o commit em todo deploy.
+- **Trade-off**: sem `APP_VERSION`, o painel mostra um hash em vez de um número de versão.
+- **Scope**: painel-admin.
+- **Date**: 2026-10-09
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `lgpd` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T23, mais o ajuste do toast no 403 dos termos) e verificado: `validation.md` com PASS, sensor leve com 8 de 8 mutações mortas
-- **Completed**: dados pessoais criptografados (AD-047), CPF pelos dígitos verificadores, máscaras no painel admin, imagens com nome aleatório, logs sem dados pessoais, log de auditoria sem nomes, pedido de exclusão com 30 dias e cancelamento no login, download dos dados em qualquer plano, exclusão definitiva com `RegistroDeExclusao`, rotina diária por GitHub Actions (AD-048), termos por versão com bloqueio até o aceite, consentimento no cadastro e nas configurações e conjunto anonimizado; backend com 1123 testes e frontend com 348
+- **Feature**: `painel-admin` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T17, mais as correções do verificador) e verificado: `validation.md` com PASS, 29 de 29 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: log de auditoria estruturado com filtros e antes e depois (AD-049), registro de toda ação de administrador, senha só nas ações sensíveis, limpeza tudo ou nada com o padrão do cadastro recriado (AD-050), exclusão pelo admin conferida de ponta a ponta, dashboard com planos e saúde medida, versão do deploy (AD-051), estatísticas pelas regras dos relatórios, e nas telas erro com "Tentar de novo", sem aba de assinatura, confirmação pelo e-mail e log filtrável; backend com 1202 testes e frontend com 385
 - **In-progress** (file:line): nenhum
-- **Deploy**: `FIELD_ENCRYPTION_KEY` precisa estar no Render antes do deploy que roda a migração 0014 (guardar uma cópia fora do Render); `ROTINA_DIARIA_TOKEN` no Render e os secrets `API_URL` e `ROTINA_DIARIA_TOKEN` no GitHub; a migração 0019 deixa todos os usuários sem aceite, então todos veem a tela de aceite no primeiro acesso
-- **Observações do verificador**: o teste independente de LGPD-21 (suíte inteira com captura de logs) não está automatizado; sem teste de que o admin criado por `create_admin.py` fica bloqueado até o aceite; textos novos da página de termos pedem revisão
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard; liquidez normaliza fevereiro por 27 dias; `get_user_financial_stats` do painel admin com as regras antigas
-- **Next step**: o usuário faz o push das duas branches `fix/lgpd-dados-pessoais-consentimento-e-exclusao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `painel-admin`
+- **Deploy**: migração `api/0020_log_de_auditoria_estruturado`; `APP_VERSION` opcional no Render (sem ela, o painel mostra o commit)
+- **Observações do verificador**: o filtro de administrador do log só lista os administradores ativos, até 100; a trava da limpeza é pega por um único teste
+- **Dependência registrada**: classes, plano do salário e vínculos entram na limpeza quando `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` criarem os modelos (AD-050); `classes-de-despesa` acrescenta as classes em `criar_padrao_do_cadastro`, com teste da limpeza
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; teste de logs na suíte inteira (LGPD-21)
+- **Next step**: o usuário faz o push das duas branches `fix/painel-admin-dados-reais-log-e-limpeza` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `classes-de-despesa`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/lgpd-dados-pessoais-consentimento-e-exclusao (backend e frontend)
+- **Branch**: fix/painel-admin-dados-reais-log-e-limpeza (backend e frontend)
