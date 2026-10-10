@@ -183,46 +183,46 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CLASSE-01 | P1: Classes do usuário | T2 | Implemented |
-| CLASSE-02 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-03 | P1: Classes do usuário | T8 | Implemented |
-| CLASSE-04 | P1: Classes do usuário | T3, T8 | Implemented |
-| CLASSE-05 | P1: Classes do usuário | T3, T8 | Implemented |
-| CLASSE-06 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-07 | P1: Classes do usuário | T3, T8 | Implemented |
-| CLASSE-08 | P1: Classes do usuário | T3, T8 | Implemented |
-| CLASSE-09 | P1: Classes do usuário | T8 | Implemented |
-| CLASSE-10 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-11 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-12 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-13 | P1: Classes do usuário | T3, T5 | Implemented |
-| CLASSE-14 | P1: Classes do usuário | T1 | Implemented |
-| CLASSE-15 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-16 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-17 | P1: Classe das categorias | T4, T9 | Implemented |
-| CLASSE-18 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-19 | P1: Classe das categorias | T9 | Implemented |
-| CLASSE-20 | P1: Classe das categorias | T9 | Implemented |
-| CLASSE-21 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-22 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-23 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-24 | P1: Classe das categorias | T2 | Implemented |
-| CLASSE-25 | P1: Classe das categorias | T1 | Implemented |
-| CLASSE-26 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-27 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-28 | P1: Divisão das despesas por classe | T5 | Implemented |
-| CLASSE-29 | P1: Divisão das despesas por classe | T5 | Implemented |
-| CLASSE-30 | P1: Divisão das despesas por classe | T5 | Implemented |
-| CLASSE-31 | P1: Divisão das despesas por classe | T10 | Implemented |
-| CLASSE-32 | P1: Divisão das despesas por classe | T10 | Implemented |
-| CLASSE-33 | P1: Divisão das despesas por classe | T10, T11 | Implemented |
-| CLASSE-34 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
-| CLASSE-35 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
-| CLASSE-36 | P1: Filtro e exportação por classe | T6 | Implemented |
-| CLASSE-37 | P1: Filtro e exportação por classe | T6 | Implemented |
-| CLASSE-38 | P1: Filtro e exportação por classe | T6 | Implemented |
-| CLASSE-39 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
-| CLASSE-40 | P1: Filtro e exportação por classe | T7 | Implemented |
+| CLASSE-01 | P1: Classes do usuário | T2 | Verified |
+| CLASSE-02 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-03 | P1: Classes do usuário | T8 | Verified |
+| CLASSE-04 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-05 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-06 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-07 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-08 | P1: Classes do usuário | T3, T8 | Verified |
+| CLASSE-09 | P1: Classes do usuário | T8 | Verified |
+| CLASSE-10 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-11 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-12 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-13 | P1: Classes do usuário | T3, T5 | Verified |
+| CLASSE-14 | P1: Classes do usuário | T1 | Verified |
+| CLASSE-15 | P1: Classes do usuário | T3 | Verified |
+| CLASSE-16 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-17 | P1: Classe das categorias | T4, T9 | Verified |
+| CLASSE-18 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-19 | P1: Classe das categorias | T9 | Verified |
+| CLASSE-20 | P1: Classe das categorias | T9 | Verified |
+| CLASSE-21 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-22 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-23 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-24 | P1: Classe das categorias | T2 | Verified |
+| CLASSE-25 | P1: Classe das categorias | T1 | Verified |
+| CLASSE-26 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-27 | P1: Classe das categorias | T4 | Verified |
+| CLASSE-28 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-29 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-30 | P1: Divisão das despesas por classe | T5 | Verified |
+| CLASSE-31 | P1: Divisão das despesas por classe | T10 | Verified |
+| CLASSE-32 | P1: Divisão das despesas por classe | T10 | Verified |
+| CLASSE-33 | P1: Divisão das despesas por classe | T10, T11 | Verified |
+| CLASSE-34 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-35 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-36 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-37 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-38 | P1: Filtro e exportação por classe | T6 | Verified |
+| CLASSE-39 | P1: Filtro e exportação por classe | T6, T11 | Verified |
+| CLASSE-40 | P1: Filtro e exportação por classe | T7 | Verified |
 
 **Coverage:** 40 total, 40 mapped to tasks, 0 unmapped ✓
 

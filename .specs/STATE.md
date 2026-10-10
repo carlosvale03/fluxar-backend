@@ -420,15 +420,14 @@
 
 ## Handoff
 
-- **Feature**: `painel-admin` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T17, mais as correções do verificador) e verificado: `validation.md` com PASS, 29 de 29 ACs, sensor leve com 8 de 8 mutações mortas
-- **Completed**: log de auditoria estruturado com filtros e antes e depois (AD-049), registro de toda ação de administrador, senha só nas ações sensíveis, limpeza tudo ou nada com o padrão do cadastro recriado (AD-050), exclusão pelo admin conferida de ponta a ponta, dashboard com planos e saúde medida, versão do deploy (AD-051), estatísticas pelas regras dos relatórios, e nas telas erro com "Tentar de novo", sem aba de assinatura, confirmação pelo e-mail e log filtrável; backend com 1202 testes e frontend com 385
+- **Feature**: `classes-de-despesa` concluída, nos dois repositórios (design e tasks aprovados no automático, a pedido do usuário)
+- **Phase / Task**: Execute concluído (T1 a T11, mais as correções do verificador) e verificado: `validation.md` com PASS, 40 de 40 ACs, sensor leve com 8 de 8 mutações mortas
+- **Completed**: modelo `ClasseDeDespesa` com implantação para os usuários existentes, Essencial e Dispensável no cadastro novo e na limpeza, API das classes com limite de 5 e nome único, classe das categorias com herança (AD-052), divisão por classe nos gráficos simples, filtro `classId` na lista e nas exportações, coluna Classe no XLSX, e nas telas o gerenciamento de classes, a classe nas categorias, o gráfico por classe e o filtro; backend com 1265 testes e frontend com 413
 - **In-progress** (file:line): nenhum
-- **Deploy**: migração `api/0020_log_de_auditoria_estruturado`; `APP_VERSION` opcional no Render (sem ela, o painel mostra o commit)
-- **Observações do verificador**: o filtro de administrador do log só lista os administradores ativos, até 100; a trava da limpeza é pega por um único teste
-- **Dependência registrada**: classes, plano do salário e vínculos entram na limpeza quando `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` criarem os modelos (AD-050); `classes-de-despesa` acrescenta as classes em `criar_padrao_do_cadastro`, com teste da limpeza
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; teste de logs na suíte inteira (LGPD-21)
-- **Next step**: o usuário faz o push das duas branches `fix/painel-admin-dados-reais-log-e-limpeza` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `classes-de-despesa`
+- **Deploy**: migração `transactions/0013_classes_de_despesa` cria as classes de todos os usuários e classifica as categorias principais com nome padrão
+- **Observações do verificador**: o filtro `sem_classe` tem uma cláusula de nulo redundante, mantida como documentação; o teste de desempenho da importação pode falhar com a máquina carregada
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; a exclusão de categoria não desativa as subcategorias; o frontend lê `is_default` das categorias, que o backend não envia
+- **Next step**: o usuário revisa, faz o push das duas branches `feat/classes-de-despesa-nas-categorias-e-relatorios` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `gestao-do-salario`
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: fix/painel-admin-dados-reais-log-e-limpeza (backend e frontend)
+- **Branch**: feat/classes-de-despesa-nas-categorias-e-relatorios (backend e frontend)

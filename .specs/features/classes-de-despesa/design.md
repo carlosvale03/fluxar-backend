@@ -1,7 +1,7 @@
 # Classes de despesa Design
 
 **Spec**: `.specs/features/classes-de-despesa/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 
