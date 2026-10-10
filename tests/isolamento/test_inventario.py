@@ -27,11 +27,14 @@ from rest_framework import serializers
 from rest_framework.relations import ManyRelatedField, RelatedField
 
 from core.fields import (
-    CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA,
+    CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA,
     TAG_NAO_ENCONTRADA, OwnedPrimaryKeyRelatedField,
 )
 
-MENSAGENS = {CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA}
+MENSAGENS = {
+    CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
+    CLASSE_NAO_ENCONTRADA,
+}
 
 # Serializers que nunca recebem dados da requisição, com o motivo.
 SO_LEITURA = {
@@ -47,6 +50,7 @@ ESPERADAS = {
     ('transactions.serializers.TransactionSerializer', 'tags'),
     ('transactions.serializers.TransactionSerializer', 'target_account_id'),
     ('transactions.serializers.CategorySerializer', 'parent'),
+    ('transactions.serializers.CategorySerializer', 'expense_class'),
     ('transactions.serializers.TransferSerializer', 'account_from'),
     ('transactions.serializers.TransferSerializer', 'account_to'),
     ('transactions.serializers.CreditCardExpenseSerializer', 'credit_card'),

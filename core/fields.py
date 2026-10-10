@@ -12,6 +12,7 @@ CONTA_NAO_ENCONTRADA = 'Conta não encontrada.'
 CARTAO_NAO_ENCONTRADO = 'Cartão não encontrado.'
 CATEGORIA_NAO_ENCONTRADA = 'Categoria não encontrada.'
 TAG_NAO_ENCONTRADA = 'Tag não encontrada.'
+CLASSE_NAO_ENCONTRADA = 'Classe não encontrada.'
 
 
 def _buscar(queryset, pk):

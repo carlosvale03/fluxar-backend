@@ -198,18 +198,18 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-13 | P1: Classes do usuário | T3 | In Progress |
 | CLASSE-14 | P1: Classes do usuário | T1 | Implemented |
 | CLASSE-15 | P1: Classes do usuário | T3 | Implemented |
-| CLASSE-16 | P1: Classe das categorias | - | Pending |
-| CLASSE-17 | P1: Classe das categorias | - | Pending |
-| CLASSE-18 | P1: Classe das categorias | - | Pending |
+| CLASSE-16 | P1: Classe das categorias | T4 | Implemented |
+| CLASSE-17 | P1: Classe das categorias | T4 | In Progress |
+| CLASSE-18 | P1: Classe das categorias | T4 | Implemented |
 | CLASSE-19 | P1: Classe das categorias | - | Pending |
 | CLASSE-20 | P1: Classe das categorias | - | Pending |
-| CLASSE-21 | P1: Classe das categorias | - | Pending |
-| CLASSE-22 | P1: Classe das categorias | - | Pending |
-| CLASSE-23 | P1: Classe das categorias | - | Pending |
+| CLASSE-21 | P1: Classe das categorias | T4 | Implemented |
+| CLASSE-22 | P1: Classe das categorias | T4 | Implemented |
+| CLASSE-23 | P1: Classe das categorias | T4 | Implemented |
 | CLASSE-24 | P1: Classe das categorias | T2 | Implemented |
 | CLASSE-25 | P1: Classe das categorias | T1 | Implemented |
-| CLASSE-26 | P1: Classe das categorias | - | Pending |
-| CLASSE-27 | P1: Classe das categorias | - | Pending |
+| CLASSE-26 | P1: Classe das categorias | T4 | Implemented |
+| CLASSE-27 | P1: Classe das categorias | T4 | Implemented |
 | CLASSE-28 | P1: Divisão das despesas por classe | - | Pending |
 | CLASSE-29 | P1: Divisão das despesas por classe | - | Pending |
 | CLASSE-30 | P1: Divisão das despesas por classe | - | Pending |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | - | Pending |
 | CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
 
-**Coverage:** 40 total, 15 mapped to tasks, 25 unmapped ⚠️ (backend em andamento)
+**Coverage:** 40 total, 23 mapped to tasks, 17 unmapped ⚠️ (backend em andamento)
 
 ---
 

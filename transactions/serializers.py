@@ -4,9 +4,10 @@ from dateutil.relativedelta import relativedelta
 from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransaction, CorrecaoDeCategoria
 from accounts.models import Account, CreditCard
 from .services import TransactionService
+from .classes import classes_efetivas
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
-    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA,
 )
 from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
@@ -77,6 +78,9 @@ class ClasseDeDespesaSerializer(serializers.ModelSerializer):
         return super().update(instance, self._com_nome_normalizado(validated_data))
 
 
+RECEITA_SEM_CLASSE = 'Categorias de receita não têm classe.'
+
+
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = serializers.SerializerMethodField()
     parent_name = serializers.ReadOnlyField(source='parent.name')
@@ -84,10 +88,21 @@ class CategorySerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
         required=False, allow_null=True,
     )
+    # Classe própria da categoria de despesa (CLASSE-17, CLASSE-23)
+    expense_class = OwnedPrimaryKeyRelatedField(
+        source='classe', queryset=ClasseDeDespesa.objects.all(), not_found_message=CLASSE_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
+    # Classe efetiva e se ela vem da mãe (CLASSE-16, CLASSE-18)
+    effective_class = serializers.SerializerMethodField()
+    class_inherited = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active']
+        fields = [
+            'id', 'name', 'icon', 'color', 'type', 'parent', 'parent_name', 'subcategories', 'is_active',
+            'expense_class', 'effective_class', 'class_inherited',
+        ]
         read_only_fields = ['id', 'subcategories', 'parent_name']
 
     def to_representation(self, instance):
@@ -98,10 +113,41 @@ class CategorySerializer(serializers.ModelSerializer):
             ret['parent_name'] = None
         return ret
 
+    def _classe_efetiva(self, obj):
+        """
+        `(classe, herdada)` pelo mapa do dono da categoria, guardado no
+        contexto para as subcategorias e as demais linhas não repetirem a
+        consulta (AD-052).
+        """
+        mapas = self.context.setdefault('_classes_efetivas', {})
+        if obj.user_id not in mapas:
+            mapas[obj.user_id] = classes_efetivas(obj.user_id) if obj.user_id else {}
+        return mapas[obj.user_id].get(obj.pk, (None, False))
+
+    def get_effective_class(self, obj):
+        classe, _ = self._classe_efetiva(obj)
+        if classe is None:
+            return None
+        return {'id': str(classe.pk), 'name': classe.nome, 'color': classe.cor}
+
+    def get_class_inherited(self, obj):
+        return self._classe_efetiva(obj)[1]
+
     def get_subcategories(self, obj):
         # Retorna subcategorias de 1º nível, só as do dono da categoria (ISOL-14)
         subs = obj.subcategories.filter(is_active=True, user_id=obj.user_id)
-        return CategorySerializer(subs, many=True).data
+        return CategorySerializer(subs, many=True, context=self.context).data
+
+    def validate(self, attrs):
+        tipo = attrs.get('type', self.instance.type if self.instance else 'EXPENSE')
+        if tipo == 'INCOME':
+            # Receita não tem classe (CLASSE-21); a despesa que vira receita
+            # perde a classe própria (CLASSE-22)
+            if attrs.get('classe') is not None:
+                raise serializers.ValidationError({'expense_class': [RECEITA_SEM_CLASSE]})
+            if self.instance is not None and self.instance.classe_id:
+                attrs['classe'] = None
+        return attrs
 
     def create(self, validated_data):
         user = self.context['request'].user

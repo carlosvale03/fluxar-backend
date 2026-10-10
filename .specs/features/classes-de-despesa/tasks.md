@@ -175,16 +175,17 @@ T10 → T11
 
 **Done when**:
 
-- [ ] Delivery dentro de Comida (Essencial) devolve `effective_class` Essencial com `class_inherited` verdadeiro; com classe própria Dispensável, só ela muda; sem a própria, volta a herdar
-- [ ] Mãe sem classe com subcategoria classificada: a subcategoria usa a dela e a mãe fica sem classe
-- [ ] Classe em Salário recebe 400 "Categorias de receita não têm classe."; despesa que vira receita perde a classe própria
-- [ ] Classe de outro usuário e id inexistente recebem a mesma resposta no campo `expense_class`
-- [ ] A importação cria categorias sem classe própria; categoria excluída mantém a classe no mapa
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Delivery dentro de Comida (Essencial) devolve `effective_class` Essencial com `class_inherited` verdadeiro; com classe própria Dispensável, só ela muda; sem a própria, volta a herdar
+- [x] Mãe sem classe com subcategoria classificada: a subcategoria usa a dela e a mãe fica sem classe
+- [x] Classe em Salário recebe 400 "Categorias de receita não têm classe."; despesa que vira receita perde a classe própria
+- [x] Classe de outro usuário e id inexistente recebem a mesma resposta no campo `expense_class`
+- [x] A importação cria categorias sem classe própria; categoria excluída mantém a classe no mapa
+- [x] Full gate passa
+- [x] Test count: 12 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: dá classe às categorias de despesa com herança da categoria-mãe`
 
