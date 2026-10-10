@@ -238,16 +238,17 @@ T10 → T11
 
 **Done when**:
 
-- [ ] Dispensável traz as despesas e compras no cartão de Doces e nenhuma receita, transferência ou pagamento de fatura
-- [ ] `sem_classe` traz a despesa sem categoria e a de categoria sem classe; junto com uma classe, traz os dois grupos
-- [ ] Dispensável com a categoria Comida não traz nada
-- [ ] Classe de outro usuário ou texto qualquer recebe 400 "Classe inválida no filtro: <valor>."
-- [ ] A exportação em XLSX e em PDF com o mesmo filtro traz as mesmas transações da lista
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 7 testes
+- [x] Dispensável traz as despesas e compras no cartão de Doces e nenhuma receita, transferência ou pagamento de fatura
+- [x] `sem_classe` traz a despesa sem categoria e a de categoria sem classe; junto com uma classe, traz os dois grupos
+- [x] Dispensável com a categoria Comida não traz nada
+- [x] Classe de outro usuário ou texto qualquer recebe 400 "Classe inválida no filtro: <valor>."
+- [x] A exportação em XLSX e em PDF com o mesmo filtro traz as mesmas transações da lista
+- [x] Full gate passa
+- [x] Test count: 9 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra as transações e a exportação por classe`
 

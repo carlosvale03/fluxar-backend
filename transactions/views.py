@@ -175,7 +175,7 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
     # Parâmetros conhecidos da lista (CONTRATO-14)
     parametros_permitidos = PAGINACAO | {
         'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
-        'type', 'categoryId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
+        'type', 'categoryId', 'classId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
         'import_batch', 'suggested_category',
     }
 
