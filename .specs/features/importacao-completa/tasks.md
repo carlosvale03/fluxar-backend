@@ -367,14 +367,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] Uma conta com nome igual vem vinculada; as outras vêm para criar com o tipo sugerido
-- [ ] Criar com saldo atual de R$ 1.234,56 manda `saldo_atual` "1234.56" no plano
-- [ ] No limite de contas, marcar mais uma para criar fica impedido e o aviso aparece
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Uma conta com nome igual vem vinculada; as outras vêm para criar com o tipo sugerido
+- [x] Criar com saldo atual de R$ 1.234,56 manda `saldo_atual` "1234.56" no plano
+- [x] No limite de contas, marcar mais uma para criar fica impedido e o aviso aparece
+- [x] Quick gate (frontend) passa
+- [x] Test count: 6 testes (`tests/importacao/assistente-contas.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite vincular ou criar as contas da planilha com o saldo atual`
 
