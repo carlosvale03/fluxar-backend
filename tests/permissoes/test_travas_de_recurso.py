@@ -3,8 +3,8 @@ Travas de recurso nas rotas (PERM-15, PERM-22 e PERM-26).
 
 Com a liberação para testes desligada, cada rota de um recurso fechado no
 plano do usuário responde 403 `{detail, code: "plan_locked", feature}`; com
-a trava aberta, a rota responde normalmente. `personalizar_dashboard`,
-`gestao_do_salario` e `vinculos` ainda não têm rota no backend. O dinheiro já
+a trava aberta, a rota responde normalmente. `personalizar_dashboard` e
+`vinculos` ainda não têm rota no backend. O dinheiro já
 lançado continua movimentável: o cofrinho de uma meta e o pagamento e o
 estorno de faturas existentes seguem liberados (PERM-22).
 """
@@ -23,7 +23,7 @@ from transactions.models import RecurringTransaction, Tag, Transaction
 from .base import RECURSOS, PermissoesTestCase, criar_admin, fechar, liberacao_de_testes
 
 BLOQUEADO = 'Este recurso não está disponível no seu plano.'
-SEM_ROTA = {'personalizar_dashboard', 'gestao_do_salario', 'vinculos'}
+SEM_ROTA = {'personalizar_dashboard', 'vinculos'}
 
 
 class TravasTestCase(PermissoesTestCase):
@@ -182,14 +182,21 @@ def chamadas_do_catalogo(t):
         'exportacao_xlsx': [
             ('exportar XLSX', lambda: c.get('/api/export/transactions/xls/'), 200),
         ],
+        'gestao_do_salario': [
+            ('modelos', lambda: c.get('/api/salary/models/'), 200),
+            ('plano', lambda: c.get('/api/salary/plan/'), 200),
+            ('salvar o plano', lambda: c.put('/api/salary/plan/', {'parts': []}, format='json'), 200),
+            ('simulação', lambda: c.post('/api/salary/simulate/', {'amount': '3000.00'}, format='json'), 200),
+        ],
     }
 
 
 class UmaRotaPorTravaTests(TravasTestCase):
     """Uma verificação por chave do catálogo com rota (PERM-15, PERM-26)."""
 
-    def test_o_catalogo_com_rota_tem_15_chaves(self):
+    def test_o_catalogo_com_rota_tem_16_chaves(self):
         self.assertEqual(set(chamadas_do_catalogo(self)), set(RECURSOS) - SEM_ROTA)
+        self.assertEqual(len(chamadas_do_catalogo(self)), 16)
 
     def test_relatorios_avancados(self):
         self.conferir('relatorios_avancados', chamadas_do_catalogo(self)['relatorios_avancados'])
@@ -235,6 +242,9 @@ class UmaRotaPorTravaTests(TravasTestCase):
 
     def test_exportacao_xlsx(self):
         self.conferir('exportacao_xlsx', chamadas_do_catalogo(self)['exportacao_xlsx'])
+
+    def test_gestao_do_salario(self):
+        self.conferir('gestao_do_salario', chamadas_do_catalogo(self)['gestao_do_salario'])
 
 
 class LiberacaoLigadaTests(TravasTestCase):

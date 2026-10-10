@@ -295,6 +295,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        # Gestão do salário: só ids e quantidades, sem valores nem nomes (SALARIO-18)
+        'salario': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         # Com o raiz no console, cada 4xx viraria uma linha; ficam só os 5xx
         'django.request': {
             'level': 'ERROR',

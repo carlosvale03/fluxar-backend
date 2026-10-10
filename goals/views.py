@@ -11,7 +11,7 @@ from accounts.models import Account
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.pagination import PaginacaoPadrao
 from core.mixins import UserQuerySetMixin
-from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
+from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA, META_NAO_ENCONTRADA
 from core.datas import hoje, ler_data
 from core.valores import dinheiro, ler_valor
 from .valores import saldo_livre
@@ -19,7 +19,6 @@ from .valores import saldo_livre
 CAMPO_OBRIGATORIO = 'Este campo é obrigatório.'
 META_COM_VALOR = 'Resgate o valor da meta antes de excluí-la.'
 TROCA_COM_VALOR = 'Resgate o valor da meta antes de trocar o cofrinho.'
-META_NAO_ENCONTRADA = 'Meta não encontrada.'
 
 
 def _data_do_movimento(texto):

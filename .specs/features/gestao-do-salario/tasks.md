@@ -145,18 +145,19 @@ T11 → T12
 
 **Done when**:
 
-- [ ] `GET models/` devolve os quatro modelos com a obra de origem
-- [ ] Salvar o 50/30/20 com Guardar na meta Viagem e reabrir devolve as partes na mesma ordem; mudar a ordem grava a nova
-- [ ] Percentuais somando 110% recebem 400 "A soma dos percentuais passa de 100%."; fixo de 0,00 e percentual de 100,01 recebem 400 no campo da parte
-- [ ] Conta de outro usuário ou inexistente recebe a mesma resposta; cofrinho, conta inativa e meta inativa recebem a mensagem do destino
-- [ ] Sem configuração, as categorias de salário trazem "Salário" e as subcategorias dela
-- [ ] Simular R$ 3.000,00 devolve a divisão e não cria transação
-- [ ] Com o recurso travado, as rotas recebem 403 `plan_locked`; nenhum log leva valores ou nomes
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 12 testes
+- [x] `GET models/` devolve os quatro modelos com a obra de origem
+- [x] Salvar o 50/30/20 com Guardar na meta Viagem e reabrir devolve as partes na mesma ordem; mudar a ordem grava a nova
+- [x] Percentuais somando 110% recebem 400 "A soma dos percentuais passa de 100%."; fixo de 0,00 e percentual de 100,01 recebem 400 no campo da parte
+- [x] Conta de outro usuário ou inexistente recebe a mesma resposta; cofrinho, conta inativa e meta inativa recebem a mensagem do destino
+- [x] Sem configuração, as categorias de salário trazem "Salário" e as subcategorias dela
+- [x] Simular R$ 3.000,00 devolve a divisão e não cria transação
+- [x] Com o recurso travado, as rotas recebem 403 `plan_locked`; nenhum log leva valores ou nomes
+- [x] Full gate passa
+- [x] Test count: 20 testes, mais a verificação da trava em `tests/permissoes/test_travas_de_recurso.py`
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite montar, salvar e simular o plano de divisão do salário`
 

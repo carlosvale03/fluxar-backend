@@ -28,12 +28,12 @@ from rest_framework.relations import ManyRelatedField, RelatedField
 
 from core.fields import (
     CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA,
-    TAG_NAO_ENCONTRADA, OwnedPrimaryKeyRelatedField,
+    META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO, TAG_NAO_ENCONTRADA, OwnedPrimaryKeyRelatedField,
 )
 
 MENSAGENS = {
     CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
-    CLASSE_NAO_ENCONTRADA,
+    CLASSE_NAO_ENCONTRADA, META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO,
 }
 
 # Serializers que nunca recebem dados da requisição, com o motivo.
@@ -62,6 +62,11 @@ ESPERADAS = {
     ('reports.serializers.FocusedMonitorItemSerializer', 'tag'),
     ('accounts.serializers.CreditCardSerializer', 'account_id'),
     ('accounts.serializers.InvoicePaymentSerializer', 'account_id'),
+    ('salario.serializers.PlanPartSerializer', 'account'),
+    ('salario.serializers.PlanPartSerializer', 'goal'),
+    ('salario.serializers.PlanSerializer', 'salary_categories'),
+    ('salario.serializers.DivisionPreviewSerializer', 'receipt'),
+    ('salario.serializers.DivisionCreateSerializer', 'receipt'),
 }
 
 

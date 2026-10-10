@@ -216,24 +216,24 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SALARIO-01 | P1: Plano de divisão | T3, T9 | Pending |
+| SALARIO-01 | P1: Plano de divisão | T3, T9 | In Progress |
 | SALARIO-02 | P1: Plano de divisão | T2 | Implemented |
 | SALARIO-03 | P1: Plano de divisão | T2 | Implemented |
-| SALARIO-04 | P1: Plano de divisão | T3, T9 | Pending |
-| SALARIO-05 | P1: Plano de divisão | T3, T9 | Pending |
+| SALARIO-04 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-05 | P1: Plano de divisão | T3, T9 | In Progress |
 | SALARIO-06 | P1: Plano de divisão | T2 | Implemented |
-| SALARIO-07 | P1: Plano de divisão | T3, T9 | Pending |
-| SALARIO-08 | P1: Plano de divisão | T3 | Pending |
-| SALARIO-09 | P1: Plano de divisão | T3 | Pending |
-| SALARIO-10 | P1: Plano de divisão | T3 | Pending |
-| SALARIO-11 | P1: Plano de divisão | T3 | Pending |
-| SALARIO-12 | P1: Plano de divisão | T3 | Pending |
-| SALARIO-13 | P1: Plano de divisão | T3, T9 | Pending |
-| SALARIO-14 | P1: Plano de divisão | T3, T9 | Pending |
+| SALARIO-07 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-08 | P1: Plano de divisão | T3 | Implemented |
+| SALARIO-09 | P1: Plano de divisão | T3 | Implemented |
+| SALARIO-10 | P1: Plano de divisão | T3 | Implemented |
+| SALARIO-11 | P1: Plano de divisão | T3 | Implemented |
+| SALARIO-12 | P1: Plano de divisão | T3 | Implemented |
+| SALARIO-13 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-14 | P1: Plano de divisão | T3, T9 | In Progress |
 | SALARIO-15 | P1: Plano de divisão | T8 | Pending |
-| SALARIO-16 | P1: Plano de divisão | T3, T8 | Pending |
+| SALARIO-16 | P1: Plano de divisão | T3, T8 | In Progress |
 | SALARIO-17 | P1: Plano de divisão | T1 | Implemented |
-| SALARIO-18 | P1: Plano de divisão | T3 | Pending |
+| SALARIO-18 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-19 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-20 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | Pending |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Pending |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 8 implemented, 1 in progress, 47 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 14 implemented, 8 in progress, 34 pending
 
 ---
 
