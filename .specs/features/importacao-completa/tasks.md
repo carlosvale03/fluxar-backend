@@ -217,15 +217,16 @@ T12 → T13
 
 **Done when**:
 
-- [ ] As contas criadas têm nome, tipo, instituição e cor do plano
-- [ ] Depois da gravação, o saldo de cada conta criada é o saldo atual informado, inclusive com transferências e pendentes
-- [ ] Três contas a criar com duas vagas no plano recebem 403 `plan_limit_reached` sem gravar nada
-- [ ] `conferir_limite` sem quantidade continua igual
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] As contas criadas têm nome, tipo, instituição e cor do plano
+- [x] Depois da gravação, o saldo de cada conta criada é o saldo atual informado, inclusive com transferências e pendentes
+- [x] Três contas a criar com duas vagas no plano recebem 403 `plan_limit_reached` sem gravar nada
+- [x] `conferir_limite` sem quantidade continua igual
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria as contas da planilha com o saldo atual informado`
 

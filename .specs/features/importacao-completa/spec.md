@@ -242,11 +242,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-22 | P1: Interpretação das linhas | T3 | Implemented |
 | IMPCOMP-23 | P1: Contas e saldo | T6 | Pending |
 | IMPCOMP-24 | P1: Contas e saldo | T6 | Pending |
-| IMPCOMP-25 | P1: Contas e saldo | T5 | Pending |
-| IMPCOMP-26 | P1: Contas e saldo | T5 | Pending |
-| IMPCOMP-27 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-25 | P1: Contas e saldo | T5 | Implemented |
+| IMPCOMP-26 | P1: Contas e saldo | T5 | Implemented |
+| IMPCOMP-27 | P1: Contas e saldo | T5 | Implemented |
 | IMPCOMP-28 | P1: Contas e saldo | T6 | Pending |
-| IMPCOMP-29 | P1: Contas e saldo | T5 | Pending |
+| IMPCOMP-29 | P1: Contas e saldo | T5 | Implemented |
 | IMPCOMP-30 | P1: Contas e saldo | T6 | Pending |
 | IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Implemented |
 | IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Implemented |
@@ -271,7 +271,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-51 | P1: Importação e resultado | T6 | Pending |
 | IMPCOMP-52 | P1: Importação e resultado | T6 | Pending |
 
-**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 26 implemented, 0 in progress, 26 pending
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 30 implemented, 0 in progress, 22 pending
 
 ---
 
