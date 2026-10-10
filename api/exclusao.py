@@ -57,12 +57,12 @@ class ExclusaoFalhou(Exception):
     """Uma etapa da exclusão definitiva falhou; nada foi apagado (LGPD-12)."""
 
 
-def _public_ids(usuario):
-    """O avatar e as imagens das metas do usuário no Cloudinary."""
+def _public_ids(usuario, incluir_avatar=True):
+    """O avatar, se pedido, e as imagens das metas do usuário no Cloudinary."""
     from goals.models import Goal
 
     ids = []
-    if usuario.avatar:
+    if incluir_avatar and usuario.avatar:
         ids.append(usuario.avatar.public_id)
     for meta in Goal.objects.filter(user=usuario):
         if meta.image:
@@ -70,8 +70,12 @@ def _public_ids(usuario):
     return [public_id for public_id in ids if public_id]
 
 
-def _remover_do_cloudinary(usuario):
-    for public_id in _public_ids(usuario):
+def _remover_do_cloudinary(usuario, incluir_avatar=True):
+    """
+    Remove as imagens do usuário no Cloudinary; a limpeza dos dados remove só
+    as das metas (ADMIN-24). Levanta `ExclusaoFalhou` na primeira falha.
+    """
+    for public_id in _public_ids(usuario, incluir_avatar):
         try:
             resultado = cloudinary.uploader.destroy(public_id)
         except Exception as erro:

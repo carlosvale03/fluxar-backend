@@ -273,18 +273,19 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Limpar um usuário com 300 transações, cartão com fatura paga, metas, orçamentos, tags e recorrências deixa só as categorias padrão e a Carteira
-- [ ] Login, senha, perfil, plano e papel continuam; o usuário entra depois da limpeza
-- [ ] As imagens das metas são removidas no Cloudinary; com o Cloudinary falhando, a resposta é 503 e nada é apagado
-- [ ] Com uma falha forçada depois de apagar parte dos dados, as 300 transações continuam lá
-- [ ] Duas limpezas simultâneas terminam com um único conjunto padrão
-- [ ] Limpar os próprios dados recebe 400
-- [ ] Todo modelo de `MODELOS_DO_USUARIO` está apagado ou em `MANTIDOS_NA_LIMPEZA`
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Limpar um usuário com 300 transações, cartão com fatura paga, metas, orçamentos, tags e recorrências deixa só as categorias padrão e a Carteira
+- [x] Login, senha, perfil, plano e papel continuam; o usuário entra depois da limpeza
+- [x] As imagens das metas são removidas no Cloudinary; com o Cloudinary falhando, a resposta é 503 e nada é apagado
+- [x] Com uma falha forçada depois de apagar parte dos dados, as 300 transações continuam lá
+- [x] Duas limpezas simultâneas terminam com um único conjunto padrão
+- [x] Limpar os próprios dados recebe 400
+- [x] Todo modelo de `MODELOS_DO_USUARIO` está apagado ou em `MANTIDOS_NA_LIMPEZA`
+- [x] Full gate passa
+- [x] Test count: 11 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: limpa os dados do usuário tudo ou nada e recria o padrão do cadastro`
 

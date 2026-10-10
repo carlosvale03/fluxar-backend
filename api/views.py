@@ -41,6 +41,7 @@ from .models import (
 )
 from .auditoria import Acoes, registrar
 from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
+from .limpeza import LimpezaFalhou, limpar_dados
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -1146,35 +1147,48 @@ class AdminResetPasswordView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AdminClearUserDataView(APIView):
+LIMPEZA_FALHOU = {
+    "detail": "Não foi possível limpar os dados agora. Nada foi apagado; tente de novo mais tarde.",
+    "code": "clear_failed",
+}
+LIMPAR_OS_PROPRIOS_DADOS = "Você não pode limpar os próprios dados pelo painel."
+
+
+class AdminClearUserDataView(SemTransacaoPorRequisicao, APIView):
     """
-    Limpa todos os dados financeiros e cadastros (contas, transações, etc.) de um usuário,
-    mantendo apenas o seu login, senha e assinatura.
+    Limpa os dados do usuário e o deixa como um cadastro novo, tudo ou nada,
+    mantendo login, senha, perfil, plano e papel (ADMIN-21 a ADMIN-27).
+
+    Fica fora da transação por requisição, como a exclusão: as imagens das
+    metas saem do Cloudinary antes, e a limpeza no banco roda no próprio
+    `atomic`. Responde com as estatísticas novas do usuário.
     """
     permission_classes = (EhAdministrador,)
 
     def post(self, request, pk):
+        from reports.services import ReportService
+
         user = get_object_or_404(User, pk=pk)
         conferir_senha_do_admin(request)
+        # O administrador não limpa os próprios dados pelo painel (ADMIN-27)
+        if user.pk == request.user.pk:
+            raise AcaoDeAdminRecusada(LIMPAR_OS_PROPRIOS_DADOS, code='own_account')
 
-        # Erro inesperado sobe e vira 500, sem o texto da exceção (CONTRATO-29)
-        # Apaga dados relacionados explicitamente
-        user.transactions.all().delete()
-        user.categories.all().delete()
-        user.recurring_transactions.all().delete()
-        user.tags.all().delete()
-        user.focused_monitors.all().delete()
-        user.goals.all().delete()
-        user.budgets.all().delete()
-        user.credit_cards.all().delete()
-        user.accounts.all().delete()
+        # Erro inesperado desfaz a limpeza e vira 500, sem o texto da exceção
+        # (ADMIN-25, CONTRATO-29)
+        try:
+            limpar_dados(user)
+        except LimpezaFalhou:
+            return Response(LIMPEZA_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         registrar(
             request.user, Acoes.CLEAR_DATA, user,
             descricao="Todos os dados financeiros e configurações foram limpos pelo administrador.",
         )
-
-        return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Dados do usuário limpos com sucesso.",
+            "financial_stats": ReportService.get_user_financial_stats(user),
+        }, status=status.HTTP_200_OK)
 
 class AdminHardDeleteView(APIView):
     """

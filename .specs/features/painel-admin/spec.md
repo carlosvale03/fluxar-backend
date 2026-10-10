@@ -176,13 +176,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-18 | P1: Operações sobre usuários | T5, T16 | In Progress |
 | ADMIN-19 | P1: Operações sobre usuários | T5, T16 | In Progress |
 | ADMIN-20 | P1: Operações sobre usuários | T16 | Pending |
-| ADMIN-21 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | In Progress |
-| ADMIN-23 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-24 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-25 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-26 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-27 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-21 | P1: Operações sobre usuários | T7 | Implemented |
+| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | Implemented |
+| ADMIN-23 | P1: Operações sobre usuários | T7 | Implemented |
+| ADMIN-24 | P1: Operações sobre usuários | T7 | Implemented |
+| ADMIN-25 | P1: Operações sobre usuários | T7 | Implemented |
+| ADMIN-26 | P1: Operações sobre usuários | T7 | Implemented |
+| ADMIN-27 | P1: Operações sobre usuários | T7 | Implemented |
 | ADMIN-28 | P1: Operações sobre usuários | T8 | Pending |
 | ADMIN-29 | P1: Operações sobre usuários | T10 | Pending |
 
