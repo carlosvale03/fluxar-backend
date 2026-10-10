@@ -410,6 +410,14 @@
 - **Date**: 2026-10-09
 - **Status**: active
 
+### AD-052
+- **Decision**: A classe efetiva de uma categoria nunca é gravada: `transactions/classes.py` monta por usuário um mapa categoria → classe efetiva (classe própria, senão a da mãe), usado pelos relatórios, pelo filtro `classId` (com `sem_classe`) e pela exportação; o nome da classe é único por usuário pela coluna `nome_normalizado`.
+- **Reason**: a herança muda com a classe, a mãe e a exclusão de classes; calcular na hora não deixa nada desatualizado e garante que a divisão por classe usa as mesmas transações da divisão por categoria.
+- **Trade-off**: cada relatório, filtro ou exportação com classe carrega as categorias do usuário.
+- **Scope**: classes-de-despesa e gestao-do-salario.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `painel-admin` concluída, nos dois repositórios
