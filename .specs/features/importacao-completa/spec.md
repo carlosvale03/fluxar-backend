@@ -230,7 +230,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-10 | P1: Leitura e detecção | T2 | Implemented |
 | IMPCOMP-11 | P1: Leitura e detecção | T2 | Implemented |
 | IMPCOMP-12 | P1: Leitura e detecção | T2 | Implemented |
-| IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | Pending |
+| IMPCOMP-13 | P1: Leitura e detecção | T6, T7 | In Progress |
 | IMPCOMP-14 | P1: Leitura e detecção | T2 | Implemented |
 | IMPCOMP-15 | P1: Interpretação das linhas | T3 | Implemented |
 | IMPCOMP-16 | P1: Interpretação das linhas | T3 | Implemented |
@@ -240,20 +240,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-20 | P1: Interpretação das linhas | T3 | Implemented |
 | IMPCOMP-21 | P1: Interpretação das linhas | T3 | Implemented |
 | IMPCOMP-22 | P1: Interpretação das linhas | T3 | Implemented |
-| IMPCOMP-23 | P1: Contas e saldo | T6 | Pending |
-| IMPCOMP-24 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-23 | P1: Contas e saldo | T6 | Implemented |
+| IMPCOMP-24 | P1: Contas e saldo | T6 | Implemented |
 | IMPCOMP-25 | P1: Contas e saldo | T5 | Implemented |
 | IMPCOMP-26 | P1: Contas e saldo | T5 | Implemented |
 | IMPCOMP-27 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-28 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-28 | P1: Contas e saldo | T6 | Implemented |
 | IMPCOMP-29 | P1: Contas e saldo | T5 | Implemented |
-| IMPCOMP-30 | P1: Contas e saldo | T6 | Pending |
+| IMPCOMP-30 | P1: Contas e saldo | T6 | Implemented |
 | IMPCOMP-31 | P1: Revisão e correção das linhas | T4 | Implemented |
 | IMPCOMP-32 | P1: Revisão e correção das linhas | T3 | Implemented |
 | IMPCOMP-33 | P1: Revisão e correção das linhas | T3 | Implemented |
 | IMPCOMP-34 | P1: Revisão e correção das linhas | T3 | Implemented |
-| IMPCOMP-35 | P1: Revisão e correção das linhas | T6 | Pending |
-| IMPCOMP-36 | P1: Revisão e correção das linhas | T6 | Pending |
+| IMPCOMP-35 | P1: Revisão e correção das linhas | T6 | Implemented |
+| IMPCOMP-36 | P1: Revisão e correção das linhas | T6 | Implemented |
 | IMPCOMP-37 | P1: Revisão e correção das linhas | T8 | Pending |
 | IMPCOMP-38 | P1: Revisão e correção das linhas | T9 | Pending |
 | IMPCOMP-39 | P1: Revisão e correção das linhas | T10 | Pending |
@@ -262,16 +262,16 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-42 | P1: Revisão e correção das linhas | T11 | Pending |
 | IMPCOMP-43 | P1: Revisão e correção das linhas | T8, T13 | Pending |
 | IMPCOMP-44 | P1: Revisão e correção das linhas | T9, T10 | Pending |
-| IMPCOMP-45 | P1: Importação e resultado | T6, T7 | Pending |
+| IMPCOMP-45 | P1: Importação e resultado | T6, T7 | In Progress |
 | IMPCOMP-46 | P1: Importação e resultado | T4 | Implemented |
-| IMPCOMP-47 | P1: Importação e resultado | T6 | Pending |
-| IMPCOMP-48 | P1: Importação e resultado | T6 | Pending |
+| IMPCOMP-47 | P1: Importação e resultado | T6 | Implemented |
+| IMPCOMP-48 | P1: Importação e resultado | T6 | Implemented |
 | IMPCOMP-49 | P1: Importação e resultado | T12 | Pending |
-| IMPCOMP-50 | P1: Importação e resultado | T6, T13 | Pending |
-| IMPCOMP-51 | P1: Importação e resultado | T6 | Pending |
-| IMPCOMP-52 | P1: Importação e resultado | T6 | Pending |
+| IMPCOMP-50 | P1: Importação e resultado | T6, T13 | In Progress |
+| IMPCOMP-51 | P1: Importação e resultado | T6 | Implemented |
+| IMPCOMP-52 | P1: Importação e resultado | T6 | Implemented |
 
-**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 30 implemented, 0 in progress, 22 pending
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 40 implemented, 3 in progress, 9 pending
 
 ---
 

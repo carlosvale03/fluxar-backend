@@ -1,10 +1,13 @@
 from django.urls import path
 from .views import (
     ImportOFXView, ImportSpreadsheetView, ImportSpreadsheetPreflightView,
+    ImportacaoAnaliseView, ImportacaoView,
     ExportTransactionsPDFView, ExportTransactionsXLSView
 )
 
 urlpatterns = [
+    path('import/', ImportacaoView.as_view(), name='import'),
+    path('import/analise/', ImportacaoAnaliseView.as_view(), name='import_analise'),
     path('import/ofx/', ImportOFXView.as_view(), name='import_ofx'),
     path('import/spreadsheet/', ImportSpreadsheetView.as_view(), name='import_spreadsheet'),
     path('import/spreadsheet/preflight/', ImportSpreadsheetPreflightView.as_view(), name='import_preflight'),

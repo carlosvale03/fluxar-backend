@@ -247,17 +247,18 @@ T12 → T13
 
 **Done when**:
 
-- [ ] A análise do Mobills devolve o plano, as linhas com estado e o resumo, sem gravar nada
-- [ ] A importação do Mobills com as contas a criar grava 57 receitas e despesas e 9 transferências, cria as 11 contas com o saldo informado e responde com `accounts_created`, `by_sheet` e `summary_rows`
-- [ ] Reimportar com as contas vinculadas grava zero e ignora tudo
-- [ ] Conta vinculada de outro usuário, conta a criar inválida, JSON inválido e chave de linha inexistente recebem 400 nos campos
-- [ ] Com `importacao_planilha` travada, 403; com `tags` travada, as linhas entram sem tags
-- [ ] Nenhum log leva nomes de conta, descrições ou valores
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 14 testes
+- [x] A análise do Mobills devolve o plano, as linhas com estado e o resumo, sem gravar nada
+- [x] A importação do Mobills com as contas a criar grava 57 receitas e despesas e 9 transferências, cria as 11 contas com o saldo informado e responde com `accounts_created`, `by_sheet` e `summary_rows`
+- [x] Reimportar com as contas vinculadas grava zero e ignora tudo
+- [x] Conta vinculada de outro usuário, conta a criar inválida, JSON inválido e chave de linha inexistente recebem 400 nos campos
+- [x] Com `importacao_planilha` travada, 403; com `tags` travada, as linhas entram sem tags
+- [x] Nenhum log leva nomes de conta, descrições ou valores
+- [x] Build gate passa
+- [x] Test count: 17 testes, mais 2 casos no catálogo de travas (`tests/permissoes/test_travas_de_recurso.py`)
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: analisa e importa a planilha completa com o plano revisado`
 
