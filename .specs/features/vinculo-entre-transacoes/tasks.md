@@ -330,14 +330,15 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Marcar "Com vínculo" envia `linked=true` na lista e na exportação
-- [ ] `/transacoes?principalId=<id>` envia o filtro
-- [ ] Com o recurso travado, o filtro aparece travado
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Marcar "Com vínculo" envia `linked=true` na lista e na exportação
+- [x] `/transacoes?principalId=<id>` envia o filtro
+- [x] Com o recurso travado, o filtro aparece travado
+- [x] Quick gate (frontend) passa
+- [x] Test count: 4 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra a lista e a exportação pelas transações com vínculo`
 
