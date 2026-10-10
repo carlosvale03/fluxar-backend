@@ -20,11 +20,18 @@ geração. As partes chegam na ordem do plano; cada uma é um objeto com `id`,
   dos ajustes, a última parte fixa da ordem é reduzida até zero, depois a
   anterior, e cada parte reduzida é marcada (SALARIO-27); as partes
   percentuais ficam com zero.
-- Uma parte gera transação quando tem valor, não fica na conta do salário e
-  não tem como destino a própria conta do recebimento (SALARIO-34). A parte
-  sem destino conta como uma saída, porque ainda precisa de um.
-- `total` é a soma das partes que geram transação, e `livre`, o que fica na
-  conta do salário: o recebido menos o total.
+- As saídas descontadas (`gastos`, `{id da parte: soma}`) saem do valor de
+  cada parte já calculado pelas regras acima (SALARIO-66, AD-057): a parte
+  transfere `max(0, valor - gasto)` e, quando o gasto passa do valor, fica
+  sem transação e informa quanto passou, sem mudar as outras (SALARIO-67).
+  O valor da parte, inclusive o ajustado, é o de antes do desconto.
+- Uma parte gera transação quando tem o que transferir, não fica na conta do
+  salário e não tem como destino a própria conta do recebimento
+  (SALARIO-34). A parte sem destino conta como uma saída, porque ainda
+  precisa de um.
+- `total` é a soma do que transferem as partes que geram transação, e
+  `livre`, o que fica na conta do salário: o recebido menos o total e menos
+  as saídas descontadas (SALARIO-72).
 """
 from dataclasses import dataclass, field
 from decimal import ROUND_DOWN, Decimal
@@ -48,6 +55,10 @@ class ItemCalculado:
     reduzida: bool = False
     ajustada: bool = False
     gera_transacao: bool = False
+    # Saídas descontadas da parte, o que ela ainda transfere e quanto passou (SALARIO-66, SALARIO-67)
+    gasto: Decimal = ZERO
+    transferir: Decimal = ZERO
+    passou: Decimal = ZERO
 
 
 @dataclass
@@ -84,9 +95,10 @@ def gera_transacao(parte, valor, conta_do_recebimento=None):
     return True
 
 
-def dividir(valor_recebido, partes, ajustes=None, conta_do_recebimento=None):
+def dividir(valor_recebido, partes, ajustes=None, conta_do_recebimento=None, gastos=None):
     """Divide `valor_recebido` entre as `partes`; veja o módulo."""
     ajustes = {str(chave): valor for chave, valor in (ajustes or {}).items()}
+    gastos = {str(chave): Decimal(valor) for chave, valor in (gastos or {}).items()}
     itens, fixos, percentuais = [], [], []
     for parte in partes:
         chave = str(parte.id) if getattr(parte, 'id', None) is not None else None
@@ -114,7 +126,13 @@ def dividir(valor_recebido, partes, ajustes=None, conta_do_recebimento=None):
     # Os percentuais somam no máximo 100% (SALARIO-08); a redução só protege o recebido
     reduzir(percentuais, sum((item.valor for item in percentuais), ZERO) - restante)
 
+    descontado = ZERO
     for item in itens:
-        item.gera_transacao = gera_transacao(item.parte, item.valor, conta_do_recebimento)
-    total = sum((item.valor for item in itens if item.gera_transacao), ZERO)
-    return Divisao(itens=itens, total=total, livre=valor_recebido - total)
+        chave = str(item.parte.id) if getattr(item.parte, 'id', None) is not None else None
+        item.gasto = gastos.get(chave, ZERO) if chave is not None else ZERO
+        descontado += item.gasto
+        item.transferir = max(ZERO, item.valor - item.gasto)
+        item.passou = max(ZERO, item.gasto - item.valor)
+        item.gera_transacao = gera_transacao(item.parte, item.transferir, conta_do_recebimento)
+    total = sum((item.transferir for item in itens if item.gera_transacao), ZERO)
+    return Divisao(itens=itens, total=total, livre=valor_recebido - total - descontado)

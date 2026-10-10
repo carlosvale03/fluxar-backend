@@ -143,12 +143,16 @@ class SalaryPendingView(APIView):
 
 
 class SalaryDivisionPreviewView(APIView):
-    """`POST /salary/divisions/preview/`: a revisão da divisão, sem gravar nada (SALARIO-29, SALARIO-30)."""
+    """
+    `POST /salary/divisions/preview/`: a revisão da divisão, sem gravar nada
+    (SALARIO-29, SALARIO-30), com as saídas desde o recebimento e a parte
+    sugerida para cada uma (SALARIO-64, SALARIO-65).
+    """
     permission_classes = PERMISSOES
 
     def post(self, request):
         dados = validar(DivisionPreviewSerializer, request)
-        return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments']))
+        return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments'], dados['outflows']))
 
 
 class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
@@ -185,7 +189,7 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
 
         dados = validar(DivisionCreateSerializer, request)
         registro, _ = divisao.gerar(
-            request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'],
+            request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'], dados['outflows'],
         )
         return Response(divisao.divisao_em_json(registro), status=status.HTTP_201_CREATED)
 

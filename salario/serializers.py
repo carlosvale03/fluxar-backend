@@ -126,12 +126,24 @@ class AdjustmentsField(serializers.DictField):
     child = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0'))
 
 
+class OutflowsField(serializers.DictField):
+    """
+    `{id da saída: id da parte | null}` (SALARIO-66). Os ids são conferidos
+    contra a lista de saídas e o plano em `salario.saidas.escolhidas`, para
+    que um id malformado receba a mesma mensagem de um inexistente
+    (SALARIO-69).
+    """
+    child = serializers.CharField(allow_null=True, allow_blank=True)
+
+
 class DivisionPreviewSerializer(serializers.Serializer):
-    """Revisão de um recebimento (SALARIO-29, SALARIO-30, SALARIO-40)."""
+    """Revisão de um recebimento (SALARIO-29, SALARIO-30, SALARIO-40, SALARIO-64)."""
     receipt = OwnedPrimaryKeyRelatedField(
         queryset=Transaction.objects.all(), not_found_message=RECEBIMENTO_NAO_ENCONTRADO,
     )
     adjustments = AdjustmentsField(required=False, default=dict)
+    # Sem `outflows`, nenhuma saída é descontada
+    outflows = OutflowsField(required=False, allow_null=True, default=dict)
 
 
 class DivisionCreateSerializer(DivisionPreviewSerializer):

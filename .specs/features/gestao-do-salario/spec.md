@@ -317,15 +317,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Verified |
-| SALARIO-64 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-65 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-66 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-67 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-68 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-69 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-70 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-64 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-65 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-66 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-67 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-68 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-69 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-70 | P1: Saídas desde o salário | refactor | Implemented |
 | SALARIO-71 | P1: Saídas desde o salário | refactor | Pending |
-| SALARIO-72 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-72 | P1: Saídas desde o salário | refactor | Implemented |
 | SALARIO-57 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-58 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-59 | P2: Ajuda para montar o plano | refactor | Pending |

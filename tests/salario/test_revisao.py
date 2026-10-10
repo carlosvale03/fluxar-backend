@@ -93,14 +93,15 @@ class RevisaoTests(SalarioTestCase):
             {'part_id': resposta.data['items'][0]['part_id'], 'name': 'Essenciais',
              'destination_type': 'SALARY_ACCOUNT', 'destination_name': 'Fica na conta do salário',
              'amount': '1500.00', 'reduced': False, 'adjusted': False, 'generates_transaction': False,
-             'origin_account': origem},
+             'origin_account': origem, 'spent': '0.00', 'transfer': '1500.00', 'exceeded': '0.00'},
             {'part_id': resposta.data['items'][1]['part_id'], 'name': 'Dispensáveis',
              'destination_type': 'SALARY_ACCOUNT', 'destination_name': 'Fica na conta do salário',
              'amount': '900.00', 'reduced': False, 'adjusted': False, 'generates_transaction': False,
-             'origin_account': origem},
+             'origin_account': origem, 'spent': '0.00', 'transfer': '900.00', 'exceeded': '0.00'},
             {'part_id': self.guardar_id, 'name': 'Guardar', 'destination_type': 'GOAL',
              'destination_name': 'Viagem A', 'amount': '600.00', 'reduced': False, 'adjusted': False,
-             'generates_transaction': True, 'origin_account': origem},
+             'generates_transaction': True, 'origin_account': origem,
+             'spent': '0.00', 'transfer': '600.00', 'exceeded': '0.00'},
         ])
         self.assertEqual(
             (resposta.data['total'], resposta.data['free'], resposta.data['date']),
