@@ -1,8 +1,10 @@
 """
 Filtros de vínculo na lista e nas exportações (VINCULO-20, VINCULO-29,
-VINCULO-30, VINCULO-32 e VINCULO-33).
+VINCULO-30, VINCULO-32 e VINCULO-33) e o filtro de valor da busca da
+principal (VINCULO-03).
 """
 import io
+from datetime import date, timedelta
 
 from django.core.cache import cache
 from openpyxl import load_workbook
@@ -88,6 +90,38 @@ class LinkedTests(FiltrosTestCase):
         resposta = self.client.get(URL_LISTA, {'linked': 'false'})
         self.assertEqual(resposta.status_code, 400)
         self.assertEqual(list(resposta.data), ['linked'])
+
+
+class ValorTests(FiltrosTestCase):
+    """VINCULO-03: a busca da principal pelo valor."""
+
+    def test_valor_acha_uma_despesa_antiga_atras_de_mais_de_100_recentes(self):
+        antiga = despesa(self.a, 'Teatro', '37.90', dia=date(2025, 1, 10))
+        inicio = date(2026, 9, 1)
+        for i in range(120):
+            despesa(self.a, f'Café {i}', '8.00', dia=inicio + timedelta(days=i % 30))
+        # Sem o filtro, a despesa antiga fica fora das 100 mais recentes
+        self.assertNotIn(str(antiga.pk), self.ids({'type': 'EXPENSE'}))
+
+        self.assertEqual(self.ids({'type': 'EXPENSE', 'amount': '37.90'}), {str(antiga.pk)})
+
+    def test_valor_invalido_recebe_400_no_campo(self):
+        for valor in ('abc', '0', '-5.00', '1.234'):
+            with self.subTest(valor=valor):
+                resposta = self.client.get(URL_LISTA, {'amount': valor})
+                self.assertEqual(resposta.status_code, 400)
+                self.assertEqual(resposta.data, {'amount': [f'Valor inválido no filtro: {valor}.']})
+        self.assertEqual(self.client.get(URL_XLSX, {'amount': 'abc'}).status_code, 400)
+
+    def test_compra_parcelada_aparece_pelo_total(self):
+        show = compra(self.a, 'Show', '300.00', parcelas=3, categoria=self.a.lazer)
+        compra(self.b, 'Show B', '300.00', parcelas=3)
+        parcelas = {str(t.pk) for t in show}
+
+        self.assertEqual(self.ids({'type': 'EXPENSE', 'amount': '300.00'}), parcelas)
+        # Pelo valor de uma parcela também
+        self.assertEqual(self.ids({'type': 'EXPENSE', 'amount': '100.00'}), parcelas)
+        self.assertEqual(self.ids({'type': 'EXPENSE', 'amount': '50.00'}), {str(self.cinema.pk)})
 
 
 class ExportacaoTests(FiltrosTestCase):
