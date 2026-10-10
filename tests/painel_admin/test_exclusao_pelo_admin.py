@@ -53,12 +53,15 @@ def criar_dados_pela_api(usuario):
         'amount': '300.00', 'date': '2026-09-16',
     }, 201)
     meta = Goal.objects.create(
-        user=usuario, name='Casa', target_amount=Decimal('10000.00'), account=cofrinho, image=IMAGEM_DA_META,
+        user=usuario, name='Casa', target_amount=Decimal('10000.00'), account=cofrinho,
     )
     for dia in ('2026-09-17', '2026-09-18'):
         post(f'/api/goals/{meta.pk}/deposit/', {
             'account_id': str(corrente.pk), 'amount': '50.00', 'date': dia,
         }, 200)
+    # A imagem entra depois dos aportes: a resposta do aporte monta o link da
+    # imagem, e o CI não configura o cloud_name do Cloudinary
+    Goal.objects.filter(pk=meta.pk).update(image=IMAGEM_DA_META)
 
     # Confere que o cenário existe antes da exclusão
     assert Transaction.objects.filter(user=usuario, credit_card=cartao).count() == 6
