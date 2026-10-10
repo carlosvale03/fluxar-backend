@@ -1,6 +1,9 @@
 # Gestão do salário Validation
 
-**Verdict: PASS** (depois da reverificação; a primeira verificação deu FAIL pelo gap 1, corrigido)
+**Verdict: PASS**
+**Result**: PASS
+
+PASS depois da reverificação; a primeira verificação deu FAIL pelo gap 1, corrigido.
 
 Verificação leve feita por um verificador independente (autor ≠ verificador): conferência das 56 ACs contra a spec e um sensor de discriminação com 9 mutações de comportamento, mais 2 variantes. Uma mutação se mostrou equivalente ao código original; as demais morreram. O backend cumpre as ACs com evidência. O verdict é FAIL por um gap de produto: a interface só oferece "Desfazer divisão" na tela de resultado logo depois da geração. Fechada essa tela, nenhuma API nem tela lista as divisões, e o usuário não consegue desfazer no dia seguinte, embora a spec dê 7 dias (SALARIO-45, SALARIO-46, SALARIO-49). Os demais gaps são de cobertura fina e de precisão da spec.
 
