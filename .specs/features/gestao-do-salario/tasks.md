@@ -305,14 +305,15 @@ T11 → T12
 
 **Done when**:
 
-- [ ] O menu tem "Gestão do salário"; com o recurso travado, a página mostra o aviso do plano
-- [ ] A página lista os salários a dividir com o botão de dividir
-- [ ] Mostra R$ 1.650,00 comprometidos e o aviso "Média de 1 mês" com um mês de histórico
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] O menu tem "Gestão do salário"; com o recurso travado, a página mostra o aviso do plano
+- [x] A página lista os salários a dividir com o botão de dividir
+- [x] Mostra R$ 1.650,00 comprometidos e o aviso "Média de 1 mês" com um mês de histórico
+- [x] Quick gate (frontend) passa
+- [x] Test count: 7 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria a página da gestão do salário com os salários a dividir e o histórico`
 

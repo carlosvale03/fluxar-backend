@@ -230,8 +230,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-12 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-13 | P1: Plano de divisão | T3, T9 | In Progress |
 | SALARIO-14 | P1: Plano de divisão | T3, T9 | In Progress |
-| SALARIO-15 | P1: Plano de divisão | T8 | Pending |
-| SALARIO-16 | P1: Plano de divisão | T3, T8 | In Progress |
+| SALARIO-15 | P1: Plano de divisão | T8 | Implemented |
+| SALARIO-16 | P1: Plano de divisão | T3, T8 | Implemented |
 | SALARIO-17 | P1: Plano de divisão | T1 | Implemented |
 | SALARIO-18 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-19 | P1: Aviso ao receber o salário | T12 | Pending |
@@ -239,7 +239,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | Pending |
 | SALARIO-22 | P1: Aviso ao receber o salário | T10 | Pending |
 | SALARIO-23 | P1: Aviso ao receber o salário | T12 | Pending |
-| SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | In Progress |
+| SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | Implemented |
 | SALARIO-25 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-26 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-27 | P1: Geração das transações | T2 | Implemented |
@@ -267,13 +267,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-49 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-50 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-51 | P1: Desfazer a divisão | T6 | Implemented |
-| SALARIO-52 | P1: Referências do mês e histórico | T7, T8 | In Progress |
-| SALARIO-53 | P1: Referências do mês e histórico | T7, T8 | In Progress |
+| SALARIO-52 | P1: Referências do mês e histórico | T7, T8 | Implemented |
+| SALARIO-53 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
-| SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | In Progress |
+| SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 31 implemented, 13 in progress, 12 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 37 implemented, 8 in progress, 11 pending
 
 ---
 
