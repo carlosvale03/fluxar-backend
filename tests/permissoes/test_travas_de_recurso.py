@@ -221,6 +221,7 @@ def chamadas_do_catalogo(t):
                 '/api/transactions/', {'principalId': str(t.despesa_avulsa("Cinema").pk)},
             ), 200),
             ('filtro com vínculo', lambda: c.get('/api/transactions/', {'linked': 'true'}), 200),
+            ('gastos puxados', lambda: c.get('/api/reports/linked-expenses/'), 200),
         ],
     }
 

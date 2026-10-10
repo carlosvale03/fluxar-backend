@@ -43,6 +43,7 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         'charts_advanced': frozenset({'period', 'days'}),
         'monthly_comparison': frozenset({'months', 'month', 'year'}),
         'tag_insights': frozenset({'tag_id', 'months'}),
+        'linked_expenses': frozenset({'month', 'year', 'period', 'days'}),
     }
 
     @action(detail=False, methods=['get'])
@@ -115,6 +116,17 @@ class ReportViewSet(ParametrosConhecidosMixin, viewsets.ViewSet):
         
         data = ReportService.get_tag_distribution(request.user, month, year, period_days=period)
         return Response(data)
+
+    @action(
+        detail=False, methods=['get'], url_path='linked-expenses',
+        permission_classes=[permissions.IsAuthenticated, RecursoLiberado('vinculos')],
+    )
+    def linked_expenses(self, request):
+        """Gastos puxados por categoria (VINCULO-34, VINCULO-35), travado pelo plano (VINCULO-20)."""
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+        period = request.query_params.get('period') or request.query_params.get('days')
+        return Response(ReportService.get_linked_expenses(request.user, month, year, period_days=period))
 
 
 

@@ -239,15 +239,16 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Três cinemas com transportes de R$ 60,00 no mês dão Lazer com R$ 180,00 puxados de Transporte
-- [ ] Transporte do mês seguinte ligado a um cinema deste mês entra no mês seguinte
-- [ ] Dependente sem categoria entra em "Sem categoria"; subcategoria entra na raiz
-- [ ] Mês sem vínculos devolve `groups` vazio; com o recurso travado, 403
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Três cinemas com transportes de R$ 60,00 no mês dão Lazer com R$ 180,00 puxados de Transporte
+- [x] Transporte do mês seguinte ligado a um cinema deste mês entra no mês seguinte
+- [x] Dependente sem categoria entra em "Sem categoria"; subcategoria entra na raiz
+- [x] Mês sem vínculos devolve `groups` vazio; com o recurso travado, 403
+- [x] Build gate passa
+- [x] Test count: 9 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra quanto cada categoria puxa de gastos em outras`
 

@@ -210,12 +210,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Pending |
 | VINCULO-32 | P1: Filtro de vinculadas | T5 | Implemented |
 | VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | In Progress |
-| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Pending |
-| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Pending |
+| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Implemented |
+| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Implemented |
 | VINCULO-36 | P1: Relatório de gastos puxados | T10 | Pending |
 | VINCULO-37 | P1: Relatório de gastos puxados | T10 | Pending |
 
-**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 22 implemented, 7 in progress, 8 pending
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 24 implemented, 7 in progress, 6 pending
 
 ---
 
