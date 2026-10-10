@@ -245,13 +245,14 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Um cadastro novo recebe as mesmas categorias, subcategorias e a conta Carteira de antes
-- [ ] Chamar a função num usuário sem dados cria o mesmo padrão
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] Um cadastro novo recebe as mesmas categorias, subcategorias e a conta Carteira de antes
+- [x] Chamar a função num usuário sem dados cria o mesmo padrão
+- [x] Quick gate passa
+- [x] Test count: 3 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `refactor: junta numa função o que um cadastro novo recebe`
 

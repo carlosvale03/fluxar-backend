@@ -177,7 +177,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-19 | P1: Operações sobre usuários | T5, T16 | In Progress |
 | ADMIN-20 | P1: Operações sobre usuários | T16 | Pending |
 | ADMIN-21 | P1: Operações sobre usuários | T7 | Pending |
-| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | Pending |
+| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | In Progress |
 | ADMIN-23 | P1: Operações sobre usuários | T7 | Pending |
 | ADMIN-24 | P1: Operações sobre usuários | T7 | Pending |
 | ADMIN-25 | P1: Operações sobre usuários | T7 | Pending |
