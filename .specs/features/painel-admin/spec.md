@@ -108,7 +108,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. **ADMIN-16** WHEN o administrador busca usuários THEN o sistema SHALL procurar pelo nome ou pelo e-mail e filtrar por plano, papel e status, na lista paginada de CONTRATO-02.
 2. **ADMIN-17** WHEN o administrador exclui uma conta, limpa os dados, redefine a senha, muda o papel ou desativa um usuário THEN o sistema SHALL exigir a senha do administrador.
 3. **ADMIN-18** IF a senha do administrador faltar ou estiver errada numa dessas ações THEN o sistema SHALL recusar com HTTP 403 e a mensagem "Senha do administrador incorreta." no campo da senha.
-4. **ADMIN-19** WHEN o administrador muda o plano de um usuário THEN o sistema SHALL aplicar a mudança sem pedir a senha.
+4. **ADMIN-19** WHEN o administrador muda o plano de um usuário ou reativa a conta dele THEN o sistema SHALL aplicar a mudança sem pedir a senha.
 5. **ADMIN-20** WHEN o administrador pede para limpar os dados ou excluir a conta de um usuário THEN a interface SHALL mostrar o que será apagado e só confirmar depois que ele digitar o e-mail do usuário.
 6. **ADMIN-21** WHEN o administrador limpa os dados de um usuário THEN o sistema SHALL apagar, numa única operação, transações, recorrências, contas, cartões e faturas, categorias, classes, tags, orçamentos, metas, monitores de foco, o plano da gestão do salário e os vínculos entre transações.
 7. **ADMIN-22** WHEN a limpeza termina THEN o sistema SHALL recriar o padrão de um cadastro novo: as classes Essencial e Dispensável (CLASSE-01), as categorias padrão com as classes iniciais (CLASSE-24) e a conta Carteira.
@@ -185,6 +185,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-27 | P1: Operações sobre usuários | T7 | Implemented |
 | ADMIN-28 | P1: Operações sobre usuários | T8 | Implemented |
 | ADMIN-29 | P1: Operações sobre usuários | T10 | Implemented |
+
+**Nota sobre ADMIN-21 e ADMIN-22:** as classes Essencial e Dispensável, o plano da gestão do salário e os vínculos entre transações ainda não existem no código. Eles entram na limpeza quando as specs `classes-de-despesa`, `gestao-do-salario` e `vinculo-entre-transacoes` criarem os seus modelos, pela estrutura da AD-050 (`MODELOS_DO_USUARIO` e a função única do padrão). A `classes-de-despesa` também acrescenta as classes a `criar_padrao_do_cadastro`, com um teste de limpeza.
 
 **Coverage:** 29 total, 29 mapped to tasks, 0 unmapped ✅
 
