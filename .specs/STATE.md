@@ -434,6 +434,14 @@
 - **Date**: 2026-10-10
 - **Status**: active
 
+### AD-055
+- **Decision**: A importação de planilha completa é sem estado: `POST /api/import/analise/` e `POST /api/import/` recebem o arquivo e o plano (abas, colunas, contas e correções de linha); a análise nunca grava nada. As contas novas são criadas na mesma requisição da importação, com `initial_balance` acertado depois da gravação para que o saldo seja o saldo atual informado pelo usuário.
+- **Reason**: nada fica guardado no servidor entre as chamadas, a importação é reproduzível a partir do plano, e o saldo das contas criadas bate com o banco sem o usuário calcular o saldo de antes da primeira transação.
+- **Trade-off**: o arquivo sobe a cada análise (até 5 MB), e o acerto do saldo é um passo a mais depois da gravação.
+- **Scope**: importacao-completa.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `vinculo-entre-transacoes` concluída, nos dois repositórios; com ela, todas as features da auditoria de 2026-09 estão implementadas
