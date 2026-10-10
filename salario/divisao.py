@@ -12,7 +12,7 @@ que soma o aporte só na meta escolhida (SALARIO-33, AD-028). Qualquer erro
 desfaz o lote inteiro (SALARIO-36).
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
@@ -279,6 +279,23 @@ def data_da_divisao(divisao):
 def prazo_para_desfazer(divisao):
     """O último dia em que a divisão ainda pode ser desfeita (SALARIO-49)."""
     return data_da_divisao(divisao) + timedelta(days=PRAZO_PARA_DESFAZER)
+
+
+def desfaziveis(usuario):
+    """
+    As divisões do usuário que ainda podem ser desfeitas: não desfeitas e
+    geradas há no máximo `PRAZO_PARA_DESFAZER` dias no calendário de Brasília
+    (`hoje() <= prazo_para_desfazer`), da mais recente para a mais antiga
+    (SALARIO-45, SALARIO-49).
+    """
+    primeiro_dia = hoje() - timedelta(days=PRAZO_PARA_DESFAZER)
+    inicio = datetime.combine(primeiro_dia, time.min, tzinfo=BRASILIA)
+    return (
+        DivisaoDoSalario.objects
+        .filter(user=usuario, desfeita_em__isnull=True, criada_em__gte=inicio)
+        .select_related('conta_de_origem', 'recebimento')
+        .order_by('-criada_em', '-pk')
+    )
 
 
 # --- Desfazer (SALARIO-46 a SALARIO-51) ---

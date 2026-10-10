@@ -6,13 +6,17 @@ from decimal import Decimal
 from unittest import mock
 
 from accounts.models import Account
+from api.models import TravaDePlano
+from core import travas
 from goals.models import Goal
 from goals.services import GoalService
 from salario.models import DivisaoDoSalario
+from tests.permissoes.base import fechar, liberacao_de_testes
 from transactions.models import Transaction
 
 from .base import (
-    URL_DIVISOES, URL_PENDENTES, SalarioTestCase, hoje_em, parte, receita, url_da_divisao, url_do_desfazer,
+    URL_DIVISOES, URL_PENDENTES, URL_PLANO, SalarioTestCase, hoje_em, parte, receita, url_da_divisao,
+    url_do_desfazer,
 )
 
 
@@ -186,3 +190,65 @@ class RecusasTests(DesfazerTestCase):
         self.assertEqual(self.geradas().count(), 4)
         self.assertIsNone(DivisaoDoSalario.objects.get(pk=self.divisao_id).desfeita_em)
         self.assertIsNone(self.client.get(url_da_divisao(self.divisao_id)).data['undone_at'])
+
+
+class DivisoesQueAindaPodemSerDesfeitasTests(DesfazerTestCase):
+    """`GET /salary/divisions/?undoable=true` (SALARIO-45, SALARIO-49)."""
+
+    def desfaziveis(self, dia=(2026, 10, 11)):
+        with hoje_em(*dia):
+            resposta = self.client.get(URL_DIVISOES, {'undoable': 'true'})
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        return resposta.data
+
+    def test_lista_a_divisao_no_formato_do_detalhe_ate_o_setimo_dia(self):
+        detalhe = self.client.get(url_da_divisao(self.divisao_id)).data
+
+        self.assertEqual(self.desfaziveis(), [detalhe])
+        self.assertEqual(self.desfaziveis(dia=(2026, 10, 17)), [detalhe])
+        self.assertEqual(detalhe['can_undo_until'], '2026-10-17')
+
+    def test_no_oitavo_dia_a_divisao_sai_da_lista(self):
+        self.assertEqual(self.desfaziveis(dia=(2026, 10, 18)), [])
+
+    def test_divisao_desfeita_sai_da_lista(self):
+        self.desfazer()
+
+        self.assertEqual(self.desfaziveis(), [])
+
+    def test_mais_recente_primeiro_e_sem_as_de_outro_usuario(self):
+        outro_salario = receita(self.a, data=date(2026, 10, 6))
+        with hoje_em(2026, 10, 12):
+            nova = self.client.post(URL_DIVISOES, {'receipt': str(outro_salario.pk)}, format='json')
+        self.assertEqual(nova.status_code, 201, nova.data)
+        self.client.force_authenticate(user=self.b.usuario)
+        with hoje_em(2026, 10, 12):
+            self.client.put(URL_PLANO, {'parts': [
+                parte('Reserva', 'FIXED', '100.00', 'ACCOUNT', account=self.b.poupanca),
+            ]}, format='json')
+            do_outro = self.client.post(URL_DIVISOES, {'receipt': str(receita(self.b).pk)}, format='json')
+        self.assertEqual(do_outro.status_code, 201, do_outro.data)
+        self.client.force_authenticate(user=self.a.usuario)
+
+        ids = [d['id'] for d in self.desfaziveis(dia=(2026, 10, 12))]
+
+        self.assertEqual(ids, [nova.data['id'], self.divisao_id])
+
+    def test_sem_undoable_true_e_com_parametro_desconhecido_recusa(self):
+        self.assertEqual(self.client.get(URL_DIVISOES).status_code, 400)
+        self.assertEqual(self.client.get(URL_DIVISOES, {'undoable': 'false'}).status_code, 400)
+        resposta = self.client.get(URL_DIVISOES, {'undoable': 'true', 'page': 2})
+        self.assertEqual(resposta.status_code, 400)
+        self.assertEqual(resposta.data['detail'], 'Filtro desconhecido: page.')
+
+    def test_com_o_recurso_travado_recebe_403(self):
+        liberacao_de_testes(False)
+        fechar('gestao_do_salario')
+        try:
+            resposta = self.client.get(URL_DIVISOES, {'undoable': 'true'})
+        finally:
+            TravaDePlano.objects.all().delete()
+            travas.invalidar()
+
+        self.assertEqual(resposta.status_code, 403)
+        self.assertEqual(resposta.data['code'], 'plan_locked')

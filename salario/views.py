@@ -11,6 +11,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.filtros import ParametrosConhecidosMixin
 from core.travas import RecursoLiberado
 from core.valores import dinheiro
 
@@ -24,6 +25,7 @@ from .serializers import (
 )
 
 PERMISSOES = [permissions.IsAuthenticated, RecursoLiberado('gestao_do_salario')]
+SO_DESFAZIVEIS = 'Use undoable=true: só as divisões que ainda podem ser desfeitas são listadas.'
 
 
 def validar(classe, request):
@@ -135,13 +137,24 @@ class SalaryDivisionPreviewView(APIView):
         return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments']))
 
 
-class SalaryDivisionsView(APIView):
+class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
     """
+    `GET /salary/divisions/?undoable=true`: as divisões que ainda podem ser
+    desfeitas, da mais recente para a mais antiga, para a tela oferecer o
+    desfazer depois de fechado o resultado (SALARIO-45, SALARIO-49). O
+    parâmetro é obrigatório: a rota não lista as demais divisões.
+
     `POST /salary/divisions/`: gera as transações da divisão de uma vez
     (SALARIO-32 a SALARIO-43). A repetição da mesma `idempotency_key`
     devolve a divisão já gravada, também com 201 (SALARIO-37).
     """
     permission_classes = PERMISSOES
+    parametros_permitidos = frozenset({'undoable'})
+
+    def get(self, request):
+        if request.query_params.get('undoable') != 'true':
+            raise ValidationError({'undoable': [SO_DESFAZIVEIS]})
+        return Response([divisao.divisao_em_json(registro) for registro in divisao.desfaziveis(request.user)])
 
     def post(self, request):
         # A repetição responde antes da validação: o recebimento pode ter
