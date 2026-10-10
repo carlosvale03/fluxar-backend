@@ -386,6 +386,30 @@
 - **Date**: 2026-10-09
 - **Status**: active
 
+### AD-049
+- **Decision**: O log de auditoria grava por uma única função `registrar` (`api/auditoria.py`), com `admin_ref`, `usuario_ref`, os e-mails mascarados do administrador e do usuário, a ação em constantes de `Acoes` e os valores de antes e de depois em campos JSON; um registro por campo alterado.
+- **Reason**: o antes e o depois só existiam num texto livre escrito de um jeito em cada view, sem filtro por administrador e com ações que não deixavam registro.
+- **Trade-off**: uma migração no `SystemLog` e a troca de todas as chamadas diretas; os registros antigos ficam só com o texto.
+- **Scope**: painel-admin e toda ação futura de administrador.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-050
+- **Decision**: A limpeza dos dados apaga `MODELOS_DO_USUARIO` menos `MANTIDOS_NA_LIMPEZA`, com as imagens das metas removidas antes no Cloudinary e o usuário travado, e recria o padrão por `criar_padrao_do_cadastro` (`transactions/padrao.py`), a mesma função do cadastro.
+- **Reason**: o teste de completude da LGPD já obriga todo modelo novo a entrar na lista, então as classes, o plano do salário e os vínculos entram na limpeza sem mudança; o padrão do cadastro fica num só lugar.
+- **Trade-off**: quem cria um modelo ligado ao usuário precisa decidir se ele fica na limpeza; as features que mudam o cadastro novo mudam essa função.
+- **Scope**: painel-admin, classes-de-despesa, gestao-do-salario e vinculo-entre-transacoes.
+- **Date**: 2026-10-09
+- **Status**: active
+
+### AD-051
+- **Decision**: A versão do sistema vem de `APP_VERSION`; sem ela, dos 7 primeiros caracteres de `RENDER_GIT_COMMIT`; sem as duas, "desenvolvimento".
+- **Reason**: a versão estava fixa no código ("1.2.5") e ninguém a atualizava; o Render preenche o commit em todo deploy.
+- **Trade-off**: sem `APP_VERSION`, o painel mostra um hash em vez de um número de versão.
+- **Scope**: painel-admin.
+- **Date**: 2026-10-09
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `lgpd` concluída, nos dois repositórios
