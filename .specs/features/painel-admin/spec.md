@@ -160,9 +160,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | In Progress |
 | ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | In Progress |
 | ADMIN-04 | P1: Telas sem dados falsos | T13 | Pending |
-| ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | In Progress |
+| ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | Implemented |
 | ADMIN-06 | P1: Telas sem dados falsos | T15 | Pending |
-| ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | In Progress |
+| ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | Implemented |
 | ADMIN-08 | P1: Log de auditoria | T2 | Implemented |
 | ADMIN-09 | P1: Log de auditoria | T3 | Implemented |
 | ADMIN-10 | P1: Log de auditoria | T1 | Implemented |

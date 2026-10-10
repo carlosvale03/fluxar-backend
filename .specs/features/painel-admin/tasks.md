@@ -426,14 +426,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] O dashboard mostra a contagem de cada plano e o rótulo "Usuários em planos pagos"
-- [ ] A saúde mostra a latência e a versão do banco da API, e o banco com erro quando vier "error"
-- [ ] Não aparecem "API HEALTH CHECK OK", "ASSINATURAS ATIVAS" nem receita
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O dashboard mostra a contagem de cada plano e o rótulo "Usuários em planos pagos"
+- [x] A saúde mostra a latência e a versão do banco da API, e o banco com erro quando vier "error"
+- [x] Não aparecem "API HEALTH CHECK OK", "ASSINATURAS ATIVAS" nem receita
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra no dashboard do admin os planos e a saúde medida`
 
