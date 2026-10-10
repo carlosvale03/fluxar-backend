@@ -177,10 +177,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | In Progress |
-| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | In Progress |
-| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Pending |
-| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | In Progress |
+| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Implemented |
+| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | Implemented |
+| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Implemented |
+| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | Implemented |
 | VINCULO-05 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-06 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-07 | P1: Criar e desfazer vínculos | T1 | Implemented |
@@ -196,8 +196,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Implemented |
 | VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | In Progress |
-| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | In Progress |
+| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | Implemented |
+| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | Implemented |
 | VINCULO-22 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-23 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-24 | P1: Custo total na principal | T7 | Implemented |
@@ -215,7 +215,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-36 | P1: Relatório de gastos puxados | T10 | Pending |
 | VINCULO-37 | P1: Relatório de gastos puxados | T10 | Pending |
 
-**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 26 implemented, 8 in progress, 3 pending
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 32 implemented, 3 in progress, 2 pending
 
 ---
 

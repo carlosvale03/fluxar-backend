@@ -300,15 +300,16 @@ T9 → T10
 
 **Done when**:
 
-- [ ] "Lançar gasto relacionado" envia `principal` na criação
-- [ ] A busca procura só despesas e compras no cartão e liga a escolhida
-- [ ] O 400 do vínculo aparece no toast
-- [ ] Com o recurso travado, lançar e vincular aparecem travados e desfazer funciona
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] "Lançar gasto relacionado" envia `principal` na criação
+- [x] A busca procura só despesas e compras no cartão e liga a escolhida
+- [x] O 400 do vínculo aparece no toast
+- [x] Com o recurso travado, lançar e vincular aparecem travados e desfazer funciona
+- [x] Quick gate (frontend) passa
+- [x] Test count: 8 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite lançar, vincular e desfazer gastos relacionados pela tela`
 
