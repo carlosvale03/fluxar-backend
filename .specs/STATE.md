@@ -426,6 +426,14 @@
 - **Date**: 2026-10-10
 - **Status**: active
 
+### AD-054
+- **Decision**: O vínculo entre transações é o campo `Transaction.principal` (`SET_NULL`), gravado na raiz da compra parcelada. As regras ficam em `transactions/vinculos.py`, que trava as duas raízes em ordem de id antes de conferir um nível só e os tipos; o custo total é calculado por página numa consulta agregada; o relatório de gastos puxados usa `regras.despesas` e a categoria raiz.
+- **Reason**: uma principal por dependente por construção; excluir a principal desfaz os vínculos sem apagar as dependentes; nenhum cálculo de saldo, fatura, orçamento ou total lê o campo, então o vínculo não muda nenhum deles.
+- **Trade-off**: o nível único é conferido no código, sob trava, e não por restrição do banco.
+- **Scope**: vinculo-entre-transacoes.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `gestao-do-salario` concluída, nos dois repositórios
