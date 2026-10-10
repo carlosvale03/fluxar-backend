@@ -216,20 +216,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SALARIO-01 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-01 | P1: Plano de divisão | T3, T9 | Implemented |
 | SALARIO-02 | P1: Plano de divisão | T2 | Implemented |
 | SALARIO-03 | P1: Plano de divisão | T2 | Implemented |
-| SALARIO-04 | P1: Plano de divisão | T3, T9 | In Progress |
-| SALARIO-05 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-04 | P1: Plano de divisão | T3, T9 | Implemented |
+| SALARIO-05 | P1: Plano de divisão | T3, T9 | Implemented |
 | SALARIO-06 | P1: Plano de divisão | T2 | Implemented |
-| SALARIO-07 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-07 | P1: Plano de divisão | T3, T9 | Implemented |
 | SALARIO-08 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-09 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-10 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-11 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-12 | P1: Plano de divisão | T3 | Implemented |
-| SALARIO-13 | P1: Plano de divisão | T3, T9 | In Progress |
-| SALARIO-14 | P1: Plano de divisão | T3, T9 | In Progress |
+| SALARIO-13 | P1: Plano de divisão | T3, T9 | Implemented |
+| SALARIO-14 | P1: Plano de divisão | T3, T9 | Implemented |
 | SALARIO-15 | P1: Plano de divisão | T8 | Implemented |
 | SALARIO-16 | P1: Plano de divisão | T3, T8 | Implemented |
 | SALARIO-17 | P1: Plano de divisão | T1 | Implemented |
@@ -269,11 +269,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-51 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-52 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 | SALARIO-53 | P1: Referências do mês e histórico | T7, T8 | Implemented |
-| SALARIO-54 | P1: Referências do mês e histórico | T9 | Pending |
-| SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
+| SALARIO-54 | P1: Referências do mês e histórico | T9 | Implemented |
+| SALARIO-55 | P1: Referências do mês e histórico | T9 | Implemented |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 37 implemented, 8 in progress, 11 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 45 implemented, 2 in progress, 9 pending
 
 ---
 

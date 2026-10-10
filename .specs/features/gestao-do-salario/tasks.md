@@ -334,16 +334,17 @@ T11 → T12
 
 **Done when**:
 
-- [ ] A escolha mostra Pague-se primeiro, 50/30/20, Seis potes e Personalizado com a obra
-- [ ] Escolher o 50/30/20 enche o editor com as três partes; subir uma parte muda a ordem enviada
-- [ ] Essenciais mostra "62,0% no seu histórico" com essenciais de 1.860 sobre salário de 3.000
-- [ ] A parte com a meta Viagem mostra quanto ela pede por mês
-- [ ] Simular R$ 3.000,00 mostra o valor de cada parte e o livre
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] A escolha mostra Pague-se primeiro, 50/30/20, Seis potes e Personalizado com a obra
+- [x] Escolher o 50/30/20 enche o editor com as três partes; subir uma parte muda a ordem enviada
+- [x] Essenciais mostra "62,0% no seu histórico" com essenciais de 1.860 sobre salário de 3.000
+- [x] A parte com a meta Viagem mostra quanto ela pede por mês
+- [x] Simular R$ 3.000,00 mostra o valor de cada parte e o livre
+- [x] Quick gate (frontend) passa
+- [x] Test count: 10 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite escolher o modelo e montar o plano de divisão do salário`
 
