@@ -94,15 +94,16 @@ T16 → T17
 
 **Done when**:
 
-- [ ] `registrar` grava o `admin_ref`, o `usuario_ref`, os dois e-mails mascarados, a ação e os valores de antes e depois
-- [ ] Nenhum registro gravado por `registrar` contém o nome nem o e-mail completo do administrador ou do usuário
-- [ ] Depois da exclusão definitiva do usuário, os registros sobre ele continuam com o `usuario_ref` e sem o `usuario_email`
-- [ ] A API do log devolve os campos novos
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] `registrar` grava o `admin_ref`, o `usuario_ref`, os dois e-mails mascarados, a ação e os valores de antes e depois
+- [x] Nenhum registro gravado por `registrar` contém o nome nem o e-mail completo do administrador ou do usuário
+- [x] Depois da exclusão definitiva do usuário, os registros sobre ele continuam com o `usuario_ref` e sem o `usuario_email`
+- [x] A API do log devolve os campos novos
+- [x] Build gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: guarda no log de auditoria quem fez, sobre quem e os valores de antes e depois`
 

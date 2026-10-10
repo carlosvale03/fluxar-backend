@@ -156,37 +156,37 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ADMIN-01 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-02 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-03 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-04 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-05 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-06 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-07 | P1: Telas sem dados falsos | - | Pending |
-| ADMIN-08 | P1: Log de auditoria | - | Pending |
-| ADMIN-09 | P1: Log de auditoria | - | Pending |
-| ADMIN-10 | P1: Log de auditoria | - | Pending |
-| ADMIN-11 | P1: Log de auditoria | - | Pending |
-| ADMIN-12 | P1: Log de auditoria | - | Pending |
-| ADMIN-13 | P1: Log de auditoria | - | Pending |
-| ADMIN-14 | P1: Log de auditoria | - | Pending |
-| ADMIN-15 | P1: Log de auditoria | - | Pending |
-| ADMIN-16 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-17 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-18 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-19 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-20 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-21 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-22 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-23 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-24 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-25 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-26 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-27 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-28 | P1: Operações sobre usuários | - | Pending |
-| ADMIN-29 | P1: Operações sobre usuários | - | Pending |
+| ADMIN-01 | P1: Telas sem dados falsos | T15 | Pending |
+| ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | Pending |
+| ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | Pending |
+| ADMIN-04 | P1: Telas sem dados falsos | T13 | Pending |
+| ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | Pending |
+| ADMIN-06 | P1: Telas sem dados falsos | T15 | Pending |
+| ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | Pending |
+| ADMIN-08 | P1: Log de auditoria | T2 | Pending |
+| ADMIN-09 | P1: Log de auditoria | T3 | Pending |
+| ADMIN-10 | P1: Log de auditoria | T1 | Implemented |
+| ADMIN-11 | P1: Log de auditoria | T1, T2 | In Progress |
+| ADMIN-12 | P1: Log de auditoria | T4, T14 | Pending |
+| ADMIN-13 | P1: Log de auditoria | T4, T14 | Pending |
+| ADMIN-14 | P1: Log de auditoria | T4, T14 | Pending |
+| ADMIN-15 | P1: Log de auditoria | T4 | Pending |
+| ADMIN-16 | P1: Operações sobre usuários | T11, T17 | Pending |
+| ADMIN-17 | P1: Operações sobre usuários | T5, T16 | Pending |
+| ADMIN-18 | P1: Operações sobre usuários | T5, T16 | Pending |
+| ADMIN-19 | P1: Operações sobre usuários | T5, T16 | Pending |
+| ADMIN-20 | P1: Operações sobre usuários | T16 | Pending |
+| ADMIN-21 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-22 | P1: Operações sobre usuários | T6, T7 | Pending |
+| ADMIN-23 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-24 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-25 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-26 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-27 | P1: Operações sobre usuários | T7 | Pending |
+| ADMIN-28 | P1: Operações sobre usuários | T8 | Pending |
+| ADMIN-29 | P1: Operações sobre usuários | T10 | Pending |
 
-**Coverage:** 29 total, 0 mapped to tasks, 29 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 29 total, 29 mapped to tasks, 0 unmapped ✅
 
 ---
 

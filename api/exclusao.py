@@ -14,6 +14,7 @@ from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
 
+from .auditoria import SISTEMA
 from .models import RegistroDeExclusao, SystemLog, User
 
 logger = logging.getLogger(__name__)
@@ -50,9 +51,6 @@ EXCECOES = (
     ('api.SystemLog', 'user'),
     ('api.TravaDePlano', 'atualizada_por'),
 )
-
-# `admin_name` dos registros que não são ações de administrador
-SISTEMA = 'Sistema'
 
 
 class ExclusaoFalhou(Exception):
@@ -109,6 +107,8 @@ def excluir_definitivamente(usuario, executor):
         logs.exclude(admin_name=SISTEMA).update(user=None, usuario_ref=usuario_id)
         logs.filter(admin_name=SISTEMA).delete()
         SystemLog.objects.filter(usuario_ref=usuario_id, user__isnull=True, admin_name=SISTEMA).delete()
+        # Sobre o usuário excluído fica só o id interno, sem o e-mail mascarado (ADMIN-11)
+        SystemLog.objects.filter(usuario_ref=usuario_id).update(usuario_email='')
         User.objects.get(pk=usuario_id).delete()
         RegistroDeExclusao.objects.get_or_create(
             usuario_id=usuario_id,

@@ -387,10 +387,24 @@ class ResetPasswordSerializer(serializers.Serializer):
         return value
 
 class SystemLogSerializer(serializers.ModelSerializer):
+    """
+    Um registro do log de auditoria (AD-049): quem fez e sobre quem, pelo id
+    interno e pelo e-mail mascarado, e os valores de antes e de depois.
+    """
+    admin_id = serializers.UUIDField(source='admin_ref', read_only=True)
+    admin_email = serializers.CharField(source='admin_name', read_only=True)
+    user_id = serializers.UUIDField(source='usuario_ref', read_only=True)
+    user_email = serializers.CharField(source='usuario_email', read_only=True)
+    before = serializers.JSONField(source='antes', read_only=True)
+    after = serializers.JSONField(source='depois', read_only=True)
+
     class Meta:
         from .models import SystemLog
         model = SystemLog
-        fields = ('id', 'action', 'description', 'admin_name', 'timestamp')
+        fields = (
+            'id', 'action', 'description', 'admin_id', 'admin_email', 'user_id', 'user_email',
+            'before', 'after', 'timestamp',
+        )
 
 class GlobalSettingSerializer(serializers.ModelSerializer):
     class Meta:
