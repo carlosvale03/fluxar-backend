@@ -74,7 +74,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 8. **VINCULO-08** IF o usuário tentar ligar uma transação a ela mesma THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Uma transação não pode ser vinculada a ela mesma."
 9. **VINCULO-09** WHEN o usuário liga a outra principal uma transação que já é dependente THEN o sistema SHALL trocar a principal dela, que continua com uma principal só.
 10. **VINCULO-10** WHEN o usuário liga uma dependente à principal que ela já tem THEN o sistema SHALL manter o vínculo como está, sem erro.
-11. **VINCULO-11** IF a principal ou a dependente for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 400 com o erro no campo e a mesma mensagem de um ID inexistente (AD-010).
+11. **VINCULO-11** IF a principal for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 400 com o erro no campo `principal` e a mesma mensagem de um ID inexistente; IF a dependente, que vem na URL, for de outro usuário ou não existir THEN o sistema SHALL responder HTTP 404, como as outras rotas de detalhe (AD-010).
 12. **VINCULO-12** WHEN o usuário escolhe uma parcela como principal ou dependente THEN o sistema SHALL vincular a compra inteira, representada pela primeira parcela.
 13. **VINCULO-13** WHEN o usuário vincula uma ocorrência de série recorrente THEN o sistema SHALL ligar só essa ocorrência, sem estender o vínculo às outras da série.
 14. **VINCULO-14** WHEN a transação principal é excluída THEN o sistema SHALL desfazer os vínculos das dependentes, sem excluí-las.
@@ -99,7 +99,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Why P1**: é o que a ideia pede: saber que o passeio custou R$ 95,00, e não R$ 50,00.
 
 **Acceptance Criteria**:
-1. **VINCULO-24** WHEN a interface mostra uma transação principal THEN a interface SHALL mostrar o custo total, que é o valor dela mais o das dependentes, e a lista das dependentes com descrição, categoria e valor.
+1. **VINCULO-24** WHEN a interface mostra uma transação principal THEN a interface SHALL mostrar o custo total, que é o valor dela mais o das dependentes, e a quantidade de dependentes; WHEN o usuário abre a principal THEN a interface SHALL mostrar a lista das dependentes com descrição, categoria e valor, que é a lista filtrada da VINCULO-31.
 2. **VINCULO-25** WHEN a interface mostra uma dependente THEN a interface SHALL indicar a principal dela, com a descrição e a data.
 3. **VINCULO-26** WHEN a API devolve uma transação THEN o sistema SHALL incluir a principal dela, se for dependente, e, se for principal, a quantidade de dependentes e o custo total.
 4. **VINCULO-27** WHEN a principal ou uma dependente é uma compra parcelada THEN o sistema SHALL usar no custo total a soma de todas as parcelas da compra.
@@ -177,45 +177,45 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VINCULO-01 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-02 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-03 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-04 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-05 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-06 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-07 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-08 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-09 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-10 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-11 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-12 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-13 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-14 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-15 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-16 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-17 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-18 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-19 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-20 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-21 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-22 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-23 | P1: Criar e desfazer vínculos | - | Pending |
-| VINCULO-24 | P1: Custo total na principal | - | Pending |
-| VINCULO-25 | P1: Custo total na principal | - | Pending |
-| VINCULO-26 | P1: Custo total na principal | - | Pending |
-| VINCULO-27 | P1: Custo total na principal | - | Pending |
-| VINCULO-28 | P1: Custo total na principal | - | Pending |
-| VINCULO-29 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-30 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-31 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-32 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-33 | P1: Filtro de vinculadas | - | Pending |
-| VINCULO-34 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-35 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-36 | P1: Relatório de gastos puxados | - | Pending |
-| VINCULO-37 | P1: Relatório de gastos puxados | - | Pending |
+| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Verified |
+| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | Verified |
+| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Verified |
+| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | Verified |
+| VINCULO-05 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-06 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-07 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-08 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-09 | P1: Criar e desfazer vínculos | T1, T2 | Verified |
+| VINCULO-10 | P1: Criar e desfazer vínculos | T1, T2 | Verified |
+| VINCULO-11 | P1: Criar e desfazer vínculos | T2 | Verified |
+| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | Verified |
+| VINCULO-13 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-14 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-15 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-16 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Verified |
+| VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | Verified |
+| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | Verified |
+| VINCULO-22 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-23 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-24 | P1: Custo total na principal | T7 | Verified |
+| VINCULO-25 | P1: Custo total na principal | T7 | Verified |
+| VINCULO-26 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-27 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-28 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-29 | P1: Filtro de vinculadas | T5 | Verified |
+| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | Verified |
+| VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Verified |
+| VINCULO-32 | P1: Filtro de vinculadas | T5 | Verified |
+| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | Verified |
+| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Verified |
+| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Verified |
+| VINCULO-36 | P1: Relatório de gastos puxados | T10 | Verified |
+| VINCULO-37 | P1: Relatório de gastos puxados | T10 | Verified |
 
-**Coverage:** 37 total, 0 mapped to tasks, 37 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 37 implemented, 0 in progress, 0 pending
 
 ---
 

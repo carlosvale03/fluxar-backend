@@ -7,13 +7,15 @@ usam `TIPOS_DE_DESPESA`: o mesmo filtro tem o mesmo significado nos três.
 """
 from uuid import UUID
 
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q, Sum
+from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
 from core.datas import ler_data
+from core.valores import ler_valor
 
 from .classes import SEM_CLASSE, mapa_de_classes
-from .models import Category, ClasseDeDespesa
+from .models import Category, ClasseDeDespesa, Transaction
 
 # "Despesas" inclui as compras no cartão (FIN-25)
 TIPOS_DE_DESPESA = ('EXPENSE', 'CREDIT_CARD')
@@ -22,6 +24,9 @@ TIPOS_DE_TRANSFERENCIA = ('TRANSFER_OUT', 'TRANSFER_IN')
 TIPO_INVALIDO = 'Tipo inválido. Use ALL, INCOME, EXPENSE ou TRANSFER.'
 LOTE_INVALIDO = 'Lote de importação inválido.'
 CLASSE_INVALIDA = 'Classe inválida no filtro: {valor}.'
+TRANSACAO_INVALIDA = 'Transação inválida no filtro: {valor}.'
+LIGADAS_INVALIDO = 'Use linked=true para ver só as transações com vínculo.'
+VALOR_INVALIDO_NO_FILTRO = 'Valor inválido no filtro: {valor}.'
 
 
 def categorias_com_descendentes(usuario, ids):
@@ -131,6 +136,9 @@ def filtrar_transacoes(qs, params, usuario):
     if params.get('search'):
         qs = qs.filter(description__icontains=params.get('search'))
 
+    if params.get('amount'):
+        qs = filtrar_por_valor(qs, params.get('amount'), usuario)
+
     # Só transações de série recorrente (CONTRATO-15)
     if params.get('is_recurring') == 'true':
         qs = qs.filter(recurring_source__isnull=False)
@@ -146,7 +154,80 @@ def filtrar_transacoes(qs, params, usuario):
     if params.get('suggested_category') == 'true':
         qs = qs.filter(categoria_sugerida=True)
 
+    qs = filtrar_por_vinculo(qs, params, usuario)
+
     tag_ids = params.getlist('tagIds')
     if tag_ids:
         qs = qs.filter(tags__id__in=tag_ids).distinct()
+    return qs
+
+
+def filtrar_por_valor(qs, texto, usuario):
+    """
+    Filtro `amount` (VINCULO-03): o valor no formato da API ("50.00"), lido
+    como o `amount` da criação (`ler_valor`); ilegível, zero, negativo ou
+    com mais de duas casas recebe 400 no campo.
+
+    Traz as transações com esse valor e as compras parceladas cujo total
+    (a soma das parcelas, agrupadas pela raiz) é esse valor; nessas, vêm a
+    raiz e todas as parcelas, como no `principalId`. Uma compra parcelada
+    também aparece pelo valor de uma parcela.
+    """
+    try:
+        valor = ler_valor(texto)
+    except ValidationError:
+        raise ValidationError({'amount': [VALOR_INVALIDO_NO_FILTRO.format(valor=texto)]})
+
+    compras = (
+        Transaction.objects.filter(user=usuario, is_installment=True)
+        .annotate(compra=Coalesce('parent_transaction_id', 'pk'))
+        .values('compra')
+        .annotate(total=Sum('amount'))
+        .filter(total=valor)
+        .values('compra')
+    )
+    return qs.filter(
+        Q(amount=valor) | Q(pk__in=compras) | Q(parent_transaction_id__in=compras)
+    )
+
+
+def filtrar_por_vinculo(qs, params, usuario):
+    """
+    Filtros do vínculo (VINCULO-29, VINCULO-30, VINCULO-32), com as parcelas
+    das compras envolvidas:
+    - `principalId`: a compra principal e as dependentes dela; id que não é
+      de uma transação do usuário recebe 400;
+    - `linked=true`: só as transações que são principais ou dependentes;
+      outro valor recebe 400.
+    Os dois dependem do recurso `vinculos` (VINCULO-20).
+    """
+    principal = params.get('principalId')
+    ligadas = params.get('linked')
+    if principal is None and ligadas is None:
+        return qs
+    from core.travas import exigir_recurso
+    exigir_recurso(usuario, 'vinculos')
+
+    if principal is not None:
+        alvo = None
+        if _uuid_valido(principal):
+            alvo = Transaction.objects.filter(user=usuario, pk=principal).values_list(
+                'pk', 'parent_transaction_id',
+            ).first()
+        if alvo is None:
+            raise ValidationError({'principalId': [TRANSACAO_INVALIDA.format(valor=principal)]})
+        raiz = alvo[1] or alvo[0]
+        qs = qs.filter(
+            Q(pk=raiz) | Q(parent_transaction_id=raiz)
+            | Q(principal_id=raiz) | Q(parent_transaction__principal_id=raiz)
+        )
+
+    if ligadas is not None:
+        if ligadas != 'true':
+            raise ValidationError({'linked': [LIGADAS_INVALIDO]})
+        qs = qs.filter(
+            Q(principal__isnull=False) | Q(parent_transaction__principal__isnull=False)
+            | Q(Exists(Transaction.objects.filter(principal_id=OuterRef('pk'))))
+            | Q(Exists(Transaction.objects.filter(principal_id=OuterRef('parent_transaction_id'))))
+        )
     return qs

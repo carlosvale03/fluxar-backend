@@ -204,10 +204,14 @@ class TransactionService:
 
     @staticmethod
     @transaction.atomic
-    def create_credit_card_expense(user, card, amount, date, description, category, tags=None, installments=1):
+    def create_credit_card_expense(
+        user, card, amount, date, description, category, tags=None, installments=1, principal=None,
+    ):
         """
         Cria despesa de Cartão de Crédito.
-        Suporta parcelamento (Installments).
+        Suporta parcelamento (Installments). Com `principal`, a compra nasce
+        como gasto relacionado, ligada pela raiz no mesmo `atomic`; a recusa
+        do vínculo desfaz a compra (VINCULO-01, VINCULO-12, VINCULO-18).
         """
         if installments < 1:
             raise ValidationError("Número de parcelas deve ser pelo menos 1.")
@@ -254,6 +258,11 @@ class TransactionService:
             if i == 0 and parcelado:
                 parent_txn = t
             transactions.append(t)
+
+        if principal is not None:
+            from .vinculos import vincular
+            vincular(transactions[0], principal)
+            transactions[0].refresh_from_db(fields=['principal'])
 
         return transactions
 

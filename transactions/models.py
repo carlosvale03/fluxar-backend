@@ -150,6 +150,14 @@ class Transaction(models.Model):
     # sem FK, como o `transfer_id`, para não ligar os apps em círculo
     divisao_do_salario = models.UUIDField(null=True, blank=True, db_index=True)
 
+    # Vínculo (AD-027, AD-054): a transação principal da qual esta é
+    # dependente, gravada na raiz da compra parcelada. Excluir a principal
+    # desfaz o vínculo e mantém a dependente (VINCULO-14). As regras ficam em
+    # `transactions/vinculos.py`.
+    principal = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='dependentes',
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -159,6 +167,11 @@ class Transaction(models.Model):
             models.UniqueConstraint(
                 fields=['account', 'fitid'], condition=models.Q(fitid__isnull=False),
                 name='fitid_unico_por_conta',
+            ),
+            # Uma transação não é principal de si mesma (VINCULO-08)
+            models.CheckConstraint(
+                condition=~models.Q(principal=models.F('id')),
+                name='transacao_nao_e_principal_de_si_mesma',
             ),
         ]
 

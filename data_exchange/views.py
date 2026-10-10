@@ -104,6 +104,10 @@ class ImportSpreadsheetView(views.APIView):
 # Parâmetros conhecidos da exportação (CONTRATO-14)
 PARAMETROS_DA_EXPORTACAO = frozenset({
     'accountId', 'categoryId', 'classId', 'type', 'startDate', 'endDate', 'tagIds', 'search',
+    # Filtros do vínculo, sem o vínculo no arquivo (VINCULO-33)
+    'principalId', 'linked',
+    # Valor, como na lista (VINCULO-03, AD-022)
+    'amount',
 })
 
 

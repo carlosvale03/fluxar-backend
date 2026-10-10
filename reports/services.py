@@ -71,6 +71,82 @@ def despesas_por_classe(user, start_date, end_date):
     ]
 
 
+# Gastos puxados: dependente ou principal sem categoria do usuário (VINCULO-34)
+SEM_CATEGORIA_NOME = 'Sem categoria'
+SEM_CATEGORIA_COR = '#CBD5E1'
+
+
+def _raizes_das_categorias(user):
+    """
+    `{id da categoria: categoria raiz}` das categorias do usuário, subindo a
+    árvore inteira. Categoria de outro usuário fica de fora e conta como sem
+    categoria (ISOL-15).
+    """
+    categorias = {c.pk: c for c in Category.objects.filter(user=user).only('pk', 'parent_id', 'name', 'color')}
+    raizes = {}
+    for pk, categoria in categorias.items():
+        atual, vistas = categoria, {pk}
+        while atual.parent_id in categorias and atual.parent_id not in vistas:
+            vistas.add(atual.parent_id)
+            atual = categorias[atual.parent_id]
+        raizes[pk] = atual
+    return raizes
+
+
+def gastos_puxados(user, start_date, end_date):
+    """
+    Quanto cada categoria raiz das principais puxa de gastos em cada
+    categoria raiz das dependentes (VINCULO-34). As dependentes entram pelas
+    regras das despesas, cada uma pela própria `report_date` (VINCULO-35);
+    uma parcela entra quando a raiz da compra dela tem principal. Do maior
+    total para o menor, com os valores em texto de duas casas.
+    """
+    dependentes = (
+        regras.despesas(user, start_date, end_date)
+        .filter(Q(principal__isnull=False) | Q(parent_transaction__principal__isnull=False))
+        .annotate(da_principal=Coalesce('principal', 'parent_transaction__principal'))
+        .order_by().values('da_principal', 'category_id').annotate(total=Sum('amount'))
+    )
+    linhas = list(dependentes)
+    categoria_da_principal = dict(
+        Transaction.objects.filter(user=user, pk__in={linha['da_principal'] for linha in linhas})
+        .values_list('pk', 'category_id')
+    )
+    raizes = _raizes_das_categorias(user)
+
+    grupos = {}
+    for linha in linhas:
+        de = raizes.get(categoria_da_principal.get(linha['da_principal']))
+        para = raizes.get(linha['category_id'])
+        grupo = grupos.setdefault(de.pk if de else None, {'categoria': de, 'total': Decimal('0.00'), 'puxados': {}})
+        grupo['total'] += linha['total']
+        puxado = grupo['puxados'].setdefault(para.pk if para else None, {'categoria': para, 'total': Decimal('0.00')})
+        puxado['total'] += linha['total']
+
+    def ordem(item):
+        return (-item['total'], item['categoria'] is None, item['categoria'].name if item['categoria'] else '')
+
+    def campos(categoria):
+        if categoria is None:
+            return {'category_id': None, 'category_name': SEM_CATEGORIA_NOME, 'color': SEM_CATEGORIA_COR}
+        return {
+            'category_id': str(categoria.pk), 'category_name': categoria.name,
+            'color': categoria.color or SEM_CATEGORIA_COR,
+        }
+
+    return [
+        {
+            **campos(grupo['categoria']),
+            'total': dinheiro(grupo['total']),
+            'pulled': [
+                {**campos(puxado['categoria']), 'amount': dinheiro(puxado['total'])}
+                for puxado in sorted(grupo['puxados'].values(), key=ordem)
+            ],
+        }
+        for grupo in sorted(grupos.values(), key=ordem)
+    ]
+
+
 class ReportService:
     @staticmethod
     def _get_date_range(period_days=None, month=None, year=None):
@@ -433,6 +509,21 @@ class ReportService:
                 'start_date': start_date.strftime('%Y-%m-%d'),
                 'end_date': end_date.strftime('%Y-%m-%d')
             }
+        }
+
+    @staticmethod
+    def get_linked_expenses(user, month=None, year=None, period_days=None):
+        """
+        Relatório de gastos puxados, com o período dos gráficos simples
+        (VINCULO-34, VINCULO-35).
+        """
+        start_date, end_date = ReportService._get_date_range(period_days, month, year)
+        return {
+            'groups': gastos_puxados(user, start_date, end_date),
+            'period': {
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d'),
+            },
         }
 
     @staticmethod

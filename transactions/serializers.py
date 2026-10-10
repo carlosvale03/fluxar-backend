@@ -5,9 +5,10 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from accounts.models import Account, CreditCard
 from .services import TransactionService
 from .classes import classes_efetivas
+from .vinculos import ListaComVinculos, dados_dos_vinculos, desfazer_vinculos, raiz_da_compra, vincular
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
-    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA,
+    CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, TRANSACAO_NAO_ENCONTRADA,
 )
 from core.travas import conferir_limite
 from core.valores import dinheiro, validar_valor_positivo
@@ -215,6 +216,13 @@ class TransactionSerializer(serializers.ModelSerializer):
     recurring_source = serializers.PrimaryKeyRelatedField(read_only=True)
     # Lote da importação e categoria sugerida pelo histórico (IMPORT-45, IMPORT-46)
     category_suggested = serializers.BooleanField(source='categoria_sugerida', read_only=True)
+    # A principal da compra, lida da raiz numa parcela (VINCULO-26). Na
+    # criação, lança a despesa como gasto relacionado (VINCULO-01); depois,
+    # o vínculo muda só pela rota `link`
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
 
     class Meta:
         model = Transaction
@@ -226,7 +234,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'is_installment', 'installment_number', 'installment_total',
             'transfer_id', 'related_transaction', 'target_account_id', 'update_scope',
             'is_recurring', 'frequency', 'recurring_source',
-            'import_batch', 'category_suggested',
+            'import_batch', 'category_suggested', 'principal',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -237,12 +245,15 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
         # Valor maior que zero, com até duas casas (SALDO-09)
         extra_kwargs = {'amount': {'validators': [validar_valor_positivo]}}
+        list_serializer_class = ListaComVinculos
 
     def to_representation(self, instance):
         """
         Injeta is_recurring e frequency no output baseado no recurring_source.
         """
         representation = super().to_representation(instance)
+        # Campos do vínculo, os da compra numa parcela (VINCULO-26, VINCULO-27)
+        representation.update(self._vinculo(instance))
 
         # Conta, categoria e tags de outro usuário não aparecem (ISOL-15)
         dono = instance.user_id
@@ -269,6 +280,18 @@ class TransactionSerializer(serializers.ModelSerializer):
             representation['frequency'] = None
             
         return representation
+
+    def _vinculo(self, obj):
+        """
+        `principal`, `principal_detail`, `dependents_count` e `total_cost` da
+        compra de `obj`. A lista calcula os de todas as linhas de uma vez em
+        `ListaComVinculos`; um objeto sozinho calcula só os dele.
+        """
+        dados = self.context.setdefault('_vinculos', {})
+        raiz = raiz_da_compra(obj)
+        if raiz not in dados:
+            dados.update(dados_dos_vinculos([obj]))
+        return dados[raiz]
 
     def get_signed_amount(self, obj):
         # Retorna negativo para saídas e positivo para entradas
@@ -348,6 +371,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         
         # Extrair tags
         tags = validated_data.pop('tags', [])
+        principal = validated_data.pop('principal', None)
         
         # Limpar campos virtuais
         validated_data.pop('target_account_id', None)
@@ -359,6 +383,12 @@ class TransactionSerializer(serializers.ModelSerializer):
         
         if tags:
             transaction.tags.set(tags)
+
+        # Gasto relacionado: o vínculo vai no mesmo `atomic`, e a recusa
+        # desfaz a criação (VINCULO-01, VINCULO-18). Só esta ocorrência se
+        # liga, nunca a série (VINCULO-13)
+        if principal is not None:
+            transaction.principal = vincular(transaction, principal).principal
             
         # 2. Lógica de Recorrência
         if is_recurring and frequency:
@@ -413,6 +443,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         scope = validated_data.pop('update_scope', 'SINGLE')
+        validated_data.pop('principal', None)
         for campo in ('is_recurring', 'frequency'):
             validated_data.pop(campo, None)
 
@@ -460,9 +491,14 @@ class TransactionSerializer(serializers.ModelSerializer):
         correcao = self._correcao_de_categoria(instance, validated_data)
         if correcao is not None:
             validated_data['categoria_sugerida'] = False
+        virou_receita = instance.type != 'INCOME' and validated_data.get('type') == 'INCOME'
         t = super().update(instance, validated_data)
         if correcao is not None:
             correcao.save()
+        # Receita não se vincula: a despesa que vira receita perde os vínculos (VINCULO-16)
+        if virou_receita:
+            desfazer_vinculos([t.pk], t.user_id)
+            t.principal = None
         
         if tags is not None:
             t.tags.set(tags)
@@ -503,6 +539,17 @@ class TransferSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=255, required=False, default="Transferência")
 
 
+class VinculoSerializer(serializers.Serializer):
+    """
+    Corpo de `POST /transactions/{id}/link/`: a principal, só do usuário da
+    requisição; a de outro usuário recebe a mesma mensagem de um id
+    inexistente (VINCULO-11, AD-010).
+    """
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+    )
+
+
 class CreditCardExpenseSerializer(serializers.Serializer):
     # Cartão excluído não recebe compra nova
     credit_card = OwnedPrimaryKeyRelatedField(
@@ -515,6 +562,11 @@ class CreditCardExpenseSerializer(serializers.Serializer):
         queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
     )
     installments = serializers.IntegerField(default=1, min_value=1)
+    # Gasto relacionado (VINCULO-01)
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
     tags = OwnedPrimaryKeyRelatedField(
         queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
         many=True, required=False,

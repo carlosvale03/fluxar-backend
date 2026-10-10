@@ -7,11 +7,12 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from .serializers import (
     TransactionSerializer, CategorySerializer, TagSerializer, ClasseDeDespesaSerializer,
     CLASSE_PADRAO_FIXA, LIMITE_DE_CLASSES, LIMITE_DE_CLASSES_ATINGIDO, NOME_DE_CLASSE_REPETIDO,
-    TransferSerializer, CreditCardExpenseSerializer,
+    TransferSerializer, CreditCardExpenseSerializer, VinculoSerializer,
     TIPOS_DO_ENDPOINT, TIPO_NAO_ALTERAVEL,
 )
 from .filtros import filtrar_transacoes
 from .services import COMPRA_EM_FATURA_PAGA, TransactionService, em_fatura_paga, grupo_da_compra
+from .vinculos import desfazer_vinculos, desvincular, vincular
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
 from core.travas import RecursoLiberado, conferir_limite, exigir_recurso
@@ -176,7 +177,7 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
     parametros_permitidos = PAGINACAO | {
         'accountId', 'credit_card', 'invoice', 'month', 'year', 'startDate', 'endDate',
         'type', 'categoryId', 'classId', 'tagIds', 'search', 'is_recurring', 'transfer_id',
-        'import_batch', 'suggested_category',
+        'import_batch', 'suggested_category', 'principalId', 'linked', 'amount',
     }
 
     def get_queryset(self):
@@ -205,6 +206,9 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             exigir_recurso(self.request.user, 'transacoes_recorrentes')
         if serializer.validated_data.get('tags'):
             exigir_recurso(self.request.user, 'tags')
+        # Lançar um gasto relacionado depende do plano (VINCULO-20)
+        if serializer.validated_data.get('principal') is not None:
+            exigir_recurso(self.request.user, 'vinculos')
         serializer.save()
 
     def perform_update(self, serializer):
@@ -270,6 +274,8 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             exigir_recurso(request.user, 'compras_parceladas')
         if data.get('tags'):
             exigir_recurso(request.user, 'tags')
+        if data.get('principal') is not None:
+            exigir_recurso(request.user, 'vinculos')
         
         txs = TransactionService.create_credit_card_expense(
             user=request.user,
@@ -279,7 +285,8 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             description=data['description'],
             category=data['category'],
             tags=data.get('tags'),
-            installments=data['installments']
+            installments=data['installments'],
+            principal=data.get('principal'),
         )
         
         # Serializar retorno (pode ser a primeira transação ou lista)
@@ -287,6 +294,27 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             TransactionSerializer(txs, many=True).data,
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=['post', 'delete'], url_path='link')
+    def link(self, request, pk=None):
+        """
+        `POST {principal}` liga a transação, ou troca a principal dela
+        (VINCULO-02, VINCULO-09, VINCULO-10), e depende do recurso `vinculos`
+        (VINCULO-20). `DELETE` desfaz o vínculo e fica liberado mesmo com o
+        recurso travado (VINCULO-04, VINCULO-21). As duas devolvem a
+        transação; a de outro usuário recebe 404 (VINCULO-11).
+        """
+        if request.method == 'POST':
+            exigir_recurso(request.user, 'vinculos')
+        transacao = self.get_object()
+        if request.method == 'DELETE':
+            desvincular(transacao)
+        else:
+            corpo = VinculoSerializer(data=request.data, context={'request': request})
+            corpo.is_valid(raise_exception=True)
+            vincular(transacao, corpo.validated_data['principal'])
+        transacao = Transaction.objects.get(pk=transacao.pk)
+        return Response(self.get_serializer(transacao).data)
 
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
@@ -373,7 +401,11 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             user=request.user, recurring_source=serie, status='PENDING',
         )
         contas = set(pendentes.values_list('account_id', flat=True))
+        ids = list(pendentes.values_list('pk', flat=True))
         updated_count = pendentes.update(**update_data)
+        # As ocorrências que viram receita perdem os vínculos (VINCULO-16)
+        if update_data.get('type') == 'INCOME':
+            desfazer_vinculos(ids, request.user.pk)
 
         for campo, valor in update_data.items():
             setattr(serie, campo, valor)

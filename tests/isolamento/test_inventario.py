@@ -28,12 +28,13 @@ from rest_framework.relations import ManyRelatedField, RelatedField
 
 from core.fields import (
     CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, CONTA_NAO_ENCONTRADA,
-    META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO, TAG_NAO_ENCONTRADA, OwnedPrimaryKeyRelatedField,
+    META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO, TAG_NAO_ENCONTRADA, TRANSACAO_NAO_ENCONTRADA,
+    OwnedPrimaryKeyRelatedField,
 )
 
 MENSAGENS = {
     CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO, CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA,
-    CLASSE_NAO_ENCONTRADA, META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO,
+    CLASSE_NAO_ENCONTRADA, META_NAO_ENCONTRADA, RECEBIMENTO_NAO_ENCONTRADO, TRANSACAO_NAO_ENCONTRADA,
 }
 
 # Serializers que nunca recebem dados da requisição, com o motivo.
@@ -49,6 +50,7 @@ ESPERADAS = {
     ('transactions.serializers.TransactionSerializer', 'category'),
     ('transactions.serializers.TransactionSerializer', 'tags'),
     ('transactions.serializers.TransactionSerializer', 'target_account_id'),
+    ('transactions.serializers.TransactionSerializer', 'principal'),
     ('transactions.serializers.CategorySerializer', 'parent'),
     ('transactions.serializers.CategorySerializer', 'expense_class'),
     ('transactions.serializers.TransferSerializer', 'account_from'),
@@ -56,6 +58,8 @@ ESPERADAS = {
     ('transactions.serializers.CreditCardExpenseSerializer', 'credit_card'),
     ('transactions.serializers.CreditCardExpenseSerializer', 'category'),
     ('transactions.serializers.CreditCardExpenseSerializer', 'tags'),
+    ('transactions.serializers.CreditCardExpenseSerializer', 'principal'),
+    ('transactions.serializers.VinculoSerializer', 'principal'),
     ('budgets.serializers.BudgetSerializer', 'category'),
     ('goals.serializers.GoalSerializer', 'account'),
     ('reports.serializers.FocusedMonitorItemSerializer', 'category'),
