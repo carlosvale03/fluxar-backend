@@ -177,43 +177,43 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Implemented |
-| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | Implemented |
-| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Implemented |
-| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | Implemented |
-| VINCULO-05 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-06 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-07 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-08 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-09 | P1: Criar e desfazer vínculos | T1, T2 | Implemented |
-| VINCULO-10 | P1: Criar e desfazer vínculos | T1, T2 | Implemented |
-| VINCULO-11 | P1: Criar e desfazer vínculos | T2 | Implemented |
-| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | Implemented |
-| VINCULO-13 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-14 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-15 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-16 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Implemented |
-| VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | Implemented |
-| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | Implemented |
-| VINCULO-22 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-23 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-24 | P1: Custo total na principal | T7 | Implemented |
-| VINCULO-25 | P1: Custo total na principal | T7 | Implemented |
-| VINCULO-26 | P1: Custo total na principal | T4 | Implemented |
-| VINCULO-27 | P1: Custo total na principal | T4 | Implemented |
-| VINCULO-28 | P1: Custo total na principal | T4 | Implemented |
-| VINCULO-29 | P1: Filtro de vinculadas | T5 | Implemented |
-| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | Implemented |
-| VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Implemented |
-| VINCULO-32 | P1: Filtro de vinculadas | T5 | Implemented |
-| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | Implemented |
-| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Implemented |
-| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Implemented |
-| VINCULO-36 | P1: Relatório de gastos puxados | T10 | Implemented |
-| VINCULO-37 | P1: Relatório de gastos puxados | T10 | Implemented |
+| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Verified |
+| VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | Verified |
+| VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Verified |
+| VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | Verified |
+| VINCULO-05 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-06 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-07 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-08 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-09 | P1: Criar e desfazer vínculos | T1, T2 | Verified |
+| VINCULO-10 | P1: Criar e desfazer vínculos | T1, T2 | Verified |
+| VINCULO-11 | P1: Criar e desfazer vínculos | T2 | Verified |
+| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | Verified |
+| VINCULO-13 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-14 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-15 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-16 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Verified |
+| VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | Verified |
+| VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | Verified |
+| VINCULO-22 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-23 | P1: Criar e desfazer vínculos | T1 | Verified |
+| VINCULO-24 | P1: Custo total na principal | T7 | Verified |
+| VINCULO-25 | P1: Custo total na principal | T7 | Verified |
+| VINCULO-26 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-27 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-28 | P1: Custo total na principal | T4 | Verified |
+| VINCULO-29 | P1: Filtro de vinculadas | T5 | Verified |
+| VINCULO-30 | P1: Filtro de vinculadas | T5, T9 | Verified |
+| VINCULO-31 | P1: Filtro de vinculadas | T7, T9 | Verified |
+| VINCULO-32 | P1: Filtro de vinculadas | T5 | Verified |
+| VINCULO-33 | P1: Filtro de vinculadas | T5, T9 | Verified |
+| VINCULO-34 | P1: Relatório de gastos puxados | T6 | Verified |
+| VINCULO-35 | P1: Relatório de gastos puxados | T6 | Verified |
+| VINCULO-36 | P1: Relatório de gastos puxados | T10 | Verified |
+| VINCULO-37 | P1: Relatório de gastos puxados | T10 | Verified |
 
 **Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 37 implemented, 0 in progress, 0 pending
 

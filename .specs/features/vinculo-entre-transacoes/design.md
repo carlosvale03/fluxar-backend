@@ -1,7 +1,7 @@
 # Vínculo entre transações Design
 
 **Spec**: `.specs/features/vinculo-entre-transacoes/spec.md`
-**Status**: Approved
+**Status**: Implemented
 
 ---
 

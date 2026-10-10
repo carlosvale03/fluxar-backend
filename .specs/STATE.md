@@ -436,14 +436,14 @@
 
 ## Handoff
 
-- **Feature**: `gestao-do-salario` concluída, nos dois repositórios
-- **Phase / Task**: Execute concluído (T1 a T12, mais as correções do verificador) e verificado: `validation.md` com PASS depois da reverificação (a primeira deu FAIL por falta de desfazer depois de fechar o resultado, corrigido com a lista de divisões recentes)
-- **Completed**: app `salario` (AD-053) com plano, modelos da literatura, cálculo com arredondamento para baixo e redução a partir da última parte, simulação, salários a dividir, revisão com ajustes, geração tudo ou nada e idempotente, desfazer em até 7 dias com a lista de divisões recentes e referências do mês; nas telas, a página `/salario`, a escolha do modelo, o editor, a revisão com confirmação, o desfazer e o aviso ao lançar ou efetivar o salário; backend com 1363 testes e frontend com 454
+- **Feature**: `vinculo-entre-transacoes` concluída, nos dois repositórios; com ela, todas as features da auditoria de 2026-09 estão implementadas
+- **Phase / Task**: Execute concluído (T1 a T10, mais as correções do verificador) e verificado: `validation.md` com PASS depois da reverificação (a primeira deu FAIL pela busca por valor só nas 100 despesas mais recentes, corrigido com o filtro `amount`)
+- **Completed**: campo `Transaction.principal` na raiz da compra (AD-054), regras de um nível só sob trava, rotas de vincular e desfazer, gasto relacionado na criação, custo total e principal na API, filtros `principalId`, `linked` e `amount` na lista e nas exportações, relatório de gastos puxados; nas telas, custo total e "Por causa de", ações de lançar, vincular e desfazer, filtro "Com vínculo" e a seção "Gastos puxados"; backend com 1431 testes e frontend com 477
 - **In-progress** (file:line): nenhum
-- **Deploy**: migrações `transactions/0014_divisao_do_salario` e `salario/0001_initial`; o recurso `gestao_do_salario` fica liberado para todos até o administrador travar
-- **Observações do verificador**: efetivar pela edição não acontece pela interface atual (o formulário não tem status); o teste de desempenho da importação e um teste do painel admin estouram o tempo com a máquina carregada
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; exclusão de categoria não desativa as subcategorias
-- **Next step**: o usuário faz o push das duas branches `feat/gestao-do-salario-plano-e-divisao` e abre os PRs para a `development`, começando pelo backend. Depois do merge, a próxima é `vinculo-entre-transacoes`
+- **Deploy**: migração `transactions/0015_vinculo_entre_transacoes`; o recurso `vinculos` fica liberado para todos até o administrador travar
+- **Observações do verificador**: a busca da principal mostra cada parcela como um resultado; o teste de desempenho da importação e um teste do painel admin estouram o tempo com a máquina carregada
+- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; exclusão de categoria não desativa as subcategorias; efetivar o salário pela edição não acontece pela interface atual
+- **Next step**: o usuário faz o push das duas branches `feat/vinculo-entre-transacoes` e abre os PRs para a `development`, começando pelo backend
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: feat/gestao-do-salario-plano-e-divisao (backend e frontend)
+- **Branch**: feat/vinculo-entre-transacoes (backend e frontend)
