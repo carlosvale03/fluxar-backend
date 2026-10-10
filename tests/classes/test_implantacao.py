@@ -102,6 +102,27 @@ class ImplantacaoTests(TestCase):
         self.assertEqual(doces_bia.classe.user_id, self.bia.pk)
         self.assertEqual(ClasseDeDespesa.objects.filter(nome='Dispensável').count(), 2)
 
+    def test_rodar_de_novo_nao_duplica_classes_nem_desfaz_a_escolha_do_usuario(self):
+        comida = Category.objects.create(user=self.ana, name='Comida', type='EXPENSE')
+        doces = Category.objects.create(user=self.ana, name='Doces', type='EXPENSE')
+        self.implantar()
+        # Entre as duas rodadas a Ana troca a classe de Comida e põe Doces numa classe criada por ela
+        comida.classe = ClasseDeDespesa.objects.get(user=self.ana, nome='Dispensável')
+        comida.save(update_fields=['classe'])
+        dividas = ClasseDeDespesa.objects.create(
+            user=self.ana, nome='Dívidas', nome_normalizado='dividas', cor='#000000',
+        )
+        doces.classe = dividas
+        doces.save(update_fields=['classe'])
+
+        self.implantar()
+
+        esperado = {'Essencial': ('#16A34A', True), 'Dispensável': ('#F97316', True)}
+        self.assertEqual(classes(self.ana), {**esperado, 'Dívidas': ('#000000', False)})
+        self.assertEqual(classes(self.bia), esperado)
+        self.assertEqual(classe_de(comida), 'Dispensável')
+        self.assertEqual(classe_de(doces), 'Dívidas')
+
 
 class ModeloDasClassesTests(TestCase):
 

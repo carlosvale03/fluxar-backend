@@ -131,6 +131,21 @@ class DivisaoPorClasseTests(GraficosTestCase):
             self.classe('Essencial', '#16A34A', '10.00', self.essencial()),
         ])
 
+    def test_despesa_com_categoria_de_outro_usuario_entra_em_sem_classe(self):
+        # Dado antigo: a despesa da Ana aponta para uma categoria da Bia
+        bia = criar_usuario('bia@teste.fluxar')
+        self.lancar('50.00', date(2026, 9, 5), Category.objects.get(user=bia, name='Comida'))
+        self.lancar('10.00', date(2026, 9, 6), self.comida)
+
+        dados = self.graficos()
+
+        self.assertEqual(dados['expense_by_class'], [
+            {**SEM_CLASSE, 'amount': '50.00'},
+            self.classe('Essencial', '#16A34A', '10.00', self.essencial()),
+        ])
+        self.assertEqual(self.soma(dados['expense_by_class']), self.soma(dados['expense_by_category']))
+        self.assertEqual(self.soma(dados['expense_by_class']), Decimal('60.00'))
+
 
 class DivisaoSemTravaDePlanoTests(GraficosTestCase):
 

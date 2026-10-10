@@ -206,11 +206,21 @@ class ClassesSemTravaDePlanoTests(ClassesTestCase):
         criada = self.client.post(ROTA, {'name': 'Dívidas', 'color': '#DC2626'}, format='json')
         editada = self.client.patch(f"{ROTA}{criada.data['id']}/", {'color': '#000000'}, format='json')
         excluida = self.client.delete(f"{ROTA}{criada.data['id']}/")
+        # A classe das categorias e o filtro por classe também ficam abertos
+        doces = Category.objects.get(user=self.ana, name='Doces')
+        essencial = self.essencial()
+        classe_da_categoria = self.client.patch(
+            f'/api/categories/{doces.pk}/', {'expense_class': str(essencial.pk)}, format='json',
+        )
+        filtro = self.client.get('/api/transactions/', {'classId': str(essencial.pk)})
 
         self.assertEqual(
-            [lista.status_code, criada.status_code, editada.status_code, excluida.status_code],
-            [200, 201, 200, 204],
+            [lista.status_code, criada.status_code, editada.status_code, excluida.status_code,
+             classe_da_categoria.status_code, filtro.status_code],
+            [200, 201, 200, 204, 200, 200],
         )
+        doces.refresh_from_db()
+        self.assertEqual(doces.classe_id, essencial.pk)
 
 
 class LogsSemNomeDaClasseTests(ClassesTestCase):
