@@ -571,13 +571,14 @@ T16 → T17
 
 **Done when**:
 
-- [ ] A busca e os filtros vão como parâmetros e voltam à página 1
-- [ ] Erros da lista passam pelo `tratarErro`
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A busca e os filtros vão como parâmetros e voltam à página 1
+- [x] Erros da lista passam pelo `tratarErro`
+- [x] Build gate (frontend) passa
+- [x] Test count: 4 testes
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `fix: trata os erros da lista de usuários do admin pelo padrão do app`
 

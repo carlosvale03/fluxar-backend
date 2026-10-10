@@ -171,7 +171,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-13 | P1: Log de auditoria | T4, T14 | Implemented |
 | ADMIN-14 | P1: Log de auditoria | T4, T14 | Implemented |
 | ADMIN-15 | P1: Log de auditoria | T4 | Implemented |
-| ADMIN-16 | P1: Operações sobre usuários | T11, T17 | In Progress |
+| ADMIN-16 | P1: Operações sobre usuários | T11, T17 | Implemented |
 | ADMIN-17 | P1: Operações sobre usuários | T5, T16 | Implemented |
 | ADMIN-18 | P1: Operações sobre usuários | T5, T16 | Implemented |
 | ADMIN-19 | P1: Operações sobre usuários | T5, T16 | Implemented |
