@@ -36,8 +36,10 @@ COLUNAS_DO_TIPO = {
         'date_column', 'amount_column', 'description_column', 'type_column', 'status_column',
         'category_column', 'subcategory_column', 'tags_column', 'account_column',
     ),
+    # A descrição também é lida na transferência e precisa existir (IMPCOMP-22)
     'TRANSFER': (
-        'date_column', 'amount_column', 'source_account_column', 'dest_account_column', 'tags_column',
+        'date_column', 'amount_column', 'description_column', 'source_account_column',
+        'dest_account_column', 'tags_column',
     ),
 }
 OBRIGATORIAS_DO_TIPO = {
@@ -48,9 +50,23 @@ OBRIGATORIAS_DO_TIPO = {
 
 @dataclass(frozen=True)
 class LinhaBruta:
-    """Uma linha da planilha: o número dela no arquivo (cabeçalho = 1) e os valores por coluna."""
+    """
+    Uma linha da planilha: o número dela no arquivo (cabeçalho = 1) e os
+    valores por coluna. `resumo` marca a candidata a linha de resumo, cuja
+    primeira célula começa com "Total"; a interpretação decide pelas colunas
+    de descrição e de conta (IMPCOMP-15).
+    """
     numero: int
     valores: dict
+    resumo: bool = False
+
+
+@dataclass(frozen=True)
+class Aba:
+    """Uma aba do arquivo: o nome, o cabeçalho e as linhas de dados não vazias (IMPCOMP-01)."""
+    nome: str
+    cabecalho: list
+    linhas: list
 
 
 @dataclass(frozen=True)
@@ -176,6 +192,105 @@ def ler_xlsx(arquivo):
     yield [str(c) if c is not None else '' for c in linhas[0]]
     for numero, valores in enumerate(linhas[1:], start=2):
         yield numero, list(valores)
+
+
+def ler_abas(arquivo):
+    """
+    Lê todas as abas de um XLSX, ou o CSV como uma aba única com o nome do
+    arquivo (IMPCOMP-01, IMPCOMP-02). O cabeçalho de cada aba é a primeira
+    linha não vazia; as linhas vazias são puladas sem mudar a numeração
+    (IMPORT-30, IMPORT-32). Mais de 10.000 linhas de dados na soma das abas
+    recusa o arquivo (IMPCOMP-03). O limite de 5 MB vale antes da leitura.
+    """
+    extensao = conferir_arquivo(arquivo, {'.csv', '.xlsx'})
+    if extensao == '.csv':
+        brutas = [(Path(arquivo.name).name, linhas_do_csv(arquivo))]
+    else:
+        brutas = abas_do_xlsx(arquivo)
+
+    abas = []
+    lidas = 0
+    for nome, linhas in brutas:
+        cabecalho = None
+        dados = []
+        for numero, valores in linhas:
+            if all(vazio(v) for v in valores):
+                continue
+            if cabecalho is None:
+                cabecalho = [str(c) if c is not None else '' for c in valores]
+                continue
+            if lidas == LIMITE_DE_LINHAS:
+                recusar(LINHAS_DEMAIS)
+            lidas += 1
+            dados.append(LinhaBruta(numero, dict(zip(cabecalho, valores)), candidata_a_resumo(valores)))
+        abas.append(Aba(nome, cabecalho or [], dados))
+    return abas
+
+
+COLUNAS_DO_RESUMO = ('description_column', 'account_column', 'source_account_column', 'dest_account_column')
+
+
+def linha_de_resumo(linha, colunas):
+    """
+    A linha é o rodapé de resumo: a primeira célula começa com "Total" e as
+    colunas mapeadas de descrição e de conta estão vazias (IMPCOMP-15). Um
+    lançamento chamado "Total", com conta, é uma linha comum.
+    """
+    return linha.resumo and all(
+        vazio(linha.valores.get(colunas[campo])) for campo in COLUNAS_DO_RESUMO if colunas.get(campo)
+    )
+
+
+def candidata_a_resumo(valores):
+    """A primeira célula começa com "Total", como no rodapé das exportações (IMPCOMP-15)."""
+    primeira = valores[0] if valores else None
+    return isinstance(primeira, str) and primeira.strip().lower().startswith('total')
+
+
+def linhas_do_csv(arquivo):
+    """
+    `(número, valores)` de todas as linhas do CSV, a partir da linha 1, com a
+    mesma codificação e o mesmo separador de `ler_csv` (IMPORT-08).
+    """
+    conteudo = arquivo.read()
+    try:
+        texto = conteudo.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        try:
+            texto = conteudo.decode('cp1252')
+        except UnicodeDecodeError:
+            recusar(ARQUIVO_ILEGIVEL)
+    primeira_linha = next((linha for linha in texto.splitlines() if linha.strip()), '')
+    try:
+        separador = csv.Sniffer().sniff(primeira_linha, delimiters=';,').delimiter
+    except csv.Error:
+        separador = ','
+    try:
+        df = pd.read_csv(
+            io.StringIO(texto), sep=separador, dtype=str, header=None,
+            keep_default_na=False, skip_blank_lines=False,
+        )
+    except pd.errors.EmptyDataError:
+        return []
+    except Exception:  # noqa: BLE001 - qualquer falha do pandas é arquivo ilegível
+        recusar(ARQUIVO_ILEGIVEL)
+    return [
+        # Campo ausente vem como NaN do pandas
+        (indice + 1, [None if isinstance(v, float) else v for v in valores])
+        for indice, valores in enumerate(df.itertuples(index=False, name=None))
+    ]
+
+
+def abas_do_xlsx(arquivo):
+    """`(nome, [(número, valores)])` de cada aba do XLSX, na ordem do arquivo."""
+    try:
+        planilha = load_workbook(io.BytesIO(arquivo.read()), read_only=True, data_only=True)
+        return [
+            (aba.title, list(enumerate((list(v) for v in aba.iter_rows(values_only=True)), start=1)))
+            for aba in planilha.worksheets
+        ]
+    except Exception:  # noqa: BLE001 - arquivo que o openpyxl não abre é ilegível
+        recusar(ARQUIVO_ILEGIVEL)
 
 
 def ler_ofx(arquivo):

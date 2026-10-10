@@ -44,9 +44,10 @@ class Repetidos:
         self.todas = Counter()      # chaves de todas as receitas e despesas (IMPORT-36)
         self.transferencias = Counter()  # (origem, destino, data, valor) (IMPORT-37)
 
+        # Um envio que mistura os tipos carrega os dois contadores (IMPCOMP-46)
         if any(linha.tipo == 'TRANSFER' for linha in linhas):
             self.carregar_transferencias(usuario, existentes)
-        else:
+        if any(linha.tipo != 'TRANSFER' for linha in linhas):
             campos = ('account_id', 'date', 'amount', 'type', 'description', 'fitid')
             for conta, data, valor, tipo, descricao, fitid in existentes.values_list(*campos):
                 k = chave(conta, data, valor, tipo, descricao)
@@ -70,6 +71,14 @@ class Repetidos:
             contagem[k] -= 1
             return True
         return False
+
+    def marcar(self, linhas):
+        """
+        Para cada linha, na ordem, se ela seria ignorada como repetida, sem
+        gravar nada; a análise usa para o estado REPETIDA (IMPCOMP-31). Consome
+        a contagem: use uma instância nova para cada análise.
+        """
+        return [self.ignorar(linha) for linha in linhas]
 
     def ignorar(self, linha):
         """Se a linha é repetida, consumindo uma unidade da contagem da chave dela."""

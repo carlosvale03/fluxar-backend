@@ -434,16 +434,24 @@
 - **Date**: 2026-10-10
 - **Status**: active
 
+### AD-055
+- **Decision**: A importação de planilha completa é sem estado: `POST /api/import/analise/` e `POST /api/import/` recebem o arquivo e o plano (abas, colunas, contas e correções de linha); a análise nunca grava nada. As contas novas são criadas na mesma requisição da importação, com `initial_balance` acertado depois da gravação para que o saldo seja o saldo atual informado pelo usuário.
+- **Reason**: nada fica guardado no servidor entre as chamadas, a importação é reproduzível a partir do plano, e o saldo das contas criadas bate com o banco sem o usuário calcular o saldo de antes da primeira transação.
+- **Trade-off**: o arquivo sobe a cada análise (até 5 MB), e o acerto do saldo é um passo a mais depois da gravação.
+- **Scope**: importacao-completa.
+- **Date**: 2026-10-10
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `vinculo-entre-transacoes` concluída, nos dois repositórios; com ela, todas as features da auditoria de 2026-09 estão implementadas
-- **Phase / Task**: Execute concluído (T1 a T10, mais as correções do verificador) e verificado: `validation.md` com PASS depois da reverificação (a primeira deu FAIL pela busca por valor só nas 100 despesas mais recentes, corrigido com o filtro `amount`)
-- **Completed**: campo `Transaction.principal` na raiz da compra (AD-054), regras de um nível só sob trava, rotas de vincular e desfazer, gasto relacionado na criação, custo total e principal na API, filtros `principalId`, `linked` e `amount` na lista e nas exportações, relatório de gastos puxados; nas telas, custo total e "Por causa de", ações de lançar, vincular e desfazer, filtro "Com vínculo" e a seção "Gastos puxados"; backend com 1431 testes e frontend com 477
+- **Feature**: `importacao-completa` concluída, nos dois repositórios
+- **Phase / Task**: Execute concluído (T1 a T13) e verificado: `validation.md` com PASS, 52 de 52 ACs, sensor leve com 8 de 8 mutações mortas; o usuário testou a importação no navegador com a exportação do Mobills e confirmou o resultado
+- **Completed**: leitura de todas as abas, detecção de colunas por sinônimos, papel das abas, modelo Mobills e abas contidas; rodapé "Total", situações pendentes, entrada e saída, transferência em aba de receitas e despesas, correções e exclusões de linha; repetidos com os dois tipos; criação de contas com o saldo atual (AD-055) e limite de contas para N contas; rotas `POST /api/import/analise/` e `POST /api/import/`; assistente de planilha com arquivo, abas e colunas, contas, linhas e resultado; backend com 1500 testes e frontend com 508
 - **In-progress** (file:line): nenhum
-- **Deploy**: migração `transactions/0015_vinculo_entre_transacoes`; o recurso `vinculos` fica liberado para todos até o administrador travar
-- **Observações do verificador**: a busca da principal mostra cada parcela como um resultado; o teste de desempenho da importação e um teste do painel admin estouram o tempo com a máquina carregada
-- **Fora do escopo, anotado**: teste intermitente `tests.importacao.test_sugestao.test_linha_com_categoria_no_arquivo_mantem_a_do_arquivo`; `Promise.all` no dashboard do usuário; liquidez normaliza fevereiro por 27 dias; filtro de administrador do log só com os ativos; exclusão de categoria não desativa as subcategorias; efetivar o salário pela edição não acontece pela interface atual
-- **Next step**: o usuário faz o push das duas branches `feat/vinculo-entre-transacoes` e abre os PRs para a `development`, começando pelo backend
+- **Deploy**: nenhuma migração; as rotas antigas de planilha continuam ativas
+- **Observações do verificador (ajustes sugeridos, não aplicados)**: o limite de 10.000 linhas conta as abas ignoradas (numa exportação do Mobills o limite real cai para cerca de 5.000 lançamentos); o arquivo de teste do Mobills tem rodapé "Total" na aba Transferências, que o arquivo real não tem; o saldo com pendente e transferência para conta vinculada só tem teste de unidade; o botão Importar fica habilitado quando as contas a criar passam do limite (a importação recusa com 403); sem as colunas de descrição e conta mapeadas, qualquer linha que comece com "Total" vira rodapé; a tela não avisa quando uma aba sem colunas de origem e destino é marcada como transferências
+- **Fora do escopo, anotado**: a exportação de aba única do app do Mobills não traz as transferências; aceitar vários arquivos na mesma importação; teste de desempenho da importação com margem curta sob carga
+- **Next step**: o usuário faz o push das duas branches `feat/importacao-completa` e abre os PRs para a `development`, começando pelo backend
 - **Blockers**: nenhum
 - **Uncommitted files**: nenhum
-- **Branch**: feat/vinculo-entre-transacoes (backend e frontend)
+- **Branch**: feat/importacao-completa (backend e frontend)
