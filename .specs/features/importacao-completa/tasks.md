@@ -281,13 +281,14 @@ T12 → T13
 
 **Done when**:
 
-- [ ] A análise envia o arquivo e o plano em JSON no multipart
-- [ ] A importação envia o plano final e devolve o resumo
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A análise envia o arquivo e o plano em JSON no multipart
+- [x] A importação envia o plano final e devolve o resumo
+- [x] Quick gate (frontend) passa
+- [x] Test count: 3 testes (`tests/importacao/assistente-servico.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: cria o serviço da análise e da importação completa`
 
