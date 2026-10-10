@@ -36,8 +36,10 @@ COLUNAS_DO_TIPO = {
         'date_column', 'amount_column', 'description_column', 'type_column', 'status_column',
         'category_column', 'subcategory_column', 'tags_column', 'account_column',
     ),
+    # A descrição também é lida na transferência e precisa existir (IMPCOMP-22)
     'TRANSFER': (
-        'date_column', 'amount_column', 'source_account_column', 'dest_account_column', 'tags_column',
+        'date_column', 'amount_column', 'description_column', 'source_account_column',
+        'dest_account_column', 'tags_column',
     ),
 }
 OBRIGATORIAS_DO_TIPO = {

@@ -154,18 +154,19 @@ T12 → T13
 
 **Done when**:
 
-- [ ] A linha "Total (57)" com descrição e conta vazias é pulada e contada em `summary_rows`; um lançamento "Total" com conta é importado
-- [ ] "Paga" é efetivada; "Não paga", "A pagar" e "Agendada" são pendentes
-- [ ] Entrada preenchida vira receita, saída vira despesa, as duas ou nenhuma rejeitam com "Valor inválido"
-- [ ] Tipo "Transferência" com destino mapeado vira transferência
-- [ ] A rejeição traz a aba, o número e o motivo
-- [ ] Corrigir a data de uma linha rejeitada a torna válida; uma correção inválida volta rejeitada; uma linha excluída fica como excluída
-- [ ] Coluna de descrição da transferência que não existe no cabeçalho recebe 400 com a coluna
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 12 testes
+- [x] A linha "Total (57)" com descrição e conta vazias é pulada e contada em `summary_rows`; um lançamento "Total" com conta é importado
+- [x] "Paga" é efetivada; "Não paga", "A pagar" e "Agendada" são pendentes
+- [x] Entrada preenchida vira receita, saída vira despesa, as duas ou nenhuma rejeitam com "Valor inválido"
+- [x] Tipo "Transferência" com destino mapeado vira transferência
+- [x] A rejeição traz a aba, o número e o motivo
+- [x] Corrigir a data de uma linha rejeitada a torna válida; uma correção inválida volta rejeitada; uma linha excluída fica como excluída
+- [x] Coluna de descrição da transferência que não existe no cabeçalho recebe 400 com a coluna
+- [x] Quick gate passa
+- [x] Test count: 16 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: interpreta rodapés, situações, entrada e saída e correções da planilha`
 
