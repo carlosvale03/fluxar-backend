@@ -11,7 +11,8 @@ from django.utils.decorators import method_decorator
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings as django_settings
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Count
 import hmac
 import uuid
 from .serializers import (
@@ -42,6 +43,7 @@ from .models import (
 from .auditoria import Acoes, registrar
 from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
 from .limpeza import LimpezaFalhou, limpar_dados
+from .saude import saude
 from .cookies import (
     NOME_DO_COOKIE,
     apagar_cookie_de_renovacao,
@@ -71,7 +73,6 @@ from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
 from core import termos, travas
 from core.pagination import PaginacaoPadrao
-from core.valores import dinheiro
 from core.uploads import com_nome_aleatorio
 import logging
 
@@ -852,53 +853,31 @@ class AdminStatsView(ParametrosConhecidosMixin, APIView):
     permission_classes = (EhAdministrador,)
 
     def get(self, request):
-        total_users = User.objects.count()
-        premium_users = User.objects.filter(plan__in=['PREMIUM', 'PREMIUM_PLUS']).count()
-        
-        # Faturamento estimado (simulado com base nos planos)
-        # TODO: Integrar com Stripe/Gateway real futuramente
-        # Em Decimal e como texto na resposta (CONTRATO-16)
-        estimated_revenue = (
-            User.objects.filter(plan='PREMIUM').count() * Decimal('19.90') +
-            User.objects.filter(plan='PREMIUM_PLUS').count() * Decimal('39.90')
-        )
+        # Todos os cadastros, ativos e arquivados; a porcentagem de planos
+        # pagos usa a mesma base (ADMIN-07)
+        por_plano = dict(User.objects.order_by().values_list('plan').annotate(total=Count('pk')))
+        users_by_plan = {plano: por_plano.get(plano, 0) for plano, _ in User.PLAN_CHOICES}
+        total_users = sum(por_plano.values())
+        pagos = users_by_plan.get('PREMIUM', 0) + users_by_plan.get('PREMIUM_PLUS', 0)
+        porcentagem = (Decimal(pagos) * 100 / total_users) if total_users else Decimal('0')
 
-        # Taxa de conversão
-        conversion_rate = (premium_users / total_users * 100) if total_users > 0 else 0
-
-        # Usuários recentes para o feed de atividade
-        recent_users_query = User.objects.all().order_by('-created_at')[:5]
+        # Cadastros recentes para o feed de atividade
         recent_users = [{
             "id": str(u.id),
             "name": u.name,
             "email": u.email,
             "created_at": u.created_at
-        } for u in recent_users_query]
+        } for u in User.objects.order_by('-created_at')[:5]]
 
-        # Verificação de saúde real
-        import time
-        from django.db import connection
-        
-        db_start = time.time()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-            db_status = "Conectado"
-            db_latency = f"{int((time.time() - db_start) * 1000)}ms"
-        except Exception:
-            db_status = "Erro"
-            db_latency = "N/A"
-
+        # Sem receita nem conversão até existir cobrança (ADMIN-05); saúde
+        # medida na hora (ADMIN-02) e versão do deploy (ADMIN-03, AD-051)
         return Response({
             "total_users": total_users,
-            "premium_users": premium_users,
-            "estimated_revenue": dinheiro(estimated_revenue),
-            "conversion_rate": round(conversion_rate, 2),
+            "users_by_plan": users_by_plan,
+            "paid_users_percentage": str(porcentagem.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)),
             "recent_users": recent_users,
-            "status": "Operacional",
-            "db_status": db_status,
-            "db_latency": db_latency,
-            "api_version": "1.2.5"
+            "health": saude(),
+            "version": django_settings.VERSAO_DO_SISTEMA,
         })
 
 class AdminSystemSettingsView(ParametrosConhecidosMixin, APIView):

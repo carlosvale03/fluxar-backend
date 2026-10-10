@@ -168,8 +168,10 @@ class RelatoriosTests(DinheiroTestCase):
         self.assert_numero(estatisticas['income_count_per_day'], 'income_count_per_day')
 
         geral = self.get_json('/api/admin/stats/')
-        self.assertEqual(geral['estimated_revenue'], '19.90')
-        self.assert_numero(geral['conversion_rate'], 'conversion_rate')
+        # Sem receita até existir cobrança (ADMIN-05): a porcentagem de planos
+        # pagos vem como texto com uma casa decimal
+        self.assertNotIn('estimated_revenue', geral)
+        self.assertRegex(geral['paid_users_percentage'], r'^\d{1,3}\.\d$')
 
 
 class SerializersTests(DinheiroTestCase):

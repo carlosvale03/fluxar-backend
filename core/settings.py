@@ -57,6 +57,12 @@ ROTINA_DIARIA_TOKEN = os.getenv('ROTINA_DIARIA_TOKEN', '').strip()
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,testserver').split(',')
 
+# Versão do deploy em execução, mostrada no painel admin (ADMIN-03, AD-051):
+# APP_VERSION, ou os 7 primeiros caracteres de RENDER_GIT_COMMIT, ou
+# "desenvolvimento".
+from core.versao import ler_versao  # noqa: E402
+VERSAO_DO_SISTEMA = ler_versao()
+
 AUTH_USER_MODEL = 'api.User'
 
 

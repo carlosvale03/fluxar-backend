@@ -336,15 +336,16 @@ T16 → T17
 
 **Done when**:
 
-- [ ] A resposta tem a contagem de cada plano e a porcentagem de planos pagos, e não tem `estimated_revenue` nem `conversion_rate`
-- [ ] A saúde traz a latência e a versão do banco medidas na hora; com `DatabaseError`, o banco vem "error" e a latência nula
-- [ ] `version` vem de `APP_VERSION`; sem ela, dos 7 primeiros caracteres de `RENDER_GIT_COMMIT`; sem as duas, "desenvolvimento"
-- [ ] Nenhum "Operacional" nem "1.2.5" fixo na resposta
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] A resposta tem a contagem de cada plano e a porcentagem de planos pagos, e não tem `estimated_revenue` nem `conversion_rate`
+- [x] A saúde traz a latência e a versão do banco medidas na hora; com `DatabaseError`, o banco vem "error" e a latência nula
+- [x] `version` vem de `APP_VERSION`; sem ela, dos 7 primeiros caracteres de `RENDER_GIT_COMMIT`; sem as duas, "desenvolvimento"
+- [x] Nenhum "Operacional" nem "1.2.5" fixo na resposta
+- [x] Full gate passa
+- [x] Test count: 10 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `fix: mostra no dashboard do admin só números medidos, sem receita estimada`
 

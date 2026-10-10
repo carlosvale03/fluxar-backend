@@ -42,6 +42,7 @@ Configure estas chaves no painel do Render:
   - Guarde uma cópia fora do Render (num gerenciador de senhas): sem a chave, os dados criptografados ficam ilegíveis.
   - Para trocar a chave, coloque a nova na frente, separada por vírgula (`nova,antiga`): a primeira grava e todas leem. Só retire a antiga depois de regravar os dados.
 - `ROTINA_DIARIA_TOKEN`: token longo e aleatório que protege `POST /api/rotina-diaria/` (AD-048). Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Sem ele, a rota responde 404 e a rotina só roda pelo comando.
+- `APP_VERSION` (opcional): a versão mostrada no painel admin, como `1.3.0` (ADMIN-03, AD-051). Sem ela, o painel mostra os 7 primeiros caracteres de `RENDER_GIT_COMMIT`, que o Render preenche sozinho em todo deploy; não crie `RENDER_GIT_COMMIT` à mão. Sem as duas, como no ambiente local, aparece "desenvolvimento".
 
 ### Rotina diária (GitHub Actions)
 O workflow `.github/workflows/rotina-diaria.yml` roda todo dia às 6h UTC (3h de Brasília) e chama `POST /api/rotina-diaria/`, que apaga as contas cuja exclusão definitiva venceu (30 dias depois do pedido). Em **Settings → Secrets and variables → Actions** do repositório, crie:
