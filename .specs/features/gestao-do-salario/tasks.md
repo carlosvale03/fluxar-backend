@@ -365,16 +365,17 @@ T11 → T12
 
 **Done when**:
 
-- [ ] O botão fica desabilitado até a marcação e diz "Gerar 1 transação de R$ 600,00"
-- [ ] Ajustar uma parte recalcula o total e envia o ajuste
-- [ ] Repetir depois de um erro de rede envia a mesma chave; reabrir gera outra
-- [ ] Depois da geração, aparecem as transações criadas e "Desfazer divisão"
-- [ ] `/salario?dividir=<id>` sem plano abre a escolha do modelo; com plano, a revisão
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 6 testes
+- [x] O botão fica desabilitado até a marcação e diz "Gerar 1 transação de R$ 600,00"
+- [x] Ajustar uma parte recalcula o total e envia o ajuste
+- [x] Repetir depois de um erro de rede envia a mesma chave; reabrir gera outra
+- [x] Depois da geração, aparecem as transações criadas e "Desfazer divisão"
+- [x] `/salario?dividir=<id>` sem plano abre a escolha do modelo; com plano, a revisão
+- [x] Quick gate (frontend) passa
+- [x] Test count: 8 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: revisa e gera as transações da divisão do salário com confirmação`
 

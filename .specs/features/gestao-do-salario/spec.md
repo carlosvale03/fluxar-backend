@@ -236,17 +236,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-18 | P1: Plano de divisão | T3 | Implemented |
 | SALARIO-19 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-20 | P1: Aviso ao receber o salário | T12 | Pending |
-| SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | Pending |
-| SALARIO-22 | P1: Aviso ao receber o salário | T10 | Pending |
+| SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | In Progress |
+| SALARIO-22 | P1: Aviso ao receber o salário | T10 | Implemented |
 | SALARIO-23 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | Implemented |
 | SALARIO-25 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-26 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-27 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-28 | P1: Geração das transações | T2 | Implemented |
-| SALARIO-29 | P1: Geração das transações | T4, T10 | In Progress |
-| SALARIO-30 | P1: Geração das transações | T2, T4, T10 | In Progress |
-| SALARIO-31 | P1: Geração das transações | T10 | Pending |
+| SALARIO-29 | P1: Geração das transações | T4, T10 | Implemented |
+| SALARIO-30 | P1: Geração das transações | T2, T4, T10 | Implemented |
+| SALARIO-31 | P1: Geração das transações | T10 | Implemented |
 | SALARIO-32 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-33 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-34 | P1: Geração das transações | T2 | Implemented |
@@ -259,7 +259,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-41 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-42 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-43 | P1: Geração das transações | T5 | Implemented |
-| SALARIO-44 | P1: Geração das transações | T10 | Pending |
+| SALARIO-44 | P1: Geração das transações | T10 | Implemented |
 | SALARIO-45 | P1: Desfazer a divisão | T11 | Pending |
 | SALARIO-46 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-47 | P1: Desfazer a divisão | T6 | Implemented |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Implemented |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Implemented |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 45 implemented, 2 in progress, 9 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 50 implemented, 1 in progress, 5 pending
 
 ---
 
