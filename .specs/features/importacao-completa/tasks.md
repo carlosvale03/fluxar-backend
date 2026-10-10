@@ -425,14 +425,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O resultado mostra as contas criadas e os totais por aba
-- [ ] As rejeitadas aparecem como "<aba>, linha <n>: <motivo>"
-- [ ] Com contas criadas, `atualizarUso` é chamado
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O resultado mostra as contas criadas e os totais por aba
+- [x] As rejeitadas aparecem como "<aba>, linha <n>: <motivo>"
+- [x] Com contas criadas, `atualizarUso` é chamado
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes (`tests/importacao/assistente-resultado.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o resultado da importação completa por aba`
 

@@ -266,12 +266,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | IMPCOMP-46 | P1: Importação e resultado | T4 | Implemented |
 | IMPCOMP-47 | P1: Importação e resultado | T6 | Implemented |
 | IMPCOMP-48 | P1: Importação e resultado | T6 | Implemented |
-| IMPCOMP-49 | P1: Importação e resultado | T12 | Pending |
+| IMPCOMP-49 | P1: Importação e resultado | T12 | Implemented |
 | IMPCOMP-50 | P1: Importação e resultado | T6, T13 | In Progress |
 | IMPCOMP-51 | P1: Importação e resultado | T6 | Implemented |
 | IMPCOMP-52 | P1: Importação e resultado | T6 | Implemented |
 
-**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 49 implemented, 2 in progress, 1 pending
+**Coverage:** 52 total, 52 mapped to tasks, 0 unmapped; 50 implemented, 2 in progress, 0 pending
 
 ---
 
