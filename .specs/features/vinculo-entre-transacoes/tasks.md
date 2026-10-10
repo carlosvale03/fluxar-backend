@@ -359,13 +359,14 @@ T9 → T10
 
 **Done when**:
 
-- [ ] O relatório mostra "Lazer puxou R$ 180,00 de Transporte"
-- [ ] Sem vínculos aparece "Nenhum gasto vinculado no período."
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 3 testes
+- [x] O relatório mostra "Lazer puxou R$ 180,00 de Transporte"
+- [x] Sem vínculos aparece "Nenhum gasto vinculado no período."
+- [x] Build gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra o relatório de gastos puxados na tela Relatórios`
 
