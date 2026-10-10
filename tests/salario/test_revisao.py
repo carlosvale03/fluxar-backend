@@ -8,7 +8,7 @@ from decimal import Decimal
 from unittest import mock
 
 from salario.models import DivisaoDoSalario
-from transactions.models import Category
+from transactions.models import Category, Transaction
 
 from .base import (
     URL_PENDENTES, URL_PLANO, URL_REVISAO, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita,
@@ -153,7 +153,9 @@ class RevisaoTests(SalarioTestCase):
             'outra categoria': receita(self.a, categoria=investimento).pk,
             'de outro usuário': receita(self.b).pk,
             'inexistente': uuid.uuid4(),
+            'sem conta': receita(self.a).pk,
         }
+        Transaction.objects.filter(pk=casos['sem conta']).update(account=None)
         for nome, pk in casos.items():
             with self.subTest(nome):
                 with hoje_em(2026, 10, 10):

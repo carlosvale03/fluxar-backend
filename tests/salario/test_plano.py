@@ -250,6 +250,16 @@ class SimulacaoTests(SalarioTestCase):
         )
         self.assertEqual(resposta.data['free'], '700.00')
 
+    def test_percentual_arredonda_para_baixo_no_centavo(self):
+        # 10% de 1.234,55 = 123,455: para baixo dá 123,45 (meio para cima daria 123,46)
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '1234.55', 'parts': [parte('Guardar', 'PERCENT', '10.00')],
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(resposta.data['items'][0]['amount'], '123.45')
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('123.45', '1111.10'))
+
     def test_simulacao_recusa_valor_vazio_e_percentuais_acima_de_100(self):
         self.assertEqual(self.client.post(URL_SIMULAR, {'amount': '0'}, format='json').status_code, 400)
         resposta = self.client.post(URL_SIMULAR, {

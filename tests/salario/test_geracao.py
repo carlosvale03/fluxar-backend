@@ -3,7 +3,7 @@ Geração das transações da divisão (SALARIO-18, SALARIO-32 a SALARIO-38,
 SALARIO-40 a SALARIO-43).
 """
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone as dt_timezone
 from decimal import Decimal
 from unittest import mock
 
@@ -76,6 +76,21 @@ class GeraAsTransacoesTests(GeracaoTestCase):
         self.assertEqual(self.valor_da_meta(carro), Decimal('100.00'))
         self.assertEqual(self.saldo(self.a.conta), Decimal('2400.00'))
         self.assertEqual(self.saldo(self.a.cofrinho), Decimal('700.00'))
+
+    def test_geracao_na_virada_do_dia_em_utc_usa_a_data_de_brasilia(self):
+        # 02h30 UTC do dia 11 ainda é 23h30 do dia 10 em Brasília (AD-008)
+        self.salvar_plano([parte('Reserva', 'FIXED', '500.00', 'ACCOUNT', account=self.a.poupanca)])
+        noite = datetime(2026, 10, 11, 2, 30, tzinfo=dt_timezone.utc)
+        with mock.patch('django.utils.timezone.now', return_value=noite):
+            resposta = self.client.post(URL_DIVISOES, {'receipt': str(self.salario.pk)}, format='json')
+
+        self.assertEqual(resposta.status_code, 201, resposta.data)
+        self.assertEqual(resposta.data['date'], '2026-10-10')
+        self.assertEqual(resposta.data['transactions'][0]['date'], '2026-10-10')
+        self.assertEqual(resposta.data['can_undo_until'], '2026-10-17')
+        self.assertEqual(
+            {p.date for p in self.da_divisao(resposta.data['id'])}, {date(2026, 10, 10)},
+        )
 
     def test_parte_com_destino_numa_conta_cria_a_transferencia_e_todas_levam_o_id_da_divisao(self):
         self.salvar_plano([
@@ -299,8 +314,10 @@ class RecusasTests(GeracaoTestCase):
 
     def test_recebimento_que_nao_e_salario_recebido_e_recusado(self):
         self.salvar_plano(plano_50_30_20(guardar_na=self.a.viagem))
-        for recebimento in (receita(self.a, status='PENDING'), receita(self.b)):
-            with self.subTest(status=recebimento.status, usuario=recebimento.user_id):
+        sem_conta = receita(self.a)
+        Transaction.objects.filter(pk=sem_conta.pk).update(account=None)
+        for recebimento in (receita(self.a, status='PENDING'), receita(self.b), sem_conta):
+            with self.subTest(status=recebimento.status, usuario=recebimento.user_id, pk=recebimento.pk):
                 resposta = self.gerar(recebimento=recebimento)
 
                 self.assertEqual(resposta.status_code, 400)
