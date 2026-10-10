@@ -106,11 +106,42 @@ class DividirTests(SimpleTestCase):
         self.assertEqual(self.valores(divisao), [Decimal('123.45')])
         self.assertEqual(divisao.livre, Decimal('1111.14'))
 
-    def test_percentual_vale_sobre_o_recebido_na_ordem_do_plano(self):
+    def test_percentual_vale_sobre_o_que_sobra_dos_fixos(self):
+        # AD-056: 50% de 1.000,00 - 500,00
         divisao = dividir(Decimal('1000.00'), [fixa('Aluguel', '500'), percentual('Guardar', '50')])
 
-        self.assertEqual(self.valores(divisao), [Decimal('500'), Decimal('500.00')])
-        self.assertEqual(divisao.livre, Decimal('0.00'))
+        self.assertEqual(self.valores(divisao), [Decimal('500'), Decimal('250.00')])
+        self.assertEqual(divisao.livre, Decimal('250.00'))
+
+    def test_fixo_sai_primeiro_e_os_percentuais_dividem_o_resto_sem_reduzir(self):
+        partes = [
+            fixa('Aluguel', '500.00'),
+            percentual('Essenciais', '50'),
+            percentual('Dispensáveis', '30'),
+            percentual('Guardar', '20'),
+        ]
+
+        divisao = dividir(Decimal('3000.00'), partes)
+
+        self.assertEqual(
+            self.valores(divisao),
+            [Decimal('500.00'), Decimal('1250.00'), Decimal('750.00'), Decimal('500.00')],
+        )
+        self.assertEqual((divisao.total, divisao.livre), (Decimal('3000.00'), Decimal('0.00')))
+        self.assertFalse(any(i.reduzida for i in divisao.itens))
+
+    def test_fixo_antes_ou_depois_do_percentual_sai_primeiro(self):
+        divisao = dividir(Decimal('3000.00'), [percentual('Guardar', '50'), fixa('Aluguel', '500.00')])
+
+        self.assertEqual(self.valores(divisao), [Decimal('1250.00'), Decimal('500.00')])
+        self.assertEqual(divisao.livre, Decimal('1250.00'))
+
+    def test_percentual_sobre_o_resto_e_arredondado_para_baixo(self):
+        # 33,33% de 1.000,00 (1.100,00 - 100,00) = 333,30
+        divisao = dividir(Decimal('1100.00'), [fixa('Aluguel', '100.00'), percentual('Guardar', '33.33')])
+
+        self.assertEqual(self.valores(divisao), [Decimal('100.00'), Decimal('333.30')])
+        self.assertEqual(divisao.livre, Decimal('666.70'))
 
     def test_salario_menor_reduz_a_ultima_parte(self):
         divisao = dividir(Decimal('1000.00'), [fixa('Primeira', '700'), fixa('Segunda', '500')])
@@ -118,6 +149,38 @@ class DividirTests(SimpleTestCase):
         self.assertEqual(self.valores(divisao), [Decimal('700'), Decimal('300')])
         self.assertEqual([i.reduzida for i in divisao.itens], [False, True])
         self.assertEqual(divisao.livre, Decimal('0.00'))
+
+    def test_fixos_acima_do_recebido_reduzem_a_ultima_fixa_e_zeram_os_percentuais(self):
+        partes = [fixa('Primeira', '700'), percentual('Guardar', '50'), fixa('Segunda', '500')]
+
+        divisao = dividir(Decimal('1000.00'), partes)
+
+        self.assertEqual(self.valores(divisao), [Decimal('700'), Decimal('0.00'), Decimal('300')])
+        # Só a fixa é reduzida; a percentual fica com zero sem ser marcada
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, False, True])
+        self.assertEqual([i.gera_transacao for i in divisao.itens], [True, False, True])
+        self.assertEqual((divisao.total, divisao.livre), (Decimal('1000'), Decimal('0.00')))
+
+    def test_percentual_ajustado_conta_como_fixo(self):
+        guardar = percentual('Guardar', '20')
+        partes = [guardar, percentual('Essenciais', '50')]
+
+        divisao = dividir(Decimal('3000.00'), partes, ajustes={str(guardar.id): Decimal('1000.00')})
+
+        # 50% de 2.000,00 (3.000,00 - 1.000,00 ajustados), não de 3.000,00
+        self.assertEqual(self.valores(divisao), [Decimal('1000.00'), Decimal('1000.00')])
+        self.assertEqual([i.ajustada for i in divisao.itens], [True, False])
+        self.assertEqual(divisao.livre, Decimal('1000.00'))
+
+    def test_ajuste_e_fixos_tiram_do_recebido_antes_dos_percentuais(self):
+        aluguel = fixa('Aluguel', '500.00')
+        partes = [aluguel, fixa('Reserva', '300.00'), percentual('Guardar', '50')]
+
+        divisao = dividir(Decimal('2000.00'), partes, ajustes={str(aluguel.id): Decimal('800.00')})
+
+        # 50% de 900,00 (2.000,00 - 800,00 - 300,00)
+        self.assertEqual(self.valores(divisao), [Decimal('800.00'), Decimal('300.00'), Decimal('450.00')])
+        self.assertEqual(divisao.livre, Decimal('450.00'))
 
     def test_salario_menor_zera_a_ultima_e_reduz_a_anterior(self):
         divisao = dividir(Decimal('1000.00'), [fixa('A', '800'), fixa('B', '300'), fixa('C', '200')])
@@ -146,6 +209,16 @@ class DividirTests(SimpleTestCase):
 
         self.assertEqual(self.valores(divisao), [Decimal('900.00'), Decimal('100')])
         self.assertEqual([i.reduzida for i in divisao.itens], [False, True])
+
+    def test_ajustes_iguais_ao_recebido_zeram_fixos_e_percentuais(self):
+        primeira = fixa('Primeira', '500')
+        partes = [primeira, fixa('Segunda', '300'), percentual('Guardar', '10')]
+
+        divisao = dividir(Decimal('1000.00'), partes, ajustes={primeira.id: Decimal('1000.00')})
+
+        self.assertEqual(self.valores(divisao), [Decimal('1000.00'), Decimal('0'), Decimal('0.00')])
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, True, False])
+        self.assertEqual(divisao.livre, Decimal('0.00'))
 
     def test_ajustes_que_passam_do_recebido_sao_recusados(self):
         guardar = fixa('Guardar', '100')

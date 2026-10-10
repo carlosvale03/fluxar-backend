@@ -87,7 +87,8 @@ class DesfazTests(DesfazerTestCase):
 
         self.assertEqual([p['id'] for p in pendentes], [str(self.salario.pk)])
         self.assertEqual(nova.status_code, 201, nova.data)
-        self.assertEqual(self.valor_da_meta(self.a.viagem), Decimal('600.00'))
+        # 20% de 2.500,00 (3.000,00 - 500,00 da Reserva), AD-056
+        self.assertEqual(self.valor_da_meta(self.a.viagem), Decimal('500.00'))
 
     def test_no_ultimo_dia_do_prazo_ainda_desfaz(self):
         resposta = self.desfazer(dia=(2026, 10, 17))
@@ -128,7 +129,7 @@ class DesfazTests(DesfazerTestCase):
             self.assertEqual(self.desfazer().status_code, 200)
 
         texto = '\n'.join(logs.output)
-        for dado in ('Viagem', 'Reserva', 'Poupança', '600.00', '500.00'):
+        for dado in ('Viagem', 'Reserva', 'Poupança', '500.00', '1000.00', '2000.00'):
             self.assertNotIn(dado, texto)
 
 

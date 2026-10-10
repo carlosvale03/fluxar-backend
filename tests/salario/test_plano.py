@@ -308,6 +308,22 @@ class SimulacaoTests(SalarioTestCase):
         )
         self.assertEqual(resposta.data['free'], '700.00')
 
+    def test_fixo_sai_do_recebido_antes_dos_percentuais(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '3000.00',
+            'parts': [parte('Aluguel', 'FIXED', '500.00', 'GOAL', goal=self.a.viagem)] + plano_50_30_20(),
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(
+            [(i['name'], i['amount'], i['reduced']) for i in resposta.data['items']],
+            [
+                ('Aluguel', '500.00', False), ('Essenciais', '1250.00', False),
+                ('Dispensáveis', '750.00', False), ('Guardar', '500.00', False),
+            ],
+        )
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('1000.00', '2000.00'))
+
     def test_percentual_arredonda_para_baixo_no_centavo(self):
         # 10% de 1.234,55 = 123,455: para baixo dá 123,45 (meio para cima daria 123,46)
         resposta = self.client.post(URL_SIMULAR, {

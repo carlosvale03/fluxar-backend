@@ -104,13 +104,14 @@ class GeraAsTransacoesTests(GeracaoTestCase):
         self.assertEqual(resposta.status_code, 201, resposta.data)
         self.assertEqual(
             [(t['kind'], t['destination_name'], t['amount']) for t in resposta.data['transactions']],
-            [('TRANSFER', 'Poupança A', '500.00'), ('GOAL_DEPOSIT', 'Viagem A', '300.00')],
+            # 10% de 1.500,00 (3.000,00 - 1.000,00 - 500,00 fixos), AD-056
+            [('TRANSFER', 'Poupança A', '500.00'), ('GOAL_DEPOSIT', 'Viagem A', '150.00')],
         )
         self.assertEqual(self.da_divisao(resposta.data['id']).count(), 4)
         self.assertEqual(Transaction.objects.filter(divisao_do_salario__isnull=False).count(), 4)
         self.assertEqual(self.saldo(self.a.poupanca), Decimal('500.00'))
-        self.assertEqual(self.saldo(self.a.conta), Decimal('2200.00'))
-        self.assertEqual((resposta.data['total'], resposta.data['free']), ('800.00', '2200.00'))
+        self.assertEqual(self.saldo(self.a.conta), Decimal('2350.00'))
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('650.00', '2350.00'))
         # A divisão relida é igual à resposta da geração
         self.assertEqual(self.client.get(url_da_divisao(resposta.data['id'])).data, resposta.data)
 
