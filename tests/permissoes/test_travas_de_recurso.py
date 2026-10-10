@@ -187,6 +187,7 @@ def chamadas_do_catalogo(t):
             ('plano', lambda: c.get('/api/salary/plan/'), 200),
             ('salvar o plano', lambda: c.put('/api/salary/plan/', {'parts': []}, format='json'), 200),
             ('simulação', lambda: c.post('/api/salary/simulate/', {'amount': '3000.00'}, format='json'), 200),
+            ('salários a dividir', lambda: c.get('/api/salary/pending/'), 200),
         ],
     }
 

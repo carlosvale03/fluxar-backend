@@ -180,15 +180,16 @@ T11 → T12
 
 **Done when**:
 
-- [ ] A lista traz o salário efetivado do mês e o do mês anterior, inclusive importado, e deixa de fora o pendente, o de dois meses atrás e o já dividido
-- [ ] A revisão mostra origem, destino, valor, data de hoje em Brasília, total e livre
-- [ ] Ajustes que passam do recebido recebem 400 no campo `adjustments`
-- [ ] Receita pendente, de outra categoria ou de outro usuário recebe 400 "Escolha um salário recebido para dividir."
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] A lista traz o salário efetivado do mês e o do mês anterior, inclusive importado, e deixa de fora o pendente, o de dois meses atrás e o já dividido
+- [x] A revisão mostra origem, destino, valor, data de hoje em Brasília, total e livre
+- [x] Ajustes que passam do recebido recebem 400 no campo `adjustments`
+- [x] Receita pendente, de outra categoria ou de outro usuário recebe 400 "Escolha um salário recebido para dividir."
+- [x] Quick gate passa
+- [x] Test count: 11 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: lista os salários a dividir e mostra a revisão da divisão`
 

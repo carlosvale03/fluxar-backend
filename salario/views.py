@@ -12,10 +12,10 @@ from rest_framework.views import APIView
 from core.travas import RecursoLiberado
 from core.valores import dinheiro
 
-from . import plano
+from . import divisao, plano
 from .calculo import dividir
 from .modelos import MODELOS, REGRA_DOS_MODELOS
-from .serializers import PlanSerializer, SimulateSerializer, conferir_soma
+from .serializers import DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma
 
 PERMISSOES = [permissions.IsAuthenticated, RecursoLiberado('gestao_do_salario')]
 
@@ -103,10 +103,27 @@ class SalarySimulateView(APIView):
             partes = [parte_da_requisicao(p) for p in dados['parts']]
         else:
             partes = plano.partes_do_plano(request.user)
-        divisao = dividir(valor, partes)
+        resultado = dividir(valor, partes)
         return Response({
             'amount': dinheiro(valor),
-            'items': [plano.item_em_json(item) for item in divisao.itens],
-            'total': dinheiro(divisao.total),
-            'free': dinheiro(divisao.livre),
+            'items': [plano.item_em_json(item) for item in resultado.itens],
+            'total': dinheiro(resultado.total),
+            'free': dinheiro(resultado.livre),
         })
+
+
+class SalaryPendingView(APIView):
+    """`GET /salary/pending/`: os salários do mês atual e do anterior ainda não divididos (SALARIO-24)."""
+    permission_classes = PERMISSOES
+
+    def get(self, request):
+        return Response([divisao.recebimento_em_json(t) for t in divisao.pendentes(request.user)])
+
+
+class SalaryDivisionPreviewView(APIView):
+    """`POST /salary/divisions/preview/`: a revisão da divisão, sem gravar nada (SALARIO-29, SALARIO-30)."""
+    permission_classes = PERMISSOES
+
+    def post(self, request):
+        dados = validar(DivisionPreviewSerializer, request)
+        return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments']))
