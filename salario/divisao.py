@@ -17,14 +17,16 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef
+from django.http import Http404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from accounts.faturas import mes_anterior
+from accounts.saldo import travar
 from core.datas import BRASILIA, hoje
 from core.fields import RECEBIMENTO_NAO_ENCONTRADO
 from core.valores import dinheiro
-from goals.models import GoalDeposit
+from goals.models import Goal, GoalDeposit
 from goals.services import GoalService
 from reports.regras import limites_do_mes, mes_atual
 from transactions.models import Transaction
@@ -277,6 +279,110 @@ def data_da_divisao(divisao):
 def prazo_para_desfazer(divisao):
     """O último dia em que a divisão ainda pode ser desfeita (SALARIO-49)."""
     return data_da_divisao(divisao) + timedelta(days=PRAZO_PARA_DESFAZER)
+
+
+# --- Desfazer (SALARIO-46 a SALARIO-51) ---
+
+JA_DESFEITA = 'Esta divisão já foi desfeita.'
+PRAZO_ACABOU = 'O prazo para desfazer esta divisão acabou.'
+TRANSFERENCIA_MUDOU = 'A transferência para {destino} mudou.'
+APORTE_MUDOU = 'O aporte em {meta} mudou.'
+META_SEM_O_VALOR = 'A meta {nome} não tem mais o valor aportado pela divisão.'
+
+
+def _item_mudou(divisao, item, data):
+    """
+    Se as transações do item não são mais as geradas: alguma perna apagada,
+    ou com valor, data, status, conta ou marca diferentes; no aporte, também
+    o registro da meta (SALARIO-48).
+    """
+    pernas = {
+        perna.pk: perna
+        for perna in Transaction.objects.filter(pk__in=[item.transacao_saida_id, item.transacao_entrada_id])
+    }
+    saida, entrada = pernas.get(item.transacao_saida_id), pernas.get(item.transacao_entrada_id)
+    if saida is None or entrada is None:
+        return True
+    if item.tipo_de_destino == META:
+        if item.meta is None:
+            return True
+        destino = item.meta.account_id
+    else:
+        destino = item.conta_id
+    for perna, conta in ((saida, divisao.conta_de_origem_id), (entrada, destino)):
+        if (
+            perna.amount != item.valor or perna.date != data or perna.status != 'COMPLETED'
+            or perna.account_id is None or perna.account_id != conta
+            or perna.transfer_id != item.transfer_id or perna.divisao_do_salario != divisao.pk
+        ):
+            return True
+    if item.tipo_de_destino == META:
+        return not GoalDeposit.objects.filter(
+            goal_id=item.meta_id, type='DEPOSIT', amount=item.valor, transacao_entrada_id=entrada.pk,
+        ).exists()
+    return False
+
+
+def _mensagem_de_mudanca(item):
+    if item.tipo_de_destino == META:
+        return APORTE_MUDOU.format(meta=item.meta.name if item.meta is not None else item.nome_da_parte)
+    return TRANSFERENCIA_MUDOU.format(destino=item.conta.name if item.conta is not None else item.nome_da_parte)
+
+
+@transaction.atomic
+def desfazer(usuario, divisao_id):
+    """
+    Desfaz a divisão inteira (SALARIO-46, SALARIO-47): confere o prazo e cada
+    item e só então apaga as transações uma a uma, para que os sinais
+    recalculem saldos e metas e recusem uma meta negativa. Grava
+    `desfeita_em`, o que libera o recebimento para uma nova divisão. Qualquer
+    falha desfaz tudo (SALARIO-50). Trava a divisão, depois as contas e só
+    então as metas (AD-045).
+    """
+    divisao = DivisaoDoSalario.objects.select_for_update().filter(pk=divisao_id, user=usuario).first()
+    if divisao is None:
+        raise Http404
+    if divisao.desfeita_em is not None:
+        raise ValidationError({'detail': JA_DESFEITA})
+    if hoje() > prazo_para_desfazer(divisao):
+        raise ValidationError({'detail': PRAZO_ACABOU})
+
+    itens = [item for item in divisao.itens.select_related('conta', 'meta').order_by('ordem', 'pk') if item.transfer_id]
+    contas = [divisao.conta_de_origem_id]
+    contas += [item.conta_id for item in itens]
+    contas += [item.meta.account_id for item in itens if item.meta is not None]
+    contas += Transaction.objects.filter(
+        user=usuario, divisao_do_salario=divisao.pk,
+    ).values_list('account_id', flat=True)
+    travar(*contas)
+    metas = {
+        meta.pk: meta
+        for meta in Goal.objects.select_for_update().filter(
+            pk__in=[item.meta_id for item in itens if item.meta_id],
+        ).order_by('pk')
+    }
+
+    data = data_da_divisao(divisao)
+    for item in itens:
+        if _item_mudou(divisao, item, data):
+            raise ValidationError({'detail': _mensagem_de_mudanca(item)})
+    aportado = {}
+    for item in itens:
+        if item.tipo_de_destino == META:
+            aportado[item.meta_id] = aportado.get(item.meta_id, 0) + item.valor
+    for meta_id, valor in aportado.items():
+        meta = metas[meta_id]
+        if meta.current_amount < valor:
+            raise ValidationError({'detail': META_SEM_O_VALOR.format(nome=meta.name)})
+
+    for item in itens:
+        # Uma instância por vez: a parceira sai junto (sync_transfer_delete)
+        Transaction.objects.get(pk=item.transacao_saida_id).delete()
+    divisao.desfeita_em = timezone.now()
+    divisao.save(update_fields=['desfeita_em'])
+    # Só ids e quantidades (SALARIO-18, AD-019)
+    logger.info('Divisão do salário desfeita divisao=%s usuario=%s transacoes=%s', divisao.pk, usuario.pk, len(itens))
+    return divisao
 
 
 def divisao_em_json(divisao):

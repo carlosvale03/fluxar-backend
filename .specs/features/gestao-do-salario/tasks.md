@@ -242,17 +242,18 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Desfazer remove o aporte, e a meta e a conta do salário voltam aos valores de antes; o salário volta à lista a dividir
-- [ ] Aporte editado recebe 400 dizendo que o aporte em Viagem mudou; transação excluída também recusa
-- [ ] Meta com valor menor que o aportado recebe 400 com o nome da meta
-- [ ] No 8º dia, recebe 400 "O prazo para desfazer esta divisão acabou."
-- [ ] Com uma falha forçada no meio, a divisão continua inteira
-- [ ] Desfazer de novo recebe "Esta divisão já foi desfeita." sem remover nada
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Desfazer remove o aporte, e a meta e a conta do salário voltam aos valores de antes; o salário volta à lista a dividir
+- [x] Aporte editado recebe 400 dizendo que o aporte em Viagem mudou; transação excluída também recusa
+- [x] Meta com valor menor que o aportado recebe 400 com o nome da meta
+- [x] No 8º dia, recebe 400 "O prazo para desfazer esta divisão acabou."
+- [x] Com uma falha forçada no meio, a divisão continua inteira
+- [x] Desfazer de novo recebe "Esta divisão já foi desfeita." sem remover nada
+- [x] Full gate passa
+- [x] Test count: 12 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite desfazer a divisão do salário em até 7 dias`
 

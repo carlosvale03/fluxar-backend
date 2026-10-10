@@ -261,19 +261,19 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-43 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-44 | P1: Geração das transações | T10 | Pending |
 | SALARIO-45 | P1: Desfazer a divisão | T11 | Pending |
-| SALARIO-46 | P1: Desfazer a divisão | T6 | Pending |
-| SALARIO-47 | P1: Desfazer a divisão | T6 | Pending |
-| SALARIO-48 | P1: Desfazer a divisão | T6 | Pending |
-| SALARIO-49 | P1: Desfazer a divisão | T6 | Pending |
-| SALARIO-50 | P1: Desfazer a divisão | T6 | Pending |
-| SALARIO-51 | P1: Desfazer a divisão | T6 | Pending |
+| SALARIO-46 | P1: Desfazer a divisão | T6 | Implemented |
+| SALARIO-47 | P1: Desfazer a divisão | T6 | Implemented |
+| SALARIO-48 | P1: Desfazer a divisão | T6 | Implemented |
+| SALARIO-49 | P1: Desfazer a divisão | T6 | Implemented |
+| SALARIO-50 | P1: Desfazer a divisão | T6 | Implemented |
+| SALARIO-51 | P1: Desfazer a divisão | T6 | Implemented |
 | SALARIO-52 | P1: Referências do mês e histórico | T7, T8 | Pending |
 | SALARIO-53 | P1: Referências do mês e histórico | T7, T8 | Pending |
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Pending |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 25 implemented, 10 in progress, 21 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 31 implemented, 10 in progress, 15 pending
 
 ---
 

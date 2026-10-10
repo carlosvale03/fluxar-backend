@@ -192,6 +192,7 @@ def chamadas_do_catalogo(t):
             ('revisão', lambda: c.post('/api/salary/divisions/preview/', {'receipt': None}, format='json'), 400),
             ('geração', lambda: c.post('/api/salary/divisions/', {'receipt': None}, format='json'), 400),
             ('divisão', lambda: c.get('/api/salary/divisions/00000000-0000-0000-0000-000000000000/'), 404),
+            ('desfazer', lambda: c.post('/api/salary/divisions/00000000-0000-0000-0000-000000000000/undo/'), 404),
         ],
     }
 

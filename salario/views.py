@@ -169,3 +169,12 @@ class SalaryDivisionDetailView(APIView):
     def get(self, request, pk):
         registro = get_object_or_404(DivisaoDoSalario, pk=pk, user=request.user)
         return Response(divisao.divisao_em_json(registro))
+
+
+class SalaryDivisionUndoView(APIView):
+    """`POST /salary/divisions/<id>/undo/`: desfaz a divisão inteira em até 7 dias (SALARIO-46 a SALARIO-51)."""
+    permission_classes = PERMISSOES
+
+    def post(self, request, pk):
+        registro = divisao.desfazer(request.user, pk)
+        return Response(divisao.divisao_em_json(registro))

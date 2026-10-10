@@ -10,4 +10,5 @@ urlpatterns = [
     path('salary/divisions/preview/', views.SalaryDivisionPreviewView.as_view(), name='salary-division-preview'),
     path('salary/divisions/', views.SalaryDivisionsView.as_view(), name='salary-divisions'),
     path('salary/divisions/<uuid:pk>/', views.SalaryDivisionDetailView.as_view(), name='salary-division-detail'),
+    path('salary/divisions/<uuid:pk>/undo/', views.SalaryDivisionUndoView.as_view(), name='salary-division-undo'),
 ]
