@@ -39,6 +39,7 @@ from .models import (
     SystemLog,
     TravaDePlano,
 )
+from .auditoria import Acoes, registrar
 from .exclusao import ExclusaoFalhou, excluir_contas_vencidas, excluir_definitivamente
 from .cookies import (
     NOME_DO_COOKIE,
@@ -645,16 +646,48 @@ EXCLUSAO_FALHOU = {
 }
 
 
-def excluir_pelo_admin(usuario, chave="detail"):
+def excluir_pelo_admin(request, usuario, chave="detail"):
     """
     Exclusão definitiva pelo painel, inclusive de conta com exclusão já
     pendente (LGPD-13). Com o Cloudinary falhando, nada é apagado (LGPD-12).
+
+    O `DELETE_ACCOUNT` é gravado antes, para a exclusão mantê-lo só com o id
+    interno do usuário (ADMIN-08, ADMIN-11); se a exclusão falhar, ele sai.
     """
+    log = registrar(request.user, Acoes.DELETE_ACCOUNT, usuario, descricao="Conta excluída pelo administrador.")
     try:
         excluir_definitivamente(usuario, RegistroDeExclusao.ADMIN)
     except ExclusaoFalhou:
+        log.delete()
         return Response(EXCLUSAO_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     return Response({chave: "Usuário excluído permanentemente."}, status=status.HTTP_200_OK)
+
+
+# Cada campo que o painel muda vira um registro próprio no log (ADMIN-08, AD-049)
+CAMPOS_AUDITADOS = (
+    ('plan', Acoes.CHANGE_PLAN),
+    ('role', Acoes.CHANGE_ROLE),
+    ('is_active', Acoes.CHANGE_STATUS),
+)
+
+
+def _descricao_da_mudanca(campo, depois):
+    if campo == 'plan':
+        return "Plano alterado pelo administrador."
+    if campo == 'role':
+        return "Papel alterado pelo administrador."
+    return "Conta reativada pelo administrador." if depois else "Conta desativada pelo administrador."
+
+
+def registrar_mudancas(request, antes, depois):
+    """Um registro por campo auditado que mudou; campo sem mudança não gera registro."""
+    for campo, acao in CAMPOS_AUDITADOS:
+        valor_antes, valor_depois = getattr(antes, campo), getattr(depois, campo)
+        if valor_antes != valor_depois:
+            registrar(
+                request.user, acao, depois, antes=valor_antes, depois=valor_depois,
+                descricao=_descricao_da_mudanca(campo, valor_depois),
+            )
 
 
 class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
@@ -708,11 +741,17 @@ class AdminUserListView(ParametrosConhecidosMixin, generics.ListAPIView):
         users_to_delete = User.objects.filter(id__in=user_ids)
         recusar_remocao_de_admin(request, users_to_delete)
 
+        alvos = list(users_to_delete)
         users_to_delete.update(is_active=False)
-        # A conta arquivada perde as sessões abertas (SESSAO-17)
-        for user in users_to_delete:
+        for user in alvos:
+            # A conta arquivada perde as sessões abertas (SESSAO-17)
             encerrar_todas(user)
-        return Response({"detail": f"{users_to_delete.count()} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
+            if user.is_active:
+                registrar(
+                    request.user, Acoes.CHANGE_STATUS, user, antes=True, depois=False,
+                    descricao="Conta arquivada pelo administrador.",
+                )
+        return Response({"detail": f"{len(alvos)} usuários arquivados com sucesso."}, status=status.HTTP_200_OK)
 
 class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -746,23 +785,8 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
             # A conta desativada perde as sessões abertas (SESSAO-17)
             if not new_user.is_active:
                 encerrar_todas(new_user)
-            changes = []
-            if old_user.plan != new_user.plan:
-                changes.append(f"Plano alterado de {old_user.plan} para {new_user.plan}")
-            if old_user.role != new_user.role:
-                changes.append(f"Cargo alterado de {old_user.role} para {new_user.role}")
-            if old_user.is_active != new_user.is_active:
-                status_str = "Ativado" if new_user.is_active else "Arquivado"
-                changes.append(f"Status alterado para {status_str}")
-            
-            if changes:
-                SystemLog.objects.create(
-                    user=new_user,
-                    action="UPDATE_PROFILE",
-                    description="; ".join(changes),
-                    admin_name=_mask_email(request.user.email)
-                )
-        
+            registrar_mudancas(request, old_user, new_user)
+
         return response
 
     def destroy(self, request, *args, **kwargs):
@@ -787,21 +811,21 @@ class AdminUserDetailView(ParametrosConhecidosMixin, generics.RetrieveUpdateDest
 
         if permanent:
             # O mesmo caminho da rotina diária, na hora (LGPD-13)
-            return excluir_pelo_admin(instance)
+            return excluir_pelo_admin(request, instance)
         else:
+            estava_ativa = instance.is_active
             instance.is_active = False
             instance.save()
             # A conta arquivada perde as sessões abertas; na exclusão, elas
             # são apagadas em cascata com a conta (SESSAO-17)
             encerrar_todas(instance)
-            
-            SystemLog.objects.create(
-                user=instance,
-                action="ARCHIVE_ACCOUNT",
-                description="Conta arquivada pelo administrador.",
-                admin_name=_mask_email(request.user.email)
-            )
-            
+
+            if estava_ativa:
+                registrar(
+                    request.user, Acoes.CHANGE_STATUS, instance, antes=True, depois=False,
+                    descricao="Conta arquivada pelo administrador.",
+                )
+
             return Response({"detail": "Usuário arquivado com sucesso."}, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
@@ -1063,13 +1087,8 @@ class AdminResetPasswordView(APIView):
             # A senha nova derruba todas as sessões do usuário (SESSAO-16)
             encerrar_todas(user)
             
-            SystemLog.objects.create(
-                user=user,
-                action="RESET_PASSWORD",
-                description="Senha redefinida pelo administrador.",
-                admin_name=_mask_email(request.user.email)
-            )
-            
+            registrar(request.user, Acoes.RESET_PASSWORD, user, descricao="Senha redefinida pelo administrador.")
+
             return Response({"message": "Senha do usuário redefinida com sucesso."}, status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1101,11 +1120,9 @@ class AdminClearUserDataView(APIView):
         user.credit_cards.all().delete()
         user.accounts.all().delete()
 
-        SystemLog.objects.create(
-            user=user,
-            action="CLEAR_DATA",
-            description="Todos os dados financeiros e configurações foram limpos pelo administrador.",
-            admin_name=_mask_email(request.user.email)
+        registrar(
+            request.user, Acoes.CLEAR_DATA, user,
+            descricao="Todos os dados financeiros e configurações foram limpos pelo administrador.",
         )
 
         return Response({"message": "Dados do usuário limpos com sucesso."}, status=status.HTTP_200_OK)
@@ -1128,7 +1145,7 @@ class AdminHardDeleteView(APIView):
 
         # O mesmo caminho da rotina diária, na hora, e sem o nome na resposta
         # (LGPD-13, LGPD-21)
-        return excluir_pelo_admin(user, chave="message")
+        return excluir_pelo_admin(request, user, chave="message")
 
 # --- Termos e consentimento ---
 

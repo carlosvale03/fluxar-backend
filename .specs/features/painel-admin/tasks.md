@@ -124,16 +124,17 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Mudar o plano de COMMON para PREMIUM grava `CHANGE_PLAN` com `before` "COMMON" e `after` "PREMIUM"
-- [ ] Mudar plano e papel juntos grava dois registros; campo sem mudança não gera registro
-- [ ] Arquivar em lote grava `CHANGE_STATUS` para cada usuário
-- [ ] Redefinir a senha grava `RESET_PASSWORD` sem a senha
-- [ ] A exclusão pelas duas rotas grava `DELETE_ACCOUNT`, que continua no log do usuário depois da exclusão
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Mudar o plano de COMMON para PREMIUM grava `CHANGE_PLAN` com `before` "COMMON" e `after` "PREMIUM"
+- [x] Mudar plano e papel juntos grava dois registros; campo sem mudança não gera registro
+- [x] Arquivar em lote grava `CHANGE_STATUS` para cada usuário
+- [x] Redefinir a senha grava `RESET_PASSWORD` sem a senha
+- [x] A exclusão pelas duas rotas grava `DELETE_ACCOUNT`, que continua no log do usuário depois da exclusão
+- [x] Quick gate passa
+- [x] Test count: 9 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: registra no log toda ação do administrador sobre um usuário`
 
