@@ -396,14 +396,15 @@ T12 → T13
 
 **Done when**:
 
-- [ ] O filtro Rejeitadas mostra só as rejeitadas, com o motivo
-- [ ] Corrigir a data manda a correção no plano e mostra a linha reanalisada
-- [ ] Excluir manda `excluir: true`; restaurar tira a chave do plano
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] O filtro Rejeitadas mostra só as rejeitadas, com o motivo
+- [x] Corrigir a data manda a correção no plano e mostra a linha reanalisada
+- [x] Excluir manda `excluir: true`; restaurar tira a chave do plano
+- [x] Quick gate (frontend) passa
+- [x] Test count: 5 testes (`tests/importacao/assistente-linhas.test.tsx`)
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite revisar, corrigir e excluir as linhas antes de importar`
 
