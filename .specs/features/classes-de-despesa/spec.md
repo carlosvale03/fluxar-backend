@@ -215,16 +215,16 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-30 | P1: Divisão das despesas por classe | T5 | Implemented |
 | CLASSE-31 | P1: Divisão das despesas por classe | T10 | Implemented |
 | CLASSE-32 | P1: Divisão das despesas por classe | T10 | Implemented |
-| CLASSE-33 | P1: Divisão das despesas por classe | T10, T11 | In Progress |
-| CLASSE-34 | P1: Filtro e exportação por classe | T6 | In Progress |
-| CLASSE-35 | P1: Filtro e exportação por classe | T6 | In Progress |
+| CLASSE-33 | P1: Divisão das despesas por classe | T10, T11 | Implemented |
+| CLASSE-34 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
+| CLASSE-35 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
 | CLASSE-36 | P1: Filtro e exportação por classe | T6 | Implemented |
 | CLASSE-37 | P1: Filtro e exportação por classe | T6 | Implemented |
 | CLASSE-38 | P1: Filtro e exportação por classe | T6 | Implemented |
-| CLASSE-39 | P1: Filtro e exportação por classe | T6 | In Progress |
+| CLASSE-39 | P1: Filtro e exportação por classe | T6, T11 | Implemented |
 | CLASSE-40 | P1: Filtro e exportação por classe | T7 | Implemented |
 
-**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped ✓ (frontend em andamento)
+**Coverage:** 40 total, 40 mapped to tasks, 0 unmapped ✓
 
 ---
 

@@ -387,14 +387,15 @@ T10 → T11
 
 **Done when**:
 
-- [ ] Abrir `/transacoes?classId=<id>&startDate=&endDate=` já filtra pela classe e pelo período
-- [ ] Escolher duas classes e "Sem classe" envia três `classId`
-- [ ] A exportação envia as classes escolhidas
-- [ ] Build gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Abrir `/transacoes?classId=<id>&startDate=&endDate=` já filtra pela classe e pelo período
+- [x] Escolher duas classes e "Sem classe" envia três `classId`
+- [x] A exportação envia as classes escolhidas
+- [x] Build gate (frontend) passa
+- [x] Test count: 5 testes
 
 **Tests**: unit (frontend)
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra a lista e a exportação por classe`
 
