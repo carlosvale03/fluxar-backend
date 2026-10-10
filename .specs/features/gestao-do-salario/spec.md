@@ -247,18 +247,18 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-29 | P1: Geração das transações | T4, T10 | In Progress |
 | SALARIO-30 | P1: Geração das transações | T2, T4, T10 | In Progress |
 | SALARIO-31 | P1: Geração das transações | T10 | Pending |
-| SALARIO-32 | P1: Geração das transações | T5 | Pending |
-| SALARIO-33 | P1: Geração das transações | T5 | Pending |
+| SALARIO-32 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-33 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-34 | P1: Geração das transações | T2 | Implemented |
-| SALARIO-35 | P1: Geração das transações | T5 | Pending |
-| SALARIO-36 | P1: Geração das transações | T5 | Pending |
-| SALARIO-37 | P1: Geração das transações | T5 | Pending |
-| SALARIO-38 | P1: Geração das transações | T5 | Pending |
-| SALARIO-39 | P1: Geração das transações | T5 | Pending |
+| SALARIO-35 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-36 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-37 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-38 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-39 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-40 | P1: Geração das transações | T4 | Implemented |
-| SALARIO-41 | P1: Geração das transações | T5 | Pending |
-| SALARIO-42 | P1: Geração das transações | T5 | Pending |
-| SALARIO-43 | P1: Geração das transações | T5 | Pending |
+| SALARIO-41 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-42 | P1: Geração das transações | T5 | Implemented |
+| SALARIO-43 | P1: Geração das transações | T5 | Implemented |
 | SALARIO-44 | P1: Geração das transações | T10 | Pending |
 | SALARIO-45 | P1: Desfazer a divisão | T11 | Pending |
 | SALARIO-46 | P1: Desfazer a divisão | T6 | Pending |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Pending |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 15 implemented, 10 in progress, 31 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 25 implemented, 10 in progress, 21 pending
 
 ---
 

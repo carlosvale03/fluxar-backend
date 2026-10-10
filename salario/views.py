@@ -2,9 +2,11 @@
 Rotas da gestão do salário, todas travadas pelo recurso `gestao_do_salario`
 (SALARIO-16, PERM-15).
 """
+import uuid
 from types import SimpleNamespace
 
-from rest_framework import permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,8 +16,11 @@ from core.valores import dinheiro
 
 from . import divisao, plano
 from .calculo import dividir
+from .models import DivisaoDoSalario
 from .modelos import MODELOS, REGRA_DOS_MODELOS
-from .serializers import DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma
+from .serializers import (
+    DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma,
+)
 
 PERMISSOES = [permissions.IsAuthenticated, RecursoLiberado('gestao_do_salario')]
 
@@ -127,3 +132,40 @@ class SalaryDivisionPreviewView(APIView):
     def post(self, request):
         dados = validar(DivisionPreviewSerializer, request)
         return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments']))
+
+
+class SalaryDivisionsView(APIView):
+    """
+    `POST /salary/divisions/`: gera as transações da divisão de uma vez
+    (SALARIO-32 a SALARIO-43). A repetição da mesma `idempotency_key`
+    devolve a divisão já gravada, também com 201 (SALARIO-37).
+    """
+    permission_classes = PERMISSOES
+
+    def post(self, request):
+        # A repetição responde antes da validação: o recebimento pode ter
+        # sido excluído depois da primeira resposta
+        chave = request.data.get('idempotency_key') if hasattr(request.data, 'get') else None
+        try:
+            chave = uuid.UUID(str(chave)) if chave not in (None, '') else None
+        except ValueError:
+            chave = None
+        if chave is not None:
+            anterior = DivisaoDoSalario.objects.filter(user=request.user, chave=chave).first()
+            if anterior is not None and str(anterior.recebimento_ref) == str(request.data.get('receipt')):
+                return Response(divisao.divisao_em_json(anterior), status=status.HTTP_201_CREATED)
+
+        dados = validar(DivisionCreateSerializer, request)
+        registro, _ = divisao.gerar(
+            request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'],
+        )
+        return Response(divisao.divisao_em_json(registro), status=status.HTTP_201_CREATED)
+
+
+class SalaryDivisionDetailView(APIView):
+    """`GET /salary/divisions/<id>/`: a divisão com as transações geradas (SALARIO-44, SALARIO-45)."""
+    permission_classes = PERMISSOES
+
+    def get(self, request, pk):
+        registro = get_object_or_404(DivisaoDoSalario, pk=pk, user=request.user)
+        return Response(divisao.divisao_em_json(registro))

@@ -188,6 +188,10 @@ def chamadas_do_catalogo(t):
             ('salvar o plano', lambda: c.put('/api/salary/plan/', {'parts': []}, format='json'), 200),
             ('simulação', lambda: c.post('/api/salary/simulate/', {'amount': '3000.00'}, format='json'), 200),
             ('salários a dividir', lambda: c.get('/api/salary/pending/'), 200),
+            # Sem um salário recebido, a revisão e a geração recusam com 400 e a divisão não existe
+            ('revisão', lambda: c.post('/api/salary/divisions/preview/', {'receipt': None}, format='json'), 400),
+            ('geração', lambda: c.post('/api/salary/divisions/', {'receipt': None}, format='json'), 400),
+            ('divisão', lambda: c.get('/api/salary/divisions/00000000-0000-0000-0000-000000000000/'), 404),
         ],
     }
 

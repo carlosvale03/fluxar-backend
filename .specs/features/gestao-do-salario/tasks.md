@@ -210,17 +210,18 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Dividir R$ 3.000,00 com Guardar na meta Viagem cria um aporte efetivado de R$ 600,00 com a data de hoje, que entra só em Viagem mesmo com o cofrinho dividido com outra meta
-- [ ] Parte com destino numa conta cria a transferência; todas as transações levam o id da divisão
-- [ ] Com uma falha forçada no segundo item, nenhuma transação fica gravada
-- [ ] O mesmo pedido com a mesma chave devolve a mesma divisão sem criar nada; outro pedido para o mesmo salário recebe 400 "Este salário já foi dividido."
-- [ ] Dois pedidos simultâneos criam as transações de um só
-- [ ] Parte sem destino, destino inativo e plano sem transação recebem as mensagens da spec
-- [ ] Full gate passa
-- [ ] Test count: pelo menos 10 testes
+- [x] Dividir R$ 3.000,00 com Guardar na meta Viagem cria um aporte efetivado de R$ 600,00 com a data de hoje, que entra só em Viagem mesmo com o cofrinho dividido com outra meta
+- [x] Parte com destino numa conta cria a transferência; todas as transações levam o id da divisão
+- [x] Com uma falha forçada no segundo item, nenhuma transação fica gravada
+- [x] O mesmo pedido com a mesma chave devolve a mesma divisão sem criar nada; outro pedido para o mesmo salário recebe 400 "Este salário já foi dividido."
+- [x] Dois pedidos simultâneos criam as transações de um só
+- [x] Parte sem destino, destino inativo e plano sem transação recebem as mensagens da spec
+- [x] Full gate passa
+- [x] Test count: 18 testes
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 **Commit**: `feat: gera as transferências e os aportes da divisão do salário de uma vez`
 
