@@ -366,14 +366,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Receitas e despesas dos 30 dias batem com as do relatório do usuário no mesmo período
-- [ ] Ajuste de saldo e transação de conta excluída ficam fora
-- [ ] Compra no cartão entra pela data do relatório
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Receitas e despesas dos 30 dias batem com as do relatório do usuário no mesmo período
+- [x] Ajuste de saldo e transação de conta excluída ficam fora
+- [x] Compra no cartão entra pela data do relatório
+- [x] Quick gate passa
+- [x] Test count: 4 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: calcula as estatísticas do usuário no painel pelas regras dos relatórios`
 
