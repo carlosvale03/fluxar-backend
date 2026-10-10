@@ -183,7 +183,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-25 | P1: Operações sobre usuários | T7 | Implemented |
 | ADMIN-26 | P1: Operações sobre usuários | T7 | Implemented |
 | ADMIN-27 | P1: Operações sobre usuários | T7 | Implemented |
-| ADMIN-28 | P1: Operações sobre usuários | T8 | Pending |
+| ADMIN-28 | P1: Operações sobre usuários | T8 | Implemented |
 | ADMIN-29 | P1: Operações sobre usuários | T10 | Pending |
 
 **Coverage:** 29 total, 29 mapped to tasks, 0 unmapped ✅

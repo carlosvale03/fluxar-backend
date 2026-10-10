@@ -306,13 +306,14 @@ T16 → T17
 
 **Done when**:
 
-- [ ] A exclusão termina com 200 e nenhum dado do usuário no banco
-- [ ] Fica o `RegistroDeExclusao` com `executada_por` ADMIN e o `DELETE_ACCOUNT` no log
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A exclusão termina com 200 e nenhum dado do usuário no banco
+- [x] Fica o `RegistroDeExclusao` com `executada_por` ADMIN e o `DELETE_ACCOUNT` no log
+- [x] Build gate passa
+- [x] Test count: 2 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test: confere a exclusão pelo admin de um usuário com cartão, parcelas, transferências e metas`
 
