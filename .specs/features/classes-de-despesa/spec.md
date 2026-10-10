@@ -183,7 +183,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CLASSE-01 | P1: Classes do usuário | - | Pending |
+| CLASSE-01 | P1: Classes do usuário | T2 | Implemented |
 | CLASSE-02 | P1: Classes do usuário | - | Pending |
 | CLASSE-03 | P1: Classes do usuário | - | Pending |
 | CLASSE-04 | P1: Classes do usuário | - | Pending |
@@ -206,7 +206,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-21 | P1: Classe das categorias | - | Pending |
 | CLASSE-22 | P1: Classe das categorias | - | Pending |
 | CLASSE-23 | P1: Classe das categorias | - | Pending |
-| CLASSE-24 | P1: Classe das categorias | - | Pending |
+| CLASSE-24 | P1: Classe das categorias | T2 | Implemented |
 | CLASSE-25 | P1: Classe das categorias | T1 | Implemented |
 | CLASSE-26 | P1: Classe das categorias | - | Pending |
 | CLASSE-27 | P1: Classe das categorias | - | Pending |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | - | Pending |
 | CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
 
-**Coverage:** 40 total, 2 mapped to tasks, 38 unmapped ⚠️ (backend em andamento)
+**Coverage:** 40 total, 4 mapped to tasks, 36 unmapped ⚠️ (backend em andamento)
 
 ---
 

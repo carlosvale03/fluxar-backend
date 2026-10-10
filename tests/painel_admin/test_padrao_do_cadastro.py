@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from accounts.models import Account
 from api.models import User
-from transactions.models import Category
+from transactions.models import Category, ClasseDeDespesa
 from transactions.padrao import criar_padrao_do_cadastro
 
 # As categorias de um cadastro novo, como (nome, tipo, categoria pai)
@@ -66,6 +66,8 @@ class PadraoDoCadastroTests(TestCase):
         usuario = User.objects.create_user(email='novo@teste.fluxar', password='senha-de-teste-123', name='Novo')
         Category.objects.filter(user=usuario).delete()
         Account.objects.filter(user=usuario).delete()
+        # As classes também são do padrão (CLASSE-01)
+        ClasseDeDespesa.objects.filter(user=usuario).delete()
 
         criar_padrao_do_cadastro(usuario)
 

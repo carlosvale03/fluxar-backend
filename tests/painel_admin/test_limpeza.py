@@ -71,7 +71,11 @@ class LimpezaTests(PainelAdminTestCase):
         esperados = {rotulo: n for rotulo, n in restantes.items() if rotulo in MANTIDOS_NA_LIMPEZA}
         self.assertEqual(
             restantes,
-            {**esperados, 'transactions.Category': len(CATEGORIAS_PADRAO), 'accounts.Account': 1},
+            {
+                **esperados, 'transactions.Category': len(CATEGORIAS_PADRAO), 'accounts.Account': 1,
+                # Essencial e Dispensável, recriadas pelo padrão (CLASSE-01)
+                'transactions.ClasseDeDespesa': 2,
+            },
         )
         self.assertEqual(set(categorias(usuario)), CATEGORIAS_PADRAO)
         self.assertEqual(contas(usuario), [('Carteira', 'WALLET', 0, True)])

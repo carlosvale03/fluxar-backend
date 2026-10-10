@@ -113,14 +113,15 @@ T10 → T11
 
 **Done when**:
 
-- [ ] Um usuário novo tem Essencial e Dispensável
-- [ ] Casa, Comida, Transporte e Educação ficam em Essencial; Lazer, Eletrônicos, Doces, Doação e Presente (despesa) em Dispensável; Aluguel e Energia herdam de Casa
-- [ ] A limpeza do painel termina com as duas classes, sem duplicar
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Um usuário novo tem Essencial e Dispensável
+- [x] Casa, Comida, Transporte e Educação ficam em Essencial; Lazer, Eletrônicos, Doces, Doação e Presente (despesa) em Dispensável; Aluguel e Energia herdam de Casa
+- [x] A limpeza do painel termina com as duas classes, sem duplicar
+- [x] Quick gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: dá as classes Essencial e Dispensável a todo cadastro novo`
 
