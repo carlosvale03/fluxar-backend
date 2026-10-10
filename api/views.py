@@ -1154,16 +1154,12 @@ class AdminClearUserDataView(SemTransacaoPorRequisicao, APIView):
             raise AcaoDeAdminRecusada(LIMPAR_OS_PROPRIOS_DADOS, code='own_account')
 
         # Erro inesperado desfaz a limpeza e vira 500, sem o texto da exceção
-        # (ADMIN-25, CONTRATO-29)
+        # (ADMIN-25, CONTRATO-29). O CLEAR_DATA é gravado na mesma transação
         try:
-            limpar_dados(user)
+            limpar_dados(user, request.user)
         except LimpezaFalhou:
             return Response(LIMPEZA_FALHOU, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        registrar(
-            request.user, Acoes.CLEAR_DATA, user,
-            descricao="Todos os dados financeiros e configurações foram limpos pelo administrador.",
-        )
         return Response({
             "message": "Dados do usuário limpos com sucesso.",
             "financial_stats": ReportService.get_user_financial_stats(user),

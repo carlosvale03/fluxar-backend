@@ -10,6 +10,8 @@ Limpeza dos dados de um usuário pelo administrador (ADMIN-21 a ADMIN-26, AD-050
 3. Apaga cada modelo de `MODELOS_DO_USUARIO` que não está em
    `MANTIDOS_NA_LIMPEZA`, na ordem da lista (ADMIN-21).
 4. Recria o padrão de um cadastro novo (ADMIN-22).
+5. Grava o `CLEAR_DATA` no log de auditoria, na mesma transação: sem o
+   registro, nada é apagado (ADMIN-08).
 
 Uma exceção no meio desfaz a transação inteira (ADMIN-25). O `User`, com
 login, senha, perfil, plano e papel, não está na lista e fica (ADMIN-23).
@@ -19,6 +21,7 @@ from django.db import transaction
 
 from transactions.padrao import criar_padrao_do_cadastro
 
+from .auditoria import Acoes, registrar
 from .exclusao import MODELOS_DO_USUARIO, ExclusaoFalhou, _remover_do_cloudinary
 from .models import User
 
@@ -47,8 +50,11 @@ def modelos_da_limpeza():
     ]
 
 
-def limpar_dados(usuario):
-    """Apaga os dados do usuário e recria o padrão do cadastro, tudo ou nada."""
+def limpar_dados(usuario, admin):
+    """
+    Apaga os dados do usuário, recria o padrão do cadastro e registra a
+    limpeza feita por `admin`, tudo ou nada.
+    """
     from goals.models import Goal
 
     try:
@@ -63,3 +69,7 @@ def limpar_dados(usuario):
         for modelo, campo in modelos_da_limpeza():
             modelo.objects.filter(**{f'{campo}_id': usuario.pk}).delete()
         criar_padrao_do_cadastro(usuario)
+        registrar(
+            admin, Acoes.CLEAR_DATA, usuario,
+            descricao='Todos os dados financeiros e configurações foram limpos pelo administrador.',
+        )

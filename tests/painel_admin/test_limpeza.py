@@ -170,6 +170,20 @@ class LimpezaTests(PainelAdminTestCase):
         self.assertGreater(Transaction.objects.filter(user=self.ana).count(), TRANSACOES_EXTRAS)
         self.assertFalse(SystemLog.objects.filter(action='CLEAR_DATA').exists())
 
+    def test_falha_ao_gravar_o_log_mantem_os_dados_como_estavam(self, destruir):
+        """O CLEAR_DATA é gravado na mesma transação: sem o registro, nada é apagado (ADMIN-08)."""
+        antes = linhas_do_usuario(self.ana.pk)
+        self.client.raise_request_exception = False
+
+        with mock.patch('api.limpeza.registrar', side_effect=RuntimeError('log fora do ar')) as registrar:
+            resposta = self.limpar()
+
+        registrar.assert_called_once()
+        self.assertEqual(resposta.status_code, 500)
+        self.assertEqual(linhas_do_usuario(self.ana.pk), antes)
+        self.assertGreater(Transaction.objects.filter(user=self.ana).count(), TRANSACOES_EXTRAS)
+        self.assertFalse(SystemLog.objects.filter(action='CLEAR_DATA').exists())
+
     # ADMIN-27 --------------------------------------------------------------
 
     def test_administrador_limpando_os_proprios_dados_recebe_400(self, destruir):
