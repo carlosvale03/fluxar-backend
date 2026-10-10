@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.http import HttpResponse
 from accounts.models import Account
+from transactions.classes import mapa_de_classes
 from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
 from .importacao.gravacao import Gravacao
@@ -132,9 +133,9 @@ class ExportTransactionsXLSView(ParametrosConhecidosMixin, views.APIView):
         qs = filtrar_transacoes(
             Transaction.objects.filter(user=request.user), request.query_params, request.user,
         )
-        qs = qs.order_by('date')
-        
-        buffer = ExportService.generate_xls(qs)
+        qs = qs.select_related('account', 'category__parent').prefetch_related('tags').order_by('date')
+
+        buffer = ExportService.generate_xls(qs, mapa_de_classes(request.user))
         
         response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="relatorio_fluxar.xlsx"'

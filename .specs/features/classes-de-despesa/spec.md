@@ -222,9 +222,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-37 | P1: Filtro e exportação por classe | T6 | Implemented |
 | CLASSE-38 | P1: Filtro e exportação por classe | T6 | Implemented |
 | CLASSE-39 | P1: Filtro e exportação por classe | T6 | In Progress |
-| CLASSE-40 | P1: Filtro e exportação por classe | - | Pending |
+| CLASSE-40 | P1: Filtro e exportação por classe | T7 | Implemented |
 
-**Coverage:** 40 total, 32 mapped to tasks, 8 unmapped ⚠️ (backend em andamento)
+**Coverage:** 40 total, 33 mapped to tasks, 7 unmapped ⚠️ (backend em andamento)
 
 ---
 

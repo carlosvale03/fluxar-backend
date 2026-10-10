@@ -269,13 +269,14 @@ T10 → T11
 
 **Done when**:
 
-- [ ] Despesas e compras no cartão mostram a classe efetiva ou "Sem classe"; receitas e transferências ficam vazias
-- [ ] O XLSX dos dados da LGPD também tem a coluna
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 3 testes
+- [x] Despesas e compras no cartão mostram a classe efetiva ou "Sem classe"; receitas e transferências ficam vazias
+- [x] O XLSX dos dados da LGPD também tem a coluna
+- [x] Build gate passa
+- [x] Test count: 3 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `feat: inclui a classe na exportação em XLSX`
 
