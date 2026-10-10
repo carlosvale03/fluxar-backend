@@ -73,7 +73,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 6. **CLASSE-06** IF o nome da classe estiver vazio ou tiver mais de 30 caracteres THEN o sistema SHALL recusar com HTTP 400 e o erro no campo do nome.
 7. **CLASSE-07** IF o nome repetir o de outra classe do usuário, sem diferença de maiúsculas e acentos, THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Já existe uma classe com esse nome." no campo do nome.
 8. **CLASSE-08** IF o usuário tentar excluir ou renomear Essencial ou Dispensável THEN o sistema SHALL recusar com HTTP 400 e a mensagem "As classes padrão não podem ser excluídas nem renomeadas."
-9. **CLASSE-09** WHEN o usuário pede para excluir uma classe que ele criou THEN a interface SHALL mostrar quantas categorias a usam e só excluir depois da confirmação.
+9. **CLASSE-09** WHEN o usuário pede para excluir uma classe que ele criou THEN a interface SHALL mostrar quantas categorias têm essa classe como classe própria e só excluir depois da confirmação.
 10. **CLASSE-10** WHEN uma classe é excluída THEN o sistema SHALL remover a classe própria das categorias que a usavam, que passam a seguir a herança de CLASSE-16.
 11. **CLASSE-11** IF a exclusão de uma classe falhar no meio THEN o sistema SHALL manter a classe e as categorias como estavam.
 12. **CLASSE-12** WHILE houver pedidos simultâneos de criação de classes do mesmo usuário, o sistema SHALL manter o limite de 5 classes e os nomes sem repetição.
