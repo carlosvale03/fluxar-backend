@@ -208,15 +208,16 @@ T10 → T11
 
 **Done when**:
 
-- [ ] R$ 600,00 em Comida, R$ 300,00 em Doces e R$ 100,00 sem categoria dão Essencial 600.00, Dispensável 300.00 e Sem classe 100.00
-- [ ] A soma por classe é igual à soma por categoria, com compras parceladas no cartão e despesas pendentes
-- [ ] Passar Doces para Essencial muda também o mês anterior
-- [ ] Período sem despesas devolve a lista vazia; a rota não tem trava de plano
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] R$ 600,00 em Comida, R$ 300,00 em Doces e R$ 100,00 sem categoria dão Essencial 600.00, Dispensável 300.00 e Sem classe 100.00
+- [x] A soma por classe é igual à soma por categoria, com compras parceladas no cartão e despesas pendentes
+- [x] Passar Doces para Essencial muda também o mês anterior
+- [x] Período sem despesas devolve a lista vazia; a rota não tem trava de plano
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra nos gráficos quanto das despesas foi para cada classe`
 
