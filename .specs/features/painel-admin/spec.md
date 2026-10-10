@@ -157,9 +157,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ADMIN-01 | P1: Telas sem dados falsos | T15 | Pending |
-| ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | In Progress |
-| ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | In Progress |
-| ADMIN-04 | P1: Telas sem dados falsos | T13 | Pending |
+| ADMIN-02 | P1: Telas sem dados falsos | T9, T12, T13 | Implemented |
+| ADMIN-03 | P1: Telas sem dados falsos | T9, T13 | Implemented |
+| ADMIN-04 | P1: Telas sem dados falsos | T13 | Implemented |
 | ADMIN-05 | P1: Telas sem dados falsos | T9, T12 | Implemented |
 | ADMIN-06 | P1: Telas sem dados falsos | T15 | Pending |
 | ADMIN-07 | P1: Telas sem dados falsos | T9, T12 | Implemented |

@@ -455,13 +455,14 @@ T16 → T17
 
 **Done when**:
 
-- [ ] A versão mostrada é a da API
-- [ ] Não aparecem "Uptime", "PostgreSQL 15.4", "Build" nem "Limpar Cache"
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 2 testes
+- [x] A versão mostrada é a da API
+- [x] Não aparecem "Uptime", "PostgreSQL 15.4", "Build" nem "Limpar Cache"
+- [x] Quick gate (frontend) passa
+- [x] Test count: 3 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `fix: tira das configurações do admin os valores fixos e o botão que não fazia nada`
 
