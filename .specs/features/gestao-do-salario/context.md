@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-09-26
 **Spec:** `.specs/features/gestao-do-salario/spec.md`
-**Status:** Spec aprovada; design não iniciado
+**Status:** Spec aprovada; design e tasks aprovados em 2026-10-10; implementada e verificada em 2026-10-10 (validation.md: PASS)
 
 ---
 

@@ -153,7 +153,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 1. **SALARIO-45** WHEN o usuário pede para desfazer uma divisão THEN a interface SHALL mostrar as transações que serão removidas e pedir confirmação.
 2. **SALARIO-46** WHEN o usuário confirma o desfazer THEN o sistema SHALL remover de uma vez todas as transações da divisão e devolver os saldos das contas e os valores das metas ao que eram antes dela.
 3. **SALARIO-47** WHEN uma divisão é desfeita THEN o sistema SHALL liberar o recebimento para uma nova divisão.
-4. **SALARIO-48** IF alguma transação da divisão tiver sido editada ou excluída, ou uma meta não tiver mais o valor aportado pela divisão, THEN o sistema SHALL recusar o desfazer com HTTP 400 e uma mensagem que diga qual transação ou meta impede.
+4. **SALARIO-48** IF alguma transação da divisão tiver sido editada no valor, na data, no status ou na conta, ou excluída, ou uma meta não tiver mais o valor aportado pela divisão, THEN o sistema SHALL recusar o desfazer com HTTP 400 e uma mensagem que diga qual transação ou meta impede.
 5. **SALARIO-49** IF o pedido de desfazer chegar mais de 7 dias depois da geração THEN o sistema SHALL recusar com HTTP 400 e a mensagem "O prazo para desfazer esta divisão acabou."
 6. **SALARIO-50** IF o desfazer falhar no meio THEN o sistema SHALL manter a divisão inteira como estava.
 7. **SALARIO-51** WHEN um pedido de desfazer chega para uma divisão já desfeita THEN o sistema SHALL responder que ela já foi desfeita, sem remover mais nada.
@@ -216,64 +216,64 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SALARIO-01 | P1: Plano de divisão | - | Pending |
-| SALARIO-02 | P1: Plano de divisão | - | Pending |
-| SALARIO-03 | P1: Plano de divisão | - | Pending |
-| SALARIO-04 | P1: Plano de divisão | - | Pending |
-| SALARIO-05 | P1: Plano de divisão | - | Pending |
-| SALARIO-06 | P1: Plano de divisão | - | Pending |
-| SALARIO-07 | P1: Plano de divisão | - | Pending |
-| SALARIO-08 | P1: Plano de divisão | - | Pending |
-| SALARIO-09 | P1: Plano de divisão | - | Pending |
-| SALARIO-10 | P1: Plano de divisão | - | Pending |
-| SALARIO-11 | P1: Plano de divisão | - | Pending |
-| SALARIO-12 | P1: Plano de divisão | - | Pending |
-| SALARIO-13 | P1: Plano de divisão | - | Pending |
-| SALARIO-14 | P1: Plano de divisão | - | Pending |
-| SALARIO-15 | P1: Plano de divisão | - | Pending |
-| SALARIO-16 | P1: Plano de divisão | - | Pending |
-| SALARIO-17 | P1: Plano de divisão | - | Pending |
-| SALARIO-18 | P1: Plano de divisão | - | Pending |
-| SALARIO-19 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-20 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-21 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-22 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-23 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-24 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-25 | P1: Aviso ao receber o salário | - | Pending |
-| SALARIO-26 | P1: Geração das transações | - | Pending |
-| SALARIO-27 | P1: Geração das transações | - | Pending |
-| SALARIO-28 | P1: Geração das transações | - | Pending |
-| SALARIO-29 | P1: Geração das transações | - | Pending |
-| SALARIO-30 | P1: Geração das transações | - | Pending |
-| SALARIO-31 | P1: Geração das transações | - | Pending |
-| SALARIO-32 | P1: Geração das transações | - | Pending |
-| SALARIO-33 | P1: Geração das transações | - | Pending |
-| SALARIO-34 | P1: Geração das transações | - | Pending |
-| SALARIO-35 | P1: Geração das transações | - | Pending |
-| SALARIO-36 | P1: Geração das transações | - | Pending |
-| SALARIO-37 | P1: Geração das transações | - | Pending |
-| SALARIO-38 | P1: Geração das transações | - | Pending |
-| SALARIO-39 | P1: Geração das transações | - | Pending |
-| SALARIO-40 | P1: Geração das transações | - | Pending |
-| SALARIO-41 | P1: Geração das transações | - | Pending |
-| SALARIO-42 | P1: Geração das transações | - | Pending |
-| SALARIO-43 | P1: Geração das transações | - | Pending |
-| SALARIO-44 | P1: Geração das transações | - | Pending |
-| SALARIO-45 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-46 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-47 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-48 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-49 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-50 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-51 | P1: Desfazer a divisão | - | Pending |
-| SALARIO-52 | P1: Referências do mês e histórico | - | Pending |
-| SALARIO-53 | P1: Referências do mês e histórico | - | Pending |
-| SALARIO-54 | P1: Referências do mês e histórico | - | Pending |
-| SALARIO-55 | P1: Referências do mês e histórico | - | Pending |
-| SALARIO-56 | P1: Referências do mês e histórico | - | Pending |
+| SALARIO-01 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-02 | P1: Plano de divisão | T2 | Verified |
+| SALARIO-03 | P1: Plano de divisão | T2 | Verified |
+| SALARIO-04 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-05 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-06 | P1: Plano de divisão | T2 | Verified |
+| SALARIO-07 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-08 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-09 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-10 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-11 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-12 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-13 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-14 | P1: Plano de divisão | T3, T9 | Verified |
+| SALARIO-15 | P1: Plano de divisão | T8 | Verified |
+| SALARIO-16 | P1: Plano de divisão | T3, T8 | Verified |
+| SALARIO-17 | P1: Plano de divisão | T1 | Verified |
+| SALARIO-18 | P1: Plano de divisão | T3 | Verified |
+| SALARIO-19 | P1: Aviso ao receber o salário | T12 | Verified |
+| SALARIO-20 | P1: Aviso ao receber o salário | T12 | Verified |
+| SALARIO-21 | P1: Aviso ao receber o salário | T10, T12 | Verified |
+| SALARIO-22 | P1: Aviso ao receber o salário | T10 | Verified |
+| SALARIO-23 | P1: Aviso ao receber o salário | T12 | Verified |
+| SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | Verified |
+| SALARIO-25 | P1: Aviso ao receber o salário | T12 | Verified |
+| SALARIO-26 | P1: Geração das transações | T2 | Verified |
+| SALARIO-27 | P1: Geração das transações | T2 | Verified |
+| SALARIO-28 | P1: Geração das transações | T2 | Verified |
+| SALARIO-29 | P1: Geração das transações | T4, T10 | Verified |
+| SALARIO-30 | P1: Geração das transações | T2, T4, T10 | Verified |
+| SALARIO-31 | P1: Geração das transações | T10 | Verified |
+| SALARIO-32 | P1: Geração das transações | T5 | Verified |
+| SALARIO-33 | P1: Geração das transações | T5 | Verified |
+| SALARIO-34 | P1: Geração das transações | T2 | Verified |
+| SALARIO-35 | P1: Geração das transações | T5 | Verified |
+| SALARIO-36 | P1: Geração das transações | T5 | Verified |
+| SALARIO-37 | P1: Geração das transações | T5 | Verified |
+| SALARIO-38 | P1: Geração das transações | T5 | Verified |
+| SALARIO-39 | P1: Geração das transações | T5 | Verified |
+| SALARIO-40 | P1: Geração das transações | T4 | Verified |
+| SALARIO-41 | P1: Geração das transações | T5 | Verified |
+| SALARIO-42 | P1: Geração das transações | T5 | Verified |
+| SALARIO-43 | P1: Geração das transações | T5 | Verified |
+| SALARIO-44 | P1: Geração das transações | T10 | Verified |
+| SALARIO-45 | P1: Desfazer a divisão | T11 | Verified |
+| SALARIO-46 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-47 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-48 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-49 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-50 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-51 | P1: Desfazer a divisão | T6 | Verified |
+| SALARIO-52 | P1: Referências do mês e histórico | T7, T8 | Verified |
+| SALARIO-53 | P1: Referências do mês e histórico | T7, T8 | Verified |
+| SALARIO-54 | P1: Referências do mês e histórico | T9 | Verified |
+| SALARIO-55 | P1: Referências do mês e histórico | T9 | Verified |
+| SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Verified |
 
-**Coverage:** 56 total, 0 mapped to tasks, 56 unmapped ⚠️ (design e tasks ainda não iniciados)
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 56 implemented, 0 in progress, 0 pending
 
 ---
 

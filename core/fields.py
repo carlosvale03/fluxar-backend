@@ -13,6 +13,10 @@ CARTAO_NAO_ENCONTRADO = 'Cartão não encontrado.'
 CATEGORIA_NAO_ENCONTRADA = 'Categoria não encontrada.'
 TAG_NAO_ENCONTRADA = 'Tag não encontrada.'
 CLASSE_NAO_ENCONTRADA = 'Classe não encontrada.'
+META_NAO_ENCONTRADA = 'Meta não encontrada.'
+# O recebimento a dividir: o de outro usuário recebe a mesma mensagem do que
+# não é um salário recebido (SALARIO-40)
+RECEBIMENTO_NAO_ENCONTRADO = 'Escolha um salário recebido para dividir.'
 
 
 def _buscar(queryset, pk):

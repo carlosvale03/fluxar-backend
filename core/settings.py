@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     'reports',
     'data_exchange',
     'goals.apps.GoalsConfig',
+    'salario',
 ]
 
 MIDDLEWARE = [
@@ -290,6 +291,12 @@ LOGGING = {
             'propagate': False,
         },
         'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Gestão do salário: só ids e quantidades, sem valores nem nomes (SALARIO-18)
+        'salario': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,

@@ -30,6 +30,7 @@ from budgets.models import Budget
 from core import termos
 from goals.models import ConfiguracaoDeTrocos, Goal, GoalDeposit, Troco
 from reports.models import FocusedMonitorItem
+from salario.models import DivisaoDoSalario, GestaoDoSalario, ItemDaDivisao, ParteDoPlano
 from transactions.models import Category, CorrecaoDeCategoria, RecurringTransaction, Tag, Transaction
 
 SENHA = 'senha-de-teste-123'
@@ -79,6 +80,24 @@ def criar_conta_completa(email='ana@teste.fluxar'):
     ConfiguracaoDeTrocos.objects.create(user=usuario, ativo=True, meta=meta)
     Troco.objects.create(user=usuario, despesa=despesa, conta=conta, valor=Decimal('0.50'))
     CorrecaoDeCategoria.objects.create(user=usuario, descricao='Padaria', descricao_normalizada='padaria')
+    salario = Category.objects.create(user=usuario, name='Salário Extra', type='INCOME')
+    recebimento = Transaction.objects.create(
+        user=usuario, type='INCOME', status='COMPLETED', account=conta, category=salario,
+        description='Salário', amount=Decimal('3000'), date=date(2026, 9, 5),
+    )
+    gestao = GestaoDoSalario.objects.create(user=usuario, plano_salvo=True, categorias_configuradas=True)
+    gestao.categorias.add(salario)
+    ParteDoPlano.objects.create(
+        gestao=gestao, ordem=0, nome='Guardar', tipo_de_regra='PERCENT', valor=Decimal('10'),
+        tipo_de_destino='GOAL', meta=meta,
+    )
+    divisao = DivisaoDoSalario.objects.create(
+        user=usuario, recebimento=recebimento, recebimento_ref=recebimento.pk, conta_de_origem=conta,
+        valor_recebido=Decimal('3000'), total=Decimal('300'), livre=Decimal('2700'),
+    )
+    ItemDaDivisao.objects.create(
+        divisao=divisao, ordem=0, nome_da_parte='Guardar', tipo_de_destino='GOAL', meta=meta, valor=Decimal('300'),
+    )
     Budget.objects.create(user=usuario, category=categoria, month=9, year=2026, amount_limit=Decimal('300'))
     FocusedMonitorItem.objects.create(user=usuario, category=categoria)
     criar_sessao(usuario)
