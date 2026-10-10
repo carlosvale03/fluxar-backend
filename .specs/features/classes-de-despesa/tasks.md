@@ -329,14 +329,15 @@ T10 → T11
 
 **Done when**:
 
-- [ ] A subcategoria nova começa herdando a classe da mãe e pode escolher outra
-- [ ] Categoria de receita não mostra a seleção de classe
-- [ ] A lista mostra a classe efetiva com a cor e "(herdada)" quando vem da mãe
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] A subcategoria nova começa herdando a classe da mãe e pode escolher outra
+- [x] Categoria de receita não mostra a seleção de classe
+- [x] A lista mostra a classe efetiva com a cor e "(herdada)" quando vem da mãe
+- [x] Quick gate (frontend) passa
+- [x] Test count: 6 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra e escolhe a classe nas categorias de despesa`
 

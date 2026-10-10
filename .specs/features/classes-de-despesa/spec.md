@@ -199,10 +199,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-14 | P1: Classes do usuário | T1 | Implemented |
 | CLASSE-15 | P1: Classes do usuário | T3 | Implemented |
 | CLASSE-16 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-17 | P1: Classe das categorias | T4 | In Progress |
+| CLASSE-17 | P1: Classe das categorias | T4, T9 | Implemented |
 | CLASSE-18 | P1: Classe das categorias | T4 | Implemented |
-| CLASSE-19 | P1: Classe das categorias | - | Pending |
-| CLASSE-20 | P1: Classe das categorias | - | Pending |
+| CLASSE-19 | P1: Classe das categorias | T9 | Implemented |
+| CLASSE-20 | P1: Classe das categorias | T9 | Implemented |
 | CLASSE-21 | P1: Classe das categorias | T4 | Implemented |
 | CLASSE-22 | P1: Classe das categorias | T4 | Implemented |
 | CLASSE-23 | P1: Classe das categorias | T4 | Implemented |
@@ -224,7 +224,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | CLASSE-39 | P1: Filtro e exportação por classe | T6 | In Progress |
 | CLASSE-40 | P1: Filtro e exportação por classe | T7 | Implemented |
 
-**Coverage:** 40 total, 35 mapped to tasks, 5 unmapped ⚠️ (frontend em andamento)
+**Coverage:** 40 total, 37 mapped to tasks, 3 unmapped ⚠️ (frontend em andamento)
 
 ---
 
