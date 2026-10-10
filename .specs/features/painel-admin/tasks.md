@@ -395,14 +395,15 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Buscar "maria" com o plano PREMIUM traz só as Marias do Premium
-- [ ] A busca acha pelo e-mail
-- [ ] Os filtros de papel e de status (arquivados) combinam com a busca
-- [ ] Build gate passa
-- [ ] Test count: pelo menos 4 testes
+- [x] Buscar "maria" com o plano PREMIUM traz só as Marias do Premium
+- [x] A busca acha pelo e-mail
+- [x] Os filtros de papel e de status (arquivados) combinam com a busca
+- [x] Build gate passa
+- [x] Test count: 5 testes
 
 **Tests**: integration
 **Gate**: build
+**Status**: ✅ Complete
 
 **Commit**: `test: confere a busca de usuários com os filtros de plano, papel e status`
 
