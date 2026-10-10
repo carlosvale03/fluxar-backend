@@ -358,14 +358,15 @@ T10 → T11
 
 **Done when**:
 
-- [ ] 600, 300 e 100 aparecem como 60,0%, 30,0% e 10,0%, com "Sem classe" em cinza
-- [ ] Sem despesas aparece "Nenhuma despesa no período."
-- [ ] Clicar numa classe abre `/transacoes` com `classId` e o período dos gráficos, inclusive na tela Relatórios sem os relatórios avançados
-- [ ] Quick gate (frontend) passa
-- [ ] Test count: pelo menos 4 testes
+- [x] 600, 300 e 100 aparecem como 60,0%, 30,0% e 10,0%, com "Sem classe" em cinza
+- [x] Sem despesas aparece "Nenhuma despesa no período."
+- [x] Clicar numa classe abre `/transacoes` com `classId` e o período dos gráficos, inclusive na tela Relatórios sem os relatórios avançados
+- [x] Quick gate (frontend) passa
+- [x] Test count: 6 testes
 
 **Tests**: unit (frontend)
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: mostra a divisão das despesas por classe no dashboard e nos relatórios`
 
