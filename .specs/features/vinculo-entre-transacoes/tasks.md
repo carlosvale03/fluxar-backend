@@ -145,15 +145,16 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Lançar o transporte de R$ 45,00 com o cinema como principal cria a dependente
-- [ ] Compra parcelada com principal liga a raiz da compra
-- [ ] Principal que já é dependente recebe 400 e nenhuma transação fica criada
-- [ ] Com o recurso travado, enviar `principal` recebe 403
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 5 testes
+- [x] Lançar o transporte de R$ 45,00 com o cinema como principal cria a dependente
+- [x] Compra parcelada com principal liga a raiz da compra
+- [x] Principal que já é dependente recebe 400 e nenhuma transação fica criada
+- [x] Com o recurso travado, enviar `principal` recebe 403
+- [x] Quick gate passa
+- [x] Test count: 7 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: permite lançar um gasto relacionado a partir de uma transação`
 

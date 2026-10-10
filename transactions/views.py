@@ -206,6 +206,9 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             exigir_recurso(self.request.user, 'transacoes_recorrentes')
         if serializer.validated_data.get('tags'):
             exigir_recurso(self.request.user, 'tags')
+        # Lançar um gasto relacionado depende do plano (VINCULO-20)
+        if serializer.validated_data.get('principal') is not None:
+            exigir_recurso(self.request.user, 'vinculos')
         serializer.save()
 
     def perform_update(self, serializer):
@@ -271,6 +274,8 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             exigir_recurso(request.user, 'compras_parceladas')
         if data.get('tags'):
             exigir_recurso(request.user, 'tags')
+        if data.get('principal') is not None:
+            exigir_recurso(request.user, 'vinculos')
         
         txs = TransactionService.create_credit_card_expense(
             user=request.user,
@@ -280,7 +285,8 @@ class TransactionViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.
             description=data['description'],
             category=data['category'],
             tags=data.get('tags'),
-            installments=data['installments']
+            installments=data['installments'],
+            principal=data.get('principal'),
         )
         
         # Serializar retorno (pode ser a primeira transação ou lista)

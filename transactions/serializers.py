@@ -5,7 +5,7 @@ from .models import Transaction, Category, ClasseDeDespesa, Tag, RecurringTransa
 from accounts.models import Account, CreditCard
 from .services import TransactionService
 from .classes import classes_efetivas
-from .vinculos import desfazer_vinculos
+from .vinculos import desfazer_vinculos, vincular
 from core.fields import (
     OwnedPrimaryKeyRelatedField, CONTA_NAO_ENCONTRADA, CARTAO_NAO_ENCONTRADO,
     CATEGORIA_NAO_ENCONTRADA, TAG_NAO_ENCONTRADA, CLASSE_NAO_ENCONTRADA, TRANSACAO_NAO_ENCONTRADA,
@@ -216,8 +216,13 @@ class TransactionSerializer(serializers.ModelSerializer):
     recurring_source = serializers.PrimaryKeyRelatedField(read_only=True)
     # Lote da importação e categoria sugerida pelo histórico (IMPORT-45, IMPORT-46)
     category_suggested = serializers.BooleanField(source='categoria_sugerida', read_only=True)
-    # A principal da compra, lida da raiz numa parcela (VINCULO-26)
-    principal = serializers.SerializerMethodField()
+    # A principal da compra, lida da raiz numa parcela (VINCULO-26). Na
+    # criação, lança a despesa como gasto relacionado (VINCULO-01); depois,
+    # o vínculo muda só pela rota `link`
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
 
     class Meta:
         model = Transaction
@@ -246,6 +251,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         Injeta is_recurring e frequency no output baseado no recurring_source.
         """
         representation = super().to_representation(instance)
+        if instance.parent_transaction_id:
+            representation['principal'] = instance.parent_transaction.principal_id
 
         # Conta, categoria e tags de outro usuário não aparecem (ISOL-15)
         dono = instance.user_id
@@ -279,11 +286,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         if obj.type in ['EXPENSE', 'TRANSFER_OUT', 'INVOICE_PAYMENT', 'CREDIT_CARD']:
             return dinheiro(-abs(obj.amount))
         return dinheiro(abs(obj.amount))
-
-    def get_principal(self, obj):
-        if obj.parent_transaction_id:
-            return obj.parent_transaction.principal_id
-        return obj.principal_id
 
     def get_account_detail(self, obj):
         if obj.account:
@@ -356,6 +358,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         
         # Extrair tags
         tags = validated_data.pop('tags', [])
+        principal = validated_data.pop('principal', None)
         
         # Limpar campos virtuais
         validated_data.pop('target_account_id', None)
@@ -367,6 +370,12 @@ class TransactionSerializer(serializers.ModelSerializer):
         
         if tags:
             transaction.tags.set(tags)
+
+        # Gasto relacionado: o vínculo vai no mesmo `atomic`, e a recusa
+        # desfaz a criação (VINCULO-01, VINCULO-18). Só esta ocorrência se
+        # liga, nunca a série (VINCULO-13)
+        if principal is not None:
+            transaction.principal = vincular(transaction, principal).principal
             
         # 2. Lógica de Recorrência
         if is_recurring and frequency:
@@ -421,6 +430,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         scope = validated_data.pop('update_scope', 'SINGLE')
+        validated_data.pop('principal', None)
         for campo in ('is_recurring', 'frequency'):
             validated_data.pop(campo, None)
 
@@ -539,6 +549,11 @@ class CreditCardExpenseSerializer(serializers.Serializer):
         queryset=Category.objects.all(), not_found_message=CATEGORIA_NAO_ENCONTRADA,
     )
     installments = serializers.IntegerField(default=1, min_value=1)
+    # Gasto relacionado (VINCULO-01)
+    principal = OwnedPrimaryKeyRelatedField(
+        queryset=Transaction.objects.all(), not_found_message=TRANSACAO_NAO_ENCONTRADA,
+        required=False, allow_null=True,
+    )
     tags = OwnedPrimaryKeyRelatedField(
         queryset=Tag.objects.all(), not_found_message=TAG_NAO_ENCONTRADA,
         many=True, required=False,

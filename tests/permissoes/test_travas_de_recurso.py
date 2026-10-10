@@ -214,6 +214,9 @@ def chamadas_do_catalogo(t):
                 {'principal': str(t.despesa_avulsa("Cinema").pk)},
                 format='json',
             ), 200),
+            ('lançar gasto relacionado', lambda: c.post('/api/transactions/', t.corpo_transacao(
+                principal=str(t.despesa_avulsa("Cinema").pk),
+            ), format='json'), 201),
         ],
     }
 

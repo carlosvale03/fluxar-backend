@@ -177,7 +177,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | Pending |
+| VINCULO-01 | P1: Criar e desfazer vínculos | T3, T8 | In Progress |
 | VINCULO-02 | P1: Criar e desfazer vínculos | T2, T8 | In Progress |
 | VINCULO-03 | P1: Criar e desfazer vínculos | T8 | Pending |
 | VINCULO-04 | P1: Criar e desfazer vínculos | T1, T2, T8 | In Progress |
@@ -188,13 +188,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-09 | P1: Criar e desfazer vínculos | T1, T2 | Implemented |
 | VINCULO-10 | P1: Criar e desfazer vínculos | T1, T2 | Implemented |
 | VINCULO-11 | P1: Criar e desfazer vínculos | T2 | Implemented |
-| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | In Progress |
+| VINCULO-12 | P1: Criar e desfazer vínculos | T1, T3 | Implemented |
 | VINCULO-13 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-14 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-15 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-16 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-17 | P1: Criar e desfazer vínculos | T1 | Implemented |
-| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Pending |
+| VINCULO-18 | P1: Criar e desfazer vínculos | T3 | Implemented |
 | VINCULO-19 | P1: Criar e desfazer vínculos | T1 | Implemented |
 | VINCULO-20 | P1: Criar e desfazer vínculos | T2, T3, T5, T6, T8 | In Progress |
 | VINCULO-21 | P1: Criar e desfazer vínculos | T2, T8 | In Progress |
@@ -215,7 +215,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | VINCULO-36 | P1: Relatório de gastos puxados | T10 | Pending |
 | VINCULO-37 | P1: Relatório de gastos puxados | T10 | Pending |
 
-**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 15 implemented, 5 in progress, 17 pending
+**Coverage:** 37 total, 37 mapped to tasks, 0 unmapped; 17 implemented, 5 in progress, 15 pending
 
 ---
 
