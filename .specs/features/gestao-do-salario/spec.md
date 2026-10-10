@@ -217,11 +217,11 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | SALARIO-01 | P1: Plano de divisão | T3, T9 | Pending |
-| SALARIO-02 | P1: Plano de divisão | T2 | Pending |
-| SALARIO-03 | P1: Plano de divisão | T2 | Pending |
+| SALARIO-02 | P1: Plano de divisão | T2 | Implemented |
+| SALARIO-03 | P1: Plano de divisão | T2 | Implemented |
 | SALARIO-04 | P1: Plano de divisão | T3, T9 | Pending |
 | SALARIO-05 | P1: Plano de divisão | T3, T9 | Pending |
-| SALARIO-06 | P1: Plano de divisão | T2 | Pending |
+| SALARIO-06 | P1: Plano de divisão | T2 | Implemented |
 | SALARIO-07 | P1: Plano de divisão | T3, T9 | Pending |
 | SALARIO-08 | P1: Plano de divisão | T3 | Pending |
 | SALARIO-09 | P1: Plano de divisão | T3 | Pending |
@@ -241,15 +241,15 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-23 | P1: Aviso ao receber o salário | T12 | Pending |
 | SALARIO-24 | P1: Aviso ao receber o salário | T4, T8 | Pending |
 | SALARIO-25 | P1: Aviso ao receber o salário | T12 | Pending |
-| SALARIO-26 | P1: Geração das transações | T2 | Pending |
-| SALARIO-27 | P1: Geração das transações | T2 | Pending |
-| SALARIO-28 | P1: Geração das transações | T2 | Pending |
+| SALARIO-26 | P1: Geração das transações | T2 | Implemented |
+| SALARIO-27 | P1: Geração das transações | T2 | Implemented |
+| SALARIO-28 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-29 | P1: Geração das transações | T4, T10 | Pending |
-| SALARIO-30 | P1: Geração das transações | T2, T4, T10 | Pending |
+| SALARIO-30 | P1: Geração das transações | T2, T4, T10 | In Progress |
 | SALARIO-31 | P1: Geração das transações | T10 | Pending |
 | SALARIO-32 | P1: Geração das transações | T5 | Pending |
 | SALARIO-33 | P1: Geração das transações | T5 | Pending |
-| SALARIO-34 | P1: Geração das transações | T2 | Pending |
+| SALARIO-34 | P1: Geração das transações | T2 | Implemented |
 | SALARIO-35 | P1: Geração das transações | T5 | Pending |
 | SALARIO-36 | P1: Geração das transações | T5 | Pending |
 | SALARIO-37 | P1: Geração das transações | T5 | Pending |
@@ -273,7 +273,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Pending |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Pending |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 1 implemented, 0 in progress, 55 pending
+**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 8 implemented, 1 in progress, 47 pending
 
 ---
 

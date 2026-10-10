@@ -114,16 +114,17 @@ T11 → T12
 
 **Done when**:
 
-- [ ] Os três modelos têm as partes, os percentuais, o destino inicial e a referência da spec; o Personalizado não tem partes
-- [ ] R$ 3.000,00 com 50/30/20 dá 1.500,00, 900,00 e 600,00, sem sobra
-- [ ] 33,33% de R$ 1.000,00 dá R$ 333,30, e R$ 666,70 ficam livres
-- [ ] R$ 1.000,00 com fixos de 700 e 500 reduz a última para 300 e a marca reduzida; fixos de 800, 300 e 200 zeram a última e reduzem a do meio
-- [ ] Ajuste vale só na divisão; parte na conta do salário, na conta do recebimento ou com zero não gera transação
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 8 testes
+- [x] Os três modelos têm as partes, os percentuais, o destino inicial e a referência da spec; o Personalizado não tem partes
+- [x] R$ 3.000,00 com 50/30/20 dá 1.500,00, 900,00 e 600,00, sem sobra
+- [x] 33,33% de R$ 1.000,00 dá R$ 333,30, e R$ 666,70 ficam livres
+- [x] R$ 1.000,00 com fixos de 700 e 500 reduz a última para 300 e a marca reduzida; fixos de 800, 300 e 200 zeram a última e reduzem a do meio
+- [x] Ajuste vale só na divisão; parte na conta do salário, na conta do recebimento ou com zero não gera transação
+- [x] Quick gate passa
+- [x] Test count: 15 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: calcula a divisão do salário pelos modelos e pelo plano`
 
