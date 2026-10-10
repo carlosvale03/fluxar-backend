@@ -184,15 +184,16 @@ T16 → T17
 
 **Done when**:
 
-- [ ] Cada filtro, sozinho e combinado, devolve só os registros que o atendem, do mais recente para o mais antigo
-- [ ] O período inclui os dois dias; data inválida recebe 400 no campo
-- [ ] O log de um usuário excluído continua consultável pelo identificador
-- [ ] `POST`, `PUT`, `PATCH` e `DELETE` nas duas rotas do log recebem 405
-- [ ] Quick gate passa
-- [ ] Test count: pelo menos 6 testes
+- [x] Cada filtro, sozinho e combinado, devolve só os registros que o atendem, do mais recente para o mais antigo
+- [x] O período inclui os dois dias; data inválida recebe 400 no campo
+- [x] O log de um usuário excluído continua consultável pelo identificador
+- [x] `POST`, `PUT`, `PATCH` e `DELETE` nas duas rotas do log recebem 405
+- [x] Quick gate passa
+- [x] Test count: 9 testes
 
 **Tests**: integration
 **Gate**: quick
+**Status**: ✅ Complete
 
 **Commit**: `feat: filtra o log de auditoria por ação, administrador e período`
 

@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings as django_settings
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 import hmac
 import uuid
@@ -65,6 +65,7 @@ from .utils.email_service import (
     send_verification_email,
 )
 from core.manutencao import invalidar as invalidar_manutencao, manutencao_ligada
+from core.datas import BRASILIA, ler_data
 from core.filtros import PAGINACAO, ParametrosConhecidosMixin
 from core.permissions import EhAdministrador
 from core import termos, travas
@@ -1046,16 +1047,46 @@ class AdminPlansView(ParametrosConhecidosMixin, APIView):
         )
 
 
+ADMIN_INVALIDO = "Informe o identificador de um administrador."
+
+
+def _inicio_do_dia(dia):
+    """Meia-noite do dia no fuso de Brasília (AD-008)."""
+    return datetime.combine(dia, datetime.min.time(), tzinfo=BRASILIA)
+
+
 class AdminGlobalLogsView(ParametrosConhecidosMixin, generics.ListAPIView):
     """
-    Retorna todos os logs do sistema para auditoria global.
+    O log de auditoria, do registro mais recente para o mais antigo, filtrado
+    por `action`, `admin` (id do administrador), `inicio` e `fim`
+    (AAAA-MM-DD, dias de Brasília, os dois incluídos). Parâmetro vazio vale
+    como ausente. Somente leitura: escrita recebe 405 (ADMIN-12, ADMIN-13,
+    ADMIN-15).
     """
-    queryset = SystemLog.objects.all().order_by('-timestamp')
     serializer_class = SystemLogSerializer
     permission_classes = (EhAdministrador,)
     # Lista paginada (CONTRATO-02, AD-021)
     pagination_class = PaginacaoPadrao
-    parametros_permitidos = PAGINACAO
+    parametros_permitidos = PAGINACAO | {'action', 'admin', 'inicio', 'fim'}
+
+    def get_queryset(self):
+        params = self.request.query_params
+        queryset = SystemLog.objects.all()
+        if params.get('action'):
+            queryset = queryset.filter(action=params['action'])
+        if params.get('admin'):
+            try:
+                admin = uuid.UUID(params['admin'])
+            except ValueError:
+                raise exceptions.ValidationError({'admin': [ADMIN_INVALIDO]})
+            queryset = queryset.filter(admin_ref=admin)
+        if params.get('inicio'):
+            inicio = ler_data(params['inicio'], 'inicio')
+            queryset = queryset.filter(timestamp__gte=_inicio_do_dia(inicio))
+        if params.get('fim'):
+            fim = ler_data(params['fim'], 'fim')
+            queryset = queryset.filter(timestamp__lt=_inicio_do_dia(fim + timedelta(days=1)))
+        return queryset.order_by('-timestamp')
 
 class AdminUserFinancialStatsView(ParametrosConhecidosMixin, APIView):
     """

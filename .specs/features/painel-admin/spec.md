@@ -167,10 +167,10 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | ADMIN-09 | P1: Log de auditoria | T3 | Implemented |
 | ADMIN-10 | P1: Log de auditoria | T1 | Implemented |
 | ADMIN-11 | P1: Log de auditoria | T1, T2 | Implemented |
-| ADMIN-12 | P1: Log de auditoria | T4, T14 | Pending |
-| ADMIN-13 | P1: Log de auditoria | T4, T14 | Pending |
-| ADMIN-14 | P1: Log de auditoria | T4, T14 | Pending |
-| ADMIN-15 | P1: Log de auditoria | T4 | Pending |
+| ADMIN-12 | P1: Log de auditoria | T4, T14 | In Progress |
+| ADMIN-13 | P1: Log de auditoria | T4, T14 | In Progress |
+| ADMIN-14 | P1: Log de auditoria | T4, T14 | In Progress |
+| ADMIN-15 | P1: Log de auditoria | T4 | Implemented |
 | ADMIN-16 | P1: Operações sobre usuários | T11, T17 | Pending |
 | ADMIN-17 | P1: Operações sobre usuários | T5, T16 | Pending |
 | ADMIN-18 | P1: Operações sobre usuários | T5, T16 | Pending |
