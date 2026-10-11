@@ -23,7 +23,9 @@ Saídas desde o salário (SALARIO-64 a SALARIO-69, SALARIO-75, AD-057).
   categoria (as classes padrão Essencial e Dispensável, AD-052); o destino
   da compra é o nome do cartão. Transferência: a primeira parte
   com destino na meta do aporte ligado a ela ou na conta da perna de
-  entrada. Nos demais casos, nenhuma.
+  entrada. Nos demais casos, nenhuma. A revisão passa só as partes com valor
+  calculado maior que zero, para a sugestão nunca apontar para uma parte
+  zerada.
 - `escolhidas`: confere o `outflows` da requisição, `{id da saída: id da
   parte | null}`, e devolve as saídas descontadas com a parte de cada uma;
   uma saída fora da lista ou uma parte fora do plano recebe 400 no campo

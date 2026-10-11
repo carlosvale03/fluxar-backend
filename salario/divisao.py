@@ -212,12 +212,15 @@ def revisar(usuario, recebimento, ajustes=None, pedido=None):
     """
     A revisão da divisão de um recebimento, sem gravar nada. Lista todas as
     saídas que podem ser descontadas, com a parte sugerida e a escolhida no
-    `pedido`; sem pedido, nenhuma é descontada (SALARIO-64, SALARIO-65).
+    `pedido`; sem pedido, nenhuma é descontada (SALARIO-64, SALARIO-65). A
+    sugestão só considera as partes com valor calculado, já com os ajustes,
+    maior que zero (SALARIO-65).
     """
     conferir_recebimento(usuario, recebimento)
     conferir_nao_dividido(recebimento.pk)
-    partes, lista, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido)
-    sugeridas = saidas.sugestoes(usuario, lista, partes)
+    _, lista, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido)
+    com_valor = [item.parte for item in resultado.itens if item.valor > 0]
+    sugeridas = saidas.sugestoes(usuario, lista, com_valor)
     escolhida = {saida.pk: parte for saida, parte in descontadas}
     corpo = [saidas.saida_em_json(saida, *sugeridas[saida.pk], escolhida.get(saida.pk)) for saida in lista]
     return revisao_em_json(recebimento, resultado, hoje(), corpo)

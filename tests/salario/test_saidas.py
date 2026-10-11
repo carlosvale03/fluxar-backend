@@ -172,6 +172,35 @@ class JanelaAteOProximoSalarioTests(SaidasTestCase):
 class SugestoesTests(SaidasTestCase):
     """SALARIO-65."""
 
+    def test_parte_com_valor_zero_nao_e_sugerida(self):
+        despesa = self.despesa(categoria=self.comida)
+        transferencia = self.transferencia(self.a.poupanca)
+
+        resposta = self.revisar(adjustments={self.necessidades: '0.00'})
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        sugeridas = {s['id']: s['suggested_part_id'] for s in resposta.data['outflows']}
+        self.assertEqual(sugeridas, {str(despesa.pk): None, str(transferencia.pk): None})
+
+    def test_parte_zerada_passa_a_sugestao_para_a_proxima_da_mesma_regra(self):
+        self.salvar_plano([
+            parte('Aluguel', 'FIXED', '3000.00', 'SALARY_ACCOUNT'),
+            parte('Necessidades', 'PERCENT', '50.00', 'ACCOUNT', account=self.a.poupanca, reference='ESSENCIAL'),
+            parte('Mercado', 'FIXED', '1.00', 'SALARY_ACCOUNT', reference='ESSENCIAL'),
+        ])
+        aluguel, necessidades, mercado = [p['id'] for p in self.client.get(URL_PLANO).data['parts']]
+        despesa = self.despesa(categoria=self.comida)
+
+        resposta = self.revisar(adjustments={aluguel: '2999.00'})
+
+        # Necessidades fica com zero: nada sobra depois dos fixos
+        self.assertEqual(
+            [(i['name'], i['amount']) for i in resposta.data['items']],
+            [('Aluguel', '2999.00'), ('Necessidades', '0.00'), ('Mercado', '1.00')],
+        )
+        self.assertEqual(resposta.data['outflows'][0]['id'], str(despesa.pk))
+        self.assertEqual(resposta.data['outflows'][0]['suggested_part_id'], mercado)
+
     def sugeridas(self):
         resposta = self.revisar()
         self.assertEqual(resposta.status_code, 200, resposta.data)
