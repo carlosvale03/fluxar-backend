@@ -306,12 +306,12 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALDO-43 | P2: Ajuste de saldo | T3 | Verified |
 | SALDO-44 | P2: Operações simultâneas | T28 | Verified |
 | SALDO-45 | P2: Operações simultâneas | T28 | Verified |
-| SALDO-46 | P2: Inativar e reativar contas | refactor | Pending |
-| SALDO-47 | P2: Inativar e reativar contas | refactor | Pending |
-| SALDO-48 | P2: Inativar e reativar contas | refactor | Pending |
-| SALDO-49 | P2: Inativar e reativar contas | refactor | Pending |
-| SALDO-50 | P2: Inativar e reativar contas | refactor | Pending |
-| SALDO-51 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-46 | P2: Inativar e reativar contas | refactor | Implemented |
+| SALDO-47 | P2: Inativar e reativar contas | refactor | Implemented |
+| SALDO-48 | P2: Inativar e reativar contas | refactor | Implemented |
+| SALDO-49 | P2: Inativar e reativar contas | refactor | Implemented |
+| SALDO-50 | P2: Inativar e reativar contas | refactor | Implemented |
+| SALDO-51 | P2: Inativar e reativar contas | refactor | Implemented |
 | SALDO-52 | P2: Inativar e reativar contas | refactor | Pending |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped

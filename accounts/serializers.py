@@ -14,7 +14,8 @@ class AccountSerializer(serializers.ModelSerializer):
             'institution', 'color', 'is_manual', 
             'is_active', 'created_at', 'updated_at'
         ]
-        # is_active só muda pela exclusão, que confere saldo e pendentes (SALDO-34)
+        # is_active só muda pela exclusão e pelas ações deactivate e reactivate,
+        # que conferem saldo, pendentes e o limite do plano (SALDO-34, SALDO-46 a SALDO-50)
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_manual', 'balance', 'is_active']
 
     def create(self, validated_data):
