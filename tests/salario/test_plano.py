@@ -18,7 +18,7 @@ from .base import (
 )
 
 SOMA_ACIMA = {'detail': 'A soma dos percentuais passa de 100%.', 'code': 'invalid'}
-DESTINO_INDISPONIVEL = 'Escolha uma conta ativa que não seja cofrinho ou uma meta ativa.'
+DESTINO_INDISPONIVEL = 'Escolha uma conta ativa ou uma meta ativa.'
 BLOQUEADO = {
     'detail': 'Este recurso não está disponível no seu plano.', 'code': 'plan_locked',
     'feature': 'gestao_do_salario',
@@ -171,14 +171,19 @@ class ValidacaoDasPartesTests(SalarioTestCase):
                     self.assertEqual(resposta.status_code, 400)
                     self.assertEqual(resposta.data, {'parts': [erro]})
 
-    def test_cofrinho_conta_inativa_e_meta_inativa_recebem_a_mensagem_do_destino(self):
+    def test_cofrinho_ativo_pode_ser_destino(self):
+        resposta = self.put([parte('Reserva', 'FIXED', '10.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['parts'][0]['account'], str(self.a.cofrinho.pk))
+
+    def test_conta_inativa_e_meta_inativa_recebem_a_mensagem_do_destino(self):
         inativa = Account.objects.create(user=self.a.usuario, name='Antiga', type='CHECKING', is_active=False)
         arquivada = Goal.objects.create(
             user=self.a.usuario, name='Arquivada', target_amount=Decimal('100'), account=self.a.cofrinho,
             is_active=False,
         )
         casos = (
-            ('cofrinho', parte('P', 'FIXED', '10.00', 'ACCOUNT', account=self.a.cofrinho), 'account'),
             ('conta inativa', parte('P', 'FIXED', '10.00', 'ACCOUNT', account=inativa), 'account'),
             ('meta inativa', parte('P', 'FIXED', '10.00', 'GOAL', goal=arquivada), 'goal'),
         )

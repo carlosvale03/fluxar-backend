@@ -20,7 +20,7 @@ from transactions.models import Category, Transaction
 
 from .models import CONTA, CONTA_DO_SALARIO, DISPENSAVEL, ESSENCIAL, FIXO, META, PERCENTUAL
 
-DESTINO_INDISPONIVEL = 'Escolha uma conta ativa que não seja cofrinho ou uma meta ativa.'
+DESTINO_INDISPONIVEL = 'Escolha uma conta ativa ou uma meta ativa.'
 SOMA_ACIMA_DE_100 = 'A soma dos percentuais passa de 100%.'
 VALOR_FIXO_MINIMO = 'O valor fixo deve ser de pelo menos R$ 0,01.'
 PERCENTUAL_FORA_DO_INTERVALO = 'O percentual deve ficar entre 0,01% e 100%.'
@@ -29,8 +29,8 @@ CEM = Decimal('100')
 
 
 def conta_disponivel(conta):
-    """Conta que pode receber uma parte: ativa e que não seja cofrinho (SALARIO-05)."""
-    return conta is not None and conta.is_active and conta.type != 'PIGGY_BANK'
+    """Conta que pode receber uma parte: qualquer conta ativa do usuário, cofrinho inclusive (SALARIO-05)."""
+    return conta is not None and conta.is_active
 
 
 def meta_disponivel(meta):

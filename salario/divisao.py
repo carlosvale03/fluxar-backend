@@ -211,7 +211,7 @@ def pela_chave(usuario, chave, recebimento_id):
 
 
 def destino_disponivel(parte):
-    """O destino ainda recebe a parte: conta ativa que não é cofrinho, ou meta ativa com cofrinho ativo."""
+    """O destino ainda recebe a parte: conta ativa, ou meta ativa com cofrinho ativo."""
     if parte.tipo_de_destino == CONTA:
         return conta_disponivel(parte.conta)
     if parte.tipo_de_destino == META:
