@@ -1,6 +1,6 @@
 """
 API do plano de divisão (SALARIO-01, SALARIO-04, SALARIO-05, SALARIO-07 a
-SALARIO-14, SALARIO-16, SALARIO-18, SALARIO-55).
+SALARIO-14, SALARIO-16, SALARIO-18, SALARIO-55, SALARIO-76).
 """
 import uuid
 from datetime import date
@@ -14,7 +14,7 @@ from tests.permissoes.base import fechar, liberacao_de_testes
 from transactions.models import Category, Transaction
 
 from .base import (
-    URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita,
+    URL_DIVISOES, URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita,
 )
 
 SOMA_ACIMA = {'detail': 'A soma dos percentuais passa de 100%.', 'code': 'invalid'}
@@ -172,10 +172,12 @@ class ValidacaoDasPartesTests(SalarioTestCase):
                     self.assertEqual(resposta.data, {'parts': [erro]})
 
     def test_cofrinho_ativo_pode_ser_destino(self):
-        resposta = self.put([parte('Reserva', 'FIXED', '10.00', 'ACCOUNT', account=self.a.cofrinho)])
+        sem_meta = Account.objects.create(user=self.a.usuario, name='Cofrinho livre', type='PIGGY_BANK')
+
+        resposta = self.put([parte('Reserva', 'FIXED', '10.00', 'ACCOUNT', account=sem_meta)])
 
         self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(resposta.data['parts'][0]['account'], str(self.a.cofrinho.pk))
+        self.assertEqual(resposta.data['parts'][0]['account'], str(sem_meta.pk))
 
     def test_conta_inativa_e_meta_inativa_recebem_a_mensagem_do_destino(self):
         inativa = Account.objects.create(user=self.a.usuario, name='Antiga', type='CHECKING', is_active=False)
@@ -193,6 +195,73 @@ class ValidacaoDasPartesTests(SalarioTestCase):
 
                 self.assertEqual(resposta.status_code, 400)
                 self.assertEqual(resposta.data, {'parts': [{campo: [DESTINO_INDISPONIVEL]}]})
+
+
+class CofrinhoDeMetaTests(SalarioTestCase):
+    """SALARIO-76: o cofrinho A é a conta da meta Viagem A."""
+
+    def test_parte_no_cofrinho_de_uma_meta_e_salva_com_destino_na_meta(self):
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        [salva] = resposta.data['parts']
+        self.assertEqual(
+            (salva['destination_type'], salva['account'], salva['goal'], salva['destination_name']),
+            ('GOAL', None, str(self.a.viagem.pk), 'Viagem A'),
+        )
+        self.assertEqual(self.client.get(URL_PLANO).data['parts'], resposta.data['parts'])
+
+    def test_a_geracao_soma_o_aporte_na_meta_do_cofrinho(self):
+        self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+        salario = receita(self.a)
+
+        with hoje_em(2026, 10, 10):
+            resposta = self.client.post(URL_DIVISOES, {'receipt': str(salario.pk)}, format='json')
+
+        self.assertEqual(resposta.status_code, 201, resposta.data)
+        self.assertEqual(resposta.data['transactions'][0]['kind'], 'GOAL_DEPOSIT')
+        self.assertEqual(self.valor_da_meta(self.a.viagem), Decimal('300.00'))
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('300.00'))
+
+    def test_meta_concluida_continua_recebendo_a_parte(self):
+        Goal.objects.filter(pk=self.a.viagem.pk).update(target_amount=Decimal('1.00'), current_amount=Decimal('1.00'))
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        self.assertEqual(resposta.data['parts'][0]['goal'], str(self.a.viagem.pk))
+
+    def test_cofrinho_de_mais_de_uma_meta_ativa_fica_com_destino_na_conta(self):
+        Goal.objects.create(user=self.a.usuario, name='Carro', target_amount=Decimal('100'), account=self.a.cofrinho)
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        [salva] = resposta.data['parts']
+        self.assertEqual(
+            (salva['destination_type'], salva['account'], salva['goal']), ('ACCOUNT', str(self.a.cofrinho.pk), None),
+        )
+
+    def test_cofrinho_so_de_meta_arquivada_fica_com_destino_na_conta(self):
+        Goal.objects.filter(pk=self.a.viagem.pk).update(is_active=False)
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        self.assertEqual(resposta.data['parts'][0]['destination_type'], 'ACCOUNT')
+
+    def test_conta_que_nao_e_cofrinho_fica_com_destino_na_conta(self):
+        resposta = self.salvar_plano([parte('Reserva', 'FIXED', '300.00', 'ACCOUNT', account=self.a.poupanca)])
+
+        self.assertEqual(resposta.data['parts'][0]['account'], str(self.a.poupanca.pk))
+
+    def test_simulacao_com_partes_trata_o_cofrinho_como_a_meta(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '1000.00', 'parts': [parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)],
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        [item] = resposta.data['items']
+        self.assertEqual(
+            (item['destination_type'], item['destination_name'], item['generates_transaction']),
+            ('GOAL', 'Viagem A', True),
+        )
 
 
 class CategoriasDeSalarioTests(SalarioTestCase):

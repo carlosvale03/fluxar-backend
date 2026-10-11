@@ -4,6 +4,11 @@ Entrada da API da gestão do salário (SALARIO-04 a SALARIO-11, SALARIO-14).
 As contas, as metas, as categorias e o recebimento só aceitam objetos do
 usuário da requisição; um id de outro usuário recebe a mesma mensagem de um
 id inexistente (SALARIO-10, AD-010).
+
+A parte com destino num cofrinho que é a conta de uma única meta ativa vira
+uma parte com destino nessa meta, no plano salvo e na simulação, para que o
+aporte some no valor da meta (SALARIO-76). Com mais de uma meta ativa no
+cofrinho, não há como saber qual, e a parte fica com destino na conta.
 """
 from decimal import Decimal
 
@@ -34,8 +39,16 @@ def conta_disponivel(conta):
 
 
 def meta_disponivel(meta):
-    """Meta que pode receber uma parte: ativa (SALARIO-05)."""
+    """Meta que pode receber uma parte: ativa, concluída ou não (SALARIO-05)."""
     return meta is not None and meta.is_active
+
+
+def meta_do_cofrinho(conta):
+    """A única meta ativa que tem a conta como cofrinho, ou `None` (SALARIO-76)."""
+    if conta is None or conta.type != 'PIGGY_BANK':
+        return None
+    metas = list(Goal.objects.filter(account=conta, user_id=conta.user_id, is_active=True)[:2])
+    return metas[0] if len(metas) == 1 else None
 
 
 class PlanPartSerializer(serializers.Serializer):
@@ -74,6 +87,9 @@ class PlanPartSerializer(serializers.Serializer):
                 erros['account'] = [CAMPO_OBRIGATORIO]
             elif not conta_disponivel(dados['account']):
                 erros['account'] = [DESTINO_INDISPONIVEL]
+            elif (meta := meta_do_cofrinho(dados['account'])) is not None:
+                # O cofrinho de uma meta: a parte vai para a meta (SALARIO-76)
+                dados['destination_type'], dados['account'], dados['goal'] = META, None, meta
         elif destino == META:
             dados['account'] = None
             if dados.get('goal') is None:
