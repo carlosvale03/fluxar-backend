@@ -353,7 +353,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-75 | P1: Divisão fiel à revisão | refactor | Pending |
 | SALARIO-76 | P1: Divisão fiel à revisão | refactor | Pending |
 | SALARIO-77 | P1: Divisão fiel à revisão | refactor | Pending |
-| SALARIO-78 | P1: Divisão fiel à revisão | refactor | Pending |
+| SALARIO-78 | P1: Divisão fiel à revisão | refactor | Implemented |
 | SALARIO-79 | P1: Divisão fiel à revisão | refactor | Pending |
 | SALARIO-57 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-58 | P2: Ajuda para montar o plano | refactor | Pending |
@@ -363,7 +363,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-62 | P2: Ajuda para montar o plano | refactor | Pending |
 | SALARIO-63 | P2: Ajuda para montar o plano | refactor | Pending |
 
-**Coverage:** 79 total, 79 mapped to tasks, 0 unmapped; 64 implemented, 0 in progress, 15 pending
+**Coverage:** 79 total, 79 mapped to tasks, 0 unmapped; 65 implemented, 0 in progress, 14 pending
 
 ---
 

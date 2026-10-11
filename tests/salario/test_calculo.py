@@ -1,6 +1,6 @@
 """
 Modelos da literatura e cálculo da divisão (SALARIO-02, SALARIO-03,
-SALARIO-06, SALARIO-26 a SALARIO-28, SALARIO-30, SALARIO-34).
+SALARIO-06, SALARIO-26 a SALARIO-28, SALARIO-30, SALARIO-34, SALARIO-78).
 """
 import uuid
 from decimal import Decimal
@@ -156,8 +156,8 @@ class DividirTests(SimpleTestCase):
         divisao = dividir(Decimal('1000.00'), partes)
 
         self.assertEqual(self.valores(divisao), [Decimal('700'), Decimal('0.00'), Decimal('300')])
-        # Só a fixa é reduzida; a percentual fica com zero sem ser marcada
-        self.assertEqual([i.reduzida for i in divisao.itens], [False, False, True])
+        # A fixa é reduzida, e a percentual, que ficou sem nada, também é marcada (SALARIO-78)
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, True, True])
         self.assertEqual([i.gera_transacao for i in divisao.itens], [True, False, True])
         self.assertEqual((divisao.total, divisao.livre), (Decimal('1000'), Decimal('0.00')))
 
@@ -217,7 +217,7 @@ class DividirTests(SimpleTestCase):
         divisao = dividir(Decimal('1000.00'), partes, ajustes={primeira.id: Decimal('1000.00')})
 
         self.assertEqual(self.valores(divisao), [Decimal('1000.00'), Decimal('0'), Decimal('0.00')])
-        self.assertEqual([i.reduzida for i in divisao.itens], [False, True, False])
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, True, True])
         self.assertEqual(divisao.livre, Decimal('0.00'))
 
     def test_ajustes_que_passam_do_recebido_sao_recusados(self):
@@ -225,6 +225,20 @@ class DividirTests(SimpleTestCase):
 
         with self.assertRaises(AjustesAcimaDoRecebido):
             dividir(Decimal('1000.00'), [guardar], ajustes={str(guardar.id): Decimal('1000.01')})
+
+    def test_percentual_sem_nada_depois_dos_fixos_e_marcado_como_reduzido(self):
+        # Os fixos usam todo o recebido, sem precisar de redução (SALARIO-78)
+        divisao = dividir(Decimal('1000.00'), [fixa('Aluguel', '1000.00'), percentual('Guardar', '10')])
+
+        self.assertEqual(self.valores(divisao), [Decimal('1000.00'), Decimal('0.00')])
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, True])
+
+    def test_percentual_que_arredonda_para_zero_sobre_um_resto_positivo_nao_e_reduzido(self):
+        # 10% de R$ 0,05 = R$ 0,005, que vai para baixo (SALARIO-28), sem ser uma redução
+        divisao = dividir(Decimal('1000.00'), [fixa('Aluguel', '999.95'), percentual('Guardar', '10')])
+
+        self.assertEqual(self.valores(divisao), [Decimal('999.95'), Decimal('0.00')])
+        self.assertEqual([i.reduzida for i in divisao.itens], [False, False])
 
     def test_partes_que_nao_geram_transacao(self):
         partes = [

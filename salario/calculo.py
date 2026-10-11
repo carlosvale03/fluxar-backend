@@ -20,6 +20,11 @@ geração. As partes chegam na ordem do plano; cada uma é um objeto com `id`,
   dos ajustes, a última parte fixa da ordem é reduzida até zero, depois a
   anterior, e cada parte reduzida é marcada (SALARIO-27); as partes
   percentuais ficam com zero.
+- Uma parte percentual com percentual maior que zero que fica com zero
+  porque nada sobrou depois dos fixos e dos ajustes (`restante == 0`) também
+  é marcada como reduzida (SALARIO-78). O percentual que sobre um restante
+  positivo arredonda para R$ 0,00 não é marcado: é o arredondamento de
+  SALARIO-28, não uma redução.
 - As saídas descontadas (`gastos`, `{id da parte: soma}`) saem do valor de
   cada parte já calculado pelas regras acima (SALARIO-66, AD-057): a parte
   transfere `max(0, valor - gasto)` e, quando o gasto passa do valor, fica
@@ -123,6 +128,8 @@ def dividir(valor_recebido, partes, ajustes=None, conta_do_recebimento=None, gas
     restante = max(ZERO, disponivel - sum((item.valor for item in fixos), ZERO))
     for item in percentuais:
         item.valor = valor_do_percentual(item.parte, restante)
+        # Nada sobrou para os percentuais (SALARIO-78)
+        item.reduzida = restante == 0 and item.parte.valor > 0
     # Os percentuais somam no máximo 100% (SALARIO-08); a redução só protege o recebido
     reduzir(percentuais, sum((item.valor for item in percentuais), ZERO) - restante)
 
