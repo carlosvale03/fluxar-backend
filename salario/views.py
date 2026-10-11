@@ -113,7 +113,11 @@ class SalaryCategoriesView(APIView):
 class SalarySimulateView(APIView):
     """
     `POST /salary/simulate/`: a divisão de um valor pelas partes enviadas ou
-    pelo plano salvo, sem gravar nada (SALARIO-13).
+    pelo plano salvo, sem gravar nada (SALARIO-13). Só com `amount`, vale o
+    plano salvo como está, sem conferir os destinos: um destino que deixou de
+    estar ativo só é recusado na geração (SALARIO-42). As partes enviadas
+    passam pelas mesmas validações do plano. A parte que fica na conta do
+    salário nunca gera transação (SALARIO-34).
     """
     permission_classes = PERMISSOES
 

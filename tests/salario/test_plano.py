@@ -369,6 +369,37 @@ class SimulacaoTests(SalarioTestCase):
         self.assertEqual((resposta.data['total'], resposta.data['free']), ('600.00', '2400.00'))
         self.assertEqual(Transaction.objects.count(), antes)
 
+    def test_simula_pelo_plano_salvo_mesmo_com_destino_que_deixou_de_estar_ativo(self):
+        self.salvar_plano([
+            parte('Reserva', 'FIXED', '500.00', 'ACCOUNT', account=self.a.poupanca),
+            parte('Guardar', 'PERCENT', '20.00', 'GOAL', goal=self.a.viagem),
+            parte('Gastos', 'PERCENT', '50.00', 'SALARY_ACCOUNT'),
+        ])
+        Account.objects.filter(pk=self.a.poupanca.pk).update(is_active=False)
+        Goal.objects.filter(pk=self.a.viagem.pk).update(is_active=False)
+
+        resposta = self.client.post(URL_SIMULAR, {'amount': '3000.00'}, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(
+            [(i['name'], i['amount'], i['generates_transaction']) for i in resposta.data['items']],
+            [('Reserva', '500.00', True), ('Guardar', '500.00', True), ('Gastos', '1250.00', False)],
+        )
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('1000.00', '2000.00'))
+
+    def test_parte_na_conta_do_salario_nunca_gera_transacao_na_simulacao(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '1000.00',
+            'parts': [
+                parte('Gastos', 'FIXED', '700.00', 'SALARY_ACCOUNT'),
+                parte('Lazer', 'PERCENT', '100.00', 'SALARY_ACCOUNT'),
+            ],
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual([i['generates_transaction'] for i in resposta.data['items']], [False, False])
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('0.00', '1000.00'))
+
     def test_simula_partes_ainda_nao_salvas_mesmo_sem_destino(self):
         resposta = self.client.post(URL_SIMULAR, {
             'amount': '1000.00',
