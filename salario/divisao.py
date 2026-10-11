@@ -234,15 +234,21 @@ def destino_disponivel(parte):
     return True
 
 
-def conferir_partes(resultado):
-    """As recusas da geração, na ordem SALARIO-41, SALARIO-42 e SALARIO-43."""
+def conferir_partes(resultado, descontadas=()):
+    """
+    As recusas da geração, na ordem SALARIO-41, SALARIO-42 e SALARIO-43. Sem
+    nenhuma parte que gere transação, a divisão só é recusada quando também
+    não desconta nenhuma saída: com saídas descontadas, ela é gravada sem
+    transações, para registrar as saídas e tirar o salário da lista dos que
+    faltam dividir (SALARIO-73).
+    """
     # Sem nada a transferir, a parte sem destino não precisa de um (SALARIO-67)
     if any(item.transferir > 0 and item.parte.tipo_de_destino is None for item in resultado.itens):
         raise ValidationError({'detail': DESTINO_FALTANDO})
     for item in resultado.itens:
         if item.gera_transacao and not destino_disponivel(item.parte):
             raise ValidationError({'detail': DESTINO_NAO_DISPONIVEL.format(nome=item.parte.nome)})
-    if not any(item.gera_transacao for item in resultado.itens):
+    if not any(item.gera_transacao for item in resultado.itens) and not descontadas:
         raise ValidationError({'detail': NADA_A_GERAR})
 
 
@@ -278,7 +284,8 @@ def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None):
     Gera as transações da divisão do recebimento pelo plano salvo, com os
     ajustes da revisão e as saídas descontadas do `pedido` (SALARIO-66).
     Devolve `(divisao, criada)`; `criada` é falso quando a chave já tinha
-    sido usada para esse recebimento.
+    sido usada para esse recebimento. Quando as saídas descontadas cobrem
+    todas as partes, a divisão é gravada sem transações (SALARIO-73).
 
     A divisão, os itens e as saídas descontadas nascem num savepoint, antes
     das transações: a restrição única parcial das saídas recusa a mesma
@@ -297,7 +304,7 @@ def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None):
     conferir_nao_dividido(recebimento.pk)
 
     _, _, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido)
-    conferir_partes(resultado)
+    conferir_partes(resultado, descontadas)
     try:
         # Savepoint: com ATOMIC_REQUESTS, o erro de restrição sem ele
         # inutilizaria a transação da requisição
@@ -450,7 +457,8 @@ def desfazer(usuario, divisao_id):
     recalculem saldos e metas e recusem uma meta negativa. Grava
     `desfeita_em`, o que libera o recebimento para uma nova divisão. Qualquer
     falha desfaz tudo (SALARIO-50). Trava a divisão, depois as contas e só
-    então as metas (AD-045).
+    então as metas (AD-045). A divisão sem transações (SALARIO-73) só
+    libera as saídas descontadas e o recebimento.
     """
     divisao = DivisaoDoSalario.objects.select_for_update().filter(pk=divisao_id, user=usuario).first()
     if divisao is None:

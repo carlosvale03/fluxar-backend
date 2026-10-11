@@ -1,5 +1,5 @@
 """
-Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, AD-057).
+Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, SALARIO-73, AD-057).
 
 O salário de R$ 3.000,00 cai na corrente em 05/10 e a divisão acontece em
 10/10. O plano tem Necessidades (R$ 200,00 para a poupança, referência
@@ -22,7 +22,7 @@ from transactions.models import Category, Transaction
 from transactions.services import TransactionService
 
 from .base import (
-    URL_DIVISOES, URL_PLANO, URL_REVISAO, SalarioTestCase, hoje_em, parte, receita, url_da_divisao,
+    URL_DIVISOES, URL_PENDENTES, URL_PLANO, URL_REVISAO, SalarioTestCase, hoje_em, parte, receita, url_da_divisao,
     url_do_desfazer,
 )
 
@@ -394,6 +394,68 @@ class GeracaoComSaidasTests(SaidasTestCase):
         texto = '\n'.join(logs.output)
         for dado in ('Farmácia', '137.45', '62.55', 'Necessidades', 'Poupança'):
             self.assertNotIn(dado, texto)
+
+
+class DivisaoSemTransacoesTests(SaidasTestCase):
+    """SALARIO-73."""
+
+    def test_saidas_que_cobrem_todas_as_partes_gravam_a_divisao_sem_transacoes(self):
+        mercado = self.despesa(valor='200.00')
+        aporte = self.aporte(valor='300.00')
+        transacoes = Transaction.objects.count()
+
+        resposta = self.gerar(outflows={str(mercado.pk): self.necessidades, str(aporte.pk): self.guardar})
+
+        self.assertEqual(resposta.status_code, 201, resposta.data)
+        self.assertEqual(resposta.data['transactions'], [])
+        self.assertEqual([i['generates_transaction'] for i in resposta.data['items']], [False, False, False])
+        self.assertEqual(
+            [(i['name'], i['amount'], i['spent'], i['transfer']) for i in resposta.data['items']],
+            [
+                ('Necessidades', '200.00', '200.00', '0.00'),
+                ('Diversão', '100.00', '0.00', '100.00'),
+                ('Guardar', '300.00', '300.00', '0.00'),
+            ],
+        )
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('0.00', '2500.00'))
+        self.assertEqual(
+            [(s['id'], s['part_name']) for s in resposta.data['outflows']],
+            [(str(mercado.pk), 'Necessidades'), (str(aporte.pk), 'Guardar')],
+        )
+        self.assertEqual(Transaction.objects.count(), transacoes)
+        self.assertEqual(SaidaDescontada.objects.filter(ativa=True).count(), 2)
+        # O salário sai da lista dos que faltam dividir
+        with hoje_em(2026, 10, 10):
+            pendentes = self.client.get(URL_PENDENTES).data
+        self.assertNotIn(str(self.salario.pk), [p['id'] for p in pendentes])
+
+    def test_desfazer_a_divisao_sem_transacoes_libera_as_saidas_e_o_salario(self):
+        mercado = self.despesa(valor='200.00')
+        aporte = self.aporte(valor='300.00')
+        gerada = self.gerar(outflows={str(mercado.pk): self.necessidades, str(aporte.pk): self.guardar})
+        self.assertEqual(gerada.status_code, 201, gerada.data)
+
+        with hoje_em(2026, 10, 11):
+            resposta = self.client.post(url_do_desfazer(gerada.data['id']), format='json')
+            pendentes = self.client.get(URL_PENDENTES).data
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertIsNotNone(resposta.data['undone_at'])
+        self.assertFalse(SaidaDescontada.objects.filter(ativa=True).exists())
+        self.assertIn(str(self.salario.pk), [p['id'] for p in pendentes])
+        self.assertEqual(self.listadas(self.revisar(dia=(2026, 10, 11))), [str(mercado.pk), str(aporte.pk)])
+
+    def test_sem_transacao_e_sem_saida_descontada_continua_recusada(self):
+        mercado = self.despesa(valor='200.00')
+        self.salvar_plano([parte('Diversão', 'FIXED', '100.00', 'SALARY_ACCOUNT')])
+
+        for outflows in ({}, {str(mercado.pk): None}):
+            with self.subTest(outflows=outflows):
+                resposta = self.gerar(outflows=outflows)
+
+                self.assertEqual(resposta.status_code, 400)
+                self.assertEqual(resposta.data, {'detail': 'Nenhuma parte do plano gera transação.', 'code': 'invalid'})
+        self.assertFalse(DivisaoDoSalario.objects.exists())
 
 
 class DesfazerComSaidasTests(SaidasTestCase):
