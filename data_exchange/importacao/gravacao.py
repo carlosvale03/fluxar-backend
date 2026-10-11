@@ -27,6 +27,14 @@ logger = logging.getLogger(__name__)
 ERRO_AO_GRAVAR = 'Erro ao gravar a linha'
 
 
+def linha_rejeitada(rejeicao):
+    """`{line, reason}` da rejeição, com `sheet` na importação completa (IMPORT-30, IMPCOMP-21)."""
+    item = {'line': rejeicao.linha, 'reason': rejeicao.motivo}
+    if rejeicao.aba is not None:
+        item['sheet'] = rejeicao.aba
+    return item
+
+
 class Gravacao:
     """Grava as linhas de uma importação para o usuário e monta o resumo."""
 
@@ -58,6 +66,7 @@ class Gravacao:
         validas = [r for r in resultados if isinstance(r, LinhaImportada)]
         rejeitadas = [r for r in resultados if isinstance(r, Rejeicao)]
         gravadas = ignoradas = sugeridas = 0
+        por_aba = []  # (aba, 'imported' | 'ignored') de cada linha válida
 
         with transaction.atomic():
             self.travar_contas(validas)
@@ -66,6 +75,7 @@ class Gravacao:
                 for linha in validas:
                     if repetidos.ignorar(linha):
                         ignoradas += 1
+                        por_aba.append((linha.aba, 'ignored'))
                         continue
                     try:
                         novas = {'categorias': {}, 'tags': {}}
@@ -78,15 +88,26 @@ class Gravacao:
                             'Falha ao gravar a linha %s da importação %s (%s).',
                             linha.numero, self.lote, type(erro).__name__,
                         )
-                        rejeitadas.append(Rejeicao(linha.numero, ERRO_AO_GRAVAR))
+                        rejeitadas.append(Rejeicao(linha.numero, ERRO_AO_GRAVAR, linha.aba))
                         continue
                     # O cache só recebe as categorias e tags novas depois que o savepoint confirma
                     self.categorias.update(novas['categorias'])
                     self.tags.update(novas['tags'])
                     gravadas += 1
                     sugeridas += sugerida
+                    por_aba.append((linha.aba, 'imported'))
 
-        rejeitadas.sort(key=lambda r: r.linha)
+        # Na ordem das abas e, dentro de cada uma, pelo número da linha
+        ordem_das_abas = {}
+        for resultado in resultados:
+            ordem_das_abas.setdefault(resultado.aba, len(ordem_das_abas))
+        rejeitadas.sort(key=lambda r: (ordem_das_abas.get(r.aba, 0), r.linha))
+        # Totais por aba da importação completa (IMPCOMP-47)
+        self.por_aba = {}
+        for aba, chave in [(r.aba, 'rejected') for r in rejeitadas] + por_aba:
+            if aba is not None:
+                totais = self.por_aba.setdefault(aba, {'imported': 0, 'ignored': 0, 'rejected': 0})
+                totais[chave] += 1
         return {
             'total': len(resultados),
             'imported': gravadas,
@@ -94,7 +115,7 @@ class Gravacao:
             'rejected': len(rejeitadas),
             'suggested': sugeridas,
             'batch_id': str(self.lote),
-            'rejected_rows': [{'line': r.linha, 'reason': r.motivo} for r in rejeitadas],
+            'rejected_rows': [linha_rejeitada(r) for r in rejeitadas],
         }
 
     def travar_contas(self, linhas):

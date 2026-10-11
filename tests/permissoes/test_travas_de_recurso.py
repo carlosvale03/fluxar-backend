@@ -187,6 +187,13 @@ def chamadas_do_catalogo(t):
                 'mapping': json.dumps(MAPEAMENTO), 'import_type': 'INCOME_EXPENSE',
                 'account_id': str(d.conta.pk),
             }, format='multipart'), 200),
+            # Rotas da importação completa (IMPCOMP-50)
+            ('analisar planilha completa', lambda: c.post('/api/import/analise/', {
+                'file': arquivo_csv([['Data', 'Descrição', 'Valor'], ['10/09/2026', 'Padaria', '-12,34']]),
+            }, format='multipart'), 200),
+            ('importar planilha completa', lambda: c.post('/api/import/', {
+                'file': arquivo_csv([['Data', 'Descrição', 'Valor'], ['10/09/2026', 'Padaria', '-12,34']]),
+            }, format='multipart'), 200),
         ],
         'exportacao_pdf': [
             ('exportar PDF', lambda: c.get('/api/export/transactions/pdf/'), 200),

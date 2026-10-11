@@ -24,6 +24,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Importar extrato ou fatura de cartão como compras no cartão | Não existe hoje e não foi pedido |
 | Sugestão de categoria por um modelo treinado com dados de vários usuários | Fica com a previsão de gastos (PROP-04); aqui a sugestão usa só as correções do próprio usuário |
 | Impedir que um usuário importe para a conta de outro (SEG-01) | Feature `isolamento-entre-usuarios` |
+| Criar contas na própria importação, ler todas as abas e detectar as colunas | Feature `importacao-completa` (AD-055); aqui a linha de conta não mapeada continua rejeitada (IMPORT-21) |
 
 ---
 

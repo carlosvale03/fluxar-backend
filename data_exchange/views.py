@@ -7,9 +7,11 @@ from accounts.models import Account
 from transactions.classes import mapa_de_classes
 from transactions.filtros import filtrar_transacoes
 from transactions.models import Transaction
+from .importacao import completa
 from .importacao.gravacao import Gravacao
 from .importacao.interpretacao import Interpretador, interpretar_ofx
 from .importacao.leitura import contas_da_planilha, ler_ofx, ler_planilha
+from .serializers import ler_plano
 from .services import ExportService
 from core.fields import get_owned_or_400, CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
@@ -100,6 +102,39 @@ class ImportSpreadsheetView(views.APIView):
         resultados = [interpretador.planilha(linha) for linha in linhas]
         # Sempre 200 com o resumo quando o arquivo é aceito (IMPORT-29, IMPORT-31)
         return Response(Gravacao(request.user).importar(resultados), status=status.HTTP_200_OK)
+
+class ImportacaoCompletaMixin:
+    """
+    Base das rotas da importação completa (AD-055): o arquivo em `file` e o
+    plano, opcional, como texto JSON em `plano`. Mesma trava da importação de
+    planilha (IMPCOMP-50); com `tags` travado, as tags das colunas e das
+    correções ficam de fora (IMPCOMP-51).
+    """
+    permission_classes = [permissions.IsAuthenticated, RecursoLiberado('importacao_planilha')]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    def entrada(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            raise ValidationError({'file': [ARQUIVO_NAO_ENVIADO]})
+        return file_obj, ler_plano(request), acesso(request.user).recurso_liberado('tags')
+
+
+class ImportacaoAnaliseView(ImportacaoCompletaMixin, views.APIView):
+    """`POST /api/import/analise/`: o plano completo, as linhas e o resumo, sem gravar nada (IMPCOMP-13)."""
+
+    def post(self, request):
+        file_obj, plano, tags_liberadas = self.entrada(request)
+        return Response(completa.analisar(request.user, file_obj, plano, tags_liberadas), status=status.HTTP_200_OK)
+
+
+class ImportacaoView(ImportacaoCompletaMixin, views.APIView):
+    """`POST /api/import/`: cria as contas do plano e grava todas as abas usadas (IMPCOMP-45)."""
+
+    def post(self, request):
+        file_obj, plano, tags_liberadas = self.entrada(request)
+        return Response(completa.importar(request.user, file_obj, plano, tags_liberadas), status=status.HTTP_200_OK)
+
 
 # Parâmetros conhecidos da exportação (CONTRATO-14)
 PARAMETROS_DA_EXPORTACAO = frozenset({

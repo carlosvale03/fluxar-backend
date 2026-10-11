@@ -76,12 +76,19 @@ def arquivo_csv(linhas, nome='extrato.csv', separador=';', codificacao='utf-8'):
     return SimpleUploadedFile(nome, texto.encode(codificacao), content_type='text/csv')
 
 
-def arquivo_xlsx(linhas, nome='extrato.xlsx'):
-    """Um XLSX com as `linhas` na primeira aba; os valores mantêm o tipo."""
+def arquivo_xlsx(linhas=None, nome='extrato.xlsx', abas=None):
+    """
+    Um XLSX com as `linhas` na primeira aba, ou com as `abas` (pares
+    `(nome da aba, linhas)`, na ordem); os valores mantêm o tipo.
+    """
     planilha = Workbook()
-    aba = planilha.active
-    for linha in linhas:
-        aba.append(list(linha))
+    if abas is None:
+        abas = [(planilha.active.title, linhas)]
+    planilha.remove(planilha.active)
+    for titulo, linhas_da_aba in abas:
+        aba = planilha.create_sheet(titulo)
+        for linha in linhas_da_aba:
+            aba.append(list(linha))
     conteudo = io.BytesIO()
     planilha.save(conteudo)
     return SimpleUploadedFile(
