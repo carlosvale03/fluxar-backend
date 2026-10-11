@@ -164,7 +164,8 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
 
     `POST /salary/divisions/`: gera as transações da divisão de uma vez
     (SALARIO-32 a SALARIO-43). A repetição da mesma `idempotency_key`
-    devolve a divisão já gravada, também com 201 (SALARIO-37).
+    devolve a divisão já gravada, também com 201 (SALARIO-37); a de uma
+    divisão desfeita recebe 409 (SALARIO-79).
     """
     permission_classes = PERMISSOES
     parametros_permitidos = frozenset({'undoable'})
@@ -185,6 +186,9 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
         if chave is not None:
             anterior = DivisaoDoSalario.objects.filter(user=request.user, chave=chave).first()
             if anterior is not None and str(anterior.recebimento_ref) == str(request.data.get('receipt')):
+                # A chave de uma divisão desfeita não a devolve como gerada (SALARIO-79)
+                if anterior.desfeita_em is not None:
+                    raise divisao.DivisaoDesfeita()
                 return Response(divisao.divisao_em_json(anterior), status=status.HTTP_201_CREATED)
 
         dados = validar(DivisionCreateSerializer, request)

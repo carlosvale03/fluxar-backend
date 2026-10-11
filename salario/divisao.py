@@ -6,7 +6,8 @@ A geração (AD-026, AD-053) corre num `atomic`, com a linha do recebimento
 travada: um segundo pedido para o mesmo recebimento espera o primeiro e, ao
 seguir, encontra a divisão gravada (SALARIO-39). A repetição da mesma chave
 devolve a divisão já gravada, sem gerar de novo (SALARIO-37, AD-007), e a
-resposta é remontada do registro. As transferências saem por
+resposta é remontada do registro; a chave de uma divisão desfeita recebe
+409 (SALARIO-79). As transferências saem por
 `TransactionService.create_transfer` e os aportes por `GoalService.aportar`,
 que soma o aporte só na meta escolhida (SALARIO-33, AD-028). Qualquer erro
 desfaz o lote inteiro (SALARIO-36).
@@ -24,7 +25,8 @@ from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef
 from django.http import Http404
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework import status
+from rest_framework.exceptions import APIException, ValidationError
 
 from accounts.faturas import mes_anterior
 from accounts.saldo import travar
@@ -51,9 +53,17 @@ DESTINO_FALTANDO = 'Escolha o destino de todas as partes.'
 DESTINO_NAO_DISPONIVEL = 'O destino da parte {nome} não está mais disponível.'
 NADA_A_GERAR = 'Nenhuma parte do plano gera transação.'
 CHAVE_COM_OUTRO_SALARIO = 'Este identificador de divisão já foi usado com outro salário.'
+DIVISAO_DESFEITA = 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.'
 DESCRICAO = 'Divisão do salário: {nome}'
 # Prazo para desfazer, em dias depois da data da geração (SALARIO-49)
 PRAZO_PARA_DESFAZER = 7
+
+
+class DivisaoDesfeita(APIException):
+    """A chave da tentativa é de uma divisão já desfeita (SALARIO-79): 409, sem devolver a divisão."""
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = DIVISAO_DESFEITA
+    default_code = 'division_undone'
 
 
 def recebimento_valido(usuario, transacao, categorias=None):
@@ -200,13 +210,17 @@ def revisar(usuario, recebimento, ajustes=None, pedido=None):
 def pela_chave(usuario, chave, recebimento_id):
     """
     A divisão já gravada com a chave da tentativa, ou `None`. A mesma chave
-    com outro recebimento recebe 400.
+    com outro recebimento recebe 400; a chave de uma divisão já desfeita
+    recebe 409, para a interface abrir a revisão de novo em vez de mostrar a
+    divisão desfeita como gerada (SALARIO-79).
     """
     if chave is None:
         return None
     anterior = DivisaoDoSalario.objects.filter(user=usuario, chave=chave).first()
     if anterior is not None and str(anterior.recebimento_ref) != str(recebimento_id):
         raise ValidationError({'detail': CHAVE_COM_OUTRO_SALARIO})
+    if anterior is not None and anterior.desfeita_em is not None:
+        raise DivisaoDesfeita()
     return anterior
 
 

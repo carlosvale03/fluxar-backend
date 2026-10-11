@@ -1,6 +1,6 @@
 """
 Geração das transações da divisão (SALARIO-18, SALARIO-32 a SALARIO-38,
-SALARIO-40 a SALARIO-43).
+SALARIO-40 a SALARIO-43, SALARIO-79).
 """
 import uuid
 from datetime import date, datetime, timezone as dt_timezone
@@ -10,12 +10,14 @@ from unittest import mock
 from accounts.models import Account
 from goals.models import Goal
 from goals.services import GoalService
+from salario import divisao as servico
 from salario.models import DivisaoDoSalario
 from transactions.models import Transaction
 from transactions.services import TransactionService
 
 from .base import (
     URL_DIVISOES, URL_PLANO, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita, url_da_divisao,
+    url_do_desfazer,
 )
 
 JA_DIVIDIDO = {'detail': 'Este salário já foi dividido.', 'code': 'invalid'}
@@ -262,6 +264,43 @@ class RepeticaoTests(GeracaoTestCase):
         self.assertEqual(resposta.status_code, 400)
         self.assertEqual(resposta.data, erro('Este identificador de divisão já foi usado com outro salário.'))
         self.assertEqual(DivisaoDoSalario.objects.count(), 1)
+
+
+class ChaveDeDivisaoDesfeitaTests(GeracaoTestCase):
+    """SALARIO-79."""
+
+    DESFEITA = {'detail': 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.', 'code': 'division_undone'}
+
+    def setUp(self):
+        super().setUp()
+        self.salvar_plano(plano_50_30_20(guardar_na=self.a.viagem))
+        self.chave = uuid.uuid4()
+        self.divisao_id = self.gerar(chave=self.chave).data['id']
+        with hoje_em(2026, 10, 11):
+            self.assertEqual(self.client.post(url_do_desfazer(self.divisao_id), format='json').status_code, 200)
+
+    def test_chave_de_divisao_desfeita_recebe_409_sem_gerar_de_novo(self):
+        antes = Transaction.objects.count()
+
+        resposta = self.gerar(chave=self.chave)
+
+        self.assertEqual(resposta.status_code, 409)
+        self.assertEqual(resposta.data, self.DESFEITA)
+        self.assertEqual(Transaction.objects.count(), antes)
+        self.assertEqual(DivisaoDoSalario.objects.count(), 1)
+        self.assertEqual(self.valor_da_meta(self.a.viagem), Decimal('0.00'))
+
+    def test_a_geracao_recusa_a_chave_desfeita_tambem_depois_da_trava(self):
+        # O pedido que passou pela conferência da rota antes do desfazer terminar
+        with hoje_em(2026, 10, 10), self.assertRaises(servico.DivisaoDesfeita):
+            servico.gerar(self.a.usuario, self.salario.pk, self.chave)
+        self.assertEqual(DivisaoDoSalario.objects.count(), 1)
+
+    def test_nova_chave_divide_o_salario_de_novo(self):
+        resposta = self.gerar(chave=uuid.uuid4())
+
+        self.assertEqual(resposta.status_code, 201, resposta.data)
+        self.assertNotEqual(resposta.data['id'], self.divisao_id)
 
 
 class RecusasTests(GeracaoTestCase):
