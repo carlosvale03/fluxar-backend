@@ -1,5 +1,6 @@
 """
-Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, SALARIO-73, SALARIO-75, AD-057).
+Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, SALARIO-73, SALARIO-75, SALARIO-77,
+AD-057).
 
 O salário de R$ 3.000,00 cai na corrente em 05/10 e a divisão acontece em
 10/10. O plano tem Necessidades (R$ 200,00 para a poupança, referência
@@ -547,6 +548,69 @@ class DivisaoSemTransacoesTests(SaidasTestCase):
         self.assertFalse(DivisaoDoSalario.objects.exists())
 
 
+class SaidasMudadasTests(SaidasTestCase):
+    """SALARIO-77."""
+
+    def setUp(self):
+        super().setUp()
+        self.mercado = self.despesa(valor='50.00')
+        self.farmacia = self.despesa(valor='30.00', description='Farmácia')
+        self.lanche = self.despesa(valor='20.00', categoria=self.lazer, description='Lanche')
+        self.gerada = self.gerar(outflows={
+            str(self.mercado.pk): self.necessidades, str(self.farmacia.pk): self.necessidades,
+            str(self.lanche.pk): self.diversao,
+        })
+        self.assertEqual(self.gerada.status_code, 201, self.gerada.data)
+
+    def mudadas(self):
+        """`outflows_changed` no detalhe e na lista das divisões que ainda podem ser desfeitas."""
+        with hoje_em(2026, 10, 11):
+            detalhe = self.client.get(url_da_divisao(self.gerada.data['id'])).data
+            [listada] = self.client.get(URL_DIVISOES, {'undoable': 'true'}).data
+        self.assertEqual(listada['outflows_changed'], detalhe['outflows_changed'])
+        return detalhe['outflows_changed']
+
+    def test_divisao_recem_gerada_nao_tem_saida_mudada(self):
+        self.assertEqual(self.gerada.data['outflows_changed'], 0)
+        self.assertEqual(self.mudadas(), 0)
+
+    def test_conta_as_saidas_excluidas_com_outro_valor_ou_que_deixaram_de_valer(self):
+        casos = (
+            ('excluída', lambda: Transaction.objects.get(pk=self.mercado.pk).delete()),
+            ('outro valor', lambda: Transaction.objects.filter(pk=self.farmacia.pk).update(amount=Decimal('31.00'))),
+            ('pendente', lambda: Transaction.objects.filter(pk=self.lanche.pk).update(status='PENDING')),
+        )
+        for quantas, (nome, mudar) in enumerate(casos, start=1):
+            with self.subTest(nome):
+                mudar()
+
+                self.assertEqual(self.mudadas(), quantas)
+
+    def test_saida_movida_para_outra_conta_conta_como_mudada(self):
+        Transaction.objects.filter(pk=self.mercado.pk).update(account=self.a.poupanca)
+
+        self.assertEqual(self.mudadas(), 1)
+
+    def test_saida_editada_sem_mudar_valor_nem_conta_nao_conta(self):
+        Transaction.objects.filter(pk=self.mercado.pk).update(description='Mercado da esquina', date=date(2026, 10, 7))
+
+        self.assertEqual(self.mudadas(), 0)
+
+    def test_desfazer_com_saidas_mudadas_libera_todas_e_a_desfeita_fica_com_zero(self):
+        Transaction.objects.get(pk=self.mercado.pk).delete()
+        Transaction.objects.filter(pk=self.farmacia.pk).update(amount=Decimal('31.00'))
+
+        with hoje_em(2026, 10, 11):
+            resposta = self.client.post(url_do_desfazer(self.gerada.data['id']), format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(resposta.data['outflows_changed'], 0)
+        self.assertFalse(SaidaDescontada.objects.filter(ativa=True).exists())
+        self.assertEqual(
+            self.listadas(self.revisar(dia=(2026, 10, 11))), [str(self.farmacia.pk), str(self.lanche.pk)],
+        )
+
+
 class DesfazerComSaidasTests(SaidasTestCase):
     """SALARIO-70."""
 
@@ -644,6 +708,17 @@ class ComprasNoCartaoTests(SaidasTestCase):
         compra.refresh_from_db()
         self.assertEqual((compra.status, compra.payment_date), ('PENDING', None))
         self.assertEqual(self.listadas(self.revisar()), [])
+
+    def test_compra_descontada_com_o_pagamento_estornado_conta_como_mudada(self):
+        compra = self.compra_paga()
+        gerada = self.gerar(outflows={str(compra.pk): self.necessidades})
+        self.assertEqual(gerada.data['outflows_changed'], 0)
+
+        faturas.estornar(self.a.usuario, compra.invoice)
+
+        with hoje_em(2026, 10, 10):
+            detalhe = self.client.get(url_da_divisao(gerada.data['id']))
+        self.assertEqual(detalhe.data['outflows_changed'], 1)
 
     def test_compra_descontada_na_geracao_e_liberada_ao_desfazer(self):
         compra = self.compra_paga()

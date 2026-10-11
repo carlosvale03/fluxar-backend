@@ -537,10 +537,35 @@ def desfazer(usuario, divisao_id):
     return divisao
 
 
+def saida_mudou(registro, conta_de_origem_id):
+    """
+    Se a saída descontada não é mais a que entrou na divisão (SALARIO-77):
+    excluída, com valor diferente do descontado ou sem valer mais como saída
+    da conta do recebimento (não efetivada, em outra conta ou compra no
+    cartão com o pagamento estornado).
+    """
+    saida = registro.transacao
+    if saida is None or saida.amount != registro.valor:
+        return True
+    if saida.status != 'COMPLETED' or saida.account_id is None or saida.account_id != conta_de_origem_id:
+        return True
+    return saida.type == saidas.COMPRA_NO_CARTAO and saida.payment_date is None
+
+
+def saidas_mudadas(divisao, descontadas):
+    """Quantas saídas descontadas na divisão ativa mudaram depois da geração; na desfeita, zero (SALARIO-77)."""
+    if divisao.desfeita_em is not None:
+        return 0
+    return sum(
+        1 for registro in descontadas if registro.ativa and saida_mudou(registro, divisao.conta_de_origem_id)
+    )
+
+
 def divisao_em_json(divisao):
     """
     O corpo da divisão gerada, montado só do registro: a repetição da mesma
-    chave recebe a mesma resposta (SALARIO-37).
+    chave recebe a mesma resposta (SALARIO-37). `outflows_changed` conta as
+    saídas descontadas que mudaram depois da geração (SALARIO-77).
     """
     itens = list(divisao.itens.select_related('conta', 'meta').order_by('ordem', 'pk'))
     origem = {
@@ -595,6 +620,7 @@ def divisao_em_json(divisao):
             for item in itens
         ],
         'outflows': [saida_em_json(registro) for registro in descontadas],
+        'outflows_changed': saidas_mudadas(divisao, descontadas),
         'transactions': [
             {
                 'transfer_id': str(item.transfer_id),
