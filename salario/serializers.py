@@ -147,5 +147,9 @@ class DivisionPreviewSerializer(serializers.Serializer):
 
 
 class DivisionCreateSerializer(DivisionPreviewSerializer):
-    """Geração: a revisão mais a chave da tentativa (SALARIO-37, AD-007)."""
+    """
+    Geração: a revisão mais a chave da tentativa (SALARIO-37, AD-007) e,
+    opcionalmente, o total mostrado na revisão (SALARIO-74).
+    """
     idempotency_key = serializers.UUIDField(required=False, allow_null=True, default=None)
+    expected_total = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True, default=None)

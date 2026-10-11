@@ -28,6 +28,7 @@ from .base import (
 
 SAIDA_NAO_ENCONTRADA = {'outflows': ['Saída não encontrada.']}
 PARTE_NAO_ENCONTRADA = {'outflows': ['Parte não encontrada.']}
+DIVISAO_MUDOU = {'detail': 'A divisão mudou desde a revisão. Confira de novo antes de gerar.', 'code': 'invalid'}
 
 
 class SaidasTestCase(SalarioTestCase):
@@ -358,6 +359,9 @@ class GeracaoComSaidasTests(SaidasTestCase):
                 with self.subTest(outflows=outflows, rota=rota.__name__):
                     resposta = rota(outflows=outflows)
                     self.assertEqual(resposta.status_code, 400)
+                    # Na geração, a parte fora do plano é um plano salvo de novo (SALARIO-74)
+                    if rota == self.gerar and esperado == PARTE_NAO_ENCONTRADA:
+                        esperado = DIVISAO_MUDOU
                     self.assertEqual(resposta.data, esperado)
         self.assertFalse(DivisaoDoSalario.objects.exists())
         self.assertFalse(SaidaDescontada.objects.exists())
@@ -369,9 +373,11 @@ class GeracaoComSaidasTests(SaidasTestCase):
         parte_de_b = self.client.get(URL_PLANO).data['parts'][0]['id']
         self.client.force_authenticate(user=self.a.usuario)
 
-        resposta = self.gerar(outflows={str(saida.pk): parte_de_b})
+        for rota, esperado in ((self.revisar, PARTE_NAO_ENCONTRADA), (self.gerar, DIVISAO_MUDOU)):
+            with self.subTest(rota=rota.__name__):
+                resposta = rota(outflows={str(saida.pk): parte_de_b})
 
-        self.assertEqual((resposta.status_code, resposta.data), (400, PARTE_NAO_ENCONTRADA))
+                self.assertEqual((resposta.status_code, resposta.data), (400, esperado))
 
     def test_repeticao_da_mesma_chave_devolve_a_mesma_resposta(self):
         saida = self.despesa()

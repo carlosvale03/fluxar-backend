@@ -53,6 +53,7 @@ DESTINO_FALTANDO = 'Escolha o destino de todas as partes.'
 DESTINO_NAO_DISPONIVEL = 'O destino da parte {nome} não está mais disponível.'
 NADA_A_GERAR = 'Nenhuma parte do plano gera transação.'
 CHAVE_COM_OUTRO_SALARIO = 'Este identificador de divisão já foi usado com outro salário.'
+DIVISAO_MUDOU = 'A divisão mudou desde a revisão. Confira de novo antes de gerar.'
 DIVISAO_DESFEITA = 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.'
 DESCRICAO = 'Divisão do salário: {nome}'
 # Prazo para desfazer, em dias depois da data da geração (SALARIO-49)
@@ -153,13 +154,30 @@ def calcular(usuario, recebimento, ajustes=None, partes=None, gastos=None):
         raise ValidationError({'adjustments': [AJUSTES_ACIMA_DO_RECEBIDO]})
 
 
-def calcular_com_saidas(usuario, recebimento, ajustes=None, pedido=None):
+def conferir_partes_do_pedido(partes, ajustes, pedido):
+    """
+    Na geração, um ajuste ou uma saída que aponta para uma parte fora do
+    plano quer dizer que o plano foi salvo de novo depois da revisão: 400
+    `{detail}` com `DIVISAO_MUDOU` (SALARIO-74), no lugar das mensagens de
+    campo da revisão.
+    """
+    ids = {str(parte.pk) for parte in partes}
+    apontadas = {str(chave) for chave in (ajustes or {})}
+    apontadas |= {str(valor) for valor in (pedido or {}).values() if valor not in (None, '')}
+    if apontadas - ids:
+        raise ValidationError({'detail': DIVISAO_MUDOU})
+
+
+def calcular_com_saidas(usuario, recebimento, ajustes=None, pedido=None, geracao=False):
     """
     A divisão com as saídas desde o recebimento (SALARIO-64 a SALARIO-67,
     SALARIO-69). Devolve `(partes, elegiveis, descontadas, resultado)`;
-    `descontadas` é `[(saida, parte)]`.
+    `descontadas` é `[(saida, parte)]`. Na `geracao`, as partes apontadas
+    pelo pedido são conferidas antes (SALARIO-74).
     """
     partes = plano.partes_do_plano(usuario)
+    if geracao:
+        conferir_partes_do_pedido(partes, ajustes, pedido)
     lista = list(saidas.elegiveis(usuario, recebimento))
     descontadas = saidas.escolhidas(lista, partes, pedido)
     resultado = calcular(usuario, recebimento, ajustes, partes=partes, gastos=saidas.gastos_por_parte(descontadas))
@@ -279,10 +297,12 @@ def _gerar_item(usuario, recebimento, item, data, divisao):
 
 
 @transaction.atomic
-def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None):
+def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None, total_esperado=None):
     """
     Gera as transações da divisão do recebimento pelo plano salvo, com os
     ajustes da revisão e as saídas descontadas do `pedido` (SALARIO-66).
+    Com `total_esperado`, o total revisado, um total recalculado diferente
+    recebe 400 `DIVISAO_MUDOU`, antes das demais recusas (SALARIO-74).
     Devolve `(divisao, criada)`; `criada` é falso quando a chave já tinha
     sido usada para esse recebimento. Quando as saídas descontadas cobrem
     todas as partes, a divisão é gravada sem transações (SALARIO-73).
@@ -303,7 +323,9 @@ def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None):
         return anterior, False
     conferir_nao_dividido(recebimento.pk)
 
-    _, _, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido)
+    _, _, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido, geracao=True)
+    if total_esperado is not None and total_esperado != resultado.total:
+        raise ValidationError({'detail': DIVISAO_MUDOU})
     conferir_partes(resultado, descontadas)
     try:
         # Savepoint: com ATOMIC_REQUESTS, o erro de restrição sem ele

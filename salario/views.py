@@ -165,7 +165,8 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
     `POST /salary/divisions/`: gera as transações da divisão de uma vez
     (SALARIO-32 a SALARIO-43). A repetição da mesma `idempotency_key`
     devolve a divisão já gravada, também com 201 (SALARIO-37); a de uma
-    divisão desfeita recebe 409 (SALARIO-79).
+    divisão desfeita recebe 409 (SALARIO-79). Com `expected_total`, o total
+    da revisão, um total recalculado diferente recebe 400 (SALARIO-74).
     """
     permission_classes = PERMISSOES
     parametros_permitidos = frozenset({'undoable'})
@@ -194,6 +195,7 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
         dados = validar(DivisionCreateSerializer, request)
         registro, _ = divisao.gerar(
             request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'], dados['outflows'],
+            total_esperado=dados['expected_total'],
         )
         return Response(divisao.divisao_em_json(registro), status=status.HTTP_201_CREATED)
 
