@@ -15,7 +15,14 @@ desfaz o lote inteiro (SALARIO-36).
 As saídas da conta do salário desde o recebimento (`saidas`, AD-057) entram
 na revisão e são descontadas das partes escolhidas; cada transação leva o
 que a parte ainda transfere, e as saídas descontadas ficam registradas na
-divisão até ela ser desfeita (SALARIO-64 a SALARIO-70, SALARIO-72).
+divisão até ela ser desfeita (SALARIO-64 a SALARIO-70, SALARIO-72). Quando
+as saídas cobrem todas as partes, a divisão é gravada sem transações
+(SALARIO-73), e o corpo da divisão conta as saídas descontadas que mudaram
+depois da geração (SALARIO-77).
+
+A geração confere que a divisão é a revisada: o total enviado pela revisão
+e as partes apontadas pelos ajustes e pelas saídas precisam bater com o
+plano de agora (SALARIO-74).
 """
 import logging
 from datetime import datetime, time, timedelta
