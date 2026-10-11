@@ -202,6 +202,25 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P2: Inativar e reativar contas
+
+**User Story**: Como usuário, quero inativar uma conta que não uso mais, ver as contas inativas e reativar uma delas, sem perder o histórico.
+
+**Why P2**: a tela de contas já oferece o interruptor "Conta ativa" e o filtro de inativas, mas o backend ignorava o interruptor e nunca devolvia as inativas. Inativar é a exclusão de SALDO-34; reativar desfaz a exclusão.
+
+**Acceptance Criteria**:
+1. **SALDO-46** WHEN o usuário inativa uma conta com saldo zero e sem transações pendentes THEN o sistema SHALL marcá-la como inativa, com o mesmo efeito da exclusão de SALDO-34.
+2. **SALDO-47** IF o usuário tentar inativar uma conta com saldo diferente de zero THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Zere o saldo antes de inativar a conta: transfira ou ajuste o valor restante."
+3. **SALDO-48** IF o usuário tentar inativar uma conta com transações pendentes THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Resolva as transações pendentes antes de inativar a conta: efetive, mova ou exclua cada uma."
+4. **SALDO-49** WHEN o usuário reativa uma conta inativa THEN o sistema SHALL voltar a mostrá-la nas listas e nos totais e a aceitar operações nela.
+5. **SALDO-50** IF reativar a conta fizer o usuário passar do limite `limite_contas` do plano dele THEN o sistema SHALL recusar com HTTP 403 `plan_limit_reached`.
+6. **SALDO-51** WHEN a lista de contas recebe `status=inactive` ou `status=all` THEN o sistema SHALL devolver só as inativas ou todas; sem o parâmetro, SHALL devolver só as ativas, como antes.
+7. **SALDO-52** WHEN o usuário desliga ou liga o interruptor "Conta ativa" na edição da conta THEN a interface SHALL inativar ou reativar a conta pelas regras acima e mostrar a recusa do backend.
+
+**Independent Test**: inativar uma conta zerada a tira da lista e aparece com o filtro "Inativas"; tentar inativar uma conta com R$ 10,00 recebe a mensagem de SALDO-47; reativar a devolve à lista.
+
+---
+
 ## Edge Cases
 
 - Transação efetivada com data futura, fora de série: entra no saldo desde já (SALDO-01, AD-002).
@@ -287,6 +306,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALDO-43 | P2: Ajuste de saldo | T3 | Verified |
 | SALDO-44 | P2: Operações simultâneas | T28 | Verified |
 | SALDO-45 | P2: Operações simultâneas | T28 | Verified |
+| SALDO-46 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-47 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-48 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-49 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-50 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-51 | P2: Inativar e reativar contas | refactor | Pending |
+| SALDO-52 | P2: Inativar e reativar contas | refactor | Pending |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 
