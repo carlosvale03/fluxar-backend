@@ -544,7 +544,9 @@ class DivisaoSemTransacoesTests(SaidasTestCase):
                 resposta = self.gerar(outflows=outflows)
 
                 self.assertEqual(resposta.status_code, 400)
-                self.assertEqual(resposta.data, {'detail': 'Nenhuma parte do plano gera transação.', 'code': 'invalid'})
+                self.assertEqual(
+                    resposta.data, {'detail': 'Nenhuma parte do plano gera transação.', 'code': 'invalid'},
+                )
         self.assertFalse(DivisaoDoSalario.objects.exists())
 
 

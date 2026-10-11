@@ -168,4 +168,6 @@ class DivisionCreateSerializer(DivisionPreviewSerializer):
     opcionalmente, o total mostrado na revisão (SALARIO-74).
     """
     idempotency_key = serializers.UUIDField(required=False, allow_null=True, default=None)
-    expected_total = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True, default=None)
+    expected_total = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, allow_null=True, default=None,
+    )

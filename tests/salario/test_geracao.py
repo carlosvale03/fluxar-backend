@@ -347,7 +347,9 @@ class DivisaoMudouDesdeARevisaoTests(GeracaoTestCase):
 class ChaveDeDivisaoDesfeitaTests(GeracaoTestCase):
     """SALARIO-79."""
 
-    DESFEITA = {'detail': 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.', 'code': 'division_undone'}
+    DESFEITA = {
+        'detail': 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.', 'code': 'division_undone',
+    }
 
     def setUp(self):
         super().setUp()
