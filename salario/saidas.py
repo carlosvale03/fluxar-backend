@@ -1,16 +1,23 @@
 """
-Saídas desde o salário (SALARIO-64 a SALARIO-69, AD-057).
+Saídas desde o salário (SALARIO-64 a SALARIO-69, SALARIO-75, AD-057).
 
 - `elegiveis`: as saídas efetivadas da conta do recebimento (despesas,
   transferências, aportes em metas, que são transferências, e pagamentos de
-  fatura) com data entre a do recebimento e hoje, no calendário de Brasília,
-  e as compras no cartão pagas pela conta do recebimento com data de
-  pagamento nesse intervalo, uma linha por parcela, menos as geradas por
+  fatura) com data entre a do recebimento e o fim da janela, no calendário
+  de Brasília, e as compras no cartão pagas pela conta do recebimento com
+  data de pagamento nesse intervalo, uma linha por parcela, menos as geradas por
   divisões do salário, os ajustes de saldo e as já descontadas numa divisão
   ativa (SALARIO-64). O pagamento de fatura não cria transação: as compras
   pagas ficam `COMPLETED`, na conta que pagou e com `payment_date`; o
   estorno as devolve a pendentes, na conta do cartão e sem data de
   pagamento, e elas saem da lista.
+- `fim_da_janela`: a véspera do próximo salário na mesma conta ou hoje, o
+  que vier antes (SALARIO-75). O próximo salário é a primeira receita
+  efetivada da conta, numa categoria de salário e sem ser ajuste de saldo
+  (as mesmas regras que põem um recebimento na lista dos salários a
+  dividir), com data posterior à do recebimento. Um salário no mesmo dia
+  não fecha a janela: os dois listam as mesmas saídas, e a descontada num
+  deles sai da lista do outro. Um salário ainda pendente também não fecha.
 - `sugestoes`: a parte sugerida para cada saída (SALARIO-65). Despesa e
   compra no cartão: a primeira parte cuja referência é a classe efetiva da
   categoria (as classes padrão Essencial e Dispensável, AD-052); o destino
@@ -22,6 +29,7 @@ Saídas desde o salário (SALARIO-64 a SALARIO-69, AD-057).
   uma saída fora da lista ou uma parte fora do plano recebe 400 no campo
   `outflows` (SALARIO-69).
 """
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Case, DateField, Exists, F, OuterRef, Q, When
@@ -33,6 +41,7 @@ from goals.models import GoalDeposit
 from transactions.classes import mapa_de_classes
 from transactions.models import Transaction
 
+from . import plano
 from .models import CONTA, META, SaidaDescontada
 from .referencias import referencia_da_classe
 
@@ -44,10 +53,28 @@ PARTE_NAO_ENCONTRADA = 'Parte não encontrada.'
 ZERO = Decimal('0.00')
 
 
+def fim_da_janela(usuario, recebimento):
+    """O último dia das saídas do recebimento: hoje ou a véspera do próximo salário na mesma conta (SALARIO-75)."""
+    proximo = (
+        Transaction.objects.filter(
+            user=usuario, type='INCOME', status='COMPLETED', account_id=recebimento.account_id,
+            is_balance_adjustment=False, category_id__in=plano.categorias_de_salario(usuario),
+            date__gt=recebimento.date,
+        )
+        .order_by('date')
+        .values_list('date', flat=True)
+        .first()
+    )
+    fim = hoje()
+    if proximo is not None:
+        fim = min(fim, proximo - timedelta(days=1))
+    return fim
+
+
 def elegiveis(usuario, recebimento):
     """As saídas que podem ser descontadas na divisão do recebimento (SALARIO-64), da mais antiga para a mais recente."""
     descontada = SaidaDescontada.objects.filter(transacao_ref=OuterRef('pk'), ativa=True)
-    inicio, fim = recebimento.date, hoje()
+    inicio, fim = recebimento.date, fim_da_janela(usuario, recebimento)
     return (
         Transaction.objects.filter(
             Q(type__in=TIPOS_DE_SAIDA, date__gte=inicio, date__lte=fim)

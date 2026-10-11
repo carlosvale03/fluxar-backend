@@ -1,5 +1,5 @@
 """
-Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, SALARIO-73, AD-057).
+Saídas desde o salário (SALARIO-64 a SALARIO-70, SALARIO-72, SALARIO-73, SALARIO-75, AD-057).
 
 O salário de R$ 3.000,00 cai na corrente em 05/10 e a divisão acontece em
 10/10. O plano tem Necessidades (R$ 200,00 para a poupança, referência
@@ -44,6 +44,7 @@ class SaidasTestCase(SalarioTestCase):
         self.salario = receita(self.a)
         self.comida = Category.objects.get(user=self.a.usuario, name='Comida', type='EXPENSE')
         self.lazer = Category.objects.get(user=self.a.usuario, name='Lazer', type='EXPENSE')
+        self.freela = Category.objects.create(user=self.a.usuario, name='Freela', type='INCOME')
 
     def despesa(self, valor='130.00', data=date(2026, 10, 6), categoria=None, usuario=None, **extra):
         extra.setdefault('account', self.a.conta)
@@ -98,7 +99,8 @@ class SaidasElegiveisTests(SaidasTestCase):
         self.assertEqual(ids, [str(no_dia_do_recebimento.pk), str(transferencia.pk), str(aporte.pk), str(fatura.pk)])
 
     def test_deixa_fora_as_saidas_que_nao_sairam_do_salario(self):
-        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 1))
+        # Outro salário no mesmo dia e na mesma conta: as janelas dos dois se cruzam (SALARIO-75)
+        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 5))
         self.despesa(account=self.a.poupanca)                                    # outra conta
         self.despesa(data=date(2026, 10, 4))                                     # antes do recebimento
         self.despesa(data=date(2026, 10, 11))                                    # depois de hoje
@@ -106,7 +108,7 @@ class SaidasElegiveisTests(SaidasTestCase):
         self.despesa(is_balance_adjustment=True)                                 # ajuste de saldo
         self.despesa(divisao_do_salario=uuid.uuid4())                            # gerada por uma divisão
         self.despesa(usuario=self.b.usuario)                                     # de outro usuário
-        receita(self.a, valor='10.00', data=date(2026, 10, 6), categoria=self.a.salario)  # entrada
+        receita(self.a, valor='10.00', data=date(2026, 10, 6), categoria=self.freela)    # entrada
         descontada = self.despesa(description='Já descontada')
         # Descontada na divisão ativa do outro salário da mesma conta
         resposta = self.gerar(outro_salario, outflows={str(descontada.pk): self.diversao})
@@ -115,6 +117,56 @@ class SaidasElegiveisTests(SaidasTestCase):
         ids = self.listadas(self.revisar())
 
         self.assertEqual(ids, [])
+
+
+class JanelaAteOProximoSalarioTests(SaidasTestCase):
+    """SALARIO-75: o salário de 05/10 e o próximo, de 08/10, na mesma corrente."""
+
+    def setUp(self):
+        super().setUp()
+        self.antes = self.despesa(data=date(2026, 10, 7), description='Véspera do próximo')
+        self.depois = self.despesa(data=date(2026, 10, 8), description='Dia do próximo')
+
+    def test_as_saidas_vao_ate_a_vespera_do_proximo_salario(self):
+        proximo = receita(self.a, valor='500.00', data=date(2026, 10, 8))
+
+        self.assertEqual(self.listadas(self.revisar()), [str(self.antes.pk)])
+        # As do dia do próximo em diante ficam com ele
+        self.assertEqual(self.listadas(self.revisar(proximo)), [str(self.depois.pk)])
+
+    def test_saida_do_dia_do_proximo_salario_e_recusada_na_geracao(self):
+        receita(self.a, valor='500.00', data=date(2026, 10, 8))
+
+        resposta = self.gerar(outflows={str(self.depois.pk): self.necessidades})
+
+        self.assertEqual((resposta.status_code, resposta.data), (400, SAIDA_NAO_ENCONTRADA))
+
+    def test_sem_proximo_salario_vai_ate_hoje(self):
+        self.assertEqual(self.listadas(self.revisar()), [str(self.antes.pk), str(self.depois.pk)])
+
+    def test_so_um_salario_recebido_na_mesma_conta_depois_do_recebimento_fecha_a_janela(self):
+        receita(self.a, valor='500.00', data=date(2026, 10, 8), status='PENDING')       # pendente
+        receita(self.a, valor='500.00', data=date(2026, 10, 8), categoria=self.freela)  # não é salário
+        receita(self.a, valor='500.00', data=date(2026, 10, 8), conta=self.a.poupanca)  # outra conta
+        receita(self.a, valor='500.00', data=date(2026, 10, 8), is_balance_adjustment=True)
+        receita(self.a, valor='500.00', data=date(2026, 10, 5))                         # mesmo dia
+        receita(self.a, valor='500.00', data=date(2026, 10, 3))                         # anterior
+
+        self.assertEqual(self.listadas(self.revisar()), [str(self.antes.pk), str(self.depois.pk)])
+
+    def test_categoria_de_salario_configurada_fecha_a_janela(self):
+        self.salvar_plano(
+            [parte('Necessidades', 'FIXED', '200.00', 'ACCOUNT', account=self.a.poupanca)],
+            salary_categories=[str(self.a.salario.pk), str(self.freela.pk)],
+        )
+        receita(self.a, valor='500.00', data=date(2026, 10, 8), categoria=self.freela)
+
+        self.assertEqual(self.listadas(self.revisar()), [str(self.antes.pk)])
+
+    def test_proximo_salario_depois_de_hoje_nao_muda_a_janela(self):
+        receita(self.a, valor='500.00', data=date(2026, 10, 20))
+
+        self.assertEqual(self.listadas(self.revisar()), [str(self.antes.pk), str(self.depois.pk)])
 
 
 class SugestoesTests(SaidasTestCase):
@@ -314,7 +366,8 @@ class GeracaoComSaidasTests(SaidasTestCase):
         self.assertEqual(SaidaDescontada.objects.filter(ativa=True).count(), 2)
 
     def test_saida_descontada_numa_divisao_ativa_nao_entra_em_outra(self):
-        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 1))
+        # Outro salário no mesmo dia e na mesma conta: as janelas dos dois se cruzam (SALARIO-75)
+        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 5))
         saida = self.despesa()
         self.assertEqual(self.gerar(outflows={str(saida.pk): self.necessidades}).status_code, 201)
 
@@ -328,7 +381,8 @@ class GeracaoComSaidasTests(SaidasTestCase):
     def test_restricao_unica_recusa_a_mesma_saida_descontada_ao_mesmo_tempo(self):
         # Simula a corrida: a lista do segundo pedido foi lida antes de o
         # primeiro gravar a saída descontada
-        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 1))
+        # Outro salário no mesmo dia e na mesma conta: as janelas dos dois se cruzam (SALARIO-75)
+        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 5))
         saida = self.despesa()
         self.assertEqual(self.gerar(outflows={str(saida.pk): self.necessidades}).status_code, 201)
         transacoes = Transaction.objects.count()
@@ -578,7 +632,8 @@ class ComprasNoCartaoTests(SaidasTestCase):
         }])
         [registro] = SaidaDescontada.objects.filter(ativa=True)
         self.assertEqual((registro.transacao_id, registro.valor), (compra.pk, Decimal('130.00')))
-        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 1))
+        # Outro salário no mesmo dia e na mesma conta: as janelas dos dois se cruzam (SALARIO-75)
+        outro_salario = receita(self.a, valor='1000.00', data=date(2026, 10, 5))
         self.assertEqual(self.listadas(self.revisar(outro_salario)), [])
 
         with hoje_em(2026, 10, 11):
