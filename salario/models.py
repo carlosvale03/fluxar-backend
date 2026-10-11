@@ -7,6 +7,8 @@ Gestão do salário (AD-026, AD-053).
 - `DivisaoDoSalario`: uma por recebimento dividido, com a chave da tentativa
   (AD-007) e a marca de desfeita.
 - `ItemDaDivisao`: o que cada parte gerou na divisão.
+- `SaidaDescontada`: cada saída da conta do salário descontada de uma parte
+  na divisão (AD-057).
 
 As transações geradas levam o id da divisão em
 `Transaction.divisao_do_salario`, um UUID sem FK, para não criar dependência
@@ -108,8 +110,10 @@ class DivisaoDoSalario(models.Model):
 
 class ItemDaDivisao(models.Model):
     """
-    O que uma parte gerou na divisão: o valor e, quando gerou transação, as
-    duas pernas da transferência ou do aporte (SALARIO-32, SALARIO-35).
+    O que uma parte gerou na divisão: o valor da parte e, quando gerou
+    transação, as duas pernas da transferência ou do aporte (SALARIO-32,
+    SALARIO-35). Com saídas descontadas (`saidas`), a transação leva o valor
+    menos a soma delas, sem ficar abaixo de zero (SALARIO-66).
     """
     divisao = models.ForeignKey(DivisaoDoSalario, on_delete=models.CASCADE, related_name='itens')
     ordem = models.PositiveIntegerField()
@@ -129,3 +133,31 @@ class ItemDaDivisao(models.Model):
 
     def __str__(self):
         return f'Item {self.pk}'
+
+
+class SaidaDescontada(models.Model):
+    """
+    Uma saída da conta do salário descontada de uma parte na divisão
+    (SALARIO-66, SALARIO-68, AD-057). `transacao_ref` guarda o id da saída
+    mesmo depois de ela ser excluída; a restrição única parcial deixa cada
+    saída em no máximo uma divisão ativa, e o desfazer marca `ativa` como
+    falso, liberando a saída (SALARIO-70).
+    """
+    divisao = models.ForeignKey(DivisaoDoSalario, on_delete=models.CASCADE, related_name='saidas')
+    item = models.ForeignKey(ItemDaDivisao, on_delete=models.CASCADE, related_name='saidas')
+    transacao = models.ForeignKey('transactions.Transaction', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    transacao_ref = models.UUIDField(db_index=True)
+    valor = models.DecimalField(max_digits=15, decimal_places=2)
+    ativa = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['pk']
+        constraints = [
+            # Uma saída só é descontada numa divisão ativa (SALARIO-64, SALARIO-68)
+            models.UniqueConstraint(
+                fields=['transacao_ref'], condition=models.Q(ativa=True), name='saida_descontada_uma_vez',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Saída descontada {self.pk}'

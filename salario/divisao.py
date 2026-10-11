@@ -6,10 +6,23 @@ A geração (AD-026, AD-053) corre num `atomic`, com a linha do recebimento
 travada: um segundo pedido para o mesmo recebimento espera o primeiro e, ao
 seguir, encontra a divisão gravada (SALARIO-39). A repetição da mesma chave
 devolve a divisão já gravada, sem gerar de novo (SALARIO-37, AD-007), e a
-resposta é remontada do registro. As transferências saem por
+resposta é remontada do registro; a chave de uma divisão desfeita recebe
+409 (SALARIO-79). As transferências saem por
 `TransactionService.create_transfer` e os aportes por `GoalService.aportar`,
 que soma o aporte só na meta escolhida (SALARIO-33, AD-028). Qualquer erro
 desfaz o lote inteiro (SALARIO-36).
+
+As saídas da conta do salário desde o recebimento (`saidas`, AD-057) entram
+na revisão e são descontadas das partes escolhidas; cada transação leva o
+que a parte ainda transfere, e as saídas descontadas ficam registradas na
+divisão até ela ser desfeita (SALARIO-64 a SALARIO-70, SALARIO-72). Quando
+as saídas cobrem todas as partes, a divisão é gravada sem transações
+(SALARIO-73), e o corpo da divisão conta as saídas descontadas que mudaram
+depois da geração (SALARIO-77).
+
+A geração confere que a divisão é a revisada: o total enviado pela revisão
+e as partes apontadas pelos ajustes e pelas saídas precisam bater com o
+plano de agora (SALARIO-74).
 """
 import logging
 from datetime import datetime, time, timedelta
@@ -19,7 +32,8 @@ from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef
 from django.http import Http404
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework import status
+from rest_framework.exceptions import APIException, ValidationError
 
 from accounts.faturas import mes_anterior
 from accounts.saldo import travar
@@ -32,9 +46,9 @@ from reports.regras import limites_do_mes, mes_atual
 from transactions.models import Transaction
 from transactions.services import TransactionService
 
-from . import plano
-from .calculo import AjustesAcimaDoRecebido, dividir
-from .models import CONTA, META, DivisaoDoSalario, ItemDaDivisao
+from . import plano, saidas
+from .calculo import ZERO, AjustesAcimaDoRecebido, dividir
+from .models import CONTA, META, DivisaoDoSalario, ItemDaDivisao, SaidaDescontada
 from .serializers import conta_disponivel, meta_disponivel
 
 logger = logging.getLogger(__name__)
@@ -46,9 +60,18 @@ DESTINO_FALTANDO = 'Escolha o destino de todas as partes.'
 DESTINO_NAO_DISPONIVEL = 'O destino da parte {nome} não está mais disponível.'
 NADA_A_GERAR = 'Nenhuma parte do plano gera transação.'
 CHAVE_COM_OUTRO_SALARIO = 'Este identificador de divisão já foi usado com outro salário.'
+DIVISAO_MUDOU = 'A divisão mudou desde a revisão. Confira de novo antes de gerar.'
+DIVISAO_DESFEITA = 'Esta divisão foi desfeita. Abra a revisão de novo para dividir.'
 DESCRICAO = 'Divisão do salário: {nome}'
 # Prazo para desfazer, em dias depois da data da geração (SALARIO-49)
 PRAZO_PARA_DESFAZER = 7
+
+
+class DivisaoDesfeita(APIException):
+    """A chave da tentativa é de uma divisão já desfeita (SALARIO-79): 409, sem devolver a divisão."""
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = DIVISAO_DESFEITA
+    default_code = 'division_undone'
 
 
 def recebimento_valido(usuario, transacao, categorias=None):
@@ -118,40 +141,96 @@ def recebimento_em_json(transacao):
     }
 
 
-def calcular(usuario, recebimento, ajustes=None):
+def calcular(usuario, recebimento, ajustes=None, partes=None, gastos=None):
     """
     A divisão do recebimento pelo plano salvo, com os ajustes da revisão
-    (SALARIO-26 a SALARIO-30). Ajuste de uma parte fora do plano ou acima do
+    (SALARIO-26 a SALARIO-30) e as saídas descontadas de cada parte
+    (`gastos`, SALARIO-66). Ajuste de uma parte fora do plano ou acima do
     recebido recebe 400 no campo `adjustments`.
     """
-    partes = plano.partes_do_plano(usuario)
+    if partes is None:
+        partes = plano.partes_do_plano(usuario)
     ajustes = {str(chave): valor for chave, valor in (ajustes or {}).items()}
     if set(ajustes) - {str(parte.pk) for parte in partes}:
         raise ValidationError({'adjustments': [AJUSTE_DE_OUTRA_PARTE]})
     try:
-        return dividir(recebimento.amount, partes, ajustes, conta_do_recebimento=recebimento.account_id)
+        return dividir(
+            recebimento.amount, partes, ajustes, conta_do_recebimento=recebimento.account_id, gastos=gastos,
+        )
     except AjustesAcimaDoRecebido:
         raise ValidationError({'adjustments': [AJUSTES_ACIMA_DO_RECEBIDO]})
 
 
-def revisao_em_json(recebimento, divisao, data):
-    """O corpo de `POST /salary/divisions/preview/` (SALARIO-29)."""
+def conferir_partes_do_pedido(partes, ajustes, pedido):
+    """
+    Na geração, um ajuste ou uma saída que aponta para uma parte fora do
+    plano quer dizer que o plano foi salvo de novo depois da revisão: 400
+    `{detail}` com `DIVISAO_MUDOU` (SALARIO-74), no lugar das mensagens de
+    campo da revisão.
+    """
+    ids = {str(parte.pk) for parte in partes}
+    apontadas = {str(chave) for chave in (ajustes or {})}
+    apontadas |= {str(valor) for valor in (pedido or {}).values() if valor not in (None, '')}
+    if apontadas - ids:
+        raise ValidationError({'detail': DIVISAO_MUDOU})
+
+
+def calcular_com_saidas(usuario, recebimento, ajustes=None, pedido=None, geracao=False):
+    """
+    A divisão com as saídas desde o recebimento (SALARIO-64 a SALARIO-67,
+    SALARIO-69). Devolve `(partes, elegiveis, descontadas, resultado)`;
+    `descontadas` é `[(saida, parte)]`. Na `geracao`, as partes apontadas
+    pelo pedido são conferidas antes (SALARIO-74).
+    """
+    partes = plano.partes_do_plano(usuario)
+    if geracao:
+        conferir_partes_do_pedido(partes, ajustes, pedido)
+    lista = list(saidas.elegiveis(usuario, recebimento))
+    descontadas = saidas.escolhidas(lista, partes, pedido)
+    resultado = calcular(usuario, recebimento, ajustes, partes=partes, gastos=saidas.gastos_por_parte(descontadas))
+    return partes, lista, descontadas, resultado
+
+
+def valores_do_item(gasto, transferir, passou):
+    """O já gasto, o que será transferido e quanto passou de uma parte (SALARIO-66, SALARIO-67)."""
+    return {'spent': dinheiro(gasto), 'transfer': dinheiro(transferir), 'exceeded': dinheiro(passou)}
+
+
+def revisao_em_json(recebimento, divisao, data, saidas_em_json=()):
+    """O corpo de `POST /salary/divisions/preview/` (SALARIO-29, SALARIO-64 a SALARIO-67)."""
     origem = {'id': str(recebimento.account_id), 'name': recebimento.account.name}
     return {
         'receipt': recebimento_em_json(recebimento),
-        'items': [{**plano.item_em_json(item), 'origin_account': origem} for item in divisao.itens],
+        'items': [
+            {
+                **plano.item_em_json(item), 'origin_account': origem,
+                **valores_do_item(item.gasto, item.transferir, item.passou),
+            }
+            for item in divisao.itens
+        ],
+        'outflows': list(saidas_em_json),
         'total': dinheiro(divisao.total),
         'free': dinheiro(divisao.livre),
         'date': data.isoformat(),
     }
 
 
-def revisar(usuario, recebimento, ajustes=None):
-    """A revisão da divisão de um recebimento, sem gravar nada."""
+def revisar(usuario, recebimento, ajustes=None, pedido=None):
+    """
+    A revisão da divisão de um recebimento, sem gravar nada. Lista todas as
+    saídas que podem ser descontadas, com a parte sugerida e a escolhida no
+    `pedido`; sem pedido, nenhuma é descontada (SALARIO-64, SALARIO-65). A
+    sugestão só considera as partes com valor calculado, já com os ajustes,
+    maior que zero (SALARIO-65).
+    """
     conferir_recebimento(usuario, recebimento)
     conferir_nao_dividido(recebimento.pk)
-    divisao = calcular(usuario, recebimento, ajustes)
-    return revisao_em_json(recebimento, divisao, hoje())
+    _, lista, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido)
+    com_valor = [item.parte for item in resultado.itens if item.valor > 0]
+    sugeridas = saidas.sugestoes(usuario, lista, com_valor)
+    escolhida = {saida.pk: parte for saida, parte in descontadas}
+    corpo = [saidas.saida_em_json(saida, *sugeridas[saida.pk], escolhida.get(saida.pk)) for saida in lista]
+    return revisao_em_json(recebimento, resultado, hoje(), corpo)
 
 
 # --- Geração (SALARIO-32 a SALARIO-43) ---
@@ -159,18 +238,22 @@ def revisar(usuario, recebimento, ajustes=None):
 def pela_chave(usuario, chave, recebimento_id):
     """
     A divisão já gravada com a chave da tentativa, ou `None`. A mesma chave
-    com outro recebimento recebe 400.
+    com outro recebimento recebe 400; a chave de uma divisão já desfeita
+    recebe 409, para a interface abrir a revisão de novo em vez de mostrar a
+    divisão desfeita como gerada (SALARIO-79).
     """
     if chave is None:
         return None
     anterior = DivisaoDoSalario.objects.filter(user=usuario, chave=chave).first()
     if anterior is not None and str(anterior.recebimento_ref) != str(recebimento_id):
         raise ValidationError({'detail': CHAVE_COM_OUTRO_SALARIO})
+    if anterior is not None and anterior.desfeita_em is not None:
+        raise DivisaoDesfeita()
     return anterior
 
 
 def destino_disponivel(parte):
-    """O destino ainda recebe a parte: conta ativa que não é cofrinho, ou meta ativa com cofrinho ativo."""
+    """O destino ainda recebe a parte: conta ativa, ou meta ativa com cofrinho ativo."""
     if parte.tipo_de_destino == CONTA:
         return conta_disponivel(parte.conta)
     if parte.tipo_de_destino == META:
@@ -179,33 +262,41 @@ def destino_disponivel(parte):
     return True
 
 
-def conferir_partes(resultado):
-    """As recusas da geração, na ordem SALARIO-41, SALARIO-42 e SALARIO-43."""
-    if any(item.valor > 0 and item.parte.tipo_de_destino is None for item in resultado.itens):
+def conferir_partes(resultado, descontadas=()):
+    """
+    As recusas da geração, na ordem SALARIO-41, SALARIO-42 e SALARIO-43. Sem
+    nenhuma parte que gere transação, a divisão só é recusada quando também
+    não desconta nenhuma saída: com saídas descontadas, ela é gravada sem
+    transações, para registrar as saídas e tirar o salário da lista dos que
+    faltam dividir (SALARIO-73).
+    """
+    # Sem nada a transferir, a parte sem destino não precisa de um (SALARIO-67)
+    if any(item.transferir > 0 and item.parte.tipo_de_destino is None for item in resultado.itens):
         raise ValidationError({'detail': DESTINO_FALTANDO})
     for item in resultado.itens:
         if item.gera_transacao and not destino_disponivel(item.parte):
             raise ValidationError({'detail': DESTINO_NAO_DISPONIVEL.format(nome=item.parte.nome)})
-    if not any(item.gera_transacao for item in resultado.itens):
+    if not any(item.gera_transacao for item in resultado.itens) and not descontadas:
         raise ValidationError({'detail': NADA_A_GERAR})
 
 
 def _gerar_item(usuario, recebimento, item, data, divisao):
     """
-    Cria a transferência ou o aporte da parte, efetivado e com a data `data`,
-    e marca as duas pernas com a divisão (SALARIO-32, SALARIO-35). Devolve
-    `(saida, entrada, transfer_id)`.
+    Cria a transferência ou o aporte da parte com o que ela ainda transfere
+    depois das saídas descontadas (SALARIO-66), efetivado e com a data
+    `data`, e marca as duas pernas com a divisão (SALARIO-32, SALARIO-35).
+    Devolve `(saida, entrada, transfer_id)`.
     """
     parte = item.parte
     descricao = DESCRICAO.format(nome=parte.nome)
     if parte.tipo_de_destino == CONTA:
         transfer_id = TransactionService.create_transfer(
             user=usuario, account_from=recebimento.account, account_to=parte.conta,
-            amount=item.valor, date=data, description=descricao,
+            amount=item.transferir, date=data, description=descricao,
         )
     else:
         try:
-            GoalService.aportar(parte.meta, item.valor, data, account=recebimento.account, description=descricao)
+            GoalService.aportar(parte.meta, item.transferir, data, account=recebimento.account, description=descricao)
         except DjangoValidationError as erro:
             raise ValidationError({'detail': erro.messages[0]})
         registro = GoalDeposit.objects.filter(goal_id=parte.meta_id, account_id=recebimento.account_id).latest('pk')
@@ -216,11 +307,20 @@ def _gerar_item(usuario, recebimento, item, data, divisao):
 
 
 @transaction.atomic
-def gerar(usuario, recebimento_id, chave=None, ajustes=None):
+def gerar(usuario, recebimento_id, chave=None, ajustes=None, pedido=None, total_esperado=None):
     """
     Gera as transações da divisão do recebimento pelo plano salvo, com os
-    ajustes da revisão. Devolve `(divisao, criada)`; `criada` é falso quando a
-    chave já tinha sido usada para esse recebimento.
+    ajustes da revisão e as saídas descontadas do `pedido` (SALARIO-66).
+    Com `total_esperado`, o total revisado, um total recalculado diferente
+    recebe 400 `DIVISAO_MUDOU`, antes das demais recusas (SALARIO-74).
+    Devolve `(divisao, criada)`; `criada` é falso quando a chave já tinha
+    sido usada para esse recebimento. Quando as saídas descontadas cobrem
+    todas as partes, a divisão é gravada sem transações (SALARIO-73).
+
+    A divisão, os itens e as saídas descontadas nascem num savepoint, antes
+    das transações: a restrição única parcial das saídas recusa a mesma
+    saída descontada ao mesmo tempo por outra divisão, que deixou de estar
+    na lista (SALARIO-64, SALARIO-69).
     """
     anterior = pela_chave(usuario, chave, recebimento_id)
     if anterior is not None:
@@ -233,8 +333,10 @@ def gerar(usuario, recebimento_id, chave=None, ajustes=None):
         return anterior, False
     conferir_nao_dividido(recebimento.pk)
 
-    resultado = calcular(usuario, recebimento, ajustes)
-    conferir_partes(resultado)
+    _, _, descontadas, resultado = calcular_com_saidas(usuario, recebimento, ajustes, pedido, geracao=True)
+    if total_esperado is not None and total_esperado != resultado.total:
+        raise ValidationError({'detail': DIVISAO_MUDOU})
+    conferir_partes(resultado, descontadas)
     try:
         # Savepoint: com ATOMIC_REQUESTS, o erro de restrição sem ele
         # inutilizaria a transação da requisição
@@ -244,30 +346,50 @@ def gerar(usuario, recebimento_id, chave=None, ajustes=None):
                 conta_de_origem_id=recebimento.account_id, chave=chave, valor_recebido=recebimento.amount,
                 total=resultado.total, livre=resultado.livre,
             )
+            registros = {}
+            for ordem, item in enumerate(resultado.itens):
+                parte = item.parte
+                registros[parte.pk] = ItemDaDivisao.objects.create(
+                    divisao=divisao, ordem=ordem, nome_da_parte=parte.nome,
+                    tipo_de_destino=parte.tipo_de_destino or '',
+                    conta=parte.conta if parte.tipo_de_destino == CONTA else None,
+                    meta=parte.meta if parte.tipo_de_destino == META else None,
+                    valor=item.valor, reduzida=item.reduzida,
+                )
+            # As saídas descontadas e em qual parte (SALARIO-68)
+            SaidaDescontada.objects.bulk_create([
+                SaidaDescontada(
+                    divisao=divisao, item=registros[parte.pk], transacao=saida, transacao_ref=saida.pk,
+                    valor=saida.amount,
+                )
+                for saida, parte in descontadas
+            ])
     except IntegrityError:
         # A mesma chave gravada ao mesmo tempo por outro pedido (SALARIO-39)
         anterior = pela_chave(usuario, chave, recebimento_id)
         if anterior is not None:
             return anterior, False
-        raise ValidationError({'detail': JA_DIVIDIDO})
+        if divisao_ativa(recebimento.pk).exists():
+            raise ValidationError({'detail': JA_DIVIDIDO})
+        # Uma saída descontada ao mesmo tempo por outra divisão (SALARIO-64)
+        raise ValidationError({'outflows': [saidas.SAIDA_NAO_ENCONTRADA]})
 
     data = hoje()
     geradas = 0
-    for ordem, item in enumerate(resultado.itens):
-        saida = entrada = transfer_id = None
-        if item.gera_transacao:
-            saida, entrada, transfer_id = _gerar_item(usuario, recebimento, item, data, divisao)
-            geradas += 1
-        parte = item.parte
-        ItemDaDivisao.objects.create(
-            divisao=divisao, ordem=ordem, nome_da_parte=parte.nome, tipo_de_destino=parte.tipo_de_destino or '',
-            conta=parte.conta if parte.tipo_de_destino == CONTA else None,
-            meta=parte.meta if parte.tipo_de_destino == META else None,
-            valor=item.valor, reduzida=item.reduzida,
-            transacao_saida=saida, transacao_entrada=entrada, transfer_id=transfer_id,
+    for item in resultado.itens:
+        if not item.gera_transacao:
+            continue
+        registro = registros[item.parte.pk]
+        registro.transacao_saida, registro.transacao_entrada, registro.transfer_id = _gerar_item(
+            usuario, recebimento, item, data, divisao,
         )
+        registro.save(update_fields=['transacao_saida', 'transacao_entrada', 'transfer_id'])
+        geradas += 1
     # Só ids e quantidades (SALARIO-18, AD-019)
-    logger.info('Divisão do salário gerada divisao=%s usuario=%s transacoes=%s', divisao.pk, usuario.pk, geradas)
+    logger.info(
+        'Divisão do salário gerada divisao=%s usuario=%s transacoes=%s saidas=%s',
+        divisao.pk, usuario.pk, geradas, len(descontadas),
+    )
     return divisao, True
 
 
@@ -307,11 +429,24 @@ APORTE_MUDOU = 'O aporte em {meta} mudou.'
 META_SEM_O_VALOR = 'A meta {nome} não tem mais o valor aportado pela divisão.'
 
 
-def _item_mudou(divisao, item, data):
+def gastos_dos_itens(divisao):
+    """`{id do item: soma das saídas descontadas nele}`, também nas divisões desfeitas."""
+    gastos = {}
+    for item_id, valor in divisao.saidas.values_list('item_id', 'valor'):
+        gastos[item_id] = gastos.get(item_id, ZERO) + valor
+    return gastos
+
+
+def transferido(item, gastos):
+    """O que o item transferiu: o valor da parte menos as saídas descontadas, sem ficar abaixo de zero."""
+    return max(ZERO, item.valor - gastos.get(item.pk, ZERO))
+
+
+def _item_mudou(divisao, item, data, valor):
     """
     Se as transações do item não são mais as geradas: alguma perna apagada,
-    ou com valor, data, status, conta ou marca diferentes; no aporte, também
-    o registro da meta (SALARIO-48).
+    ou com valor (`valor`, o transferido), data, status, conta ou marca
+    diferentes; no aporte, também o registro da meta (SALARIO-48).
     """
     pernas = {
         perna.pk: perna
@@ -328,14 +463,14 @@ def _item_mudou(divisao, item, data):
         destino = item.conta_id
     for perna, conta in ((saida, divisao.conta_de_origem_id), (entrada, destino)):
         if (
-            perna.amount != item.valor or perna.date != data or perna.status != 'COMPLETED'
+            perna.amount != valor or perna.date != data or perna.status != 'COMPLETED'
             or perna.account_id is None or perna.account_id != conta
             or perna.transfer_id != item.transfer_id or perna.divisao_do_salario != divisao.pk
         ):
             return True
     if item.tipo_de_destino == META:
         return not GoalDeposit.objects.filter(
-            goal_id=item.meta_id, type='DEPOSIT', amount=item.valor, transacao_entrada_id=entrada.pk,
+            goal_id=item.meta_id, type='DEPOSIT', amount=valor, transacao_entrada_id=entrada.pk,
         ).exists()
     return False
 
@@ -354,7 +489,8 @@ def desfazer(usuario, divisao_id):
     recalculem saldos e metas e recusem uma meta negativa. Grava
     `desfeita_em`, o que libera o recebimento para uma nova divisão. Qualquer
     falha desfaz tudo (SALARIO-50). Trava a divisão, depois as contas e só
-    então as metas (AD-045).
+    então as metas (AD-045). A divisão sem transações (SALARIO-73) só
+    libera as saídas descontadas e o recebimento.
     """
     divisao = DivisaoDoSalario.objects.select_for_update().filter(pk=divisao_id, user=usuario).first()
     if divisao is None:
@@ -380,13 +516,14 @@ def desfazer(usuario, divisao_id):
     }
 
     data = data_da_divisao(divisao)
+    gastos = gastos_dos_itens(divisao)
     for item in itens:
-        if _item_mudou(divisao, item, data):
+        if _item_mudou(divisao, item, data, transferido(item, gastos)):
             raise ValidationError({'detail': _mensagem_de_mudanca(item)})
     aportado = {}
     for item in itens:
         if item.tipo_de_destino == META:
-            aportado[item.meta_id] = aportado.get(item.meta_id, 0) + item.valor
+            aportado[item.meta_id] = aportado.get(item.meta_id, 0) + transferido(item, gastos)
     for meta_id, valor in aportado.items():
         meta = metas[meta_id]
         if meta.current_amount < valor:
@@ -397,15 +534,45 @@ def desfazer(usuario, divisao_id):
         Transaction.objects.get(pk=item.transacao_saida_id).delete()
     divisao.desfeita_em = timezone.now()
     divisao.save(update_fields=['desfeita_em'])
+    # As saídas descontadas voltam a poder entrar numa divisão (SALARIO-70)
+    liberadas = divisao.saidas.filter(ativa=True).update(ativa=False)
     # Só ids e quantidades (SALARIO-18, AD-019)
-    logger.info('Divisão do salário desfeita divisao=%s usuario=%s transacoes=%s', divisao.pk, usuario.pk, len(itens))
+    logger.info(
+        'Divisão do salário desfeita divisao=%s usuario=%s transacoes=%s saidas=%s',
+        divisao.pk, usuario.pk, len(itens), liberadas,
+    )
     return divisao
+
+
+def saida_mudou(registro, conta_de_origem_id):
+    """
+    Se a saída descontada não é mais a que entrou na divisão (SALARIO-77):
+    excluída, com valor diferente do descontado ou sem valer mais como saída
+    da conta do recebimento (não efetivada, em outra conta ou compra no
+    cartão com o pagamento estornado).
+    """
+    saida = registro.transacao
+    if saida is None or saida.amount != registro.valor:
+        return True
+    if saida.status != 'COMPLETED' or saida.account_id is None or saida.account_id != conta_de_origem_id:
+        return True
+    return saida.type == saidas.COMPRA_NO_CARTAO and saida.payment_date is None
+
+
+def saidas_mudadas(divisao, descontadas):
+    """Quantas saídas descontadas na divisão ativa mudaram depois da geração; na desfeita, zero (SALARIO-77)."""
+    if divisao.desfeita_em is not None:
+        return 0
+    return sum(
+        1 for registro in descontadas if registro.ativa and saida_mudou(registro, divisao.conta_de_origem_id)
+    )
 
 
 def divisao_em_json(divisao):
     """
     O corpo da divisão gerada, montado só do registro: a repetição da mesma
-    chave recebe a mesma resposta (SALARIO-37).
+    chave recebe a mesma resposta (SALARIO-37). `outflows_changed` conta as
+    saídas descontadas que mudaram depois da geração (SALARIO-77).
     """
     itens = list(divisao.itens.select_related('conta', 'meta').order_by('ordem', 'pk'))
     origem = {
@@ -414,9 +581,28 @@ def divisao_em_json(divisao):
     }
     data = data_da_divisao(divisao).isoformat()
     recebimento = divisao.recebimento
+    gastos = gastos_dos_itens(divisao)
+    nomes = {item.pk: item.nome_da_parte for item in itens}
+    descontadas = list(divisao.saidas.select_related('transacao').order_by('pk'))
 
     def destino(item):
         return plano.nome_do_destino(item.tipo_de_destino, item.conta, item.meta) or item.nome_da_parte
+
+    def valores(item):
+        gasto = gastos.get(item.pk, ZERO)
+        return valores_do_item(gasto, transferido(item, gastos), max(ZERO, gasto - item.valor))
+
+    def saida_em_json(registro):
+        # A saída excluída depois da divisão fica só com o id e o valor descontado
+        saida = registro.transacao
+        return {
+            'id': str(registro.transacao_ref),
+            'date': saidas.data_da_saida(saida).isoformat() if saida is not None else None,
+            'description': saida.description if saida is not None else None,
+            'amount': dinheiro(registro.valor),
+            'type': saida.type if saida is not None else None,
+            'part_name': nomes.get(registro.item_id),
+        }
 
     return {
         'id': str(divisao.pk),
@@ -436,9 +622,12 @@ def divisao_em_json(divisao):
                 'amount': dinheiro(item.valor),
                 'reduced': item.reduzida,
                 'generates_transaction': item.transfer_id is not None,
+                **valores(item),
             }
             for item in itens
         ],
+        'outflows': [saida_em_json(registro) for registro in descontadas],
+        'outflows_changed': saidas_mudadas(divisao, descontadas),
         'transactions': [
             {
                 'transfer_id': str(item.transfer_id),
@@ -451,7 +640,7 @@ def divisao_em_json(divisao):
                 'destination_name': destino(item),
                 'account': str(item.conta_id) if item.conta_id else None,
                 'goal': str(item.meta_id) if item.meta_id else None,
-                'amount': dinheiro(item.valor),
+                'amount': dinheiro(transferido(item, gastos)),
                 'date': data,
             }
             for item in itens if item.transfer_id is not None

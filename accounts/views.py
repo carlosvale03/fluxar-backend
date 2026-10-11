@@ -1,6 +1,7 @@
 from django.db.models.functions import Coalesce
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from .models import Account, CreditCard, CreditCardInvoice
@@ -14,8 +15,9 @@ from core.datas import hoje
 from core.fields import CONTA_NAO_ENCONTRADA
 from core.filtros import ParametrosConhecidosMixin
 from core.mixins import UserQuerySetMixin
-from core.travas import RecursoLiberado
+from core.travas import RecursoLiberado, conferir_limite
 from core.valores import ler_saldo
+from goals.models import Goal
 from transactions.models import Transaction
 from transactions.serializers import TransactionSerializer
 
@@ -23,6 +25,14 @@ from transactions.serializers import TransactionSerializer
 SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o valor restante.'
 COM_PENDENTES = 'Resolva as transações pendentes antes de excluir a conta: efetive, mova ou exclua cada uma.'
 SALDO_JA_NESSE_VALOR = 'O saldo já está nesse valor.'
+
+# Inativação de conta (SALDO-49, SALDO-50)
+SALDO_NAO_ZERADO_AO_INATIVAR = 'Zere o saldo antes de inativar a conta: transfira ou ajuste o valor restante.'
+COM_PENDENTES_AO_INATIVAR = 'Resolva as transações pendentes antes de inativar a conta: efetive, mova ou exclua cada uma.'
+
+# Filtro `status` da lista de contas (SALDO-53)
+FILTRO_DE_STATUS = {'active': {'is_active': True}, 'inactive': {'is_active': False}, 'all': {}}
+STATUS_INVALIDO = 'Use active, inactive ou all.'
 
 class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.ModelViewSet):
     """
@@ -33,24 +43,76 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
     permission_classes = [permissions.IsAuthenticated]
 
     pagination_class = None
+    parametros_permitidos = frozenset({'status'})
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(is_active=True)
-        return qs
+        qs = super().get_queryset()
+        # Inativar e reativar alcançam as contas inativas do usuário; as de
+        # outro usuário seguem 404 (SALDO-48, SALDO-51)
+        if self.action in ('deactivate', 'reactivate'):
+            return qs.select_for_update()
+        if self.action == 'list':
+            return qs.filter(**self.filtro_de_status())
+        return qs.filter(is_active=True)
+
+    def filtro_de_status(self):
+        """`status=active|inactive|all` da lista; sem ele, só as ativas (SALDO-53)."""
+        valor = self.request.query_params.get('status', 'active')
+        if valor not in FILTRO_DE_STATUS:
+            raise ValidationError({'status': [STATUS_INVALIDO]})
+        return FILTRO_DE_STATUS[valor]
+
+    def recusa_da_saida(self, conta, saldo_nao_zerado, com_pendentes):
+        """A recusa de excluir ou inativar a conta, ou `None` (SALDO-32, SALDO-33, SALDO-49, SALDO-50)."""
+        if conta.balance != 0:
+            return Response({'detail': saldo_nao_zerado}, status=status.HTTP_400_BAD_REQUEST)
+        if conta.transactions.filter(status='PENDING').exists():
+            return Response({'detail': com_pendentes}, status=status.HTTP_400_BAD_REQUEST)
+        return None
 
     def destroy(self, request, *args, **kwargs):
         """Só exclui a conta com saldo zero e sem transações pendentes."""
         conta = self.get_object()
-        if conta.balance != 0:
-            return Response({'detail': SALDO_NAO_ZERADO}, status=status.HTTP_400_BAD_REQUEST)
-        if conta.transactions.filter(status='PENDING').exists():
-            return Response({'detail': COM_PENDENTES}, status=status.HTTP_400_BAD_REQUEST)
+        recusa = self.recusa_da_saida(conta, SALDO_NAO_ZERADO, COM_PENDENTES)
+        if recusa is not None:
+            return recusa
         return super().destroy(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
         # Soft delete: as transações efetivadas continuam no histórico (SALDO-34)
         instance.is_active = False
         instance.save()
+
+    @action(detail=True, methods=['post'])
+    def deactivate(self, request, pk=None):
+        """
+        Inativa a conta com as regras da exclusão (SALDO-48 a SALDO-50). A
+        conta já inativa responde 200 sem mudança.
+        """
+        conta = self.get_object()
+        if conta.is_active:
+            recusa = self.recusa_da_saida(conta, SALDO_NAO_ZERADO_AO_INATIVAR, COM_PENDENTES_AO_INATIVAR)
+            if recusa is not None:
+                return recusa
+            self.perform_destroy(conta)
+        return Response(self.get_serializer(conta).data)
+
+    @action(detail=True, methods=['post'])
+    def reactivate(self, request, pk=None):
+        """
+        Reativa a conta inativa, dentro do limite `limite_contas` do plano
+        (SALDO-51, SALDO-52). A conta já ativa responde 200 sem conferir o
+        limite. O cofrinho de uma meta não conta no limite e não o confere.
+        """
+        conta = self.get_object()
+        if not conta.is_active:
+            if not Goal.objects.filter(user=request.user, account=conta).exists():
+                conferir_limite(request.user, 'limite_contas')
+            conta.is_active = True
+            # O post_save recalcula o saldo, que pode estar antigo na conta
+            # excluída antes da correção (accounts/signals.py, SALDO-01)
+            conta.save()
+        return Response(self.get_serializer(conta).data)
 
     @action(detail=True, methods=['post'], url_path='adjust-balance')
     def adjust_balance(self, request, pk=None):

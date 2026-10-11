@@ -1,6 +1,6 @@
 """
 API do plano de divisão (SALARIO-01, SALARIO-04, SALARIO-05, SALARIO-07 a
-SALARIO-14, SALARIO-16, SALARIO-18, SALARIO-55).
+SALARIO-14, SALARIO-16, SALARIO-18, SALARIO-55, SALARIO-76).
 """
 import uuid
 from datetime import date
@@ -14,11 +14,11 @@ from tests.permissoes.base import fechar, liberacao_de_testes
 from transactions.models import Category, Transaction
 
 from .base import (
-    URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20,
+    URL_DIVISOES, URL_MODELOS, URL_PLANO, URL_SIMULAR, SalarioTestCase, hoje_em, parte, plano_50_30_20, receita,
 )
 
 SOMA_ACIMA = {'detail': 'A soma dos percentuais passa de 100%.', 'code': 'invalid'}
-DESTINO_INDISPONIVEL = 'Escolha uma conta ativa que não seja cofrinho ou uma meta ativa.'
+DESTINO_INDISPONIVEL = 'Escolha uma conta ativa ou uma meta ativa.'
 BLOQUEADO = {
     'detail': 'Este recurso não está disponível no seu plano.', 'code': 'plan_locked',
     'feature': 'gestao_do_salario',
@@ -171,14 +171,21 @@ class ValidacaoDasPartesTests(SalarioTestCase):
                     self.assertEqual(resposta.status_code, 400)
                     self.assertEqual(resposta.data, {'parts': [erro]})
 
-    def test_cofrinho_conta_inativa_e_meta_inativa_recebem_a_mensagem_do_destino(self):
+    def test_cofrinho_ativo_pode_ser_destino(self):
+        sem_meta = Account.objects.create(user=self.a.usuario, name='Cofrinho livre', type='PIGGY_BANK')
+
+        resposta = self.put([parte('Reserva', 'FIXED', '10.00', 'ACCOUNT', account=sem_meta)])
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['parts'][0]['account'], str(sem_meta.pk))
+
+    def test_conta_inativa_e_meta_inativa_recebem_a_mensagem_do_destino(self):
         inativa = Account.objects.create(user=self.a.usuario, name='Antiga', type='CHECKING', is_active=False)
         arquivada = Goal.objects.create(
             user=self.a.usuario, name='Arquivada', target_amount=Decimal('100'), account=self.a.cofrinho,
             is_active=False,
         )
         casos = (
-            ('cofrinho', parte('P', 'FIXED', '10.00', 'ACCOUNT', account=self.a.cofrinho), 'account'),
             ('conta inativa', parte('P', 'FIXED', '10.00', 'ACCOUNT', account=inativa), 'account'),
             ('meta inativa', parte('P', 'FIXED', '10.00', 'GOAL', goal=arquivada), 'goal'),
         )
@@ -188,6 +195,73 @@ class ValidacaoDasPartesTests(SalarioTestCase):
 
                 self.assertEqual(resposta.status_code, 400)
                 self.assertEqual(resposta.data, {'parts': [{campo: [DESTINO_INDISPONIVEL]}]})
+
+
+class CofrinhoDeMetaTests(SalarioTestCase):
+    """SALARIO-76: o cofrinho A é a conta da meta Viagem A."""
+
+    def test_parte_no_cofrinho_de_uma_meta_e_salva_com_destino_na_meta(self):
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        [salva] = resposta.data['parts']
+        self.assertEqual(
+            (salva['destination_type'], salva['account'], salva['goal'], salva['destination_name']),
+            ('GOAL', None, str(self.a.viagem.pk), 'Viagem A'),
+        )
+        self.assertEqual(self.client.get(URL_PLANO).data['parts'], resposta.data['parts'])
+
+    def test_a_geracao_soma_o_aporte_na_meta_do_cofrinho(self):
+        self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+        salario = receita(self.a)
+
+        with hoje_em(2026, 10, 10):
+            resposta = self.client.post(URL_DIVISOES, {'receipt': str(salario.pk)}, format='json')
+
+        self.assertEqual(resposta.status_code, 201, resposta.data)
+        self.assertEqual(resposta.data['transactions'][0]['kind'], 'GOAL_DEPOSIT')
+        self.assertEqual(self.valor_da_meta(self.a.viagem), Decimal('300.00'))
+        self.assertEqual(self.saldo(self.a.cofrinho), Decimal('300.00'))
+
+    def test_meta_concluida_continua_recebendo_a_parte(self):
+        Goal.objects.filter(pk=self.a.viagem.pk).update(target_amount=Decimal('1.00'), current_amount=Decimal('1.00'))
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        self.assertEqual(resposta.data['parts'][0]['goal'], str(self.a.viagem.pk))
+
+    def test_cofrinho_de_mais_de_uma_meta_ativa_fica_com_destino_na_conta(self):
+        Goal.objects.create(user=self.a.usuario, name='Carro', target_amount=Decimal('100'), account=self.a.cofrinho)
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        [salva] = resposta.data['parts']
+        self.assertEqual(
+            (salva['destination_type'], salva['account'], salva['goal']), ('ACCOUNT', str(self.a.cofrinho.pk), None),
+        )
+
+    def test_cofrinho_so_de_meta_arquivada_fica_com_destino_na_conta(self):
+        Goal.objects.filter(pk=self.a.viagem.pk).update(is_active=False)
+
+        resposta = self.salvar_plano([parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)])
+
+        self.assertEqual(resposta.data['parts'][0]['destination_type'], 'ACCOUNT')
+
+    def test_conta_que_nao_e_cofrinho_fica_com_destino_na_conta(self):
+        resposta = self.salvar_plano([parte('Reserva', 'FIXED', '300.00', 'ACCOUNT', account=self.a.poupanca)])
+
+        self.assertEqual(resposta.data['parts'][0]['account'], str(self.a.poupanca.pk))
+
+    def test_simulacao_com_partes_trata_o_cofrinho_como_a_meta(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '1000.00', 'parts': [parte('Guardar', 'FIXED', '300.00', 'ACCOUNT', account=self.a.cofrinho)],
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        [item] = resposta.data['items']
+        self.assertEqual(
+            (item['destination_type'], item['destination_name'], item['generates_transaction']),
+            ('GOAL', 'Viagem A', True),
+        )
 
 
 class CategoriasDeSalarioTests(SalarioTestCase):
@@ -220,6 +294,64 @@ class CategoriasDeSalarioTests(SalarioTestCase):
                 self.assertEqual(resposta.data, {'salary_categories': ['Categoria não encontrada.']})
 
 
+
+URL_CATEGORIAS = '/api/salary/categories/'
+
+
+class SoAsCategoriasDeSalarioTests(SalarioTestCase):
+    """O usuário escolhe quais receitas são salário antes de montar o plano (SALARIO-14)."""
+
+    def test_grava_as_categorias_sem_salvar_o_plano(self):
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['salary_categories'], [str(investimento.pk)])
+        self.assertFalse(resposta.data['has_plan'])
+        self.assertEqual(resposta.data['parts'], [])
+
+    def test_mantem_as_partes_do_plano_salvo(self):
+        self.salvar_plano(plano_50_30_20())
+        antes = self.client.get(URL_PLANO).data['parts']
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+        self.assertTrue(resposta.data['has_plan'])
+        self.assertEqual(resumo(resposta.data['parts']), resumo(antes))
+
+    def test_a_categoria_escolhida_passa_a_trazer_os_salarios_a_dividir(self):
+        investimento = Category.objects.get(user=self.a.usuario, name='Investimento', type='INCOME')
+        rendimento = receita(self.a, '900.00', categoria=investimento, description='Rendimento')
+        with hoje_em(2026, 10, 10):
+            self.assertNotIn(str(rendimento.pk), [r['id'] for r in self.client.get('/api/salary/pending/').data])
+
+            self.client.put(URL_CATEGORIAS, {'salary_categories': [str(investimento.pk)]}, format='json')
+
+            self.assertIn(str(rendimento.pk), [r['id'] for r in self.client.get('/api/salary/pending/').data])
+
+    def test_lista_vazia_tira_todas_as_categorias(self):
+        resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': []}, format='json')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.data['salary_categories'], [])
+
+    def test_so_aceita_categorias_de_receita_do_usuario(self):
+        despesa = Category.objects.filter(user=self.a.usuario, type='EXPENSE').first()
+        for categoria in (despesa, self.b.salario):
+            with self.subTest(categoria=categoria.name):
+                resposta = self.client.put(URL_CATEGORIAS, {'salary_categories': [str(categoria.pk)]}, format='json')
+
+                self.assertEqual(resposta.status_code, 400)
+                self.assertEqual(resposta.data, {'salary_categories': ['Categoria não encontrada.']})
+
+    def test_sem_o_campo_recebe_400(self):
+        resposta = self.client.put(URL_CATEGORIAS, {}, format='json')
+
+        self.assertEqual(resposta.status_code, 400)
+        self.assertIn('salary_categories', resposta.data)
+
 class SimulacaoTests(SalarioTestCase):
 
     def test_simula_pelo_plano_salvo_sem_criar_transacao(self):
@@ -237,6 +369,37 @@ class SimulacaoTests(SalarioTestCase):
         self.assertEqual((resposta.data['total'], resposta.data['free']), ('600.00', '2400.00'))
         self.assertEqual(Transaction.objects.count(), antes)
 
+    def test_simula_pelo_plano_salvo_mesmo_com_destino_que_deixou_de_estar_ativo(self):
+        self.salvar_plano([
+            parte('Reserva', 'FIXED', '500.00', 'ACCOUNT', account=self.a.poupanca),
+            parte('Guardar', 'PERCENT', '20.00', 'GOAL', goal=self.a.viagem),
+            parte('Gastos', 'PERCENT', '50.00', 'SALARY_ACCOUNT'),
+        ])
+        Account.objects.filter(pk=self.a.poupanca.pk).update(is_active=False)
+        Goal.objects.filter(pk=self.a.viagem.pk).update(is_active=False)
+
+        resposta = self.client.post(URL_SIMULAR, {'amount': '3000.00'}, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(
+            [(i['name'], i['amount'], i['generates_transaction']) for i in resposta.data['items']],
+            [('Reserva', '500.00', True), ('Guardar', '500.00', True), ('Gastos', '1250.00', False)],
+        )
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('1000.00', '2000.00'))
+
+    def test_parte_na_conta_do_salario_nunca_gera_transacao_na_simulacao(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '1000.00',
+            'parts': [
+                parte('Gastos', 'FIXED', '700.00', 'SALARY_ACCOUNT'),
+                parte('Lazer', 'PERCENT', '100.00', 'SALARY_ACCOUNT'),
+            ],
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual([i['generates_transaction'] for i in resposta.data['items']], [False, False])
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('0.00', '1000.00'))
+
     def test_simula_partes_ainda_nao_salvas_mesmo_sem_destino(self):
         resposta = self.client.post(URL_SIMULAR, {
             'amount': '1000.00',
@@ -249,6 +412,22 @@ class SimulacaoTests(SalarioTestCase):
             [('Aluguel', '700.00', False), ('Guardar', '300.00', True)],
         )
         self.assertEqual(resposta.data['free'], '700.00')
+
+    def test_fixo_sai_do_recebido_antes_dos_percentuais(self):
+        resposta = self.client.post(URL_SIMULAR, {
+            'amount': '3000.00',
+            'parts': [parte('Aluguel', 'FIXED', '500.00', 'GOAL', goal=self.a.viagem)] + plano_50_30_20(),
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(
+            [(i['name'], i['amount'], i['reduced']) for i in resposta.data['items']],
+            [
+                ('Aluguel', '500.00', False), ('Essenciais', '1250.00', False),
+                ('Dispensáveis', '750.00', False), ('Guardar', '500.00', False),
+            ],
+        )
+        self.assertEqual((resposta.data['total'], resposta.data['free']), ('1000.00', '2000.00'))
 
     def test_percentual_arredonda_para_baixo_no_centavo(self):
         # 10% de 1.234,55 = 123,455: para baixo dá 123,45 (meio para cima daria 123,46)
@@ -279,6 +458,7 @@ class TravaELogsTests(SalarioTestCase):
                 lambda: self.client.get(URL_MODELOS),
                 lambda: self.client.get(URL_PLANO),
                 lambda: self.client.put(URL_PLANO, {'parts': []}, format='json'),
+                lambda: self.client.put(URL_CATEGORIAS, {'salary_categories': []}, format='json'),
                 lambda: self.client.post(URL_SIMULAR, {'amount': '10.00'}, format='json'),
             )
             for chamar in chamadas:

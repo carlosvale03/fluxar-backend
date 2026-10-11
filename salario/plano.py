@@ -95,6 +95,22 @@ def salvar_plano(usuario, partes, categorias=None):
     return gestao
 
 
+@transaction.atomic
+def salvar_categorias(usuario, categorias):
+    """
+    Grava só as categorias de salário (SALARIO-14), sem mexer nas partes nem
+    marcar o plano como salvo: o usuário escolhe quais receitas são salário
+    antes de montar o plano.
+    """
+    gestao, _ = GestaoDoSalario.objects.select_for_update().get_or_create(user=usuario)
+    gestao.categorias.set(categorias)
+    gestao.categorias_configuradas = True
+    gestao.save(update_fields=['categorias_configuradas', 'atualizada_em'])
+    # Só ids e quantidades (SALARIO-18, AD-019)
+    logger.info('Categorias de salário salvas usuario=%s categorias=%s', usuario.pk, len(categorias))
+    return gestao
+
+
 def parte_em_json(parte):
     """Uma parte do plano salvo na resposta da API."""
     meta = parte.meta if parte.tipo_de_destino == META else None

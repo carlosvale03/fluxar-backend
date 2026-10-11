@@ -181,3 +181,59 @@ Feita pelo orquestrador depois das correções, com o sensor focado no gap 1:
 Com o gap 1 corrigido e as três mutações mortas, o verdict passa a PASS.
 
 Sobre o gap 3: o formulário de edição não tem o campo de status, então efetivar pela edição não acontece pela interface atual. SALARIO-19 é atendida pelo botão "Efetivar"; o `onSuccess` da edição já passa a transação efetivada e fica pronto para quando o formulário ganhar o status. Sobre o gap 4: nenhum comportamento observável separa a exclusão uma a uma da exclusão em lote, porque o desfazer recusa antes quando a meta não tem o valor; a decisão ficou registrada na AD-053.
+
+## Rodada: divisão fiel à revisão (SALARIO-73 a 79)
+
+Verificação leve, feita por um verificador que não escreveu o código (autor diferente do verificador), na branch `refactor/gestao-do-salario-ux` dos dois repositórios.
+
+**Diffs verificados**
+
+- Backend: `2d47fb8~1..0389ec3` (spec em `2d47fb8`; código e testes de `5300f0c` a `26f6b8c`; docs em `0389ec3`).
+- Frontend: `37b7bfe~1..5d70085`.
+
+**Gates**: backend `docker compose exec -T backend python manage.py test tests.salario --noinput` com 177 testes OK; frontend `npm test -- tests/salario` com 129 testes em 13 arquivos, todos passando.
+
+### Evidência por critério
+
+| AC | Backend (código / teste) | Frontend (código / teste) |
+| --- | --- | --- |
+| SALARIO-73 | `salario/divisao.py:279` recusa só sem transação **e** sem saída descontada. Testes: `tests/salario/test_saidas.py:492` (grava sem transações, registra as saídas e tira o salário dos pendentes), `:522` (desfazer libera as saídas e o salário), `:538` (sem transação e sem saída continua com 400 "Nenhuma parte do plano gera transação.") | `RevisaoDaDivisao.tsx` `soSaidas` (transação nenhuma e alguma saída com parte) habilita "Gerar a divisão sem transferências"; o resultado e o desfazer mostram que não houve transação. Testes: `tests/salario/saidas.test.tsx:281` (botão e confirmação próprios), `:304` (resultado sem lista de transações e "Esta divisão não criou transações." no desfazer, `:334`) |
+| SALARIO-74 | `salario/divisao.py:63` (`DIVISAO_MUDOU`), `:337` (total enviado diferente do recalculado) e `conferir_partes_do_pedido` (ajuste ou saída numa parte fora do plano, só na geração). Testes: `tests/salario/test_geracao.py:285` (igual gera), `:293` (sem o total não confere), `:301` (diferente recusa 400 com a mensagem e nada é gravado), `:313` (vem antes das outras recusas), `:324` (ajuste de parte que saiu do plano), `:334` (na revisão continua o erro de campo); `tests/salario/test_saidas.py:431` (saída numa parte fora do plano na geração) | `src/services/salario.ts:88` envia `expected_total`; `RevisaoDaDivisao.tsx:42` usa a mesma frase do backend e, no 400 com esse `detail`, desmarca a confirmação e refaz a revisão. Testes: `tests/salario/revisao.test.tsx:284` (corpo com `expected_total`, toast com o motivo, nova prévia com as mesmas escolhas, confirmação desmarcada), `tests/salario/saidas.test.tsx:339` (`expected_total: "500.00"`) |
+| SALARIO-75 | `salario/saidas.py:72` (`fim_da_janela`: véspera do próximo salário efetivado na mesma conta, numa categoria de salário, sem ajuste de saldo, ou hoje). Testes: `tests/salario/test_saidas.py:131` (até a véspera; o dia do próximo fica com ele), `:138` (saída do dia do próximo recusada na geração), `:145` (sem próximo, até hoje), `:148` (pendente, outra categoria, outra conta, ajuste, mesmo dia e anterior não fecham), `:158` (categoria configurada fecha), `:167` (próximo depois de hoje não muda) | Sem lógica no frontend: a lista vem da revisão |
+| SALARIO-76 | `salario/serializers.py:90` (`meta_do_cofrinho`: cofrinho de uma única meta ativa vira destino na meta). Testes: `tests/salario/test_plano.py:203` (salva com destino na meta), `:213` (a geração soma o aporte na meta), `:225` (meta concluída continua), `:232` (mais de uma meta ativa fica na conta), `:242` (só meta arquivada fica na conta), `:249` (conta que não é cofrinho), `:254` (simulação com partes) | `EditorDoPlano.tsx` mostra o cofrinho de uma meta ativa só como a meta e esconde a meta com o cofrinho inativo. Testes: `tests/salario/plano.test.tsx:373`, `:385`, `:391`, `:402` |
+| SALARIO-77 | `salario/divisao.py:547` (`saida_mudou`: excluída, outro valor, não efetivada, outra conta ou compra com pagamento estornado) e `:630` (`outflows_changed`; zero na desfeita). Testes: `tests/salario/test_saidas.py:575` (recém-gerada com zero), `:579` (excluída, outro valor, pendente, contagem acumulada, no detalhe e na lista), `:591` (outra conta), `:596` (descrição e data não contam), `:601` (desfeita com zero), `:714` (compra com pagamento estornado) | `src/types/salario.ts:188`, `avisoDasSaidasMudadas` em `src/lib/salario.ts` e o aviso em `DivisoesRecentes.tsx`. Teste: `tests/salario/desfazer.test.tsx:203` (singular, plural e nada com zero) |
+| SALARIO-78 | `salario/calculo.py:132` (`reduzida = restante == 0 and percentual > 0`). Testes: `tests/salario/test_calculo.py:153` (fixa reduzida e percentual zerado marcado), `:229` (fixos usam todo o recebido), `:236` (arredondar para zero sobre resto positivo não marca) | Espelho em `src/lib/salario.ts:162` com a mesma regra (`restante === 0` e `percentual > 0`). Testes: `tests/salario/calculo.test.ts:24` e `:33` (inclui a parte com 0% não marcada) |
+| SALARIO-79 | `salario/divisao.py:64` (`DIVISAO_DESFEITA`), `DivisaoDesfeita` com 409 e `code` `division_undone`, conferida na rota (`salario/views.py:196`) e depois da trava (`salario/divisao.py:251`). Testes: `tests/salario/test_geracao.py:362` (409 com a mensagem, sem transação nova), `:373` (o serviço recusa depois da trava), `:379` (chave nova divide de novo) | Uma chave nova a cada abertura, com `novoIdentificador` (`src/lib/identificador.ts`) também fora de contexto seguro. Testes: `tests/salario/revisao.test.tsx:318` (409 mostra o motivo e a revisão continua aberta), `:248` (mesma chave no reenvio, outra ao reabrir), `tests/salario/identificador.test.ts:17`, `:23`, `:32` |
+| SALARIO-65 (adendo) | `salario/divisao.py` `revisar` passa a `saidas.sugestoes` só as partes com valor calculado maior que zero. Testes: `tests/salario/test_saidas.py:176` (parte zerada pelo ajuste não é sugerida), `:186` (passa para a próxima parte da mesma regra) | Sem lógica no frontend: a sugestão vem da revisão |
+
+**Contrato backend e frontend**: a frase de SALARIO-74 é idêntica nos dois lados (`salario/divisao.py:63` e `RevisaoDaDivisao.tsx:42`), e o backend devolve `detail` como texto (`{'detail': ..., 'code': 'invalid'}`, `tests/salario/test_geracao.py:26`), o que a comparação estrita do frontend exige. O 409 e a mensagem de SALARIO-79 batem com o mock de `revisao.test.tsx:318`. `outflows_changed` é inteiro no corpo do detalhe e da lista `undoable`, e o tipo do frontend o aceita como opcional. A divisão sem transação segue a mesma condição nos dois lados (nenhuma parte gera transação e há saída descontada). A regra de reduzida do frontend é a mesma do backend. O editor salva só as partes (`EditorDoPlano.tsx:447`), sem `salary_categories` (`tests/salario/plano.test.tsx:140`).
+
+### Sensor de discriminação
+
+Cada mutação foi aplicada no arquivo real, os testes do arquivo afetado rodaram, e o arquivo foi restaurado de uma cópia byte a byte (conferida com `cmp`), com `git status --porcelain` limpo depois de cada uma.
+
+| # | Repo | Mutação | Resultado | Pego por |
+| --- | --- | --- | --- | --- |
+| B1 | backend | `gerar` ignora o `expected_total` (`divisao.py:337` com `if False and ...`) | morta | `test_geracao.py:301`, `:313` |
+| B2 | backend | `conferir_partes` nunca recusa "Nenhuma parte do plano gera transação.", mesmo sem saída descontada (`divisao.py:279`) | morta | `test_saidas.py:538` (2 subtestes), `test_geracao.py` `test_plano_sem_parte_que_gere_transacao_e_recusado` (2 subtestes) |
+| B3 | backend | `fim_da_janela` termina no dia do próximo salário, sem o menos um dia (`saidas.py:72`) | morta | `test_saidas.py:131`, `:138`, `:158` |
+| B4 | backend | `saida_mudou` ignora a mudança de valor (`divisao.py:547`) | morta | `test_saidas.py:579` (subtestes "outro valor" e "pendente") |
+| F1 | frontend | o percentual travado deixa de ser só de leitura (`EditorDoPlano.tsx:612`, `readOnly={false}`) | morta | `equilibrio.test.tsx:211` |
+| F2 | frontend | "Gerar" habilitado com parte sem destino (sem `semDestino` em `RevisaoDaDivisao.tsx:557`) | morta | `revisao.test.tsx:216` |
+| F3 | frontend | a resposta de uma simulação antiga entra na tela (sem a conferência da sequência em `ResumoDoPlano.tsx:94`) | morta | `plano.test.tsx:218` |
+| F4 | frontend | o espelho de SALARIO-78 sai de `calcularDivisao` (`src/lib/salario.ts:162` só com `valores[i] < pedido`) | morta | `calculo.test.ts:24`, `:33` |
+
+8 de 8 mortas.
+
+Não mutados nesta rodada, mas com testes diretos citados acima: a conversão do cofrinho em meta (SALARIO-76), o 409 (SALARIO-79), o envio de `salary_categories` pelo editor e o reequilíbrio que ignora as partes travadas (`equilibrio.test.tsx:107`). A conferência `travadas.has(chave)` em `mudarPercentual` não foi mutada sozinha: ela fica atrás do `readOnly`, que é o que o teste exercita.
+
+### Gaps (por prioridade)
+
+1. **Baixa: a condição `percentual > 0` de SALARIO-78 não tem teste no backend.** `salario/calculo.py:132` marcaria uma parte com 0% se a condição saísse, e nenhum teste do backend pegaria. Pela API isso não acontece, porque o serializer recusa percentual abaixo de 0,01%, e o frontend já cobre o caso (`calculo.test.ts:33`). Teste sugerido em `tests/salario/test_calculo.py`: `dividir(Decimal('1000.00'), [fixa('Aluguel', '1000.00'), percentual('Vazia', '0')])` com `reduzida` igual a `[False, False]`.
+2. **Baixa: o 409 está conferido em dois lugares.** A rota (`salario/views.py:196`) e `pela_chave` (`salario/divisao.py:251`) têm cada um o seu teste (`test_geracao.py:362` pela API e `:373` pelo serviço). Não é defeito; só não entrou no sensor desta rodada.
+
+Nenhum gap bloqueia.
+
+**Árvores**: `git status --porcelain` vazio nos dois repositórios antes e depois do sensor.
+
+**Result**: PASS

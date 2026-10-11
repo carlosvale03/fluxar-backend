@@ -21,7 +21,8 @@ from .models import DivisaoDoSalario
 from .modelos import MODELOS, REGRA_DOS_MODELOS
 from .referencias import referencias
 from .serializers import (
-    DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SimulateSerializer, conferir_soma,
+    DivisionCreateSerializer, DivisionPreviewSerializer, PlanSerializer, SalaryCategoriesSerializer,
+    SimulateSerializer, conferir_soma,
 )
 
 PERMISSOES = [permissions.IsAuthenticated, RecursoLiberado('gestao_do_salario')]
@@ -96,10 +97,27 @@ class SalaryPlanView(APIView):
         return Response(plano.plano_em_json(request.user))
 
 
+
+class SalaryCategoriesView(APIView):
+    """
+    `PUT /salary/categories/`: grava só as categorias de salário, sem mexer no
+    plano (SALARIO-14). Devolve o plano, como o `GET /salary/plan/`.
+    """
+    permission_classes = PERMISSOES
+
+    def put(self, request):
+        dados = validar(SalaryCategoriesSerializer, request)
+        plano.salvar_categorias(request.user, dados['salary_categories'])
+        return Response(plano.plano_em_json(request.user))
+
 class SalarySimulateView(APIView):
     """
     `POST /salary/simulate/`: a divisão de um valor pelas partes enviadas ou
-    pelo plano salvo, sem gravar nada (SALARIO-13).
+    pelo plano salvo, sem gravar nada (SALARIO-13). Só com `amount`, vale o
+    plano salvo como está, sem conferir os destinos: um destino que deixou de
+    estar ativo só é recusado na geração (SALARIO-42). As partes enviadas
+    passam pelas mesmas validações do plano. A parte que fica na conta do
+    salário nunca gera transação (SALARIO-34).
     """
     permission_classes = PERMISSOES
 
@@ -129,12 +147,16 @@ class SalaryPendingView(APIView):
 
 
 class SalaryDivisionPreviewView(APIView):
-    """`POST /salary/divisions/preview/`: a revisão da divisão, sem gravar nada (SALARIO-29, SALARIO-30)."""
+    """
+    `POST /salary/divisions/preview/`: a revisão da divisão, sem gravar nada
+    (SALARIO-29, SALARIO-30), com as saídas desde o recebimento e a parte
+    sugerida para cada uma (SALARIO-64, SALARIO-65).
+    """
     permission_classes = PERMISSOES
 
     def post(self, request):
         dados = validar(DivisionPreviewSerializer, request)
-        return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments']))
+        return Response(divisao.revisar(request.user, dados['receipt'], dados['adjustments'], dados['outflows']))
 
 
 class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
@@ -146,7 +168,9 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
 
     `POST /salary/divisions/`: gera as transações da divisão de uma vez
     (SALARIO-32 a SALARIO-43). A repetição da mesma `idempotency_key`
-    devolve a divisão já gravada, também com 201 (SALARIO-37).
+    devolve a divisão já gravada, também com 201 (SALARIO-37); a de uma
+    divisão desfeita recebe 409 (SALARIO-79). Com `expected_total`, o total
+    da revisão, um total recalculado diferente recebe 400 (SALARIO-74).
     """
     permission_classes = PERMISSOES
     parametros_permitidos = frozenset({'undoable'})
@@ -167,11 +191,15 @@ class SalaryDivisionsView(ParametrosConhecidosMixin, APIView):
         if chave is not None:
             anterior = DivisaoDoSalario.objects.filter(user=request.user, chave=chave).first()
             if anterior is not None and str(anterior.recebimento_ref) == str(request.data.get('receipt')):
+                # A chave de uma divisão desfeita não a devolve como gerada (SALARIO-79)
+                if anterior.desfeita_em is not None:
+                    raise divisao.DivisaoDesfeita()
                 return Response(divisao.divisao_em_json(anterior), status=status.HTTP_201_CREATED)
 
         dados = validar(DivisionCreateSerializer, request)
         registro, _ = divisao.gerar(
-            request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'],
+            request.user, dados['receipt'].pk, dados['idempotency_key'], dados['adjustments'], dados['outflows'],
+            total_esperado=dados['expected_total'],
         )
         return Response(divisao.divisao_em_json(registro), status=status.HTTP_201_CREATED)
 

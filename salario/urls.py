@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path('salary/models/', views.SalaryModelsView.as_view(), name='salary-models'),
     path('salary/plan/', views.SalaryPlanView.as_view(), name='salary-plan'),
+    path('salary/categories/', views.SalaryCategoriesView.as_view(), name='salary-categories'),
     path('salary/simulate/', views.SalarySimulateView.as_view(), name='salary-simulate'),
     path('salary/references/', views.SalaryReferencesView.as_view(), name='salary-references'),
     path('salary/pending/',views.SalaryPendingView.as_view(), name='salary-pending'),

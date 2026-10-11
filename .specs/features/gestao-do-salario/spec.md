@@ -40,11 +40,15 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Quando a divisão aparece | A tela fica disponível a qualquer momento, para simular e dividir; ao lançar ou efetivar uma receita de salário, o app abre na hora o aviso com os benefícios | Decisão do usuário | sim |
 | Como o plano começa | Três modelos da literatura, do mais geral ao mais detalhado, e o Personalizado, com o histórico do usuário ao lado | Decisão do usuário | sim |
 | Partes dos modelos | Pague-se primeiro (George S. Clason, *O Homem Mais Rico da Babilônia*): Guardar 10%. 50/30/20 (Elizabeth Warren e Amelia Warren Tyagi, *All Your Worth*): Essenciais 50%, Dispensáveis 30% e Guardar 20%. Seis potes (T. Harv Eker, *Os Segredos da Mente Milionária*): Necessidades 55%, Liberdade financeira 10%, Poupança para gastos futuros 10%, Educação 10%, Diversão 10% e Doações 5% | São os percentuais das obras de origem | sim |
-| Destinos das partes | Conta ativa que não seja cofrinho, meta ativa ou "Fica na conta do salário" | O dinheiro de uma meta entra só nela, sem o rateio do cofrinho compartilhado | sim |
+| Destinos das partes | Qualquer conta ativa (cofrinho inclusive), meta ativa ou "Fica na conta do salário" | Alterado em 2026-10-11 a pedido do usuário: o cofrinho como destino recebe o dinheiro no saldo livre dele; para o dinheiro entrar numa meta, o destino é a meta | sim |
 | Destino inicial nas partes dos modelos | Partes de gastar ficam na conta do salário; partes de guardar ficam sem destino até o usuário escolher | Nos três modelos, só o que se guarda costuma sair da conta | sim |
 | Categorias de salário | A categoria padrão Salário e as subcategorias dela, mais as que o usuário marcar | "Salário" já vem em todo cadastro | sim |
 | Um plano por usuário | Um plano salvo, aplicado a qualquer recebimento de salário | Quem tem dois salários ajusta os valores na revisão | sim |
-| Salário menor que o plano | A última parte da ordem é reduzida até zero, depois a anterior, e a revisão marca cada parte reduzida | A ordem é a prioridade que o usuário definiu | sim |
+| Valor fixo e percentual no mesmo plano | Os valores fixos saem primeiro do recebido; os percentuais valem sobre o que sobra | Alterado em 2026-10-10 a pedido do usuário: com o percentual sobre o recebido inteiro, um plano com 100% em percentuais e uma parte fixa reduzia as últimas partes a quase nada (AD-056) | sim |
+| Salário menor que o plano | Quando os valores fixos passam do recebido, a última parte fixa da ordem é reduzida até zero, depois a anterior, a revisão marca cada parte reduzida, e as percentuais ficam com zero | A ordem é a prioridade que o usuário definiu | sim |
+| Saídas antes da divisão | Entram todas as saídas efetivadas da conta do recebimento (despesas, transferências, aportes em metas e pagamentos de fatura) da data do recebimento até hoje, menos as geradas por divisões do salário e os ajustes de saldo | Decisão do usuário em 2026-10-10: quem divide no fim de semana já gastou parte do salário, e só o dinheiro que saiu dessa conta saiu do salário (AD-057) | sim |
+| Saída maior que a parte | A parte fica sem transação, a revisão mostra quanto ela passou, e as outras partes não mudam | Decisão do usuário em 2026-10-10 | sim |
+| Travas dos percentuais na edição | Só na tela, durante a edição; não são salvas no plano | Servem para montar o plano, não mudam a divisão | sim |
 | Centavos | Cada parte percentual é arredondada para baixo no centavo; a diferença fica livre | A divisão nunca passa do valor recebido | sim |
 | Ajuste na revisão | Vale só para aquela divisão, sem mudar o plano | Salários que variam não obrigam a mexer no plano | sim |
 | Confirmação forte | Revisão com a lista completa, a marcação "Confirmo que fiz essas transferências no banco" e o botão com a quantidade e o total | As transações nascem efetivadas, então o usuário afirma que fez as transferências | sim |
@@ -74,13 +78,13 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 2. **SALARIO-02** WHEN o usuário escolhe um dos três modelos THEN o sistema SHALL montar o plano com as partes e os percentuais do modelo: Pague-se primeiro com Guardar 10%; 50/30/20 com Essenciais 50%, Dispensáveis 30% e Guardar 20%; Seis potes com Necessidades 55%, Liberdade financeira 10%, Poupança para gastos futuros 10%, Educação 10%, Diversão 10% e Doações 5%.
 3. **SALARIO-03** WHEN o usuário escolhe o modelo Personalizado THEN o sistema SHALL começar o plano sem partes.
 4. **SALARIO-04** WHEN o usuário adiciona ou edita uma parte THEN o sistema SHALL aceitar o nome, o destino e a regra da parte, que é um valor fixo em reais ou um percentual do salário.
-5. **SALARIO-05** WHEN o usuário escolhe o destino de uma parte THEN o sistema SHALL aceitar uma conta ativa dele que não seja cofrinho, uma meta ativa dele ou "Fica na conta do salário".
+5. **SALARIO-05** WHEN o usuário escolhe o destino de uma parte THEN o sistema SHALL aceitar qualquer conta ativa dele, cofrinho inclusive, uma meta ativa dele ou "Fica na conta do salário".
 6. **SALARIO-06** WHEN um dos três modelos monta o plano THEN o sistema SHALL deixar as partes de gastar (Essenciais, Dispensáveis, Necessidades, Educação, Diversão e Doações) com o destino "Fica na conta do salário" e as partes de guardar (Guardar, Liberdade financeira e Poupança para gastos futuros) sem destino.
 7. **SALARIO-07** WHEN o usuário muda a ordem das partes THEN o sistema SHALL gravar a nova ordem, que define quais partes são atendidas primeiro.
 8. **SALARIO-08** IF a soma dos percentuais do plano passar de 100% THEN o sistema SHALL recusar com HTTP 400 e a mensagem "A soma dos percentuais passa de 100%."
 9. **SALARIO-09** IF o valor fixo de uma parte for menor que R$ 0,01 ou o percentual estiver fora do intervalo de 0,01% a 100% THEN o sistema SHALL recusar com HTTP 400 e o erro no campo da regra.
 10. **SALARIO-10** IF o destino de uma parte for uma conta ou meta de outro usuário ou inexistente THEN o sistema SHALL responder HTTP 400 com o erro no campo do destino e a mesma mensagem de um ID inexistente (AD-010).
-11. **SALARIO-11** IF o destino de uma parte for uma conta inativa, um cofrinho ou uma meta inativa THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Escolha uma conta ativa que não seja cofrinho ou uma meta ativa." no campo do destino.
+11. **SALARIO-11** IF o destino de uma parte for uma conta inativa ou uma meta inativa THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Escolha uma conta ativa ou uma meta ativa." no campo do destino.
 12. **SALARIO-12** WHEN o usuário salva o plano THEN o sistema SHALL guardá-lo como o plano único dele, usado nas próximas divisões.
 13. **SALARIO-13** WHEN o usuário simula uma divisão com um valor de salário THEN o sistema SHALL mostrar quanto vai para cada parte e quanto fica livre, sem criar nenhuma transação.
 14. **SALARIO-14** WHEN o usuário configura a gestão do salário THEN o sistema SHALL aceitar as categorias de receita que contam como salário, com a categoria padrão Salário e as subcategorias dela marcadas de início.
@@ -119,8 +123,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 **Why P1**: é o que tira do usuário o trabalho de lançar cada transferência e cada aporte, e é onde um erro cria várias transações indesejadas de uma vez.
 
 **Acceptance Criteria**:
-1. **SALARIO-26** WHEN o sistema calcula a divisão de um recebimento THEN o sistema SHALL atender as partes na ordem do plano, cada uma com o seu valor fixo ou o seu percentual sobre o valor recebido, e deixar livre na conta do salário o que sobrar.
-2. **SALARIO-27** IF o valor recebido não cobrir todas as partes THEN o sistema SHALL reduzir primeiro a última parte da ordem, até zero, e seguir para as anteriores, marcando na revisão cada parte reduzida.
+1. **SALARIO-26** WHEN o sistema calcula a divisão de um recebimento THEN o sistema SHALL atender as partes na ordem do plano, tirando primeiro do valor recebido os valores fixos e aplicando os percentuais sobre o que sobra, e deixar livre na conta do salário o que restar.
+2. **SALARIO-27** IF os valores fixos passarem do valor recebido THEN o sistema SHALL reduzir primeiro a última parte fixa da ordem, até zero, e seguir para as anteriores, marcando na revisão cada parte reduzida, e deixar as partes percentuais com zero.
 3. **SALARIO-28** WHEN o sistema calcula uma parte percentual THEN o sistema SHALL arredondá-la para baixo no centavo, deixando a diferença livre na conta do salário.
 4. **SALARIO-29** WHEN o usuário abre a revisão de uma divisão THEN a interface SHALL mostrar cada transação que será criada, com origem, destino, valor e data, além do total e de quanto fica livre.
 5. **SALARIO-30** WHEN o usuário ajusta o valor de uma parte na revisão THEN o sistema SHALL usar o valor ajustado só nessa divisão, sem mudar o plano salvo.
@@ -179,13 +183,76 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Saídas desde o salário
+
+**User Story**: Como usuário que divide o salário dias depois de recebê-lo, quero descontar das partes o que já saiu da conta do salário, para que as transações criadas levem só o que ainda falta separar.
+
+**Why P1**: sem o desconto, a divisão transfere dinheiro que já foi gasto, e a conta do salário fica negativa.
+
+**Acceptance Criteria**:
+1. **SALARIO-64** WHEN o sistema monta a revisão de um recebimento THEN o sistema SHALL listar as saídas efetivadas da conta do recebimento (despesas, compras no cartão pagas pela conta do recebimento (pela data do pagamento), transferências, aportes em metas e pagamentos de fatura) com data entre a data do recebimento e o fim da janela de SALARIO-75, menos as geradas por divisões do salário, os ajustes de saldo e as já descontadas numa divisão ativa.
+2. **SALARIO-65** WHEN o sistema lista uma saída THEN o sistema SHALL sugerir a parte: para uma despesa, a primeira parte cuja referência é a classe efetiva da categoria dela (Essencial ou Dispensável); para uma transferência ou um aporte, a primeira parte cujo destino é a conta ou a meta de destino; nos demais casos, nenhuma parte. A sugestão nunca aponta para uma parte cujo valor calculado é zero: nesse caso, vale a próxima parte que atende à mesma regra, ou nenhuma.
+3. **SALARIO-66** WHEN o usuário atribui saídas a uma parte THEN o sistema SHALL calcular a transação dessa parte como o valor dela pela regra de SALARIO-26 menos a soma das saídas atribuídas, sem ficar abaixo de zero.
+4. **SALARIO-67** IF as saídas atribuídas a uma parte passarem do valor dela THEN o sistema SHALL deixar a parte sem transação, informar quanto ela passou e manter as outras partes como estão.
+5. **SALARIO-68** WHEN a divisão é gerada THEN o sistema SHALL registrar quais saídas foram descontadas e em qual parte.
+6. **SALARIO-69** IF uma saída enviada não estiver na lista de SALARIO-64 THEN o sistema SHALL recusar com HTTP 400 e a mensagem "Saída não encontrada." no campo das saídas.
+7. **SALARIO-70** WHEN uma divisão é desfeita THEN o sistema SHALL liberar as saídas descontadas nela para uma nova divisão.
+8. **SALARIO-71** WHEN a interface mostra a revisão THEN a interface SHALL listar as saídas com a data, a descrição, o valor e a parte escolhida, já com a sugestão de SALARIO-65 e a opção "Não descontar", e mostrar em cada parte o valor calculado, o já gasto e o que será transferido.
+9. **SALARIO-72** WHEN o sistema calcula o que fica livre THEN o sistema SHALL subtrair do recebido as transações da divisão e as saídas descontadas.
+
+**Independent Test**: com R$ 200,00 calculados para Necessidades, com destino numa conta, e uma despesa Essencial de R$ 130,00 na conta do salário depois do recebimento, a revisão sugere a despesa em Necessidades e mostra transferência de R$ 70,00; com R$ 250,00 em saídas, a parte fica sem transação e mostra "passou R$ 50,00"; desfazer a divisão libera a despesa para a próxima.
+
+---
+
+### P1: Divisão fiel à revisão
+
+**User Story**: Como usuário, quero que a divisão gerada seja a que revisei e que ela continue mostrando o que mudou depois, para confiar no que foi separado.
+
+**Why P1**: entre a revisão e a geração, o plano, as saídas e as metas podem mudar; sem estas regras, a geração cria transações diferentes das revisadas, um salário todo gasto fica a dividir para sempre e a meta não recebe o que foi guardado no cofrinho dela.
+
+**Acceptance Criteria**:
+1. **SALARIO-73** WHEN o usuário gera uma divisão em que nenhuma parte gera transação, mas ao menos uma saída foi descontada, THEN o sistema SHALL gravar a divisão sem transações, com as saídas descontadas registradas, e permitir desfazê-la como as demais, liberando as saídas; sem transação e sem saída descontada, a recusa de SALARIO-43 continua.
+2. **SALARIO-74** IF o pedido de geração trouxer o total revisado e ele for diferente do total recalculado, ou um ajuste ou uma saída apontar para uma parte que não está mais no plano, THEN o sistema SHALL recusar com HTTP 400 e a mensagem "A divisão mudou desde a revisão. Confira de novo antes de gerar."
+3. **SALARIO-75** WHEN o sistema lista as saídas de um recebimento THEN o sistema SHALL ir até a véspera do próximo salário recebido na mesma conta (a primeira receita efetivada numa categoria de salário com data posterior à do recebimento) ou até hoje, o que vier antes; sem próximo salário, até hoje.
+4. **SALARIO-76** WHEN o usuário salva ou simula uma parte com destino num cofrinho que é a conta de uma única meta ativa THEN o sistema SHALL tratar a parte como destinada a essa meta, para que o aporte some no valor dela.
+5. **SALARIO-77** WHEN o sistema mostra uma divisão ativa THEN o sistema SHALL informar quantas saídas descontadas nela mudaram depois da geração: excluídas, com valor diferente do descontado ou que deixaram de valer como saída da conta do recebimento (não efetivadas, em outra conta ou compra no cartão com o pagamento estornado).
+6. **SALARIO-78** WHEN uma parte percentual, com percentual maior que zero, fica com zero porque os valores fixos usaram todo o recebido THEN o sistema SHALL marcá-la como reduzida.
+7. **SALARIO-79** IF um pedido de geração chegar com o identificador de tentativa de uma divisão já desfeita THEN o sistema SHALL recusar com HTTP 409 e a mensagem "Esta divisão foi desfeita. Abra a revisão de novo para dividir."
+
+**Independent Test**: com R$ 3.000,00 todos atribuídos a saídas, gerar grava a divisão sem transações, e desfazê-la libera as saídas; gerar com o total revisado de R$ 600,00 depois de o plano mudar para R$ 700,00 recebe 400 "A divisão mudou desde a revisão. Confira de novo antes de gerar."; com o salário seguinte em 05/11, uma despesa de 05/11 fica fora das saídas do salário de 05/10; salvar uma parte com destino no cofrinho da meta Viagem grava a parte na meta; excluir uma saída descontada faz a divisão informar uma saída mudada; reenviar a chave de uma divisão desfeita recebe 409.
+
+---
+
+### P2: Ajuda para montar o plano
+
+**User Story**: Como usuário, quero entender cada modelo e cada parte e montar os percentuais sem fazer conta, para chegar a um plano que fecha.
+
+**Why P2**: o plano funciona sem essa ajuda, mas quem não conhece os modelos não sabe o que é "Liberdade financeira" nem quanto sobra ao mexer num percentual.
+
+**Acceptance Criteria**:
+1. **SALARIO-57** WHEN a interface mostra um modelo ou uma parte de um modelo THEN a interface SHALL mostrar o que o modelo e a parte significam, com a obra de origem.
+2. **SALARIO-58** WHEN o usuário muda o percentual de uma parte na edição THEN a interface SHALL ajustar as outras partes percentuais não travadas na proporção de cada uma, mantendo a soma dos percentuais de antes.
+3. **SALARIO-59** WHEN o usuário trava uma parte percentual THEN a interface SHALL deixar o percentual dela fora dos ajustes de SALARIO-58.
+4. **SALARIO-60** WHILE a soma dos percentuais passar de 100%, a interface SHALL mostrar o aviso "A soma dos percentuais passa de 100%." e impedir salvar o plano.
+5. **SALARIO-61** WHEN o usuário tem um plano salvo THEN a interface SHALL permitir trocar de modelo a partir do resumo do plano, mantendo o plano salvo até o novo ser salvo.
+6. **SALARIO-62** WHILE as categorias de salário já estiverem configuradas e houver salário a dividir, a interface SHALL mostrar a seção de receitas de salário recolhida, com as categorias escolhidas e a opção de abrir.
+7. **SALARIO-63** WHEN o campo da simulação está preenchido THEN a interface SHALL mostrar o valor de cada parte pela regra de SALARIO-26, inclusive na edição, antes de salvar.
+
+**Independent Test**: no 50/30/20, mudar Essenciais para 60% deixa Dispensáveis com 24% e Guardar com 16%; travar Guardar e mudar Essenciais para 60% deixa Dispensáveis com 20%; uma parte fixa de R$ 500,00 com salário simulado de R$ 3.000,00 mostra as partes percentuais sobre R$ 2.500,00; passar de 100% mostra o aviso e desabilita "Salvar plano".
+
+---
+
 ## Edge Cases
 
 - Dois salários no mês: cada recebimento é dividido pelo plano inteiro, e os valores fixos entram nas duas divisões se o usuário não ajustar na revisão (SALARIO-26, SALARIO-30).
 - Parte com destino na própria conta do recebimento: não gera transação (SALARIO-34).
-- Salário de R$ 1.000,00 com partes fixas que somam R$ 1.200,00: a última parte é reduzida até zero, depois a anterior (SALARIO-27).
+- Salário de R$ 1.000,00 com partes fixas que somam R$ 1.200,00: a última parte fixa é reduzida até zero, depois a anterior (SALARIO-27).
+- Salário de R$ 3.000,00 com uma parte fixa de R$ 500,00 e partes de 50%, 30% e 20%: os percentuais valem sobre R$ 2.500,00 (R$ 1.250,00, R$ 750,00 e R$ 500,00), e nada fica livre (SALARIO-26).
 - Parte de 33,33% sobre R$ 1.000,00: R$ 333,30, e a diferença fica livre (SALARIO-28).
-- Meta concluída ou excluída depois de entrar no plano: a geração é recusada até o usuário trocar o destino (SALARIO-42).
+- Meta concluída depois de entrar no plano: continua aceita como destino enquanto estiver ativa, e o usuário decide se segue guardando nela; meta excluída ou arquivada é recusada na geração até o usuário trocar o destino (SALARIO-42).
+- Dois salários na mesma conta no mesmo dia: as saídas desse dia em diante entram na revisão dos dois, e a saída descontada num deles sai da lista do outro (SALARIO-64, SALARIO-75).
+- Cofrinho que é a conta de mais de uma meta ativa: a parte continua com destino na conta, porque não há como saber a meta (SALARIO-76).
+- Divisão que fica com o livre negativo, quando as saídas descontadas passam do que sobra: o valor aparece negativo, sem ser ajustado (SALARIO-72).
 - Plano só com partes que ficam na conta do salário: a geração é recusada, e a simulação continua mostrando a divisão (SALARIO-13, SALARIO-43).
 - Receita de salário ainda pendente: pode ser simulada, mas não dividida (SALARIO-40).
 - Recebimento de outro usuário: recebe a mesma resposta de um recebimento que não existe (SALARIO-40, AD-010).
@@ -272,8 +339,31 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | SALARIO-54 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-55 | P1: Referências do mês e histórico | T9 | Verified |
 | SALARIO-56 | P1: Referências do mês e histórico | T7, T8 | Verified |
+| SALARIO-64 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-65 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-66 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-67 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-68 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-69 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-70 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-71 | P1: Saídas desde o salário | refactor | Pending |
+| SALARIO-72 | P1: Saídas desde o salário | refactor | Implemented |
+| SALARIO-73 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-74 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-75 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-76 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-77 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-78 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-79 | P1: Divisão fiel à revisão | refactor | Implemented |
+| SALARIO-57 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-58 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-59 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-60 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-61 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-62 | P2: Ajuda para montar o plano | refactor | Pending |
+| SALARIO-63 | P2: Ajuda para montar o plano | refactor | Pending |
 
-**Coverage:** 56 total, 56 mapped to tasks, 0 unmapped; 56 implemented, 0 in progress, 0 pending
+**Coverage:** 79 total, 79 mapped to tasks, 0 unmapped; 71 implemented, 0 in progress, 8 pending
 
 ---
 
