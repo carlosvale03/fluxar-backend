@@ -1,5 +1,5 @@
 """
-Inativar e reativar contas (SALDO-46 a SALDO-51).
+Inativar e reativar contas (SALDO-48 a SALDO-53).
 
 Inativar segue as regras da exclusão, com as mensagens próprias; reativar
 devolve a conta às listas, aos totais e às operações, dentro do limite

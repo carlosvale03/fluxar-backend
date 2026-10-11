@@ -26,11 +26,11 @@ SALDO_NAO_ZERADO = 'Zere o saldo antes de excluir a conta: transfira ou ajuste o
 COM_PENDENTES = 'Resolva as transações pendentes antes de excluir a conta: efetive, mova ou exclua cada uma.'
 SALDO_JA_NESSE_VALOR = 'O saldo já está nesse valor.'
 
-# Inativação de conta (SALDO-47, SALDO-48)
+# Inativação de conta (SALDO-49, SALDO-50)
 SALDO_NAO_ZERADO_AO_INATIVAR = 'Zere o saldo antes de inativar a conta: transfira ou ajuste o valor restante.'
 COM_PENDENTES_AO_INATIVAR = 'Resolva as transações pendentes antes de inativar a conta: efetive, mova ou exclua cada uma.'
 
-# Filtro `status` da lista de contas (SALDO-51)
+# Filtro `status` da lista de contas (SALDO-53)
 FILTRO_DE_STATUS = {'active': {'is_active': True}, 'inactive': {'is_active': False}, 'all': {}}
 STATUS_INVALIDO = 'Use active, inactive ou all.'
 
@@ -48,7 +48,7 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
     def get_queryset(self):
         qs = super().get_queryset()
         # Inativar e reativar alcançam as contas inativas do usuário; as de
-        # outro usuário seguem 404 (SALDO-46, SALDO-49)
+        # outro usuário seguem 404 (SALDO-48, SALDO-51)
         if self.action in ('deactivate', 'reactivate'):
             return qs.select_for_update()
         if self.action == 'list':
@@ -56,14 +56,14 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
         return qs.filter(is_active=True)
 
     def filtro_de_status(self):
-        """`status=active|inactive|all` da lista; sem ele, só as ativas (SALDO-51)."""
+        """`status=active|inactive|all` da lista; sem ele, só as ativas (SALDO-53)."""
         valor = self.request.query_params.get('status', 'active')
         if valor not in FILTRO_DE_STATUS:
             raise ValidationError({'status': [STATUS_INVALIDO]})
         return FILTRO_DE_STATUS[valor]
 
     def recusa_da_saida(self, conta, saldo_nao_zerado, com_pendentes):
-        """A recusa de excluir ou inativar a conta, ou `None` (SALDO-32, SALDO-33, SALDO-47, SALDO-48)."""
+        """A recusa de excluir ou inativar a conta, ou `None` (SALDO-32, SALDO-33, SALDO-49, SALDO-50)."""
         if conta.balance != 0:
             return Response({'detail': saldo_nao_zerado}, status=status.HTTP_400_BAD_REQUEST)
         if conta.transactions.filter(status='PENDING').exists():
@@ -86,7 +86,7 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
     @action(detail=True, methods=['post'])
     def deactivate(self, request, pk=None):
         """
-        Inativa a conta com as regras da exclusão (SALDO-46 a SALDO-48). A
+        Inativa a conta com as regras da exclusão (SALDO-48 a SALDO-50). A
         conta já inativa responde 200 sem mudança.
         """
         conta = self.get_object()
@@ -101,7 +101,7 @@ class AccountViewSet(ParametrosConhecidosMixin, UserQuerySetMixin, viewsets.Mode
     def reactivate(self, request, pk=None):
         """
         Reativa a conta inativa, dentro do limite `limite_contas` do plano
-        (SALDO-49, SALDO-50). A conta já ativa responde 200 sem conferir o
+        (SALDO-51, SALDO-52). A conta já ativa responde 200 sem conferir o
         limite. O cofrinho de uma meta não conta no limite e não o confere.
         """
         conta = self.get_object()
